@@ -100,4 +100,4 @@ deduplicated to once per repo per org, then distributed to each linked workspace
 ---
 
 See also: [Integration Manifests](./manifests.md) for the runner-pool and environment-provider
-surfaces you author, and [Data Model](./data-model.md) for the core domain shapes.
+surfaces you author.

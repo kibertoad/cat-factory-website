@@ -70,7 +70,6 @@ export default defineUserConfig({
         children: [
           '/reference/architecture.md',
           '/reference/manifests.md',
-          '/reference/data-model.md',
           '/reference/packages.md',
         ],
       },
@@ -124,7 +123,6 @@ export default defineUserConfig({
           children: [
             '/reference/architecture.md',
             '/reference/manifests.md',
-            '/reference/data-model.md',
             '/reference/packages.md',
           ],
         },
