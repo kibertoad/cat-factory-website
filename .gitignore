@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# VuePress build output and cache
+docs/.vuepress/dist/
+docs/.vuepress/.temp/
+docs/.vuepress/.cache/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
