@@ -13,8 +13,8 @@ During the `coder` step, an agent:
 3. **Commits its own work** to a deterministic branch (`cat-factory/<blockId>`) and validates
    locally.
 
-The agent never needs push credentials: **Cat-Factory owns the delivery contract**. The platform
-pushes the branch, opens the **pull request**, and drives your existing **CI/CD** — and because the
+The agent never needs push credentials: Cat-Factory owns the delivery contract. The platform
+pushes the branch, opens the **pull request**, and drives your existing CI/CD. Because the
 branch is deterministic and checkpointed, a retried or resumed run continues on the same branch and
 PR rather than starting over.
 
@@ -24,12 +24,12 @@ The `tester` step then validates the change before the closing automation runs.
 
 The Full build pipeline finishes with three engine steps that prepare the PR for merge:
 
-- **conflicts** — keeps the PR mergeable with its base, looping a conflict-resolver agent to merge
+- **conflicts** - keeps the PR mergeable with its base, looping a conflict-resolver agent to merge
   the base in and resolve any conflicts on the same branch.
-- **ci** — gates the (now up-to-date) PR on **green CI**, looping a CI-fixer agent on failure.
-- **merger** — scores the PR on complexity, risk, and impact, then either **auto-merges** when the
+- **ci** - gates the (now up-to-date) PR on green CI, looping a CI-fixer agent on failure.
+- **merger** - scores the PR on complexity, risk, and impact, then either auto-merges when the
   scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
-  or raises a **review notification** for a human.
+  or raises a review notification for a human.
 
 ## Reviewing the PR
 
@@ -65,4 +65,4 @@ Each iteration is fully visible on the board and in the run's event log.
 
 ---
 
-Next: connect and bootstrap the repositories agents work in — [Repositories](./repositories.md).
+Next: connect and bootstrap the repositories agents work in - [Repositories](./repositories.md).

@@ -1,7 +1,7 @@
 # Issue & Document Sources
 
-Most requirements already live somewhere — a tracker ticket or a spec document. Cat-Factory lets
-you **link those sources directly to blocks**, import them, and use them as agent context.
+Most requirements already live somewhere, in a tracker ticket or a spec document. Cat-Factory lets
+you link those sources directly to blocks, import them, and use them as agent context.
 
 ## Supported sources
 
@@ -15,33 +15,33 @@ you **link those sources directly to blocks**, import them, and use them as agen
 
 ## Finding and linking context
 
-When you create a task, the **Add task** popup includes a **context picker**. For any connected
+When you create a task, the Add task popup includes a context picker. For any connected
 source you can:
 
-1. **Search the source's catalogue** by title or content (Confluence via CQL, Notion search, Jira
+1. Search the source's catalogue by title or content (Confluence via CQL, Notion search, Jira
    via JQL, GitHub issues, and GitHub repo code/docs).
-2. **Paste a page or issue URL** directly.
-3. **Pick something already imported** into the workspace.
+2. Paste a page or issue URL directly.
+3. Pick something already imported into the workspace.
 
-Chosen items are imported and **linked to the new task as agent context** on create — no separate
+Chosen items are imported and linked to the new task as agent context on create, with no separate
 import step. Search is scoped to the workspace's own integration installation, so you only ever see
 your own org's content.
 
-Imported content can also be **expanded into structural components** — a large epic, for example,
+Imported content can also be expanded into structural components. A large epic, for example,
 can seed a module with several task leaves, each carrying its slice of context.
 
 ## Using sources as agent context
 
 Once linked and imported, source content travels with the block:
 
-- The **reviewer agent** uses it to find gaps and risks.
-- The **coder agent** uses it to implement the task accurately.
+- The reviewer agent uses it to find gaps and risks.
+- The coder agent uses it to implement the task accurately.
 - Subsequent steps reference the same shared definition.
 
 ## Enabling integrations
 
-Document and issue integrations are controlled by **feature toggles and credentials** on the
-deployment side — Confluence and Notion API access, the Jira task source, and the GitHub-backed
+Document and issue integrations are controlled by feature toggles and credentials on the
+deployment side: Confluence and Notion API access, the Jira task source, and the GitHub-backed
 sources (which ride the workspace's GitHub App installation). See
 [Configuration](../deploy/configuration.md#issue-tracker--task-sources) for the relevant settings.
 

@@ -1,14 +1,14 @@
 # Deploy to Cloudflare
 
-Cloudflare is the **reference deployment** for Cat-Factory. The backend runs as a Worker with D1,
-Durable Objects, and Workflows; the frontend is a Nuxt SPA on Cloudflare Pages; per-run coding
+Cloudflare is the reference deployment for Cat-Factory. The backend runs as a Worker with D1,
+Durable Objects, and Workflows. The frontend is a Nuxt SPA on Cloudflare Pages, and per-run coding
 work executes in Cloudflare Containers.
 
 ## Prerequisites
 
-- A **Cloudflare account** with Worker and D1 database access.
-- A **GitHub App** configured for authentication and repository operations.
-- **LLM provider API keys** — or use the free Cloudflare Workers AI default.
+- A Cloudflare account with Worker and D1 database access.
+- A GitHub App configured for authentication and repository operations.
+- LLM provider API keys, or use the free Cloudflare Workers AI default.
 - `wrangler` and `pnpm` installed locally.
 
 ## 1. Deploy the backend
@@ -38,7 +38,7 @@ pnpm deploy
 ```
 
 ::: tip NUXT_PUBLIC_API_BASE is build-time
-The frontend is a static SPA, so the API base URL is baked in at **build time**. If your backend
+The frontend is a static SPA, so the API base URL is baked in at build time. If your backend
 URL changes, rebuild and redeploy the frontend.
 :::
 
@@ -53,9 +53,9 @@ The Worker is wired up through bindings in `wrangler.toml`:
 | **Container image** | The executor harness image for per-run coding work. |
 | **Secrets** | Auth, GitHub App credentials, model provider keys, and optional web-search / tracker keys. |
 
-For the full list of secrets and environment variables — including the opt-in
+For the full list of secrets and environment variables, including the opt-in
 [web search](./configuration.md#web-search) and [tracker](./configuration.md#issue-tracker--task-sources)
-settings — see [Configuration](./configuration.md).
+settings, see [Configuration](./configuration.md).
 
 ## Production topology
 
@@ -82,10 +82,10 @@ settings — see [Configuration](./configuration.md).
 
 ## Why this setup
 
-- **Durable Workflows** checkpoint each run step, so runs survive restarts and retry from failure.
-- **Durable Objects** give each workspace an event hub that pushes live updates over WebSockets —
-  no polling.
-- **Containers** isolate each run's coding work and Git operations.
+- Durable Workflows checkpoint each run step, so runs survive restarts and retry from failure.
+- Durable Objects give each workspace an event hub that pushes live updates over WebSockets, so
+  there's no polling.
+- Containers isolate each run's coding work and Git operations.
 
 ---
 

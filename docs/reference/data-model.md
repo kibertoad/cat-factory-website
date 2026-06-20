@@ -1,12 +1,12 @@
 # Data Model
 
-This is a reference for the **core domain shapes** Cat-Factory tracks — what a block, a run, a
-service, a schedule, and the requirements document actually contain. It's handy when reasoning about
-what the board is modelling; you don't need it to use the platform.
+This is a reference for the core domain shapes Cat-Factory tracks: what a block, a run, a service, a
+schedule, and the requirements document actually contain. It's handy when reasoning about what the
+board is modelling; you don't need it to use the platform.
 
 ## Block
 
-A node on the board — a service, module, or task.
+A node on the board: a service, module, or task.
 
 ```typescript
 {
@@ -46,7 +46,7 @@ A reusable, ordered chain of agent steps.
 {
   id: string
   name: string
-  agentKinds: string[]        // open set — built-in or custom kinds
+  agentKinds: string[]        // open set - built-in or custom kinds
   gates?: boolean[]           // per-step human-approval gates, parallel to agentKinds
 }
 ```

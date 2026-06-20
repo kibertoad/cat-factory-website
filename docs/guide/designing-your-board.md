@@ -1,38 +1,38 @@
 # Designing Your Board
 
-The board is where you describe what you're building. It is also the work queue — there is no
+The board is where you describe what you're building. It is also the work queue, so there is no
 separate backlog to keep in sync. This page covers building and organizing that structure.
 
 ## The canvas
 
-The board is a **pannable, zoomable canvas** rendered with Vue Flow. As you zoom, the canvas uses
-**semantic level-of-detail rendering** — high-level frames stay legible when zoomed out, and
-detail appears as you zoom in. Service **frames are resizable** — drag a frame's border to set its
-size, or leave it to auto-size from its contents.
+The board is a pannable, zoomable canvas rendered with Vue Flow. As you zoom, the canvas uses
+semantic level-of-detail rendering: high-level frames stay legible when zoomed out, and detail
+appears as you zoom in. Service frames are resizable. Drag a frame's border to set its size, or
+leave it to auto-size from its contents.
 
 ## Navigating: navbar and command bar
 
-The left rail is a **navbar** grouped into Create, Repositories, Integrations, Workspace context
-(the [prompt-fragment](./prompt-fragments.md) library), and **Configuration**. You don't drag
-blocks or pipelines from a palette — instead, a **command bar** (open with `⌘K` / `Ctrl-K`) is the
-launcher for creating blocks and building pipelines.
+The left rail is a navbar grouped into Create, Repositories, Integrations, Workspace context
+(the [prompt-fragment](./prompt-fragments.md) library), and Configuration. You don't drag blocks
+or pipelines from a palette. Instead, a command bar (open with `⌘K` / `Ctrl-K`) is the launcher
+for creating blocks and building pipelines.
 
 The board toolbar adds an **Add service** menu to [mount a shared service](./shared-services.md)
 from your org, and a service frame offers **Add task** and **Add recurring pipeline**.
 
 **Configuration** holds two workspace-wide settings panels:
 
-- **Default models** — pick a default model per agent kind (see [Assigning models](#assigning-models)).
-- **Merge thresholds** — manage the merge-threshold presets the `merger` step uses to decide
+- **Default models** - pick a default model per agent kind (see [Assigning models](#assigning-models)).
+- **Merge thresholds** - manage the merge-threshold presets the `merger` step uses to decide
   auto-merge vs. raising a review.
 
 ## The three levels
 
 Build top-down using the [block hierarchy](./core-concepts.md#blocks):
 
-1. **Frames (services)** — one per deployable service, usually linked to a repository.
-2. **Subframes (modules)** — major areas inside a service.
-3. **Leaves (tasks)** — concrete, agent-sized units of work.
+1. **Frames (services)** - one per deployable service, usually linked to a repository.
+2. **Subframes (modules)** - major areas inside a service.
+3. **Leaves (tasks)** - concrete, agent-sized units of work.
 
 ::: tip Sizing tasks
 A task should be something an agent can implement and land in a single pull request. If a leaf
@@ -45,16 +45,16 @@ feels like it spans several PRs, split it into sibling leaves.
   controls, at the level you need.
 - **Edit** its `title`, `description`, `status`, assigned model, chosen pipeline, prompt fragments,
   and merge-threshold preset in the inspector.
-- **Reparent** by dragging a block onto a new parent — useful as your design evolves. Moving a task
-  into another service's frame re-homes it onto that service.
-- **Delete** a block to remove it; deletion **cascades to its children**, so deleting a service
+- **Reparent** by dragging a block onto a new parent, which is useful as your design evolves. Moving
+  a task into another service's frame re-homes it onto that service.
+- **Delete** a block to remove it. Deletion cascades to its children, so deleting a service
   removes its modules and tasks too.
 
 ## Dependency edges
 
 Draw **dependency edges** between blocks to capture ordering and relationships. Edges are a
-first-class part of the design — they communicate intent to your team and inform how work is
-sequenced, not just visual garnish.
+first-class part of the design, not visual garnish: they communicate intent to your team and
+inform how work is sequenced.
 
 ## Linking a repository
 
@@ -71,7 +71,8 @@ All of this is covered in [Repositories](./repositories.md).
 
 Each block can pin a `modelId`, which forces the model for runs on that block. If you'd rather not
 pin every block, set a **workspace default per agent kind** under **Configuration → Default
-models** — e.g. a strong model for `architect`, a cheap one for `tester`. The full precedence is
+models**, for example a strong model for `architect` and a cheap one for `tester`. The full
+precedence is
 `block-pinned → workspace per-kind default → deployment routing → default`. Use stronger models on
 architecturally significant blocks and cheaper ones on routine tasks to manage
 [spend](./budgets.md). See [Choosing models](./running-pipelines.md#choosing-models).

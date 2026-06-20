@@ -3,9 +3,9 @@
 Agents succeed or fail on the quality of their context. Cat-Factory works requirements at two
 levels:
 
-1. A **per-task clarification loop** — the stateless *requirements reviewer* makes one block
+1. A **per-task clarification loop**: the stateless *requirements reviewer* makes one block
    unambiguous *before* any code is generated.
-2. A **service-level prescriptive spec** — the *requirements-writer* aggregates every task's
+2. A **service-level prescriptive spec**: the *requirements-writer* aggregates every task's
    clarified requirements into a unified, in-repo `requirements/` document (plus Gherkin acceptance
    scenarios) that every later agent builds against.
 
@@ -20,8 +20,8 @@ block and reports what's missing.
 A block's requirements can come from:
 
 - A **description you write** directly on the block.
-- **Linked external sources** — Jira or GitHub issues, and Confluence, Notion, or GitHub repo
-  documents — imported and expanded into the block's context. See [Issue & Document
+- **Linked external sources**: Jira or GitHub issues, plus Confluence, Notion, or GitHub repo
+  documents, imported and expanded into the block's context. See [Issue & Document
   Sources](./issue-sources.md).
 
 ## The reviewer agent
@@ -39,7 +39,7 @@ linked context and raises **review items**, each tagged with a category and a se
 | **question** | Open questions for a product owner to answer directly. |
 
 You trigger a review from the block in the inspector. Unlike a pipeline run, the review is
-**synchronous and stateless** — there is no container — and its items are persisted so you can
+**synchronous and stateless**, with no container, and its items are persisted so you can
 answer them over several sittings.
 
 ## Answering the open questions
@@ -52,7 +52,7 @@ so the coding agent later works from a complete, agreed-upon spec.
 
 ::: tip Do this before running a pipeline
 Resolving requirements first means the coder, tester, and acceptance steps all work from the same
-clear definition — fewer wasted runs and fewer surprise PRs.
+clear definition, which means fewer wasted runs and fewer surprise PRs.
 :::
 
 ## The unified in-repo requirements document
@@ -60,7 +60,7 @@ clear definition — fewer wasted runs and fewer surprise PRs.
 Where the reviewer clarifies one task at a time, the **requirements-writer** agent produces the
 durable, **prescriptive** spec for the whole service. It is the mirror image of a
 [blueprint](./repositories.md#service-blueprints--reconciliation): a blueprint is *descriptive*
-("what the code is"); requirements are *prescriptive* ("what must be true").
+("what the code is"), while requirements are *prescriptive* ("what must be true").
 
 The writer runs **before the coder** in the Full build pipeline (and standalone via the
 **Write requirements** pipeline, `pl_requirements`). It aggregates the clarified requirements of
@@ -70,10 +70,10 @@ branch so the spec is present while the code is written:
 | File | Contents |
 | --- | --- |
 | `requirements/requirements.json` | The canonical machine-readable tree (the source of truth). |
-| `requirements/overview.md` | High-level overview — the file agents read first. |
+| `requirements/overview.md` | High-level overview, the file agents read first. |
 | `requirements/rules.md` | Cross-cutting domain rules, invariants, and constraints. |
 | `requirements/version.json` | A tiny manifest (version, hash, counts) for cheap staleness checks. |
-| `requirements/features/*.feature` | Gherkin features — one `Scenario` per acceptance criterion. |
+| `requirements/features/*.feature` | Gherkin features, one `Scenario` per acceptance criterion. |
 
 Each requirement carries a MoSCoW priority (`must`/`should`/`could`), a kind
 (`functional`/`nonfunctional`/`constraint`), provenance back to the board task(s) it came from, and
@@ -83,7 +83,7 @@ two-pass flow: the requirements-writer **seeds** the `.feature` files, the `acce
 rewrite the canonical files but never clobber the polished features.
 
 Every container agent reads the in-repo requirements as context, and the engine strictly validates
-any returned document before ingesting it — the in-repo files are the source of truth.
+any returned document before ingesting it. The in-repo files are the source of truth.
 
 ## Recommended flow
 

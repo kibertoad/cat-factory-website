@@ -1,7 +1,7 @@
 # Quick Start
 
-This walkthrough gets you from zero to a merged, agent-built pull request. It assumes you (or
-someone on your team) has a Cat-Factory instance deployed. If not, deploy one first — see
+This walkthrough takes you from an empty board to a merged, agent-built pull request. It assumes you (or
+someone on your team) has a Cat-Factory instance deployed. If not, deploy one first: see
 [Cloudflare](../deploy/cloudflare.md) or [Node.js](../deploy/nodejs.md).
 
 ## Prerequisites
@@ -10,7 +10,7 @@ Before you start, make sure you have:
 
 - A **running Cat-Factory instance** (backend + frontend).
 - A **GitHub App** connected for authentication and repository operations.
-- At least one **LLM provider** configured — your own `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, or
+- At least one **LLM provider** configured: your own `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, or
   the free-tier Cloudflare Workers AI default.
 - A **GitHub repository** you want agents to work in (or let Cat-Factory bootstrap a new one).
 
@@ -22,7 +22,7 @@ then build and publish the Nuxt frontend. Full steps are in
 
 ## 1. Sign in and open a workspace
 
-Open your Cat-Factory frontend and sign in with GitHub. You land in a **workspace** — the
+Open your Cat-Factory frontend and sign in with GitHub. You land in a **workspace**, the
 container for your boards, repositories, and budget. Create a new workspace or join an existing
 one if your organization already has them.
 
@@ -46,7 +46,7 @@ Give a task enough context for an agent to succeed:
 - Use the **context picker** in the Add-task popup to search, paste, or link an issue or document
   (Jira, GitHub Issues, Confluence, Notion, GitHub repo docs) and import it.
 
-Then trigger the **reviewer agent** to surface gaps, assumptions, and risks, and answer its
+Then trigger the **reviewer agent** to surface gaps and risky assumptions, and answer its
 questions. See [Requirements](./requirements.md) and [Issue & Document Sources](./issue-sources.md).
 
 ## 4. Run an agent pipeline
@@ -56,7 +56,7 @@ Select a task and start a run:
 1. Choose a **pipeline** (e.g. architect → coder → reviewer → tester → acceptance).
 2. Pick a **model per step** if you want to upgrade from the default.
 3. Confirm the **spend estimate** against your budget.
-4. Watch the run stream live — answer any **decision prompts** the agents raise.
+4. Watch the run stream live, and answer any **decision prompts** the agents raise.
 
 See [Running Pipelines](./running-pipelines.md).
 

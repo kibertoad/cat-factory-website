@@ -1,8 +1,8 @@
 # Prompt Fragments
 
-**Prompt fragments** are reusable, version-controlled guidelines that agents pull into their
-prompts at run time. They're how you encode your team's standards — coding conventions, review
-checklists, security rules — once and apply them everywhere.
+Prompt fragments are reusable, version-controlled guidelines that agents pull into their
+prompts at run time. Encode your team's standards once - coding conventions, review
+checklists, security rules - and apply them everywhere.
 
 ## The three scopes
 
@@ -15,18 +15,18 @@ higher ones:
 | **Account** | All workspaces in your account | Organization-wide standards. |
 | **Workspace** | A single board | Per-project customization. |
 
-You can also **source fragments from a repository** so they live under version control alongside
+You can also source fragments from a repository so they live under version control alongside
 your code.
 
 ## How agents use them
 
-Agents **select the applicable fragments per run**, based on the pipeline configuration. That
-means the right guidelines are injected for the right step — for example, a code-style fragment
-for the coder and a review checklist for the reviewer — without you re-pasting them each time.
+Agents select the applicable fragments per run, based on the pipeline configuration. The
+right guidelines are injected for the right step - a code-style fragment
+for the coder, a review checklist for the reviewer - without you re-pasting them each time.
 
 ## Versioning
 
-Fragments are **version-controlled**, and a specific version can be selected **per run**. This
+Fragments are version-controlled, and a specific version can be selected per run. This
 gives you:
 
 - A stable history of how guidance has changed.

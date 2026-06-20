@@ -1,7 +1,7 @@
 # Configuration
 
 This page is the reference for every environment variable and toggle you'll set when deploying
-Cat-Factory. Group your secrets by concern: authentication, model providers, infrastructure,
+Cat-Factory. Secrets are grouped by concern: authentication, model providers, infrastructure,
 service wiring, and feature toggles.
 
 ## Authentication
@@ -19,7 +19,7 @@ GitHub is the identity provider and the source of repository access.
 ## LLM providers
 
 Supply credentials for the providers you want to use. With none set, Cat-Factory falls back to the
-free **Cloudflare Workers AI** tier.
+free Cloudflare Workers AI tier.
 
 | Variable | Provider |
 | --- | --- |
@@ -38,7 +38,7 @@ Unconfigured providers simply aren't registered. Default routing is tunable with
 
 | Variable | Purpose |
 | --- | --- |
-| `DATABASE_URL` | PostgreSQL connection string (**Node.js deployment only**). |
+| `DATABASE_URL` | PostgreSQL connection string (Node.js deployment only). |
 | Container image registry + pull credentials | Source of the executor-harness image. |
 | Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
 
@@ -60,14 +60,14 @@ fail loudly instead of faking success:
 
 | Variable | Purpose |
 | --- | --- |
-| `NUXT_PUBLIC_API_BASE` | Frontend → backend URL. **Build-time** for the SPA. |
+| `NUXT_PUBLIC_API_BASE` | Frontend → backend URL. Build-time for the SPA. |
 | Workspace / account identity providers | Identity resolution settings. |
 | Organization membership resolution | Determines workspace access. |
 
 ## Web search
 
-Web search is **opt-in** and no-op until configured. It comes in two independent surfaces, and no
-provider key ever enters the per-run container — container agents reach search through a backend
+Web search is opt-in and no-op until configured. It comes in two independent surfaces, and no
+provider key ever enters the per-run container: container agents reach search through a backend
 proxy.
 
 | Variable | Purpose |
@@ -83,7 +83,7 @@ Inline search only takes effect on providers with a hosted search tool (Anthropi
 
 The tech-debt [recurring pipeline](../guide/recurring-pipelines.md) files a ticket through the
 workspace's chosen tracker. GitHub Issues rides the per-tenant GitHub App installation (no env).
-Jira is opt-in and stores each tenant's own credentials **encrypted at rest**:
+Jira is opt-in and stores each tenant's own credentials encrypted at rest:
 
 | Variable | Purpose |
 | --- | --- |
@@ -95,9 +95,9 @@ Jira is opt-in and stores each tenant's own credentials **encrypted at rest**:
 
 Enable optional integrations and providers:
 
-- **Document source integrations** — Confluence and Notion APIs, plus GitHub repo docs (see [Issue & Document Sources](../guide/issue-sources.md)).
-- **Environment provider manifest** — for ephemeral preview environments (see [Environments](./environments.md)).
-- **Prompt-fragment library source repository** — to version [prompt fragments](../guide/prompt-fragments.md) in Git.
+- Document source integrations: Confluence and Notion APIs, plus GitHub repo docs (see [Issue & Document Sources](../guide/issue-sources.md)).
+- Environment provider manifest, for ephemeral preview environments (see [Environments](./environments.md)).
+- Prompt-fragment library source repository, to version [prompt fragments](../guide/prompt-fragments.md) in Git.
 
 ::: warning Treat all of these as secrets
 Provider keys, the GitHub App private key, and the webhook secret are sensitive. On Cloudflare,

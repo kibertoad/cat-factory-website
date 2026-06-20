@@ -1,15 +1,15 @@
 # Deploy to Node.js
 
-Prefer to run on your own infrastructure? Cat-Factory ships a **runtime-neutral backend** that
-runs as a standard Node.js service backed by PostgreSQL, with the **same HTTP API** as the
+Prefer to run on your own infrastructure? Cat-Factory ships a runtime-neutral backend that
+runs as a standard Node.js service backed by PostgreSQL, with the same HTTP API as the
 Cloudflare deployment.
 
 ## Prerequisites
 
-- **Node.js 24+** — required for native type stripping and `--env-file` support.
-- A **PostgreSQL** database.
-- A **GitHub App** for authentication and repository operations.
-- **LLM provider API keys**.
+- Node.js 24+, required for native type stripping and `--env-file` support.
+- A PostgreSQL database.
+- A GitHub App for authentication and repository operations.
+- LLM provider API keys.
 - A container runtime (Docker/Kubernetes/your scheduler) for per-run coding jobs.
 
 ## Run directly with Node.js
@@ -21,7 +21,7 @@ cp .env.example .env
 pnpm start
 ```
 
-The service listens on port **8787** by default.
+The service listens on port 8787 by default.
 
 ## Run with Docker
 
@@ -35,7 +35,7 @@ docker run --rm -p 8787:8787 \
 
 ## How the Node.js runtime differs
 
-The backend is runtime-neutral through **port abstraction** — the same `@cat-factory/server` HTTP
+The backend is runtime-neutral through port abstraction: the same `@cat-factory/server` HTTP
 layer serves both targets, and a conformance suite validates feature parity. The
 infrastructure adapters differ:
 
@@ -48,12 +48,12 @@ infrastructure adapters differ:
 
 ## Running coding agents
 
-The Node runtime has **no built-in per-run container**. Inline agent kinds (architect, reviewer,
+The Node runtime has no built-in per-run container. Inline agent kinds (architect, reviewer,
 …) work out of the box, but the repo-operating kinds (coder, mocker, blueprints, ci-fixer,
 conflict-resolver, merger, requirements-writer, analysis) need a [runner pool](./runner-pools.md) to
 run in. Container execution turns on once the deployment has the GitHub App credentials, a public
-URL, a session secret, and a runner-pool encryption key configured; until then, container kinds
-**fail loudly** rather than faking success. See [Configuration](./configuration.md#node-container-execution).
+URL, a session secret, and a runner-pool encryption key configured. Until then, container kinds
+fail loudly rather than faking success. See [Configuration](./configuration.md#node-container-execution).
 
 ## Node.js topology
 
@@ -73,7 +73,7 @@ URL, a session secret, and a runner-pool encryption key configured; until then, 
 └─────────────────────────────────────┘
 ```
 
-For self-hosted execution at scale, point the service at a **runner pool** — see
+For self-hosted execution at scale, point the service at a runner pool. See
 [Runner Pools](./runner-pools.md).
 
 ---

@@ -1,7 +1,7 @@
 # Core Concepts
 
 A short glossary of the moving parts. Understanding these makes everything else on this site
-click into place.
+easier to follow.
 
 ## Blocks
 
@@ -12,11 +12,11 @@ Everything on the board is a **block**. Blocks form a three-level hierarchy, ide
 | --- | --- | --- |
 | `frame` | A **service** | Top-level container, usually linked to one repository. |
 | `module` | A **module** | A mid-level grouping inside a service. |
-| `task` | A **task** | An implementation unit — the thing an agent actually builds. |
+| `task` | A **task** | An implementation unit, the thing an agent actually builds. |
 
 Each block carries a `title`, `description`, and `status`, and can reference a linked model
 (`modelId`), a chosen pipeline (`pipelineId`), selected [prompt fragments](./prompt-fragments.md),
-and — once an agent opens one — its `pullRequest`. Blocks can be **reparented** by dragging them to
+and, once an agent opens one, its `pullRequest`. Blocks can be **reparented** by dragging them to
 a new parent. Deleting a block cascades to its children.
 
 A task moves through these statuses:
@@ -28,7 +28,7 @@ planned → ready → in_progress → (blocked) → pr_ready → done
 `blocked` means a step is paused waiting on a human **decision**, and `pr_ready` means a pull
 request is open and awaiting review/merge.
 
-**Dependency edges** between blocks express ordering and relationships — they are part of the
+**Dependency edges** between blocks express ordering and relationships. They are part of the
 design, not just decoration.
 
 ## Services and mounts
@@ -58,20 +58,20 @@ requirements → architect → requirements-writer → researcher → coder
 ```
 
 The `requirements` reviewer and the `architect` proposal pause for **human approval**; the rest run
-to completion. The closing trio is engine automation: **conflicts** keeps the PR mergeable with its
+to completion. The closing steps are engine automation: **conflicts** keeps the PR mergeable with its
 base, **ci** gates it on green CI (looping a fixer agent on failure), and **merger** scores the PR
 and either auto-merges within the task's thresholds or raises a review notification.
 
 Other agent kinds include `mocker`, `playwright`, `acceptance`, `documenter`, `integrator`,
 `analysis` (the tech-debt auditor), and `tracker` (files an issue/ticket). Agent kinds are an
-**open set** — a deployment can [register custom kinds](../reference/packages.md). You choose the
+**open set**: a deployment can [register custom kinds](../reference/packages.md). You choose the
 pipeline and can select a **model per step**.
 
 ## Decision prompts
 
 When an agent needs a human, the step enters `paused-for-decision` and surfaces a **decision
-prompt** — a set of questions for you to answer. The most common example: the reviewer agent
-asks you to resolve gaps and assumptions *before* code is generated. Your answers are folded back
+prompt**, a set of questions for you to answer. The most common example: the reviewer agent
+asks you to resolve open gaps and assumptions *before* code is generated. Your answers are folded back
 into the block's description and the run continues.
 
 ## Workspaces and accounts
@@ -105,7 +105,7 @@ document in-repo under `requirements/`.
 ## Prompt fragments
 
 **Prompt fragments** are versioned, reusable best-practice guidelines that agents pull in per run.
-They are scoped in three tiers — **built-in**, **account**, and **workspace** — so you can layer
+They are scoped in three tiers (**built-in**, **account**, and **workspace**) so you can layer
 organization-wide standards with board-specific tweaks. See
 [Prompt Fragments](./prompt-fragments.md).
 

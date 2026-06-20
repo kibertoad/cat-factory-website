@@ -7,7 +7,7 @@ so you know where to look when extending or debugging the platform.
 
 | Package | Responsibility |
 | --- | --- |
-| `@cat-factory/app` | Nuxt SPA layer — board UI and Pinia stores. |
+| `@cat-factory/app` | Nuxt SPA layer - board UI and Pinia stores. |
 | `@cat-factory/kernel` | Domain types, constants, repository ports, the pipeline registry (`registerPipeline`). |
 | `@cat-factory/orchestration` | Service composition root and workflow engines. |
 | `@cat-factory/agents` | Agent catalog, prompt composition, model-provider facade, the agent-kind registry (`registerAgentKind`) and web-research/cache policy. |
@@ -16,9 +16,9 @@ so you know where to look when extending or debugging the platform.
 | `@cat-factory/contracts` | Wire formats, validated with Valibot. |
 
 ::: tip Extending a deployment
-The model-provider, agent-kind, and pipeline registries are opt-in **extension seams** — a
-deployment (e.g. a proprietary org package) can mix in providers, agent kinds, and predefined
-pipelines without forking. See [Architecture → Extending a deployment](./architecture.md#extending-a-deployment).
+The model-provider, agent-kind, and pipeline registries are opt-in extension seams. A deployment
+(e.g. a proprietary org package) can mix in providers, agent kinds, and predefined pipelines
+without forking. See [Architecture → Extending a deployment](./architecture.md#extending-a-deployment).
 :::
 
 ## Internal (Docker / tooling)
@@ -73,9 +73,9 @@ cat-factory/
 
 ## Benchmarking harness
 
-A headless harness scores agents across models and prompt versions — evaluating requirement-review
-quality, code-review accuracy, and implementation correctness, with a deterministic
-`FakeAgentExecutor` for reproducible results.
+A headless harness scores agents across models and prompt versions, evaluating requirement-review
+quality, code-review accuracy, and implementation correctness. A deterministic `FakeAgentExecutor`
+keeps results reproducible.
 
 ```bash
 cd backend/internal/benchmark-harness
@@ -95,5 +95,5 @@ cat-bench --models <model-a>,<model-b> --prompt-versions v1,v2
 
 ---
 
-The platform is **MIT licensed**. Source, issues, and contribution guidelines live at
+The platform is MIT licensed. Source, issues, and contribution guidelines live at
 [kibertoad/cat-factory](https://github.com/kibertoad/cat-factory).

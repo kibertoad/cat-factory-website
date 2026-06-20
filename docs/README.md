@@ -2,7 +2,7 @@
 home: true
 title: Home
 heroText: Cat-Factory
-tagline: Design software on a visual board, then let LLM agents build it — as real, reviewed pull requests with full pipeline observability.
+tagline: Design software on a visual board, then let LLM agents build it as reviewed pull requests you can watch run end to end.
 actions:
   - text: Get Started →
     link: /guide/introduction.html
@@ -12,15 +12,15 @@ actions:
     type: secondary
 features:
   - title: The board is the plan
-    details: Sketch services, modules, and tasks on a pannable, zoomable canvas. Every block is both a design artifact and a unit of work — no separate backlog to keep in sync.
+    details: Sketch services, modules, and tasks on a pannable, zoomable canvas. Every block is both a design artifact and a unit of work, so there's no separate backlog to keep in sync.
   - title: Agents do real work
-    details: Coding agents clone your repository, implement the task, and open a pull request. A block is "done" only when its PR is merged with passing CI — never when text is generated.
+    details: Coding agents clone your repository, implement the task, and open a pull request. A block is "done" only when its PR is merged with passing CI, not when text is generated.
   - title: Multi-stage pipelines
-    details: Compose ordered agent chains — architect → coder → reviewer → tester → acceptance — with per-block model selection and human decision points along the way.
+    details: Compose ordered agent chains (architect → coder → reviewer → tester → acceptance) with per-block model selection and human decision points along the way.
   - title: Human in the loop
-    details: A reviewer agent surfaces gaps, assumptions, and risks before code is written. You answer the open questions, approve the plan, and review every PR before merge.
+    details: A reviewer agent flags open questions and risky assumptions before code is written. You answer the questions, approve the plan, and review every PR before merge.
   - title: Durable & observable
-    details: Runs are checkpointed and stream live progress over WebSockets — no polling. Watch each step, decision prompt, and failure as it happens.
+    details: Runs are checkpointed and stream live progress over WebSockets, with no polling. Watch each step, decision prompt, and failure as it happens.
   - title: Cost under control
     details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
 footer: MIT Licensed | Copyright © Cat-Factory contributors
@@ -28,8 +28,8 @@ footer: MIT Licensed | Copyright © Cat-Factory contributors
 
 ## Build software the way you draw it
 
-Cat-Factory is a **self-hosted platform** that turns an architecture diagram into shipped code.
-You design the system visually; LLM agents pick up each block, do the implementation on a real
+Cat-Factory is a self-hosted platform that turns an architecture diagram into shipped code.
+You design the system visually; LLM agents pick up each block, implement it against a real
 repository checkout, and open pull requests for your team to review and merge.
 
 ```bash

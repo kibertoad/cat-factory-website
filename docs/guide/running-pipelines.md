@@ -1,7 +1,7 @@
 # Running Pipelines
 
 A **pipeline** is an ordered chain of agent steps that takes a task from plan to merged pull
-request. This page covers starting a run, choosing models, and steering it through decision points.
+request. This page covers starting a run, choosing a model, and steering the run through its decision points.
 
 ## Anatomy of a pipeline
 
@@ -37,9 +37,9 @@ and `analysis`; a deployment can also [register custom kinds and pipelines](../r
 From a selected block, start a run:
 
 1. **Choose a pipeline** appropriate to the task.
-2. **Pick the model** — see [Choosing models](#choosing-models) below.
+2. **Pick the model** - see [Choosing models](#choosing-models) below.
 3. **Confirm the spend estimate** against your remaining [budget](./budgets.md).
-4. **Launch** — the run is created and begins streaming progress.
+4. **Launch** - the run is created and begins streaming progress.
 
 ## Choosing models
 
@@ -51,7 +51,7 @@ block-pinned model  →  workspace per-kind default  →  deployment env routing
 
 - **Pin a model on a block** to force it for that block's runs.
 - Set a **workspace model default per agent kind** (in workspace Configuration) to point a whole
-  kind — say, `architect` — at a stronger model without touching every block.
+  kind (say, `architect`) at a stronger model without touching every block.
 - Otherwise the deployment's env routing for the kind, then its global default, applies.
 
 Reserve stronger (and pricier) models for architecturally significant work and keep cheaper ones on
@@ -59,7 +59,7 @@ routine steps to manage [spend](./budgets.md).
 
 ## Watching progress live
 
-Runs stream over WebSockets — **no polling**. As the run executes you'll see:
+Runs stream over WebSockets, so there's no polling. As the run executes you'll see:
 
 - Each step transition (`pending → in-progress → complete`).
 - **Subtask** updates within a step.
@@ -68,7 +68,7 @@ Runs stream over WebSockets — **no polling**. As the run executes you'll see:
 - **Spend notifications** as model calls are metered.
 
 Every board and run share one live connection, so progress appears the moment the dashboard is
-open — no polling.
+open.
 
 ## Responding to decision prompts
 
@@ -78,16 +78,16 @@ Answer the questions to continue. The most common prompts are the **requirements
 
 ## Durability, failures, and retries
 
-Runs are **checkpointed** — each completed step is durably recorded by Cloudflare Workflows (or
-pg-boss on Node.js) — and they are **resumable**. Container work commits to a deterministic branch
+Runs are checkpointed and resumable: each completed step is durably recorded by Cloudflare Workflows
+(or pg-boss on Node.js). Container work commits to a deterministic branch
 per task (`cat-factory/<blockId>`), and the harness pushes periodic checkpoints, so an evicted or
-retried run **resumes on the same branch** instead of starting over. A live **no-progress guard**
+retried run resumes on the same branch instead of starting over. A live no-progress guard
 ends a run early with a diagnostic if the agent thrashes without editing files.
 
-Cat-Factory also owns the Git delivery contract: the **agent commits its own work and validates
-locally**, while the **platform** pushes, opens the pull request, and drives CI — so a container
+Cat-Factory also owns the Git delivery contract: the agent commits its own work and validates
+locally, while the platform pushes, opens the pull request, and drives CI, so a container
 agent never needs push credentials. If a step fails, the error is captured and the run surfaces a
-**manual retry** from the failure point.
+manual retry from the failure point.
 
 ::: tip Web research
 When [web search is configured](../deploy/configuration.md#web-search) on the deployment, container
