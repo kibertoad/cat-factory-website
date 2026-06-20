@@ -27,7 +27,7 @@ list as the plan. Cat Factory is built around three ideas:
 > work.
 
 > **Agents do real work through pull requests.** Implementation phases run actual coding agents on
-> repository checkouts. Completion is defined by merged PRs with passing CI, not by generated text.
+> repository checkouts. Completion is defined by merged PRs with passing CI.
 
 > **One place to watch and steer.** Every run streams its progress live, so you can see all the work
 > that is in flight and jump in when an agent needs your input, without polling or switching between

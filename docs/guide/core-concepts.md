@@ -26,8 +26,7 @@ Planned → Ready → In progress → (Needs attention) → PR ready → Done
 **Needs attention** means a step is paused waiting on a human **decision**, and **PR ready** means a
 pull request is open and awaiting review/merge.
 
-**Dependency edges** between blocks express ordering and relationships. They are part of the
-design, not just decoration.
+**Dependency edges** between blocks express ordering and relationships.
 
 ## Services and mounts
 

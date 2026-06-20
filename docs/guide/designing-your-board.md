@@ -53,8 +53,8 @@ feels like it spans several PRs, split it into sibling leaves.
 ## Dependency edges
 
 Draw **dependency edges** between blocks to capture ordering and relationships. Edges are a
-first-class part of the design, not visual garnish: they communicate intent to your team and
-inform how work is sequenced.
+first-class part of the design: they communicate intent to your team and inform how work is
+sequenced.
 
 ## Linking a repository
 

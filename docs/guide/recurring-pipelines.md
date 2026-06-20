@@ -8,8 +8,7 @@ schedule without anyone kicking it off.
 
 A schedule lives on a **service frame** and owns exactly **one reused on-board task block** inside
 that service. Every time the schedule fires it starts the pipeline against that block, so the board
-shows a single recurring task whose live status and run history you can inspect, not a pile of
-new blocks.
+shows a single recurring task whose live status and run history you can inspect.
 
 If a previous fire is still running, the next fire is skipped rather than stacked, so a slow run
 never piles work on itself.
