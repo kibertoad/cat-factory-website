@@ -5,28 +5,26 @@ easier to follow.
 
 ## Blocks
 
-Everything on the board is a **block**. Blocks form a three-level hierarchy, identified by their
-`level`:
+Everything on the board is a **block**. Blocks form a three-level hierarchy:
 
 | Level | Represents | Role |
 | --- | --- | --- |
-| `frame` | A **service** | Top-level container, usually linked to one repository. |
-| `module` | A **module** | A mid-level grouping inside a service. |
-| `task` | A **task** | An implementation unit, the thing an agent actually builds. |
+| **Service** (a frame) | A service | Top-level container, usually linked to one repository. |
+| **Module** | A module | A mid-level grouping inside a service. |
+| **Task** | A task | An implementation unit, the thing an agent actually builds. |
 
-Each block carries a `title`, `description`, and `status`, and can reference a linked model
-(`modelId`), a chosen pipeline (`pipelineId`), selected [prompt fragments](./prompt-fragments.md),
-and, once an agent opens one, its `pullRequest`. Blocks can be **reparented** by dragging them to
-a new parent. Deleting a block cascades to its children.
+Each block has a title, description, and status, and can carry a chosen pipeline, selected
+[prompt fragments](./prompt-fragments.md), and — once an agent opens one — its pull request. Blocks
+can be **reparented** by dragging them to a new parent. Deleting a block cascades to its children.
 
 A task moves through these statuses:
 
 ```
-planned → ready → in_progress → (blocked) → pr_ready → done
+Planned → Ready → In progress → (Needs attention) → PR ready → Done
 ```
 
-`blocked` means a step is paused waiting on a human **decision**, and `pr_ready` means a pull
-request is open and awaiting review/merge.
+**Needs attention** means a step is paused waiting on a human **decision**, and **PR ready** means a
+pull request is open and awaiting review/merge.
 
 **Dependency edges** between blocks express ordering and relationships. They are part of the
 design, not just decoration.
@@ -44,8 +42,9 @@ A **run** is an immutable execution record created when you start a pipeline on 
 **checkpointed**: each completed step is durably recorded, so a run can survive restarts and be
 retried from where it failed.
 
-A run has a `status` of `queued`, `running`, `passed`, or `failed`, and contains an ordered list
-of **steps**.
+A run shows as **Running** while it executes, then ends as **Completed** or **Failed**. While
+paused, it reads **Needs you** (waiting on a decision) or **Paused (budget)** (at the spend cap). A
+run contains an ordered list of **steps**.
 
 ## Steps and pipelines
 
@@ -53,45 +52,43 @@ A **pipeline** is a reusable, ordered chain of **steps**. Each step is handled b
 of agent. The default **Full build** pipeline runs:
 
 ```
-requirements → architect → requirements-writer → researcher → coder
-  → blueprints → tester → reviewer → conflicts → ci → merger
+Requirements Reviewer → Architect → Requirements Writer → Researcher → Coder
+  → Blueprinter → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
 ```
 
-The `requirements` reviewer and the `architect` proposal pause for **human approval**; the rest run
-to completion. The closing steps are engine automation: **conflicts** keeps the PR mergeable with its
-base, **ci** gates it on green CI (looping a fixer agent on failure), and **merger** scores the PR
-and either auto-merges within the task's thresholds or raises a review notification.
+The **Requirements Reviewer** and the **Architect** proposal pause for **human approval**; the rest
+run to completion. The closing steps are engine automation: the **Conflicts Gate** keeps the PR
+mergeable with its base, the **CI Gate** gates it on green CI (looping a fixer agent on failure), and
+the **Merger** scores the PR and either auto-merges within the task's thresholds or raises a review
+notification.
 
-Other agent kinds include `mocker`, `playwright`, `acceptance`, `documenter`, `integrator`,
-`analysis` (the tech-debt auditor), and `tracker` (files an issue/ticket). Agent kinds are an
-**open set**: a deployment can [register custom kinds](../reference/packages.md). You choose the
-pipeline and can select a **model per step**.
+Other agent kinds include the **Mock Builder**, **Acceptance Author**, **Acceptance Test Author**,
+**Documenter**, **Integrator**, a tech-debt analysis step, and an issue/ticket tracker step. Agent
+kinds are an **open set**: a deployment can [register custom kinds](../reference/packages.md). You
+choose the pipeline, and set **default models per agent kind**.
 
 ## Decision prompts
 
-When an agent needs a human, the step enters `paused-for-decision` and surfaces a **decision
+When an agent needs a human, the step enters a **Needs decision** state and surfaces a **decision
 prompt**, a set of questions for you to answer. The most common example: the reviewer agent
 asks you to resolve open gaps and assumptions *before* code is generated. Your answers are folded back
 into the block's description and the run continues.
 
 ## Workspaces and accounts
 
-- An **account** is a personal identity, tied to your GitHub login.
-- A **workspace** is an organization-level container with **membership controls** that determine
+- An **account** is the top-level owner you sign in to with GitHub. It can be a **personal account**
+  (one per GitHub login) or a shared **organization account** with multiple members. Either way it
+  owns shared services and account-wide standards, and spans all of its workspaces.
+- A **workspace** is a per-team, per-project container with **membership controls** that determine
   who can see and act on its boards.
-- Repositories, credentials, and budgets are isolated **per workspace**.
+- Repositories and credentials are isolated **per workspace**; the LLM **budget** is metered
+  account-wide (across all workspaces in the organization).
 
 ## Model selection
 
-The model an agent uses is resolved by precedence, so you can be as specific or as hands-off as you
-like:
-
-```
-block-pinned model  →  workspace per-kind default  →  deployment env routing  →  env default
-```
-
-A **workspace model default** lets you point a whole agent kind at a model (e.g. a strong model for
-`architect`, a cheap one for `tester`) without pinning every block. See
+You set a **default model per agent kind** under **Configuration → Default models** — e.g. a strong
+model for the **Architect**, a cheaper one for the **Tester**. Where a kind has no default, the
+deployment's routing for that kind applies, then its global default. See
 [Running Pipelines](./running-pipelines.md#choosing-models).
 
 ## Repositories
@@ -112,8 +109,8 @@ organization-wide standards with board-specific tweaks. See
 ## Spend and budgets
 
 Every model call is **metered** against an organization-wide **monthly budget**. When the cap is
-reached, runs pause (`pause-for-budget`) and resume automatically when the period rolls over. See
-[Budgets & Spend](./budgets.md).
+reached, runs pause (showing **Paused (budget)**) and resume automatically when the period rolls
+over. See [Budgets & Spend](./budgets.md).
 
 ---
 

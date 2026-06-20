@@ -45,7 +45,7 @@ This is how an established codebase gets represented on the board without hand-m
 
 Blueprints are the descriptive in-repo artifact ("what the code is"). Their prescriptive
 counterpart, "what must be true", is the [requirements](./requirements.md#the-unified-in-repo-requirements-document)
-document the `requirements-writer` keeps under `requirements/` in the same repo.
+document the **Requirements Writer** keeps under `requirements/` in the same repo.
 
 ## Keeping in sync via webhooks
 

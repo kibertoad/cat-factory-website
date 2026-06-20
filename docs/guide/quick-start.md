@@ -53,10 +53,11 @@ questions. See [Requirements](./requirements.md) and [Issue & Document Sources](
 
 Select a task and start a run:
 
-1. Choose a **pipeline** (e.g. architect → coder → reviewer → tester → acceptance).
-2. Pick a **model per step** if you want to upgrade from the default.
-3. Confirm the **spend estimate** against your budget.
-4. Watch the run stream live, and answer any **decision prompts** the agents raise.
+1. Choose a **pipeline** (e.g. Architect → Coder → Reviewer → Tester → Acceptance).
+2. Confirm the **spend estimate** against your budget.
+3. Watch the run stream live, and answer any **decision prompts** the agents raise.
+
+Each agent runs on its kind's default model, set in **Configuration → Default models**.
 
 See [Running Pipelines](./running-pipelines.md).
 
@@ -64,9 +65,9 @@ See [Running Pipelines](./running-pipelines.md).
 
 The coding agent clones the repo into an ephemeral container and implements the task, committing to
 a deterministic branch; Cat-Factory then pushes it, opens a **pull request**, and drives CI. The
-tester, conflicts, CI, and merger steps validate and prepare the PR.
+**Tester**, **Conflicts Gate**, **CI Gate**, and **Merger** steps validate and prepare the PR.
 
-You review the PR like any other. When you **merge**, the block flips to `done` and the board
+You review the PR like any other. When you **merge**, the block flips to **Done** and the board
 updates in real time. See [Pull Requests](./pull-requests.md).
 
 ---
@@ -74,7 +75,7 @@ updates in real time. See [Pull Requests](./pull-requests.md).
 ## The full loop
 
 ```
-Design board  →  Attach requirements  →  Run pipeline  →  Review PR  →  Merge  →  Block "done"
+Design board  →  Attach requirements  →  Run pipeline  →  Review PR  →  Merge  →  Block Done
      ▲                                                                                  │
      └──────────────────────────  iterate on the next block  ◀──────────────────────────┘
 ```

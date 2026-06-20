@@ -17,8 +17,8 @@ humans in control of cost and quality. It fits well when you want to:
 
 ## What makes it different
 
-Most "AI coding" tools stop at generating text. Cat-Factory is built around two ideas that change
-what "done" means:
+Many "AI coding" tools stop at generating snippets, and even the autonomous ones treat a flat task
+list as the plan. Cat-Factory is built around two ideas that change what "done" means:
 
 > **The board is the plan.** Services, modules, and tasks form a hierarchy (frame -> subframes ->
 > leaves) with dependency edges. The same board is your design artifact *and* your unit of work.

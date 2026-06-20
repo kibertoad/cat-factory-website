@@ -6,28 +6,27 @@ closes the loop.
 
 ## What the coding agent produces
 
-During the `coder` step, an agent:
+During the **Coder** step, an agent:
 
 1. Clones your repository into an **ephemeral container**.
 2. Implements the task from its (reviewed) [requirements](./requirements.md).
-3. **Commits its own work** to a deterministic branch (`cat-factory/<blockId>`) and validates
-   locally.
+3. **Commits its own work** to a dedicated per-task branch and validates locally.
 
 The agent never needs push credentials: Cat-Factory owns the delivery contract. The platform
 pushes the branch, opens the **pull request**, and drives your existing CI/CD. Because the
 branch is deterministic and checkpointed, a retried or resumed run continues on the same branch and
 PR rather than starting over.
 
-The `tester` step then validates the change before the closing automation runs.
+The **Tester** step then validates the change before the closing automation runs.
 
 ## Conflicts, CI, and the merger
 
 The Full build pipeline finishes with three engine steps that prepare the PR for merge:
 
-- **conflicts** - keeps the PR mergeable with its base, looping a conflict-resolver agent to merge
-  the base in and resolve any conflicts on the same branch.
-- **ci** - gates the (now up-to-date) PR on green CI, looping a CI-fixer agent on failure.
-- **merger** - scores the PR on complexity, risk, and impact, then either auto-merges when the
+- **Conflicts Gate** - keeps the PR mergeable with its base, looping a **Conflict Resolver** agent to
+  merge the base in and resolve any conflicts on the same branch.
+- **CI Gate** - gates the (now up-to-date) PR on green CI, looping a **CI Fixer** agent on failure.
+- **Merger** - scores the PR on complexity, risk, and impact, then either auto-merges when the
   scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
   or raises a review notification for a human.
 
@@ -46,11 +45,11 @@ checks, and review rules apply unchanged.
 
 When you **merge** the pull request:
 
-- The associated block flips to **`done`**.
+- The associated block flips to **Done**.
 - A completion event streams back to the board, updating it in real time.
 
 ```
-PR opened → CI passes → tester/acceptance validate → you review → merge → block "done"
+PR opened → CI passes → Tester/Acceptance validate → you review → merge → block Done
 ```
 
 ## Iterating

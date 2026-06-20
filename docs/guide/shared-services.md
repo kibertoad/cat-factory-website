@@ -11,8 +11,8 @@ Large orgs run many teams against the same set of services. Cat-Factory models t
 
 - There is **one physical copy** of a service's blocks, keyed by service. Every board that mounts
   it reads the same task list and the same state.
-- An edit on one board, whether adding a task, moving work to `done`, or a run finishing, writes the
-  same row every other mounting board reads, so boards never drift.
+- An edit on one board, whether adding a task, moving work to **Done**, or a run finishing, writes
+  the same record every other mounting board reads, so boards never drift.
 - A connected repository is synced once per org rather than once per workspace, so mounting a
   service on a second team's board adds no extra GitHub traffic.
 

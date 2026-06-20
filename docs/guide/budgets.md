@@ -29,7 +29,7 @@ independent.
 
 When metered spend reaches the budget:
 
-1. In-flight and queued runs pause with a `pause-for-budget` state.
+1. In-flight and queued runs pause, showing **Paused (budget)**.
 2. No further model calls are made on paused runs.
 3. The board surfaces the paused state so it's obvious why work stopped.
 
@@ -52,9 +52,9 @@ Model choice is a direct lever on spend:
 - Direct provider APIs (Anthropic, OpenAI, AWS Bedrock) are available when you supply
   credentials, for higher-capability models where they're worth it.
 
-Assign cheaper models to routine tasks and reserve stronger ones for architecturally significant
-work. Per-block defaults and per-step overrides make this easy. See
-[Running Pipelines](./running-pipelines.md#starting-a-run).
+Assign cheaper models to routine agent kinds and reserve stronger ones for architecturally
+significant work, all from **Configuration → Default models**. See
+[Choosing models](./running-pipelines.md#choosing-models).
 
 ::: warning Set a budget before scaling up
 Metering protects you only if a cap is configured. Set an organization budget before turning many

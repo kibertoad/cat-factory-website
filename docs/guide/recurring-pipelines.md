@@ -18,11 +18,11 @@ never piles work on itself.
 
 When you add a recurring pipeline you pick a template:
 
-| Template | Pipeline | What it does |
-| --- | --- | --- |
-| **Dependency updates** | `pl_dep_update` | A plain implement → review → merge pass for routine bumps. |
-| **Tech debt** | `pl_tech_debt` | Audits the repo, files a tracker ticket, then implements the top item. |
-| **Custom** | any pipeline | Attach any pipeline you've defined on whatever cadence you choose. |
+| Template | What it does |
+| --- | --- |
+| **Dependency updates** | A plain implement → review → merge pass for routine bumps. |
+| **Tech debt** | Audits the repo, files a tracker ticket, then implements the top item. |
+| **Custom** | Attach any pipeline you've defined on whatever cadence you choose. |
 
 ### The tech-debt pipeline
 
@@ -36,10 +36,11 @@ The tech-debt template adds two steps ahead of the usual implement → review �
 
 ## Setting the cadence
 
-The schedule runs **every `intervalHours`**, optionally constrained to an **allowed window**:
+The schedule runs on a fixed interval (the **Run every** setting, in hours), optionally constrained
+to an **allowed window**:
 
 - **Weekdays** - restrict fires to specific days (e.g. weekdays only). Empty means every day.
-- **Hour-of-day range** - a `windowStartHour`/`windowEndHour` window (e.g. only overnight).
+- **Hour-of-day window** - run only within a from/to range of hours (e.g. only overnight).
 - **Timezone** - an IANA zone (e.g. `Europe/Helsinki`) the weekday/hour window is evaluated in.
 
 If a computed next-run lands outside the window, the engine rolls it forward to the next eligible

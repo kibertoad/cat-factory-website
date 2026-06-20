@@ -27,8 +27,8 @@ A block's requirements can come from:
 ## The reviewer agent
 
 The reviewer is a **stateless** agent you trigger on a block. It analyzes the description and
-linked context and raises **review items**, each tagged with a category and a severity
-(`low`/`medium`/`high`):
+linked context and raises **review items**, each tagged with a category and a severity (low,
+medium, or high):
 
 | Category | What it surfaces |
 | --- | --- |
@@ -44,15 +44,16 @@ answer them over several sittings.
 
 ## Answering the open questions
 
-Each item is `open` until you engage, then `answered` once you reply, and `resolved` or `dismissed`
-once you settle it. Work through the list in the inspector, replying to and triaging each item.
+Each item is **open** until you engage, then **answered** once you reply, and **resolved** or
+**dismissed** once you settle it. Work through the list in the inspector, replying to and triaging
+each item.
 
 Once every item is settled, **incorporate** folds your answers back into the block's requirements,
 so the coding agent later works from a complete, agreed-upon spec.
 
 ::: tip Do this before running a pipeline
-Resolving requirements first means the coder, tester, and acceptance steps all work from the same
-clear definition, which means fewer wasted runs and fewer surprise PRs.
+Resolving requirements first means the **Coder**, **Tester**, and **Acceptance** steps all work from
+the same clear definition, which means fewer wasted runs and fewer surprise PRs.
 :::
 
 ## The unified in-repo requirements document
@@ -62,8 +63,8 @@ durable, **prescriptive** spec for the whole service. It is the mirror image of 
 [blueprint](./repositories.md#service-blueprints--reconciliation): a blueprint is *descriptive*
 ("what the code is"), while requirements are *prescriptive* ("what must be true").
 
-The writer runs **before the coder** in the Full build pipeline (and standalone via the
-**Write requirements** pipeline, `pl_requirements`). It aggregates the clarified requirements of
+The writer runs **before the Coder** in the Full build pipeline (and standalone via the
+**Write requirements** pipeline). It aggregates the clarified requirements of
 **every task** under the service frame and commits a `requirements/` folder to the implementation
 branch so the spec is present while the code is written:
 
@@ -75,12 +76,12 @@ branch so the spec is present while the code is written:
 | `requirements/version.json` | A tiny manifest (version, hash, counts) for cheap staleness checks. |
 | `requirements/features/*.feature` | Gherkin features, one `Scenario` per acceptance criterion. |
 
-Each requirement carries a MoSCoW priority (`must`/`should`/`could`), a kind
-(`functional`/`nonfunctional`/`constraint`), provenance back to the board task(s) it came from, and
-structured **Given/When/Then** acceptance criteria. Those criteria seed the Gherkin scenarios in a
-two-pass flow: the requirements-writer **seeds** the `.feature` files, the `acceptance` agent
-**polishes** them, and the `playwright` agent turns each scenario into a runnable test. Re-runs
-rewrite the canonical files but never clobber the polished features.
+Each requirement carries a MoSCoW priority (must, should, or could), a kind (functional,
+non-functional, or constraint), provenance back to the board task(s) it came from, and structured
+**Given/When/Then** acceptance criteria. Those criteria seed the Gherkin scenarios in a two-pass
+flow: the **Requirements Writer** seeds the `.feature` files, the **Acceptance Author** agent
+polishes them, and the **Acceptance Test Author** agent turns each scenario into a runnable test.
+Re-runs rewrite the canonical files but never clobber the polished features.
 
 Every container agent reads the in-repo requirements as context, and the engine strictly validates
 any returned document before ingesting it. The in-repo files are the source of truth.

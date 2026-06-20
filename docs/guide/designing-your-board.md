@@ -23,7 +23,7 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 **Configuration** holds two workspace-wide settings panels:
 
 - **Default models** - pick a default model per agent kind (see [Assigning models](#assigning-models)).
-- **Merge thresholds** - manage the merge-threshold presets the `merger` step uses to decide
+- **Merge thresholds** - manage the merge-threshold presets the **Merger** step uses to decide
   auto-merge vs. raising a review.
 
 ## The three levels
@@ -43,8 +43,8 @@ feels like it spans several PRs, split it into sibling leaves.
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
   controls, at the level you need.
-- **Edit** its `title`, `description`, `status`, assigned model, chosen pipeline, prompt fragments,
-  and merge-threshold preset in the inspector.
+- **Edit** its title, description, status, chosen pipeline, prompt fragments, and merge-policy
+  preset in the inspector.
 - **Reparent** by dragging a block onto a new parent, which is useful as your design evolves. Moving
   a task into another service's frame re-homes it onto that service.
 - **Delete** a block to remove it. Deletion cascades to its children, so deleting a service
@@ -69,12 +69,10 @@ All of this is covered in [Repositories](./repositories.md).
 
 ## Assigning models
 
-Each block can pin a `modelId`, which forces the model for runs on that block. If you'd rather not
-pin every block, set a **workspace default per agent kind** under **Configuration → Default
-models**, for example a strong model for `architect` and a cheap one for `tester`. The full
-precedence is
-`block-pinned → workspace per-kind default → deployment routing → default`. Use stronger models on
-architecturally significant blocks and cheaper ones on routine tasks to manage
+Set a **default model per agent kind** under **Configuration → Default models** — for example a
+strong model for the **Architect** and a cheaper one for the **Tester**. Where a kind has no
+default, the deployment's routing for that kind applies, then its global default. Use stronger
+models on architecturally significant kinds and cheaper ones on routine steps to manage
 [spend](./budgets.md). See [Choosing models](./running-pipelines.md#choosing-models).
 
 ## A suggested workflow
