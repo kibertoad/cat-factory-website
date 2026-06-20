@@ -1,0 +1,134 @@
+import { defaultTheme } from '@vuepress/theme-default'
+import { viteBundler } from '@vuepress/bundler-vite'
+import { searchPlugin } from '@vuepress/plugin-search'
+import { defineUserConfig } from 'vuepress'
+
+export default defineUserConfig({
+  // Deployed to GitHub Pages at https://<user>.github.io/cat-factory-website/
+  base: '/cat-factory-website/',
+  lang: 'en-US',
+  title: 'Cat-Factory',
+  description:
+    'Design software on a visual board, then let LLM agents build it — as real, reviewed pull requests with full pipeline observability.',
+
+  head: [
+    ['meta', { name: 'theme-color', content: '#3c8772' }],
+    ['meta', { name: 'viewport', content: 'width=device-width, initial-scale=1.0' }],
+  ],
+
+  bundler: viteBundler(),
+
+  theme: defaultTheme({
+    logo: null,
+    repo: 'kibertoad/cat-factory',
+    docsRepo: 'kibertoad/cat-factory-website',
+    docsBranch: 'main',
+    docsDir: 'docs',
+    editLinkText: 'Edit this page on GitHub',
+    lastUpdated: true,
+    contributors: false,
+
+    navbar: [
+      { text: 'Home', link: '/' },
+      {
+        text: 'Get Started',
+        children: [
+          '/guide/introduction.md',
+          '/guide/core-concepts.md',
+          '/guide/quick-start.md',
+        ],
+      },
+      {
+        text: 'Using Cat-Factory',
+        children: [
+          '/guide/designing-your-board.md',
+          '/guide/requirements.md',
+          '/guide/running-pipelines.md',
+          '/guide/pull-requests.md',
+          '/guide/repositories.md',
+          '/guide/issue-sources.md',
+          '/guide/budgets.md',
+          '/guide/prompt-fragments.md',
+        ],
+      },
+      {
+        text: 'Deploy & Operate',
+        children: [
+          '/deploy/cloudflare.md',
+          '/deploy/nodejs.md',
+          '/deploy/configuration.md',
+          '/deploy/runner-pools.md',
+          '/deploy/environments.md',
+        ],
+      },
+      {
+        text: 'Reference',
+        children: [
+          '/reference/architecture.md',
+          '/reference/http-api.md',
+          '/reference/data-model.md',
+          '/reference/packages.md',
+        ],
+      },
+    ],
+
+    sidebar: {
+      '/guide/': [
+        {
+          text: 'Get Started',
+          collapsible: false,
+          children: [
+            '/guide/introduction.md',
+            '/guide/core-concepts.md',
+            '/guide/quick-start.md',
+          ],
+        },
+        {
+          text: 'Using Cat-Factory',
+          collapsible: false,
+          children: [
+            '/guide/designing-your-board.md',
+            '/guide/requirements.md',
+            '/guide/running-pipelines.md',
+            '/guide/pull-requests.md',
+            '/guide/repositories.md',
+            '/guide/issue-sources.md',
+            '/guide/budgets.md',
+            '/guide/prompt-fragments.md',
+          ],
+        },
+      ],
+      '/deploy/': [
+        {
+          text: 'Deploy & Operate',
+          collapsible: false,
+          children: [
+            '/deploy/cloudflare.md',
+            '/deploy/nodejs.md',
+            '/deploy/configuration.md',
+            '/deploy/runner-pools.md',
+            '/deploy/environments.md',
+          ],
+        },
+      ],
+      '/reference/': [
+        {
+          text: 'Reference',
+          collapsible: false,
+          children: [
+            '/reference/architecture.md',
+            '/reference/http-api.md',
+            '/reference/data-model.md',
+            '/reference/packages.md',
+          ],
+        },
+      ],
+    },
+  }),
+
+  plugins: [
+    searchPlugin({
+      maxSuggestions: 10,
+    }),
+  ],
+})
