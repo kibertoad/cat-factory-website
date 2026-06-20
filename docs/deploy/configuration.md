@@ -6,15 +6,21 @@ service wiring, and feature toggles.
 
 ## Authentication
 
-GitHub is the identity provider and the source of repository access.
+GitHub is the identity provider and the source of repository access. A single [GitHub
+App](./github-app.md) supplies both: its OAuth credentials drive "Login with GitHub", and its App
+ID + private key mint the per-installation tokens used for repository operations.
 
 | Variable | Purpose |
 | --- | --- |
-| `GITHUB_CLIENT_ID` | OAuth provider client ID. |
-| `GITHUB_CLIENT_SECRET` | OAuth provider client secret. |
-| GitHub App **ID** | Identifies the GitHub App used for repository operations. |
-| GitHub App **private key** | Signs GitHub App requests. |
-| GitHub App **webhook secret** | Verifies inbound webhook payloads. |
+| `GITHUB_OAUTH_CLIENT_ID` | The GitHub App's OAuth client ID, for "Login with GitHub". |
+| `GITHUB_OAUTH_CLIENT_SECRET` | The App's OAuth client secret. |
+| `AUTH_SESSION_SECRET` | Signs session tokens (≥ 32 chars). Login fails closed without it. |
+| `GITHUB_APP_ID` | Identifies the GitHub App used for repository operations. |
+| `GITHUB_APP_PRIVATE_KEY` | PKCS#8 private key that signs App requests and mints installation tokens. |
+| `GITHUB_WEBHOOK_SECRET` | Verifies inbound webhook payloads. |
+| `GITHUB_APP_SLUG` | The App's URL slug, used to build installation links. |
+| `GITHUB_API_BASE` | GitHub API base. Defaults to `https://api.github.com`; override for GitHub Enterprise. |
+| `GITHUB_OAUTH_BASE` | OAuth host. Defaults to `https://github.com`; override for GitHub Enterprise. |
 
 ## LLM providers
 

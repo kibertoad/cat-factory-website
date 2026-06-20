@@ -33,14 +33,15 @@ You lay out the work visually; LLM agents pick up each block, implement it again
 repository checkout, and open pull requests for your team to review and merge. The board is also
 your central place to work: you can see every run as it happens and step in when an agent needs you.
 
+You assemble a thin deployment project on top of the published `@cat-factory/*` packages, then
+deploy it:
+
 ```bash
 # Deploy the backend to Cloudflare
-cd deploy/backend
-wrangler d1 migrations apply cat_factory --remote
+wrangler d1 migrations apply <your-d1-database> --remote
 pnpm deploy
 
 # Build and publish the frontend
-cd ../frontend
 NUXT_PUBLIC_API_BASE=https://your-api-domain.com pnpm generate
 pnpm deploy
 ```

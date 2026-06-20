@@ -1,28 +1,49 @@
 # Deploy to Cloudflare
 
-Cloudflare is the reference deployment for Cat Factory. The backend runs as a Worker with D1,
+Cloudflare is the reference runtime for Cat Factory. The backend runs as a Worker with D1,
 Durable Objects, and Workflows. The frontend is a Nuxt SPA on Cloudflare Pages, and per-run coding
 work executes in Cloudflare Containers.
+
+## Your deployment project
+
+Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR), which you
+assemble into a small deployment project of two thin packages that depend on the published
+libraries and point at your own Cloudflare resources:
+
+- **Backend** — re-exports `@cat-factory/worker` and ships your `wrangler.toml` (D1 binding,
+  container image tag, secrets, custom domain).
+- **Frontend** — a Nuxt app that `extends` `@cat-factory/app` and ships your Pages `wrangler.toml`.
+
+To scaffold it, copy the `deploy/backend` and `deploy/frontend` example directories from the repo,
+swap their `workspace:*` dependencies for the published npm versions, and point the config at your
+resources. From here you can **mix in proprietary agent kinds, extra model providers, and seeded
+pipelines** — see [Extending a deployment](../reference/architecture.md#extending-a-deployment).
+
+::: tip Tracking upstream
+A thin layer over the published packages keeps upgrades to a dependency bump rather than a merge
+against a fork.
+:::
 
 ## Prerequisites
 
 - A Cloudflare account with Worker and D1 database access.
-- A GitHub App configured for authentication and repository operations.
+- Your [deployment project](#your-deployment-project) depending on the published `@cat-factory/*` packages.
+- A GitHub App configured for authentication and repository operations (see [GitHub App](./github-app.md)).
 - LLM provider API keys, or use the free Cloudflare Workers AI default.
 - `wrangler` and `pnpm` installed locally.
 
 ## 1. Deploy the backend
 
-From the backend deployment project, apply database migrations and deploy the Worker:
+From your backend deployment project, apply database migrations and deploy the Worker. The D1
+migrations ship inside `@cat-factory/worker` (your `wrangler.toml`'s `migrations_dir` points at
+`node_modules/@cat-factory/worker/migrations`), so they travel with the dependency:
 
 ```bash
-cd deploy/backend
+# Review and apply D1 migrations (use your own database name)
+wrangler d1 migrations list <your-d1-database> --remote
+wrangler d1 migrations apply <your-d1-database> --remote
 
-# Review and apply D1 migrations
-wrangler d1 migrations list cat_factory --remote
-wrangler d1 migrations apply cat_factory --remote
-
-# Deploy the Worker
+# Deploy the Worker (builds @cat-factory/worker, then wrangler deploy)
 pnpm deploy
 ```
 
@@ -31,8 +52,6 @@ pnpm deploy
 Build the Nuxt SPA pointing at your backend URL, then publish it to Pages:
 
 ```bash
-cd deploy/frontend
-
 NUXT_PUBLIC_API_BASE=https://your-api-domain.com pnpm generate
 pnpm deploy
 ```

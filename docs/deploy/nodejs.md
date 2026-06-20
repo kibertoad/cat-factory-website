@@ -4,32 +4,43 @@ Prefer to run on your own infrastructure? Cat Factory ships a runtime-neutral ba
 runs as a standard Node.js service backed by PostgreSQL, with the same HTTP API as the
 Cloudflare deployment.
 
+## Your deployment project
+
+As with the [Cloudflare deployment](./cloudflare.md#your-deployment-project), you assemble a small
+project on top of the published libraries: a thin package that depends on `@cat-factory/node-server`
+and calls its `start()`, plus your own `.env` and (if you containerize) a `Dockerfile`. To scaffold
+it, copy the `deploy/node` example directory, swap its `workspace:*` dependency for the published
+npm version, and point the config at your resources. You can layer in
+[proprietary agents and providers](../reference/architecture.md#extending-a-deployment) the same way.
+
 ## Prerequisites
 
 - Node.js 24+, required for native type stripping and `--env-file` support.
 - A PostgreSQL database.
-- A GitHub App for authentication and repository operations.
+- Your own deployment project (see above), depending on the published `@cat-factory/node-server`.
+- A GitHub App for authentication and repository operations (see [GitHub App](./github-app.md)).
 - LLM provider API keys.
 - A container runtime (Docker/Kubernetes/your scheduler) for per-run coding jobs.
 
 ## Run directly with Node.js
 
+From your deployment project:
+
 ```bash
-cd deploy/node
 cp .env.example .env
 # Configure: DATABASE_URL, authentication, model keys
 pnpm start
 ```
 
-The service listens on port 8787 by default.
+The schema migrates on boot, and the service listens on port 8787 by default.
 
 ## Run with Docker
 
 ```bash
-docker build -f deploy/node/Dockerfile -t cat-factory-node .
+docker build -t cat-factory-node .
 
 docker run --rm -p 8787:8787 \
-  --env-file deploy/node/.env \
+  --env-file .env \
   cat-factory-node
 ```
 

@@ -60,6 +60,7 @@ export default defineUserConfig({
         children: [
           '/deploy/cloudflare.md',
           '/deploy/nodejs.md',
+          '/deploy/github-app.md',
           '/deploy/configuration.md',
           '/deploy/runner-pools.md',
           '/deploy/environments.md',
@@ -110,6 +111,7 @@ export default defineUserConfig({
           children: [
             '/deploy/cloudflare.md',
             '/deploy/nodejs.md',
+            '/deploy/github-app.md',
             '/deploy/configuration.md',
             '/deploy/runner-pools.md',
             '/deploy/environments.md',
