@@ -61,8 +61,9 @@ sequenced.
 A service frame typically maps to one Git repository. You have three options:
 
 - **Link an existing repository** the GitHub App can access.
-- **Bootstrap a new repository** from a reference architecture (Cat Factory creates the repo and
-  force-pushes the template, then the service frame materializes on the board).
+- **Bootstrap a new repository** from a reference architecture: you create the empty repo on
+  GitHub (or an org can let the privileged App tier create it), Cat Factory force-pushes the
+  template into it, then the service frame materializes on the board.
 - **Reconcile** an existing repo's structure onto the board with service blueprints.
 
 All of this is covered in [Repositories](./repositories.md).

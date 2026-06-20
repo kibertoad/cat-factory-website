@@ -14,7 +14,7 @@ Before you start, make sure you have:
   the free-tier Cloudflare Workers AI default.
 - A **GitHub repository** you want agents to work in (or let Cat Factory bootstrap a new one).
 
-::: tip Deploying it yourself?
+::: tip Self-hosting
 The fastest path is the Cloudflare deployment. Apply the database migrations, deploy the worker,
 then build and publish the Nuxt frontend. Full steps are in
 [Deploy to Cloudflare](../deploy/cloudflare.md).

@@ -23,12 +23,20 @@ under that service clone and open PRs against it.
 
 ## Bootstrapping a new repository
 
-Starting fresh? Let Cat Factory scaffold the repo for you:
+Cat Factory populates a repository with a reference architecture; it does not, by default, create
+the repository itself. The standard flow:
 
 1. Select a reference architecture or scaffold template.
-2. Cat Factory creates an empty repository in GitHub via the App.
-3. The bootstrap agent force-pushes the template into the repository.
+2. Create the target repository, **empty**, on GitHub. The bootstrap dialog links to GitHub's
+   new-repo page prefilled for you. Make sure the GitHub App can reach it: install the App on the
+   new repo, or install it on all repositories for the account or org.
+3. The bootstrap agent force-pushes the template into the empty repository.
 4. A service frame appears on the board automatically.
+
+The default GitHub App holds no `Administration` permission, so it cannot create repositories.
+Creating the empty repo yourself is the one manual step. An organization can remove it by opting
+into the privileged App tier, which creates the repo programmatically; see
+[GitHub App → Programmatic repository creation](../deploy/github-app.md#programmatic-repository-creation-optional).
 
 Every new service starts from a consistent, known-good baseline.
 

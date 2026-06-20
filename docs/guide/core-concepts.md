@@ -113,4 +113,4 @@ over. See [Budgets & Spend](./budgets.md).
 
 ---
 
-Ready to put these together? Continue to the [Quick Start](./quick-start.md).
+Continue to the [Quick Start](./quick-start.md) to put these together.

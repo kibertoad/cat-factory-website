@@ -10,14 +10,14 @@ Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR)
 assemble into a small deployment project of two thin packages that depend on the published
 libraries and point at your own Cloudflare resources:
 
-- **Backend** — re-exports `@cat-factory/worker` and ships your `wrangler.toml` (D1 binding,
+- **Backend**: re-exports `@cat-factory/worker` and ships your `wrangler.toml` (D1 binding,
   container image tag, secrets, custom domain).
-- **Frontend** — a Nuxt app that `extends` `@cat-factory/app` and ships your Pages `wrangler.toml`.
+- **Frontend**: a Nuxt app that `extends` `@cat-factory/app` and ships your Pages `wrangler.toml`.
 
 To scaffold it, copy the `deploy/backend` and `deploy/frontend` example directories from the repo,
 swap their `workspace:*` dependencies for the published npm versions, and point the config at your
 resources. From here you can **mix in proprietary agent kinds, extra model providers, and seeded
-pipelines** — see [Extending a deployment](../reference/architecture.md#extending-a-deployment).
+pipelines**. See [Extending a deployment](../reference/architecture.md#extending-a-deployment).
 
 ::: tip Tracking upstream
 A thin layer over the published packages keeps upgrades to a dependency bump rather than a merge
@@ -108,5 +108,5 @@ settings, see [Configuration](./configuration.md).
 
 ---
 
-Prefer your own servers? See [Deploy to Node.js](./nodejs.md). Then lock down
+To run on your own servers, see [Deploy to Node.js](./nodejs.md). Then lock down
 [Configuration](./configuration.md).

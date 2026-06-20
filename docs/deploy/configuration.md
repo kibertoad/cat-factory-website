@@ -21,6 +21,8 @@ ID + private key mint the per-installation tokens used for repository operations
 | `GITHUB_APP_SLUG` | The App's URL slug, used to build installation links. |
 | `GITHUB_API_BASE` | GitHub API base. Defaults to `https://api.github.com`; override for GitHub Enterprise. |
 | `GITHUB_OAUTH_BASE` | OAuth host. Defaults to `https://github.com`; override for GitHub Enterprise. |
+| `GITHUB_PRIVILEGED_APP_ID` | Optional second App that can create org repos. See [Programmatic repository creation](./github-app.md#programmatic-repository-creation-optional). |
+| `GITHUB_PRIVILEGED_APP_PRIVATE_KEY` | PKCS#8 private key for the privileged App. Both vars must be set, or the tier stays off. |
 
 ## LLM providers
 
