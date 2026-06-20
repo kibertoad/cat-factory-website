@@ -1,7 +1,7 @@
 # Self-Hosted Runner Pools
 
 On Cloudflare, per-run coding work executes in Cloudflare Containers by default. If you want control
-over where agents run, or you want to bring your own compute, Cat-Factory supports self-hosted runner
+over where agents run, or you want to bring your own compute, Cat Factory supports self-hosted runner
 pools. On the Node.js runtime there is no built-in per-run container, so repo-operating agent
 kinds (coder, mocker, blueprints, ci-fixer, conflict-resolver, merger, requirements-writer,
 analysis) run on a runner pool. Wiring one up is what turns those kinds on there.
@@ -22,7 +22,7 @@ scheme and a mapping from your scheduler's responses onto the canonical job view
 adapter interprets any manifest, so there's no per-org code. See
 [Integration Manifests](../reference/manifests.md#runner-pool-manifest) for the shape.
 
-Cat-Factory dispatches per-run jobs to the pool, which executes the executor-harness container
+Cat Factory dispatches per-run jobs to the pool, which executes the executor-harness container
 image. That's the same payload that runs the coding agent, performs Git operations, and produces the
 branch the platform opens a pull request from.
 

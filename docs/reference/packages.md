@@ -1,6 +1,6 @@
 # Packages & Repository Layout
 
-Cat-Factory is a TypeScript monorepo. This page maps the published packages and the source tree,
+Cat Factory is a TypeScript monorepo. This page maps the published packages and the source tree,
 so you know where to look when extending or debugging the platform.
 
 ## Published libraries

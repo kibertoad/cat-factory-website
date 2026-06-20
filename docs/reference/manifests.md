@@ -1,6 +1,6 @@
 # Integration Manifests
 
-Cat-Factory is self-hosted and has no public API to integrate against. Where it *does* reach out
+Cat Factory is self-hosted and has no public API to integrate against. Where it *does* reach out
 to infrastructure you own, whether to provision a preview environment or to dispatch a coding job to your
 own runners, you describe that infrastructure declaratively with a manifest. A single generic
 adapter interprets any manifest, so there is no per-organization code and no fixed vendor to
@@ -20,9 +20,9 @@ Both manifests are built from the same pieces:
 | Piece | What it is |
 | --- | --- |
 | **`baseUrl`** | The root of your management API. Operation paths are appended to it. |
-| **Auth scheme** | How Cat-Factory authenticates to your API: `none`, `api_key` (custom header), `bearer`, `basic`, `oauth2_client_credentials`, or `custom_headers`. |
+| **Auth scheme** | How Cat Factory authenticates to your API: `none`, `api_key` (custom header), `bearer`, `basic`, `oauth2_client_credentials`, or `custom_headers`. |
 | **Request templates** | One HTTP call per operation (method, path, optional query/headers/body) with `{{var}}` interpolation from a bounded variable namespace. |
-| **Response mapping** | Dot-paths that pull values out of *your* arbitrary response shape onto the canonical handle Cat-Factory expects. |
+| **Response mapping** | Dot-paths that pull values out of *your* arbitrary response shape onto the canonical handle Cat Factory expects. |
 
 ### Secrets are referenced, never embedded
 

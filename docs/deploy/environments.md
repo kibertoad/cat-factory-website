@@ -1,6 +1,6 @@
 # Ephemeral Environments
 
-To validate agent-built changes against a running system, Cat-Factory can provision ephemeral
+To validate agent-built changes against a running system, Cat Factory can provision ephemeral
 preview environments on demand and tear them down when the run finishes.
 
 ## What they're for

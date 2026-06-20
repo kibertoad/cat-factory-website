@@ -1,6 +1,6 @@
 # Pull Requests & Merging
 
-Cat-Factory's definition of "done" is deliberately strict: a task is complete only when its
+Cat Factory's definition of "done" is deliberately strict: a task is complete only when its
 **pull request is merged with passing CI**. This page covers what agents produce and how merging
 closes the loop.
 
@@ -12,7 +12,7 @@ During the **Coder** step, an agent:
 2. Implements the task from its (reviewed) [requirements](./requirements.md).
 3. **Commits its own work** to a dedicated per-task branch and validates locally.
 
-The agent never needs push credentials: Cat-Factory owns the delivery contract. The platform
+The agent never needs push credentials: Cat Factory owns the delivery contract. The platform
 pushes the branch, opens the **pull request**, and drives your existing CI/CD. Because the
 branch is deterministic and checkpointed, a retried or resumed run continues on the same branch and
 PR rather than starting over.

@@ -82,7 +82,7 @@ pushes periodic checkpoints, so an evicted or retried run resumes on the same br
 starting over. A live no-progress guard ends a run early with a diagnostic if the agent thrashes
 without editing files.
 
-Cat-Factory also owns the Git delivery contract: the agent commits its own work and validates
+Cat Factory also owns the Git delivery contract: the agent commits its own work and validates
 locally, while the platform pushes, opens the pull request, and drives CI, so a container
 agent never needs push credentials. If a step fails, the error is captured and the run surfaces a
 manual retry from the failure point.

@@ -1,6 +1,6 @@
 # Budgets & Spend
 
-Running agents costs money. Cat-Factory keeps that cost visible and bounded with org-wide
+Running agents costs money. Cat Factory keeps that cost visible and bounded with org-wide
 metering, a monthly budget, and automatic pausing at the cap.
 
 ## How metering works
@@ -13,7 +13,7 @@ A spend gauge in the dashboard shows current utilization at any time.
 
 ## Prompt caching
 
-Container agents re-send their conversation prefix on every call. Cat-Factory injects a
+Container agents re-send their conversation prefix on every call. Cat Factory injects a
 prompt-cache key (scoped to the execution) so that re-sent prefix is a cache hit on
 providers that support prompt caching, cutting the cost of long runs. The observability dashboard
 records cached prompt tokens and surfaces the actual cache-hit rate per run, alongside the

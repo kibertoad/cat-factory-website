@@ -7,7 +7,7 @@ teams' boards at once, where it is one shared subtree rather than a copy.
 
 ## Why services are account-owned
 
-Large orgs run many teams against the same set of services. Cat-Factory models that directly:
+Large orgs run many teams against the same set of services. Cat Factory models that directly:
 
 - There is **one physical copy** of a service's blocks, keyed by service. Every board that mounts
   it reads the same task list and the same state.

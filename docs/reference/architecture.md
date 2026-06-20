@@ -1,11 +1,11 @@
 # Architecture
 
-A high-level map of how Cat-Factory is put together. You don't need this to *use* the platform,
+A high-level map of how Cat Factory is put together. You don't need this to *use* the platform,
 but it helps when deploying, extending, or debugging it.
 
 ## The big picture
 
-Cat-Factory has three tiers:
+Cat Factory has three tiers:
 
 - A Nuxt single-page app rendering the board on a Vue Flow canvas, with Pinia stores.
 - A runtime-neutral backend (a Hono HTTP layer) that runs on Cloudflare Workers or Node.js.

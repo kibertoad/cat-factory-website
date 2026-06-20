@@ -14,7 +14,7 @@ Everything on the board is a **block**. Blocks form a three-level hierarchy:
 | **Task** | A task | An implementation unit, the thing an agent actually builds. |
 
 Each block has a title, description, and status, and can carry a chosen pipeline, selected
-[prompt fragments](./prompt-fragments.md), and — once an agent opens one — its pull request. Blocks
+[prompt fragments](./prompt-fragments.md), and, once an agent opens one, its pull request. Blocks
 can be **reparented** by dragging them to a new parent. Deleting a block cascades to its children.
 
 A task moves through these statuses:
@@ -86,14 +86,14 @@ into the block's description and the run continues.
 
 ## Model selection
 
-You set a **default model per agent kind** under **Configuration → Default models** — e.g. a strong
-model for the **Architect**, a cheaper one for the **Tester**. Where a kind has no default, the
-deployment's routing for that kind applies, then its global default. See
+You set a **default model per agent kind** under **Configuration → Default models**. For example,
+use a strong model for the **Architect** and a cheaper one for the **Tester**. Where a kind has no
+default, the deployment's routing for that kind applies, then its global default. See
 [Running Pipelines](./running-pipelines.md#choosing-models).
 
 ## Repositories
 
-Services link to Git repositories. Cat-Factory can also **bootstrap** a new repository from a
+Services link to Git repositories. Cat Factory can also **bootstrap** a new repository from a
 reference architecture, and **reconcile** an existing repository's structure back onto the board
 via service blueprints (`service → modules → features` maps stored in-repo). Alongside the
 descriptive blueprint, a service also keeps a prescriptive [requirements](./requirements.md)

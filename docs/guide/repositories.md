@@ -1,6 +1,6 @@
 # Repositories
 
-Services on your board map to Git repositories, where agents actually do their work. Cat-Factory
+Services on your board map to Git repositories, where agents actually do their work. Cat Factory
 connects to GitHub through a GitHub App, which it uses to link, bootstrap, and reconcile
 repositories.
 
@@ -11,7 +11,7 @@ Repository, pull request, and issue operations all flow through a GitHub App:
 - Repository read/write for cloning and pushing branches.
 - Pull request creation and status.
 - Issue read for importing requirements.
-- Webhooks for push, PR, and issue events, which Cat-Factory projects into its local database
+- Webhooks for push, PR, and issue events, which Cat Factory projects into its local database
   to keep the board in sync.
 
 Repositories are tracked per workspace, with credentials isolated to that workspace.
@@ -23,10 +23,10 @@ under that service clone and open PRs against it.
 
 ## Bootstrapping a new repository
 
-Starting fresh? Let Cat-Factory scaffold the repo for you:
+Starting fresh? Let Cat Factory scaffold the repo for you:
 
 1. Select a reference architecture or scaffold template.
-2. Cat-Factory creates an empty repository in GitHub via the App.
+2. Cat Factory creates an empty repository in GitHub via the App.
 3. The bootstrap agent force-pushes the template into the repository.
 4. A service frame appears on the board automatically.
 
@@ -50,7 +50,7 @@ document the **Requirements Writer** keeps under `requirements/` in the same rep
 ## Keeping in sync via webhooks
 
 Because the GitHub App sends webhooks, changes made directly in GitHub (pushes, PR merges,
-issue edits) are projected back into Cat-Factory's database, so the board stays current even when
+issue edits) are projected back into Cat Factory's database, so the board stays current even when
 work happens outside the platform.
 
 ---

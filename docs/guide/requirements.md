@@ -1,6 +1,6 @@
 # Requirements
 
-Agents succeed or fail on the quality of their context. Cat-Factory works requirements at two
+Agents succeed or fail on the quality of their context. Cat Factory works requirements at two
 levels:
 
 1. A **per-task clarification loop**: the stateless *requirements reviewer* makes one block
@@ -12,7 +12,7 @@ levels:
 ## Why this matters
 
 A vague task produces vague code. Rather than discovering misunderstandings in the pull request,
-Cat-Factory front-loads the clarification with a dedicated **reviewer agent** that inspects a
+Cat Factory front-loads the clarification with a dedicated **reviewer agent** that inspects a
 block and reports what's missing.
 
 ## Sources of requirements

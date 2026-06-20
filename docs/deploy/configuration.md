@@ -1,7 +1,7 @@
 # Configuration
 
 This page is the reference for every environment variable and toggle you'll set when deploying
-Cat-Factory. Secrets are grouped by concern: authentication, model providers, infrastructure,
+Cat Factory. Secrets are grouped by concern: authentication, model providers, infrastructure,
 service wiring, and feature toggles.
 
 ## Authentication
@@ -18,7 +18,7 @@ GitHub is the identity provider and the source of repository access.
 
 ## LLM providers
 
-Supply credentials for the providers you want to use. With none set, Cat-Factory falls back to the
+Supply credentials for the providers you want to use. With none set, Cat Factory falls back to the
 free Cloudflare Workers AI tier.
 
 | Variable | Provider |

@@ -1,6 +1,6 @@
 # Issue & Document Sources
 
-Most requirements already live somewhere, in a tracker ticket or a spec document. Cat-Factory lets
+Most requirements already live somewhere, in a tracker ticket or a spec document. Cat Factory lets
 you link those sources directly to blocks, import them, and use them as agent context.
 
 ## Supported sources

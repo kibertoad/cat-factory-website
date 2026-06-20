@@ -1,6 +1,6 @@
 # Deploy to Node.js
 
-Prefer to run on your own infrastructure? Cat-Factory ships a runtime-neutral backend that
+Prefer to run on your own infrastructure? Cat Factory ships a runtime-neutral backend that
 runs as a standard Node.js service backed by PostgreSQL, with the same HTTP API as the
 Cloudflare deployment.
 

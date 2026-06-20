@@ -9,9 +9,9 @@ export default defineUserConfig({
   // https://<user>.github.io/cat-factory-website/, change this back to '/cat-factory-website/'.
   base: '/',
   lang: 'en-US',
-  title: 'Cat-Factory',
+  title: 'Cat Factory',
   description:
-    'Design software on a visual board, then let LLM agents build it — as real, reviewed pull requests with full pipeline observability.',
+    'A central place to plan work on a visual board, let LLM agents build it as reviewed pull requests, and watch every run as it happens.',
 
   head: [
     ['meta', { name: 'theme-color', content: '#3c8772' }],
@@ -41,7 +41,7 @@ export default defineUserConfig({
         ],
       },
       {
-        text: 'Using Cat-Factory',
+        text: 'Using Cat Factory',
         children: [
           '/guide/designing-your-board.md',
           '/guide/shared-services.md',
@@ -87,7 +87,7 @@ export default defineUserConfig({
           ],
         },
         {
-          text: 'Using Cat-Factory',
+          text: 'Using Cat Factory',
           collapsible: false,
           children: [
             '/guide/designing-your-board.md',

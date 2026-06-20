@@ -61,7 +61,7 @@ inform how work is sequenced.
 A service frame typically maps to one Git repository. You have three options:
 
 - **Link an existing repository** the GitHub App can access.
-- **Bootstrap a new repository** from a reference architecture (Cat-Factory creates the repo and
+- **Bootstrap a new repository** from a reference architecture (Cat Factory creates the repo and
   force-pushes the template, then the service frame materializes on the board).
 - **Reconcile** an existing repo's structure onto the board with service blueprints.
 
@@ -69,7 +69,7 @@ All of this is covered in [Repositories](./repositories.md).
 
 ## Assigning models
 
-Set a **default model per agent kind** under **Configuration → Default models** — for example a
+Set a **default model per agent kind** under **Configuration → Default models**. For example, use a
 strong model for the **Architect** and a cheaper one for the **Tester**. Where a kind has no
 default, the deployment's routing for that kind applies, then its global default. Use stronger
 models on architecturally significant kinds and cheaper ones on routine steps to manage

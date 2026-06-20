@@ -1,18 +1,18 @@
 # Quick Start
 
 This walkthrough takes you from an empty board to a merged, agent-built pull request. It assumes you (or
-someone on your team) has a Cat-Factory instance deployed. If not, deploy one first: see
+someone on your team) has a Cat Factory instance deployed. If not, deploy one first: see
 [Cloudflare](../deploy/cloudflare.md) or [Node.js](../deploy/nodejs.md).
 
 ## Prerequisites
 
 Before you start, make sure you have:
 
-- A **running Cat-Factory instance** (backend + frontend).
+- A **running Cat Factory instance** (backend + frontend).
 - A **GitHub App** connected for authentication and repository operations.
 - At least one **LLM provider** configured: your own `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, or
   the free-tier Cloudflare Workers AI default.
-- A **GitHub repository** you want agents to work in (or let Cat-Factory bootstrap a new one).
+- A **GitHub repository** you want agents to work in (or let Cat Factory bootstrap a new one).
 
 ::: tip Deploying it yourself?
 The fastest path is the Cloudflare deployment. Apply the database migrations, deploy the worker,
@@ -22,7 +22,7 @@ then build and publish the Nuxt frontend. Full steps are in
 
 ## 1. Sign in and open a workspace
 
-Open your Cat-Factory frontend and sign in with GitHub. You land in a **workspace**, the
+Open your Cat Factory frontend and sign in with GitHub. You land in a **workspace**, the
 container for your boards, repositories, and budget. Create a new workspace or join an existing
 one if your organization already has them.
 
@@ -64,7 +64,7 @@ See [Running Pipelines](./running-pipelines.md).
 ## 5. Review and merge the pull request
 
 The coding agent clones the repo into an ephemeral container and implements the task, committing to
-a deterministic branch; Cat-Factory then pushes it, opens a **pull request**, and drives CI. The
+a deterministic branch; Cat Factory then pushes it, opens a **pull request**, and drives CI. The
 **Tester**, **Conflicts Gate**, **CI Gate**, and **Merger** steps validate and prepare the PR.
 
 You review the PR like any other. When you **merge**, the block flips to **Done** and the board
@@ -80,5 +80,5 @@ Design board  →  Attach requirements  →  Run pipeline  →  Review PR  →  
      └──────────────────────────  iterate on the next block  ◀──────────────────────────┘
 ```
 
-That's the whole cycle. From here, dig into the [Using Cat-Factory](./designing-your-board.md)
+That's the whole cycle. From here, dig into the [Using Cat Factory](./designing-your-board.md)
 guides for each stage, or set up [Budgets](./budgets.md) before you turn agents loose at scale.

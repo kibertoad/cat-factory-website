@@ -1,6 +1,6 @@
 # Deploy to Cloudflare
 
-Cloudflare is the reference deployment for Cat-Factory. The backend runs as a Worker with D1,
+Cloudflare is the reference deployment for Cat Factory. The backend runs as a Worker with D1,
 Durable Objects, and Workflows. The frontend is a Nuxt SPA on Cloudflare Pages, and per-run coding
 work executes in Cloudflare Containers.
 

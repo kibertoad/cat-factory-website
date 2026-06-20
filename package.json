@@ -1,7 +1,7 @@
 {
   "name": "cat-factory-website",
   "version": "1.0.0",
-  "description": "Documentation site for Cat-Factory — the software development agent management platform.",
+  "description": "Documentation site for Cat Factory — the software development agent management platform.",
   "type": "module",
   "license": "MIT",
   "packageManager": "pnpm@11.8.0",
