@@ -20,7 +20,7 @@ features:
   - title: Human in the loop
     details: A reviewer agent flags open questions and risky assumptions before code is written. You answer the questions, approve the plan, and review every PR before merge.
   - title: Durable & observable
-    details: Runs are checkpointed and stream live progress over WebSockets, with no polling. Watch each step, decision prompt, and failure as it happens.
+    details: Runs are checkpointed, so they survive interruptions and resume where they left off. Watch each step, decision prompt, and failure as it happens.
   - title: Cost under control
     details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
 footer: MIT Licensed | Copyright © Cat Factory contributors

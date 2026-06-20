@@ -45,7 +45,7 @@ list as the plan. Cat Factory is built around three ideas:
 | **Recurring pipelines** | Schedule maintenance (dependency updates, tech-debt passes) to re-run a pipeline on a cadence. |
 | **Integrations** | GitHub App for repo/PR/issue operations; import context from Jira, GitHub Issues, Confluence, Notion, and GitHub repo docs. |
 | **Spend control** | Organization-wide monthly LLM budget with metering, prompt caching, auto-pause at the cap, and rollover resumption. |
-| **Observability** | WebSocket event streaming of every step, decision, failure, and spend update, with no polling. |
+| **Observability** | Watch every step, decision, failure, and spend update as it happens, streamed live over WebSockets. |
 
 ## How it fits together
 
