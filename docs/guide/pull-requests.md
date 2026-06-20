@@ -12,10 +12,11 @@ During the **Coder** step, an agent:
 2. Implements the task from its (reviewed) [requirements](./requirements.md).
 3. **Commits its own work** to a dedicated per-task branch and validates locally.
 
-The agent never needs push credentials: Cat Factory owns the delivery contract. The platform
-pushes the branch, opens the **pull request**, and drives your existing CI/CD. Because the
-branch is deterministic and checkpointed, a retried or resumed run continues on the same branch and
-PR rather than starting over.
+The agent never receives push credentials. It only commits; the **harness** that runs it owns
+delivery, using the run's scoped installation token to push the branch and open the **pull
+request**, after which your existing CI/CD takes over. Because the branch is deterministic and
+checkpointed, a retried or resumed run continues on the same branch and PR rather than starting
+over.
 
 The **Tester** step then validates the change before the closing automation runs.
 
