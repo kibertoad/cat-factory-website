@@ -44,7 +44,16 @@ infrastructure adapters differ:
 | **Database** | D1 | PostgreSQL (via Drizzle) |
 | **Durable execution** | Cloudflare Workflows | pg-boss |
 | **Event streaming** | Durable Objects | HTTP WebSocket support |
-| **Run jobs** | Cloudflare Containers | Docker / Kubernetes / custom runner |
+| **Run jobs** | Cloudflare Containers | Self-hosted [runner pool](./runner-pools.md) |
+
+## Running coding agents
+
+The Node runtime has **no built-in per-run container**. Inline agent kinds (architect, reviewer,
+…) work out of the box, but the repo-operating kinds (coder, mocker, blueprints, ci-fixer,
+conflict-resolver, merger, requirements-writer, analysis) need a [runner pool](./runner-pools.md) to
+run in. Container execution turns on once the deployment has the GitHub App credentials, a public
+URL, a session secret, and a runner-pool encryption key configured; until then, container kinds
+**fail loudly** rather than faking success. See [Configuration](./configuration.md#node-container-execution).
 
 ## Node.js topology
 

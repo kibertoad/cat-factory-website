@@ -42,8 +42,10 @@ export default defineUserConfig({
         text: 'Using Cat-Factory',
         children: [
           '/guide/designing-your-board.md',
+          '/guide/shared-services.md',
           '/guide/requirements.md',
           '/guide/running-pipelines.md',
+          '/guide/recurring-pipelines.md',
           '/guide/pull-requests.md',
           '/guide/repositories.md',
           '/guide/issue-sources.md',
@@ -65,7 +67,7 @@ export default defineUserConfig({
         text: 'Reference',
         children: [
           '/reference/architecture.md',
-          '/reference/http-api.md',
+          '/reference/manifests.md',
           '/reference/data-model.md',
           '/reference/packages.md',
         ],
@@ -88,8 +90,10 @@ export default defineUserConfig({
           collapsible: false,
           children: [
             '/guide/designing-your-board.md',
+            '/guide/shared-services.md',
             '/guide/requirements.md',
             '/guide/running-pipelines.md',
+            '/guide/recurring-pipelines.md',
             '/guide/pull-requests.md',
             '/guide/repositories.md',
             '/guide/issue-sources.md',
@@ -117,7 +121,7 @@ export default defineUserConfig({
           collapsible: false,
           children: [
             '/reference/architecture.md',
-            '/reference/http-api.md',
+            '/reference/manifests.md',
             '/reference/data-model.md',
             '/reference/packages.md',
           ],

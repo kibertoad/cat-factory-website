@@ -49,7 +49,7 @@ pnpm deploy
 - **New here?** Start with the [Introduction](/guide/introduction.html) and [Core Concepts](/guide/core-concepts.html).
 - **Want it running?** Follow the [Quick Start](/guide/quick-start.html) or pick a deployment target under [Deploy & Operate](/deploy/cloudflare.html).
 - **Daily driver?** Jump into [Designing Your Board](/guide/designing-your-board.html) and [Running Pipelines](/guide/running-pipelines.html).
-- **Integrating?** See the [HTTP API](/reference/http-api.html) and [Architecture](/reference/architecture.html) reference.
+- **Integrating your infra?** See [Integration Manifests](/reference/manifests.html) and the [Architecture](/reference/architecture.html) reference.
 
 ::: tip A note on scope
 This site documents how to **deploy and use** Cat-Factory. For source code, issues, and

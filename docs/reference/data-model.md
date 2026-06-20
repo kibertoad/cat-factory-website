@@ -1,8 +1,8 @@
 # Data Model
 
-Wire formats are defined in `@cat-factory/contracts` and validated with
-[Valibot](https://valibot.dev/). These are the core domain shapes you'll encounter in the
-[HTTP API](./http-api.md).
+This is a reference for the **core domain shapes** Cat-Factory tracks — what a block, a run, a
+service, a schedule, and the requirements document actually contain. It's handy when reasoning about
+what the board is modelling; you don't need it to use the platform.
 
 ## Block
 
@@ -11,71 +11,186 @@ A node on the board — a service, module, or task.
 ```typescript
 {
   id: string
-  level: 'frame' | 'subframe' | 'leaf'
   title: string
+  type: 'frontend' | 'service' | 'api' | 'database' | 'queue' | 'integration' | 'external' | 'environment'
   description: string
-  status: 'backlog' | 'active' | 'in-review' | 'done'
-  repoId?: string
-  modelId?: string
-  parentId?: string
+  position: { x: number; y: number }
+  size?: { w: number; h: number }          // dragged frame size; absent = auto-size
+  status: 'planned' | 'ready' | 'in_progress' | 'blocked' | 'pr_ready' | 'done'
+  progress: number
+  level: 'frame' | 'module' | 'task'
+  parentId: string | null
+  dependsOn: string[]
+  executionId: string | null
+  modelId?: string                          // pinned model (overrides routing)
+  pipelineId?: string                       // pipeline chosen for this task
+  fragmentIds?: string[]                    // selected prompt fragments
+  mergePresetId?: string                    // auto-merge threshold preset
+  testTarget?: 'github_actions' | 'ephemeral_env'
+  pullRequest?: { url: string; number?: number; branch?: string }
 }
 ```
 
 | Field | Notes |
 | --- | --- |
-| `level` | `frame` = service, `subframe` = module, `leaf` = task. |
-| `status` | Lifecycle: `backlog → active → in-review → done`. |
-| `repoId` | Linked repository (typically set on `frame` blocks). |
-| `modelId` | Default model for runs on this block. |
-| `parentId` | Parent block; absent for top-level frames. |
+| `level` | `frame` = service, `module` = module, `task` = task. |
+| `status` | `blocked` = paused for a decision; `pr_ready` = PR open awaiting review. |
+| `modelId` | Pins the model; otherwise resolution falls to the workspace default, then routing. |
+| `pullRequest` | Set once the implementation agent's branch is pushed and a PR is opened. |
 
-## Run
+## Pipeline
 
-An immutable execution record for a pipeline invoked on a block.
+A reusable, ordered chain of agent steps.
+
+```typescript
+{
+  id: string
+  name: string
+  agentKinds: string[]        // open set — built-in or custom kinds
+  gates?: boolean[]           // per-step human-approval gates, parallel to agentKinds
+}
+```
+
+## Execution
+
+The execution record for a pipeline invoked on a block (the board surfaces it as the block's
+**run**).
 
 ```typescript
 {
   id: string
   blockId: string
   pipelineId: string
-  status: 'queued' | 'running' | 'passed' | 'failed'
-  steps: Step[]
-  createdAt: Date
+  pipelineName: string
+  steps: PipelineStep[]
+  currentStep: number
+  status: 'running' | 'blocked' | 'done' | 'paused' | 'failed'
+  failure?: { kind: string; ... } | null     // diagnostics when status is 'failed'
 }
 ```
 
-## Step
+## PipelineStep
 
-A single stage within a run, handled by one agent kind.
+A single stage within an execution, handled by one agent kind.
 
 ```typescript
 {
-  kind: 'architect' | 'coder' | 'reviewer' | 'tester' | ...
-  status: 'pending' | 'in-progress' | 'paused-for-decision' | 'complete'
-  decision?: { prompt: string; answers: Record<string, string> }
+  agentKind: string
+  state: 'pending' | 'working' | 'waiting_decision' | 'done'
+  progress: number
+  requiresApproval?: boolean                  // a human gate fires after this step
+  decision: { ... } | null                    // present when waiting on a decision
+  ci?: { ... } | null                         // live CI-gate state on a `ci` step
+  conflicts?: { ... } | null                  // live conflict-gate state on a `conflicts` step
+  metrics?: { ... } | null                    // LLM observability rollup (tokens, cache hits)
+  output?: string                             // text the agent produced
+  model?: string
 }
 ```
 
-Other `kind` values include `blueprints`, `acceptance`, `mocker`, `playwright`, `deployer`, and
-`custom`. When `status` is `paused-for-decision`, the `decision` object carries the prompt and the
-answers you submit.
+## Service & WorkspaceMount
+
+The [in-org shared-services](../guide/shared-services.md) types.
+
+```typescript
+// Account-owned canonical unit of work.
+Service {
+  id: string
+  accountId: string | null
+  frameBlockId: string
+  installationId: number | null               // GitHub App installation, when connected
+  repoGithubId: number | null
+  createdAt: number
+  mountCount?: number                          // set on the catalog, for the "Shared" badge
+}
+
+// A service placed onto a workspace board; PK (workspaceId, serviceId).
+WorkspaceMount {
+  workspaceId: string
+  serviceId: string
+  position: { x: number; y: number }           // per-board frame layout override
+  size?: { w: number; h: number } | null
+  createdAt: number
+}
+```
+
+## PipelineSchedule
+
+A [recurring pipeline](../guide/recurring-pipelines.md) attached to a service.
+
+```typescript
+{
+  id: string
+  serviceId: string | null
+  blockId: string                              // the reused on-board task block
+  frameId: string
+  pipelineId: string
+  template: 'dep-update' | 'tech-debt' | 'custom'
+  name: string
+  recurrence: {
+    intervalHours: number
+    weekdays: number[]                         // 0=Sun..6=Sat; empty = every day
+    windowStartHour: number | null
+    windowEndHour: number | null
+    timezone: string                           // IANA zone, e.g. "Europe/Helsinki"
+  }
+  enabled: boolean
+  lastRunAt: number | null
+  nextRunAt: number
+  createdAt: number
+}
+```
+
+## RequirementsDoc
+
+The canonical tree behind the in-repo `requirements/requirements.json`
+([requirements](../guide/requirements.md#the-unified-in-repo-requirements-document)).
+
+```typescript
+{
+  service: string
+  summary?: string
+  groups?: Array<{                             // each group → one .feature file
+    name: string
+    summary?: string
+    requirements?: Array<{
+      id: string
+      title: string
+      statement: string                        // "The system SHALL …"
+      kind: 'functional' | 'nonfunctional' | 'constraint'
+      priority: 'must' | 'should' | 'could'    // MoSCoW
+      sourceBlockIds?: string[]                // provenance
+      acceptance?: Array<{ id: string; given: string; when: string; outcome: string }>
+    }>
+  }>
+  rules?: Array<{ id: string; rule: string; rationale?: string; sourceBlockIds?: string[] }>
+}
+```
+
+## Workspace settings
+
+```typescript
+ModelDefaults    { defaults: Record<string /* agent kind */, string /* model id */> }
+TrackerSettings  { tracker: 'github' | 'jira' | null; jiraProjectKey: string | null; updatedAt: number }
+```
+
+The full **workspace snapshot** the board loads bundles the board itself (`blocks`, `pipelines`,
+`executions`) together with `mounts`, `serviceCatalog`, `mergePresets`, `modelDefaults`,
+`recurringPipelines`, `trackerSettings`, `notifications`, and `spend`.
 
 ## Relationships
 
 ```
-Workspace
-  └─ Block (frame)            level: 'frame'      → linked repo
-       └─ Block (subframe)    level: 'subframe'
-            └─ Block (leaf)   level: 'leaf'
-                 └─ Run
-                      └─ Step (architect → coder → … → acceptance)
+Account (org)
+  └─ Service                       ← account-owned; mounted onto workspaces
+       └─ Block (frame)            level: 'frame'      → linked repo
+            └─ Block (module)      level: 'module'
+                 └─ Block (task)   level: 'task'
+                      ├─ Execution → PipelineStep (agentKind, state, …)
+                      └─ PipelineSchedule (recurring)
+Workspace ──mounts──▶ Service       (per-board frame layout on the mount)
 ```
-
-- A **block** belongs to a workspace and may have a parent block.
-- A **run** belongs to a block and references the pipeline it executes.
-- A **step** belongs to a run and may carry a decision prompt.
 
 ---
 
-See these types in action in the [HTTP API](./http-api.md), and where they live in code under
-[Packages](./packages.md).
+For how these pieces fit at runtime, see [Architecture](./architecture.md).

@@ -5,26 +5,38 @@ click into place.
 
 ## Blocks
 
-Everything on the board is a **block**. Blocks form a three-level hierarchy:
+Everything on the board is a **block**. Blocks form a three-level hierarchy, identified by their
+`level`:
 
 | Level | Represents | Role |
 | --- | --- | --- |
 | `frame` | A **service** | Top-level container, usually linked to one repository. |
-| `subframe` | A **module** | A mid-level grouping inside a service. |
-| `leaf` | A **task** | An implementation unit — the thing an agent actually builds. |
+| `module` | A **module** | A mid-level grouping inside a service. |
+| `task` | A **task** | An implementation unit — the thing an agent actually builds. |
 
-Each block carries a `title`, `description`, and `status`, and can reference a linked repository
-(`repoId`) and an assigned model (`modelId`). Blocks can be **reparented** by dragging them to a
-new parent. Deleting a block cascades to its children.
+Each block carries a `title`, `description`, and `status`, and can reference a linked model
+(`modelId`), a chosen pipeline (`pipelineId`), selected [prompt fragments](./prompt-fragments.md),
+and — once an agent opens one — its `pullRequest`. Blocks can be **reparented** by dragging them to
+a new parent. Deleting a block cascades to its children.
 
-A block moves through these statuses:
+A task moves through these statuses:
 
 ```
-backlog → active → in-review → done
+planned → ready → in_progress → (blocked) → pr_ready → done
 ```
+
+`blocked` means a step is paused waiting on a human **decision**, and `pr_ready` means a pull
+request is open and awaiting review/merge.
 
 **Dependency edges** between blocks express ordering and relationships — they are part of the
 design, not just decoration.
+
+## Services and mounts
+
+A **service** is the account-owned unit a service frame represents: the frame plus its whole
+subtree, its linked repository, its runs, and its sync. A **workspace** mounts the services it
+cares about, and the same service can be mounted onto several boards in an org as **one shared
+copy** rather than duplicated. See [Shared Services](./shared-services.md).
 
 ## Runs
 
@@ -38,18 +50,22 @@ of **steps**.
 ## Steps and pipelines
 
 A **pipeline** is a reusable, ordered chain of **steps**. Each step is handled by a specific kind
-of agent:
+of agent. The default **Full build** pipeline runs:
 
 ```
-architect → coder → blueprints → reviewer → tester → acceptance
+requirements → architect → requirements-writer → researcher → coder
+  → blueprints → tester → reviewer → conflicts → ci → merger
 ```
 
-Additional step kinds include `mocker`, `playwright`, `deployer`, and `custom`. A step has a
-`status` (`pending`, `in-progress`, `paused-for-decision`, `complete`) and may pause to ask you a
-question via a **decision prompt** before continuing.
+The `requirements` reviewer and the `architect` proposal pause for **human approval**; the rest run
+to completion. The closing trio is engine automation: **conflicts** keeps the PR mergeable with its
+base, **ci** gates it on green CI (looping a fixer agent on failure), and **merger** scores the PR
+and either auto-merges within the task's thresholds or raises a review notification.
 
-You choose the pipeline and can select a **model per step**, upgrading to a stronger provider
-(via your API keys) where it matters.
+Other agent kinds include `mocker`, `playwright`, `acceptance`, `documenter`, `integrator`,
+`analysis` (the tech-debt auditor), and `tracker` (files an issue/ticket). Agent kinds are an
+**open set** — a deployment can [register custom kinds](../reference/packages.md). You choose the
+pipeline and can select a **model per step**.
 
 ## Decision prompts
 
@@ -65,11 +81,26 @@ into the block's description and the run continues.
   who can see and act on its boards.
 - Repositories, credentials, and budgets are isolated **per workspace**.
 
+## Model selection
+
+The model an agent uses is resolved by precedence, so you can be as specific or as hands-off as you
+like:
+
+```
+block-pinned model  →  workspace per-kind default  →  deployment env routing  →  env default
+```
+
+A **workspace model default** lets you point a whole agent kind at a model (e.g. a strong model for
+`architect`, a cheap one for `tester`) without pinning every block. See
+[Running Pipelines](./running-pipelines.md#choosing-models).
+
 ## Repositories
 
 Services link to Git repositories. Cat-Factory can also **bootstrap** a new repository from a
 reference architecture, and **reconcile** an existing repository's structure back onto the board
-via service blueprints (`service → modules → features` maps stored in-repo).
+via service blueprints (`service → modules → features` maps stored in-repo). Alongside the
+descriptive blueprint, a service also keeps a prescriptive [requirements](./requirements.md)
+document in-repo under `requirements/`.
 
 ## Prompt fragments
 

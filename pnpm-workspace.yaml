@@ -1,0 +1,6 @@
+# Allow these dependencies to run their install/build scripts.
+# pnpm blocks lifecycle scripts by default; esbuild (used by the Vite
+# bundler) and @parcel/watcher (used by `vuepress dev`) need theirs.
+allowBuilds:
+  esbuild: true
+  "@parcel/watcher": true

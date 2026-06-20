@@ -33,9 +33,11 @@ what "done" means:
 | **Visual planning** | A pannable, zoomable canvas with frames, modules, and tasks; drag-and-drop reparenting and dependency edges. |
 | **Agent pipelines** | Reusable, ordered chains of agent steps with per-block model selection and human decision points. |
 | **Real code** | Agents clone repos, implement work, and open PRs; merges flip blocks to "done". |
-| **Requirements review** | A stateless reviewer agent finds gaps, assumptions, and risks for you to answer before coding starts. |
-| **Integrations** | GitHub App for repo/PR/issue operations; import requirements from Jira, Linear, Confluence, and Notion. |
-| **Spend control** | Organization-wide monthly LLM budget with metering, auto-pause at the cap, and rollover resumption. |
+| **Requirements** | A reviewer agent finds gaps and risks per task; a requirements-writer keeps a unified, in-repo spec (with Gherkin scenarios) for the whole service. |
+| **Shared services** | A service is account-owned and can be mounted onto many teams' boards in an org as one shared, synced copy. |
+| **Recurring pipelines** | Schedule maintenance — dependency updates, tech-debt passes — to re-run a pipeline on a cadence. |
+| **Integrations** | GitHub App for repo/PR/issue operations; import context from Jira, GitHub Issues, Confluence, Notion, and GitHub repo docs. |
+| **Spend control** | Organization-wide monthly LLM budget with metering, prompt caching, auto-pause at the cap, and rollover resumption. |
 | **Observability** | WebSocket event streaming of every step, decision, failure, and spend update — no polling. |
 
 ## How it fits together

@@ -9,11 +9,15 @@ Every LLM call an agent makes is **metered** and added to your organization's ru
 This includes calls across all steps of all runs in the organization, regardless of which provider
 served them.
 
-Check current utilization at any time:
+A spend gauge in the dashboard shows current utilization at any time.
 
-```http
-GET /accounts/spend/current
-```
+## Prompt caching
+
+Container agents re-send their conversation prefix on every call. Cat-Factory injects a
+**prompt-cache key** (scoped to the execution) so that re-sent prefix is a **cache hit** on
+providers that support prompt caching, cutting the cost of long runs. The observability dashboard
+records **cached prompt tokens** and surfaces the actual cache-hit rate per run, alongside the
+effective request token ceiling, so you can see caching working.
 
 ## Setting a monthly budget
 

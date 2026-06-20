@@ -8,12 +8,18 @@ so you know where to look when extending or debugging the platform.
 | Package | Responsibility |
 | --- | --- |
 | `@cat-factory/app` | Nuxt SPA layer — board UI and Pinia stores. |
-| `@cat-factory/kernel` | Domain types, constants, repository ports. |
+| `@cat-factory/kernel` | Domain types, constants, repository ports, the pipeline registry (`registerPipeline`). |
 | `@cat-factory/orchestration` | Service composition root and workflow engines. |
-| `@cat-factory/agents` | Agent catalog, prompt composition, model-provider facade. |
-| `@cat-factory/server` | Runtime-neutral HTTP controllers and middleware. |
-| `@cat-factory/integrations` | GitHub, document sources, environments, runner pools. |
+| `@cat-factory/agents` | Agent catalog, prompt composition, model-provider facade, the agent-kind registry (`registerAgentKind`) and web-research/cache policy. |
+| `@cat-factory/server` | Runtime-neutral HTTP controllers, the shared agent-execution machinery (composite/container executors, runner-job client, GitHub App auth), and the web-search proxy. |
+| `@cat-factory/integrations` | GitHub, document/task sources, ticket trackers, environments, runner pools. |
 | `@cat-factory/contracts` | Wire formats, validated with Valibot. |
+
+::: tip Extending a deployment
+The model-provider, agent-kind, and pipeline registries are opt-in **extension seams** — a
+deployment (e.g. a proprietary org package) can mix in providers, agent kinds, and predefined
+pipelines without forking. See [Architecture → Extending a deployment](./architecture.md#extending-a-deployment).
+:::
 
 ## Internal (Docker / tooling)
 
@@ -73,7 +79,7 @@ quality, code-review accuracy, and implementation correctness, with a determinis
 
 ```bash
 cd backend/internal/benchmark-harness
-cat-bench --models claude-3-5-sonnet,gpt-4o --prompt-versions v1,v2
+cat-bench --models <model-a>,<model-b> --prompt-versions v1,v2
 ```
 
 ## Where to get help in the source repo

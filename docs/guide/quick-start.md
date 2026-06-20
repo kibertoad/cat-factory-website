@@ -43,10 +43,11 @@ reference architecture. See [Designing Your Board](./designing-your-board.md).
 Give a task enough context for an agent to succeed:
 
 - Write a clear description, **or**
-- Link an issue or document (Jira, Linear, GitHub issue, Confluence, Notion) and import it.
+- Use the **context picker** in the Add-task popup to search, paste, or link an issue or document
+  (Jira, GitHub Issues, Confluence, Notion, GitHub repo docs) and import it.
 
 Then trigger the **reviewer agent** to surface gaps, assumptions, and risks, and answer its
-questions. See [Requirements](./requirements.md) and [Issue Sources](./issue-sources.md).
+questions. See [Requirements](./requirements.md) and [Issue & Document Sources](./issue-sources.md).
 
 ## 4. Run an agent pipeline
 
@@ -61,8 +62,9 @@ See [Running Pipelines](./running-pipelines.md).
 
 ## 5. Review and merge the pull request
 
-The coding agent clones the repo into an ephemeral container, implements the task, and opens a
-**pull request** with CI. Tester and acceptance agents validate the output.
+The coding agent clones the repo into an ephemeral container and implements the task, committing to
+a deterministic branch; Cat-Factory then pushes it, opens a **pull request**, and drives CI. The
+tester, conflicts, CI, and merger steps validate and prepare the PR.
 
 You review the PR like any other. When you **merge**, the block flips to `done` and the board
 updates in real time. See [Pull Requests](./pull-requests.md).

@@ -4,6 +4,7 @@
   "description": "Documentation site for Cat-Factory — the software development agent management platform.",
   "type": "module",
   "license": "MIT",
+  "packageManager": "pnpm@11.8.0",
   "scripts": {
     "docs:dev": "vuepress dev docs",
     "docs:build": "vuepress build docs",

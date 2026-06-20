@@ -16,12 +16,6 @@ Repository, pull request, and issue operations all flow through a **GitHub App**
 
 Repositories are tracked **per workspace**, with credentials isolated to that workspace.
 
-List the repositories connected to a workspace:
-
-```http
-GET /repos
-```
-
 ## Linking an existing repository
 
 Link any repository the GitHub App can access to a service frame. From then on, runs on tasks
@@ -48,6 +42,10 @@ For existing repositories, the **blueprint agent** keeps board and code aligned:
 4. It **suggests structural updates and additions** so the board reflects reality.
 
 This is how an established codebase gets represented on the board without hand-modeling every piece.
+
+Blueprints are the **descriptive** in-repo artifact ("what the code is"). Their **prescriptive**
+counterpart — "what must be true" — is the [requirements](./requirements.md#the-unified-in-repo-requirements-document)
+document the `requirements-writer` keeps under `requirements/` in the same repo.
 
 ## Keeping in sync via webhooks
 

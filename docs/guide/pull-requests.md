@@ -9,12 +9,27 @@ closes the loop.
 During the `coder` step, an agent:
 
 1. Clones your repository into an **ephemeral container**.
-2. Implements the task from its (reviewed) requirements.
-3. Opens a **pull request** against your repo.
-4. Triggers your existing **CI/CD**, which Cat-Factory verifies.
+2. Implements the task from its (reviewed) [requirements](./requirements.md).
+3. **Commits its own work** to a deterministic branch (`cat-factory/<blockId>`) and validates
+   locally.
 
-The `tester` and `acceptance` steps then validate the change — running tests and confirming the
-output meets the task's acceptance criteria — before the PR is handed to you.
+The agent never needs push credentials: **Cat-Factory owns the delivery contract**. The platform
+pushes the branch, opens the **pull request**, and drives your existing **CI/CD** — and because the
+branch is deterministic and checkpointed, a retried or resumed run continues on the same branch and
+PR rather than starting over.
+
+The `tester` step then validates the change before the closing automation runs.
+
+## Conflicts, CI, and the merger
+
+The Full build pipeline finishes with three engine steps that prepare the PR for merge:
+
+- **conflicts** — keeps the PR mergeable with its base, looping a conflict-resolver agent to merge
+  the base in and resolve any conflicts on the same branch.
+- **ci** — gates the (now up-to-date) PR on **green CI**, looping a CI-fixer agent on failure.
+- **merger** — scores the PR on complexity, risk, and impact, then either **auto-merges** when the
+  scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
+  or raises a **review notification** for a human.
 
 ## Reviewing the PR
 

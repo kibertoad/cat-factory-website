@@ -26,15 +26,21 @@ Run starts
 
 ## Registering a provider
 
-Provide a manifest describing your environment provider:
+You describe your provider **declaratively, with a manifest** — there are no per-provider presets
+and no per-org code:
 
 | Field | Purpose |
 | --- | --- |
-| Provider **URL** | Base endpoint for the provider. |
-| **Provisioning API** | Called to spin up an environment. |
-| **Cleanup endpoints** | Called to tear the environment down. |
+| Base **URL** + auth scheme | Where to reach your management API and how to authenticate to it. |
+| **provision** template | Called to spin up an environment. |
+| **status** template | Polled until the environment is ready. |
+| **teardown** template | Called to tear the environment down. |
+| Response mapping | Maps your API's responses onto a canonical environment handle (e.g. its live URL). |
 
-This is enabled through the **Environment provider endpoints** feature toggle — see
+Credentials are referenced **by logical key**, never embedded — you supply the values at
+registration, where they're stored encrypted at rest. The manifest's structure is documented in
+[Integration Manifests](../reference/manifests.md#environment-provider-manifest), and it's enabled
+through the **Environment provider manifest** feature toggle — see
 [Configuration → Feature Toggles](./configuration.md#feature-toggles).
 
 ::: tip Automatic cleanup

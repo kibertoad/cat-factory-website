@@ -51,9 +51,11 @@ The Worker is wired up through bindings in `wrangler.toml`:
 | **D1 database** | Schema and application data. |
 | **Durable Objects** | Real-time, per-workspace event hubs. |
 | **Container image** | The executor harness image for per-run coding work. |
-| **Secrets** | Auth, GitHub App credentials, and model provider keys. |
+| **Secrets** | Auth, GitHub App credentials, model provider keys, and optional web-search / tracker keys. |
 
-For the full list of secrets and environment variables, see [Configuration](./configuration.md).
+For the full list of secrets and environment variables — including the opt-in
+[web search](./configuration.md#web-search) and [tracker](./configuration.md#issue-tracker--task-sources)
+settings — see [Configuration](./configuration.md).
 
 ## Production topology
 
