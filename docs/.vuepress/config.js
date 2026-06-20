@@ -4,8 +4,10 @@ import { searchPlugin } from '@vuepress/plugin-search'
 import { defineUserConfig } from 'vuepress'
 
 export default defineUserConfig({
-  // Deployed to GitHub Pages at https://<user>.github.io/cat-factory-website/
-  base: '/cat-factory-website/',
+  // Served from the custom domain root (catfactory.ai), so assets live at '/'.
+  // If you ever drop the custom domain and serve from
+  // https://<user>.github.io/cat-factory-website/, change this back to '/cat-factory-website/'.
+  base: '/',
   lang: 'en-US',
   title: 'Cat-Factory',
   description:
