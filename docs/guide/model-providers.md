@@ -29,22 +29,64 @@ it.
 
 ### Personal (individual-usage) subscriptions
 
-Claude, GLM, and ChatGPT/Codex are licensed for individual use only. Their terms forbid an
-organization from pooling one credential, so Cat Factory treats them as personal:
+Claude, GLM, and ChatGPT/Codex are licensed for **individual use only**. Anthropic's consumer
+Claude (Pro/Max), Z.ai's GLM Coding Plan, and a ChatGPT/Codex seat are each tied to one person, and
+their terms forbid sharing one credential across a team, at every tier (a ChatGPT Team or Enterprise
+plan hands out more individual seats, not one shared credential). Cat Factory honours that with a
+per-user mode rather than a workspace pool:
 
-- Each **user** connects their own credential, stored double-encrypted.
-- An organization workspace cannot pool Claude. To give a whole org access to Claude models, use a
-  direct `ANTHROPIC_API_KEY` instead.
+- Each **user** connects their own credential, and only that user's runs can use it.
+- These vendors are never poolable on any workspace, personal or org. To give a whole organization
+  access to Claude models, that is what a direct `ANTHROPIC_API_KEY` is for. Flagging a vendor as
+  individual-use routes orgs to API keys; it does not lock anyone out.
 
-When you start, retry, or approve a run that uses a personal subscription, Cat Factory asks for your
-**password** to unlock your credential for that run. The password is held briefly in the browser
-(so a burst of run interactions does not re-prompt each time) and the unlocked credential is cleared
-when the run finishes.
+### Why a personal password
+
+When a run will use one of your personal subscriptions, Cat Factory asks for a **personal password**
+to unlock it. It helps to be clear about what that password is and is not for.
+
+The password is about **intentionality, not security against attackers**. Your token is stored
+double-encrypted: the system seals it with the deployment's `ENCRYPTION_KEY`, and your password
+seals it again underneath. The system layer alone already protects your token against everyone who
+does not hold that key: an external attacker, a database leak, a curious teammate. Against those, the
+password adds nothing extra, because none of them have the system key in the first place.
+
+What the password actually buys is twofold:
+
+- It makes you **unlock your own credential on purpose**, so the system has no quiet way to pool an
+  individual-use token across a team. A teammate who triggers a run starts a *new* run under *their*
+  identity and is prompted for *their own* password, so they can never accidentally ride yours.
+  Ownership is enforced by construction: a run records who initiated it and the executor only ever
+  leases that user's credential.
+- Underneath the system key, it is a second factor at rest. The one actor it guards against is a
+  holder of the system key (an operator or insider), and defending against that actor is an explicit
+  non-goal here, since anyone running the deployment could capture secrets regardless.
+
+### How unlocking works in practice
+
+You are not re-prompted on every action. After you enter it once, the password is cached in your
+browser for about 8 hours, so starting, retrying, and approving runs ride along without asking
+again. The server never stores the password; it travels as a request header, never in a saved record.
+
+Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to
+that one run) so the asynchronous container steps can authenticate while you are away. That
+activation is deleted the moment the run finishes, and a healthy run that you keep tending re-mints
+it on each interaction, so the activation only ever expires on a stuck or abandoned run, not a live
+one. A background sweep reclaims any stragglers.
+
+### Responsible use
+
+- Connect **only your own** subscription, and only where its terms permit individual use. For
+  organization-wide use, use a direct provider API key instead.
+- Use a **strong password**. It is the second factor protecting your token at rest and is never
+  recoverable from the server: if you forget it, you reconnect the subscription. All your personal
+  subscriptions share one password, so a run that touches several unlocks them together.
+- Don't pin individual-usage models on work meant to run **unattended**.
 
 ::: tip Recurring pipelines can't use personal subscriptions
 A [scheduled pipeline](./recurring-pipelines.md) fires with no one present to enter a password, so
-it cannot use an individual-usage vendor. Point recurring work at a pooled subscription, a direct
-API key, or the Cloudflare tier.
+Cat Factory refuses to start one that resolves to an individual-usage model. Point recurring work at
+a pooled subscription, a direct API key, or the Cloudflare default.
 :::
 
 ## Subscription-only models
