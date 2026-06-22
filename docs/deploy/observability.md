@@ -16,6 +16,14 @@ Every LLM call is metered, with no configuration required. Beyond the spend tota
 
 This data is stored in your own database (D1 on Cloudflare, PostgreSQL on Node and local).
 
+The **Model activity** panel streams calls live: each call appears the moment the proxy records it,
+pushed over the workspace event stream rather than fetched once when the panel opens. Because the
+proxy records independently of the run's execution driver, model activity keeps updating even if the
+driver stalls, which distinguishes a healthy agent from a wedged one. The live rows carry only
+compact telemetry; the full prompt and response load on demand when you expand a call. Live updates
+ride the workspace realtime stream (the Cloudflare deployment today); every runtime still records the
+same calls to the database, so the panel is accurate on open everywhere.
+
 ## Controlling prompt retention
 
 By default each recorded metric keeps the full prompt sent to the model. For deployments that must

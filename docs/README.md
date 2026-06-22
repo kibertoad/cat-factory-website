@@ -24,7 +24,7 @@ features:
   - title: Cost under control
     details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
   - title: Run it on your laptop
-    details: Local mode runs the whole platform on one machine: orchestrator, agent containers, and a local database. Real clones, real CI, real merged PRs, with no cloud account or runner pool to stand up first.
+    details: Local mode runs the whole platform on one machine, with the orchestrator, agent containers, and a local database side by side. Real clones, real CI, real merged PRs, with no cloud account or runner pool to stand up first.
   - title: Bring your own subscription
     details: Run agents on a coding plan you already pay for (Claude, GLM, or ChatGPT/Codex) instead of metered API spend. Kept per-user by design, so each vendor's individual-use terms stay respected.
   - title: Maintenance on a schedule

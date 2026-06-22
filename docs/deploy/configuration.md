@@ -6,15 +6,24 @@ service wiring, and feature toggles.
 
 ## Authentication
 
-GitHub is the identity provider and the source of repository access. A single [GitHub
-App](./github-app.md) supplies both: its OAuth credentials drive "Login with GitHub", and its App
-ID + private key mint the per-installation tokens used for repository operations.
+A deployment can offer three sign-in providers in any combination: GitHub OAuth, Google OAuth, and
+email/password. Auth turns on as soon as **any** provider is configured together with a strong
+`AUTH_SESSION_SECRET`; each provider stays off until its own credentials are present. Regardless of
+how people sign in, repository access comes from the [GitHub App](./github-app.md) installation, not
+a user's own GitHub token, so a Google- or password-only user works fully. For who is allowed to
+create an account and how roles and invitations work, see
+[Members, Roles & Invitations](../guide/team-and-access.md).
 
 | Variable | Purpose |
 | --- | --- |
+| `AUTH_SESSION_SECRET` | Signs session tokens (≥ 32 chars). Auth fails closed without it, whichever providers are set. |
 | `GITHUB_OAUTH_CLIENT_ID` | The GitHub App's OAuth client ID, for "Login with GitHub". |
 | `GITHUB_OAUTH_CLIENT_SECRET` | The App's OAuth client secret. |
-| `AUTH_SESSION_SECRET` | Signs session tokens (≥ 32 chars). Login fails closed without it. |
+| `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID. Both Google vars must be set, or Google login stays off. |
+| `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret. |
+| `GOOGLE_OAUTH_REDIRECT_URL` | Optional. Explicit callback; defaults to `${origin}/auth/google/callback`. |
+| `AUTH_PASSWORD_ENABLED` | Set to `true` to offer email/password signup and login. |
+| `AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated domains allowed to self-sign-up without an invite (password/Google). Empty means invite-only. |
 | `GITHUB_APP_ID` | Identifies the GitHub App used for repository operations. |
 | `GITHUB_APP_PRIVATE_KEY` | PKCS#8 private key that signs App requests and mints installation tokens. |
 | `GITHUB_WEBHOOK_SECRET` | Verifies inbound webhook payloads. |
@@ -23,6 +32,10 @@ ID + private key mint the per-installation tokens used for repository operations
 | `GITHUB_OAUTH_BASE` | OAuth host. Defaults to `https://github.com`; override for GitHub Enterprise. |
 | `GITHUB_PRIVILEGED_APP_ID` | Optional second App that can create org repos. See [Programmatic repository creation](./github-app.md#programmatic-repository-creation-optional). |
 | `GITHUB_PRIVILEGED_APP_PRIVATE_KEY` | PKCS#8 private key for the privileged App. Both vars must be set, or the tier stays off. |
+
+New-user creation is invite-only unless an email domain is allowlisted: a person gets in by
+redeeming an email invitation or by signing up with an address on `AUTH_ALLOWED_EMAIL_DOMAINS`. With
+neither, signup is refused.
 
 ## LLM providers
 
@@ -155,6 +168,20 @@ setup is in [Notifications](./notifications.md).
 | `SLACK_ENABLED` | Set to `true` to make Slack available. Requires `ENCRYPTION_KEY`. |
 | `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Optional. Enable the OAuth "Add to Slack" flow; without them, operators paste a bot token by hand. |
 | `SLACK_REDIRECT_URL` | Optional OAuth callback, e.g. `https://your-host/slack/oauth/callback`. |
+
+## Email (invitations)
+
+Email carries [invitation](../guide/team-and-access.md#inviting-teammates) links. It is opt-in at the
+deployment level; the provider, API key, and From address are then onboarded **per account in the
+UI** and stored sealed in the database (like the Slack bot token), not read from env. Adapters exist
+for SendGrid and Resend. With email off or no sender connected, invitations still work: the accept
+link is returned for manual sharing.
+
+| Variable | Purpose |
+| --- | --- |
+| `EMAIL_ENABLED` | Set to `true` to make the email feature available. Requires an encryption key. |
+| `APP_BASE_URL` | The SPA origin that invitation accept links point at. Falls back to `AUTH_SUCCESS_REDIRECT_URL`. |
+| `EMAIL_ENCRYPTION_KEY` | Optional. Seals the per-account email API key at rest; falls back to the shared `ENCRYPTION_KEY`. |
 
 ## Feature toggles
 

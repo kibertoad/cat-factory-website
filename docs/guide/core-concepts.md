@@ -75,11 +75,13 @@ into the block's description and the run continues.
 
 ## Workspaces and accounts
 
-- An **account** is the top-level owner you sign in to with GitHub. It can be a **personal account**
-  (one per GitHub login) or a shared **organization account** with multiple members. Either way it
-  owns shared services and account-wide standards, and spans all of its workspaces.
+- An **account** is the top-level owner you work under. It can be a **personal account** (one per
+  user) or a shared **organization account** with multiple members holding an **owner** or
+  **member** role. Either way it owns shared services and account-wide standards, and spans all of
+  its workspaces. You sign in with GitHub, Google, or email/password, and owners bring teammates in
+  by email invitation. See [Members, Roles & Invitations](./team-and-access.md).
 - A **workspace** is a per-team, per-project container with **membership controls** that determine
-  who can see and act on its boards.
+  who can see and act on its boards. Boards carry a name and description.
 - Repositories and credentials are isolated **per workspace**; the LLM **budget** is metered
   account-wide (across all workspaces in the organization).
 
