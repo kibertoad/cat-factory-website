@@ -26,15 +26,16 @@ ID + private key mint the per-installation tokens used for repository operations
 
 ## LLM providers
 
-Supply credentials for the providers you want to use. With none set, Cat Factory falls back to the
-free Cloudflare Workers AI tier.
+Supply credentials for the providers you want to use. With none set, Cat Factory falls back to
+Cloudflare Workers AI, which needs no provider key (it runs on your Cloudflare account's Workers AI
+allowance and pricing).
 
 | Variable | Provider |
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Claude API access. |
 | `OPENAI_API_KEY` | OpenAI model access. |
 | `QWEN_API_KEY` / `DEEPSEEK_API_KEY` / `MOONSHOT_API_KEY` | OpenAI-compatible vendors. |
-| `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | Cloudflare Workers AI over REST (default cost-free tier; optional `CLOUDFLARE_AI_GATEWAY`). |
+| `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | Cloudflare Workers AI over REST (the default tier, no provider key; optional `CLOUDFLARE_AI_GATEWAY`). |
 | `BEDROCK_REGION` + AWS credentials + `BEDROCK_MODELS` | AWS Bedrock, via `@cat-factory/provider-bedrock`. |
 
 Unconfigured providers simply aren't registered. Default routing is tunable with
@@ -42,12 +43,36 @@ Unconfigured providers simply aren't registered. Default routing is tunable with
 `AGENT_MAX_OUTPUT_TOKENS`; a workspace can override the model per agent kind at runtime (see
 [Choosing models](../guide/running-pipelines.md#choosing-models)).
 
+Besides direct API keys, workspaces and users can connect coding-plan **subscriptions** (Claude,
+GLM, Kimi, DeepSeek, ChatGPT/Codex) through the UI. Those need no provider env vars; they only
+need `ENCRYPTION_KEY` set so the tokens can be stored encrypted. See
+[Model Providers & Subscriptions](../guide/model-providers.md).
+
+## Credential encryption
+
+One shared master key encrypts every integration's per-workspace credentials at rest: connected
+Jira sites, runner-pool API tokens, environment-provider auth, Slack bot tokens, and pooled or
+personal model subscriptions. The cipher domain-separates per integration internally, so a single
+key is safe across all of them.
+
+| Variable | Purpose |
+| --- | --- |
+| `ENCRYPTION_KEY` | Base64 key, ≥ 32 bytes decoded (`openssl rand -base64 32`). Required. The always-on Jira task-source integration fails to boot with a loud config error until it is set. |
+
+::: warning One key, not four
+Earlier builds used separate `DOCUMENTS_ENCRYPTION_KEY`, `TASKS_ENCRYPTION_KEY`,
+`ENVIRONMENTS_ENCRYPTION_KEY`, and `RUNNERS_ENCRYPTION_KEY` values. These are gone. Provision a
+single `ENCRYPTION_KEY` instead. Use the same key value across restarts and replicas, or existing
+encrypted credentials become unreadable.
+:::
+
 ## Infrastructure
 
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string (Node.js deployment only). |
 | Container image registry + pull credentials | Source of the executor-harness image. |
+| `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |
 | Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
 
 ## Node container execution
@@ -62,7 +87,7 @@ fail loudly instead of faking success:
 | `GITHUB_APP_ID` + `GITHUB_APP_PRIVATE_KEY` | Mint short-lived per-run GitHub installation tokens. |
 | `PUBLIC_URL` | The backend's externally reachable URL (runners call back to it). |
 | `AUTH_SESSION_SECRET` | Session secret (also required for real auth). |
-| `RUNNERS_ENCRYPTION_KEY` | Encrypts the runner-pool credentials stored at rest. |
+| `ENCRYPTION_KEY` | Encrypts the runner-pool credentials stored at rest (the shared master key above). |
 
 ## Service configuration
 
@@ -87,30 +112,64 @@ proxy.
 
 Inline search only takes effect on providers with a hosted search tool (Anthropic / OpenAI).
 
-## Issue tracker & task sources
+## Document & task sources
 
-The tech-debt [recurring pipeline](../guide/recurring-pipelines.md) files a ticket through the
-workspace's chosen tracker. GitHub Issues rides the per-tenant GitHub App installation (no env).
-Jira is opt-in and stores each tenant's own credentials encrypted at rest:
+Document sources (Confluence, Notion, GitHub repo docs) and the Jira task source are **always on**:
+they ship enabled and each workspace connects its own site through the UI, with credentials stored
+encrypted under `ENCRYPTION_KEY`. There is no per-integration enable flag anymore. The integrations
+fail loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning errors later.
 
 | Variable | Purpose |
 | --- | --- |
-| `TASKS_ENABLED` | Turns on the task-source integration. |
-| `TASKS_ENCRYPTION_KEY` | Base64 key (≥ 32 bytes) encrypting tenant tracker credentials. Fail-closed: no key, no integration. |
-| `TASK_SOURCES` | Comma-separated sources to enable (Node supports `jira` today). |
+| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to all (`confluence,notion,github`). |
+| `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
+| `TASK_SOURCES` | Comma-separated task sources to enable. Node supports `jira` today. GitHub Issues rides the per-tenant GitHub App installation and needs no env. |
+
+The tech-debt [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the
+workspace's chosen tracker (see [Issue & Document Sources](../guide/issue-sources.md)).
+
+## Observability
+
+Every model call is metered for the spend gauge and the in-app observability dashboard. Two
+optional settings tune what is recorded and where it is sent. Both are covered in depth in
+[Observability](./observability.md).
+
+| Variable | Purpose |
+| --- | --- |
+| `LLM_RECORD_PROMPTS` | Set to `false` to drop prompt text from recorded metrics (tokens, timing, finish reason, and counts are still kept). Defaults to recording prompts. |
+| `LANGFUSE_ENABLED` | Set to `true` to stream every LLM call to Langfuse as a trace. Off by default. |
+| `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | Langfuse project keys (`pk-lf-…` / `sk-lf-…`). Both required when enabled. |
+| `LANGFUSE_BASE_URL` | Langfuse host. Optional; defaults to `https://cloud.langfuse.com`. |
+
+Langfuse honours `LLM_RECORD_PROMPTS`: with prompts off, the traces carry only numeric telemetry.
+
+## Notifications (Slack)
+
+Board notifications (merge reviews, pipeline completions, CI failures, requirement reviews) land in
+the in-app inbox by default. Slack is an optional extra transport. It is opt-in, each workspace
+connects its own Slack from the UI, and the bot token is encrypted under `ENCRYPTION_KEY`. Full
+setup is in [Notifications](./notifications.md).
+
+| Variable | Purpose |
+| --- | --- |
+| `SLACK_ENABLED` | Set to `true` to make Slack available. Requires `ENCRYPTION_KEY`. |
+| `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Optional. Enable the OAuth "Add to Slack" flow; without them, operators paste a bot token by hand. |
+| `SLACK_REDIRECT_URL` | Optional OAuth callback, e.g. `https://your-host/slack/oauth/callback`. |
 
 ## Feature toggles
 
-Enable optional integrations and providers:
+Optional integrations enabled by their own flag:
 
-- Document source integrations: Confluence and Notion APIs, plus GitHub repo docs (see [Issue & Document Sources](../guide/issue-sources.md)).
-- Environment provider manifest, for ephemeral preview environments (see [Environments](./environments.md)).
-- Prompt-fragment library source repository, to version [prompt fragments](../guide/prompt-fragments.md) in Git.
+| Variable | Purpose |
+| --- | --- |
+| `ENVIRONMENTS_ENABLED` | Set to `true` for ephemeral preview environments (also requires `ENCRYPTION_KEY`). See [Environments](./environments.md). |
+| `PROMPT_LIBRARY_ENABLED` | Set to `true` to source [prompt fragments](../guide/prompt-fragments.md) from a Git library repository. |
 
-::: warning Treat all of these as secrets
-Provider keys, the GitHub App private key, and the webhook secret are sensitive. On Cloudflare,
-set them as **secret bindings** (`wrangler secret put …`); on Node.js, keep them in your
-`.env`/secret manager and never commit them.
+::: warning Treat secrets as secrets
+Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse
+secret key, and the webhook secret are all sensitive. On Cloudflare, set them as **secret
+bindings** (`wrangler secret put …`); on Node.js and local, keep them in your `.env` / secret
+manager and never commit them.
 :::
 
 ---

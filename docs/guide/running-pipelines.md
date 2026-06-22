@@ -26,12 +26,12 @@ Requirements Reviewer → Architect → Requirements Writer → Researcher → C
 | **CI Gate** | Gates the PR on green CI, looping a CI Fixer agent on failure. |
 | **Merger** | Scores the PR and auto-merges within thresholds, or raises a review notification. |
 
-Other built-in pipelines include **Quick implement**, **Map service** (run after bootstrap),
-**Write requirements**, and the recurring presets **Dependency updates** / **Tech debt** (see
-[Recurring Pipelines](./recurring-pipelines.md)). Additional agent kinds include the **Mock
-Builder**, **Acceptance Test Author**, **Acceptance Author**, **Documenter**, **Integrator**, and a
-tech-debt analysis step; a deployment can also
-[register custom kinds and pipelines](../reference/packages.md).
+Other built-in pipelines include **Quick implement**, **Complex fullstack feature**, **Map
+service** (run after bootstrap), **Write requirements**, and the recurring presets **Dependency
+updates** / **Tech debt** (see [Recurring Pipelines](./recurring-pipelines.md)). Additional agent
+kinds include the **Mock Builder**, **Fixer** (loops on failing tests), **Acceptance Test Author**,
+**Acceptance Author**, **Documenter**, **Integrator**, and a tech-debt analysis step; a deployment
+can also [register custom kinds and pipelines](../reference/packages.md).
 
 ## Starting a run
 
@@ -42,6 +42,12 @@ From a selected block, start a run:
 3. **Launch** - the run is created and begins streaming progress.
 
 Each agent runs on its kind's default model - see [Choosing models](#choosing-models) below.
+
+::: tip Personal subscriptions ask for a password
+If a step uses a model from a personal (individual-usage) subscription such as Claude, GLM, or
+Codex, starting or retrying the run prompts for your password to unlock that credential. See
+[Model Providers & Subscriptions](./model-providers.md).
+:::
 
 ## Choosing models
 
