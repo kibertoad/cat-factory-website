@@ -2,7 +2,7 @@
 home: true
 title: Home
 heroText: Cat Factory
-tagline: A visual board, task management, and LLM coding agents in one place. Turn tasks into reviewed pull requests you can watch run end to end.
+tagline: A visual board, task management, and LLM coding agents in one place. Turn tasks into reviewed pull requests you can watch run end to end. Run it on your own machine, on the coding subscriptions you already pay for.
 actions:
   - text: Get Started →
     link: /guide/introduction.html
@@ -23,6 +23,12 @@ features:
     details: Runs are checkpointed, so they survive interruptions and resume where they left off. Watch each step, decision prompt, and failure as it happens.
   - title: Cost under control
     details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
+  - title: Run it on your laptop
+    details: Local mode runs the whole platform on one machine: orchestrator, agent containers, and a local database. Real clones, real CI, real merged PRs, with no cloud account or runner pool to stand up first.
+  - title: Bring your own subscription
+    details: Run agents on a coding plan you already pay for (Claude, GLM, or ChatGPT/Codex) instead of metered API spend. Kept per-user by design, so each vendor's individual-use terms stay respected.
+  - title: Maintenance on a schedule
+    details: Attach a recurring pipeline to a service and let agents handle dependency bumps and tech debt on a cadence. Routine upkeep ships as reviewed PRs without anyone kicking it off.
 footer: MIT Licensed | Copyright © Cat Factory contributors
 ---
 
@@ -45,6 +51,29 @@ pnpm deploy
 NUXT_PUBLIC_API_BASE=https://your-api-domain.com pnpm generate
 pnpm deploy
 ```
+
+## Start on one machine
+
+[Local mode](/deploy/local.html) runs the entire platform on a single machine: the orchestrator as
+a Node process, each agent job as a local Docker container, GitHub through a personal access token,
+and persistence on a local PostgreSQL. There is no cloud account, runner pool, or GitHub App to
+register first. It is the fastest way to try Cat Factory end to end, and it does real work: agent
+containers clone, commit, and push to real repositories, CI gates on real GitHub Actions, and PRs
+merge for real. Use it for evaluation, demos, and single-operator workflows, then move the same
+backend to [Cloudflare](/deploy/cloudflare.html) or [Node.js](/deploy/nodejs.html) when you want a
+shared deployment.
+
+## Use the subscriptions you already pay for
+
+Cat Factory can run agents on a coding-plan subscription you already hold (Anthropic's Claude
+Pro/Max, Z.ai's GLM Coding Plan, or a ChatGPT/Codex seat) instead of metered, per-token API spend.
+These plans are licensed for individual use, so Cat Factory keeps them per-user: you connect your
+own credential, only your runs use it, and it is never pooled across a team. That respects each
+vendor's terms while unlocking [subscription-only models](/guide/model-providers.html), such as the
+Claude Opus and Sonnet coding-plan models and the Codex GPT models, that have no API-key or
+Cloudflare equivalent. For shared, org-wide access, set a direct provider API key instead. See
+[Model Providers & Subscriptions](/guide/model-providers.html) for how connecting and unlocking
+works.
 
 ## Where to next?
 
