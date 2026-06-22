@@ -9,23 +9,26 @@ them per agent kind. This page explains the options and how to connect a coding-
 | --- | --- | --- |
 | **Cloudflare Workers AI** | Nothing. The zero-setup default, no provider API key required. | Always available as a fallback. |
 | **Direct provider API key** | An operator sets `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc. (see [Configuration](../deploy/configuration.md#llm-providers)). | A model upgrades to its direct provider automatically once the key is present. |
-| **Coding-plan subscription** | Connected through the UI (below). | A model runs in the Claude Code or Codex harness, authenticated with the subscription. |
+| **Vendor subscription or key** | Connected in the UI (below). | A model runs in the Claude Code or Codex harness, authenticated with a coding-plan subscription or a vendor API key. |
 
 When more than one source could serve a model, **subscriptions win first**, then a direct API key,
 then Cloudflare. Direct keys are the right path for org-wide and programmatic access.
 
 ## Connecting a subscription
 
-Subscriptions let agents run on a coding plan you already pay for (Claude, GLM, Kimi, DeepSeek, or
-ChatGPT/Codex) instead of metered API calls. They store no env vars; they only need
-[`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption) so the token can be encrypted
-at rest. There are two kinds, decided by each vendor's licence.
+A connected vendor credential lets agents run through the Claude Code or Codex harness, talking
+straight to the vendor outside Cat Factory's per-token spend metering. You connect it in the
+**LLM Vendors** settings; it stores no env vars and only needs
+[`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption) so the token is encrypted at
+rest. What you connect differs by vendor (a coding-plan subscription for Claude, GLM, or Kimi; a
+plain API key for DeepSeek), and so does whether it can be shared, which sorts them into two groups.
 
-### Pooled (workspace) subscriptions
+### Pooled (workspace) credentials
 
-Kimi and DeepSeek permit organizational use, so a workspace can connect one token and share it
-across the team. Connect it once in the workspace's model settings and every member's runs can use
-it.
+Kimi (Moonshot's coding plan) and DeepSeek (a commercial API key, not a consumer subscription) both
+permit organizational use under their terms, so a workspace connects one credential and shares it
+across the team. Connect it once and every member's runs use it; add more than one and Cat Factory
+rotates across them.
 
 ### Personal (individual-usage) subscriptions
 
@@ -69,7 +72,7 @@ What the password actually buys is twofold:
 ### How unlocking works in practice
 
 You are not re-prompted on every action. After you enter it once, the password is cached in your
-browser for about 8 hours, so starting, retrying, and approving from your side runs ride along without asking
+browser, so starting, retrying, and approving from your side runs ride along without asking
 again. The server never stores the password; it travels as a request header, never in a saved record.
 
 Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to

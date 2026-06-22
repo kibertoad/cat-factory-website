@@ -43,10 +43,10 @@ Unconfigured providers simply aren't registered. Default routing is tunable with
 `AGENT_MAX_OUTPUT_TOKENS`; a workspace can override the model per agent kind at runtime (see
 [Choosing models](../guide/running-pipelines.md#choosing-models)).
 
-Besides direct API keys, workspaces and users can connect coding-plan **subscriptions** (Claude,
-GLM, Kimi, DeepSeek, ChatGPT/Codex) through the UI. Those need no provider env vars; they only
-need `ENCRYPTION_KEY` set so the tokens can be stored encrypted. See
-[Model Providers & Subscriptions](../guide/model-providers.md).
+Besides direct API keys, workspaces and users can connect **vendor credentials** through the UI: a
+coding-plan subscription (Claude, GLM, Kimi) or a vendor API key (DeepSeek), run through the Claude
+Code or Codex harness. Those need no provider env vars; they only need `ENCRYPTION_KEY` set so the
+tokens can be stored encrypted. See [Model Providers & Subscriptions](../guide/model-providers.md).
 
 ## Credential encryption
 
