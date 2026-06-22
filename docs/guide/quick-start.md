@@ -11,7 +11,7 @@ Before you start, make sure you have:
 - A **running Cat Factory instance** (backend + frontend).
 - A **GitHub App** connected for authentication and repository operations (see [GitHub App](../deploy/github-app.md)).
 - At least one **LLM provider** configured: your own `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, or
-  the free-tier Cloudflare Workers AI default.
+  the Cloudflare Workers AI default (no key required).
 - A **GitHub repository** you want agents to work in (or let Cat Factory bootstrap a new one).
 
 ::: tip Self-hosting

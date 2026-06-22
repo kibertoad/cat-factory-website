@@ -100,9 +100,9 @@ document in-repo under `requirements/`.
 
 ## Prompt fragments
 
-**Prompt fragments** are versioned, reusable best-practice guidelines that agents pull in per run.
-They are scoped in three tiers (**built-in**, **account**, and **workspace**) so you can layer
-organization-wide standards with board-specific tweaks. See
+**Prompt fragments** are versioned, reusable best-practice guidelines, assigned per service and
+folded into code-aware agent steps. They are scoped in three tiers (**built-in**, **account**, and
+**workspace**) so you can layer organization-wide standards with board-specific tweaks. See
 [Prompt Fragments](./prompt-fragments.md).
 
 ## Spend and budgets

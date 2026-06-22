@@ -48,7 +48,8 @@ budget. This keeps surprises out of large pipelines, since you see the likely co
 
 Model choice is a direct lever on spend:
 
-- Cloudflare Workers AI is the default, cost-free tier.
+- Cloudflare Workers AI is the default and needs no provider key. It runs on your Cloudflare
+  account's Workers AI allowance and pricing, so it is the cheapest tier but not literally free.
 - Direct provider APIs (Anthropic, OpenAI, AWS Bedrock) are available when you supply
   credentials, for higher-capability models where they're worth it.
 

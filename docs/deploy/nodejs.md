@@ -4,6 +4,11 @@ Prefer to run on your own infrastructure? Cat Factory ships a runtime-neutral ba
 runs as a standard Node.js service backed by PostgreSQL, with the same HTTP API as the
 Cloudflare deployment.
 
+::: tip Just evaluating?
+To try the whole product on one machine with Docker and a GitHub token, see
+[Run Locally](./local.md). It is the same runtime wired for a developer machine.
+:::
+
 ## Your deployment project
 
 As with the [Cloudflare deployment](./cloudflare.md#your-deployment-project), you assemble a small

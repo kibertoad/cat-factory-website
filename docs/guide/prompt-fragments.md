@@ -16,21 +16,25 @@ higher ones:
 | **Workspace** | A single board | Per-project customization. |
 
 You can also source fragments from a repository so they live under version control alongside
-your code.
+your code. On Node and local that library source is opt-in: set
+[`PROMPT_LIBRARY_ENABLED`](../deploy/configuration.md#feature-toggles).
 
 ## How agents use them
 
-Agents select the applicable fragments per run, based on the pipeline configuration. The
-right guidelines are injected for the right step - a code-style fragment
-for the coder, a review checklist for the reviewer - without you re-pasting them each time.
+Fragments are assigned **per service**, not picked fresh on every run. You choose which fragments a
+service uses in its inspector, and from then on every run on that service applies them. To avoid
+setting the same list on each new service, set **workspace defaults** that new services inherit.
+
+Fragments only fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
+and architect). A code-style or review-checklist fragment reaches those steps automatically; steps
+that never touch code are left untouched.
 
 ## Versioning
 
-Fragments are version-controlled, and a specific version can be selected per run. This
-gives you:
+Fragments are version-controlled. This gives you:
 
 - A stable history of how guidance has changed.
-- The ability to pin a run to a known fragment version.
+- The ability to pin a service to a known fragment version.
 - A clean way to evolve standards without disrupting in-flight work.
 
 ## Putting it together
@@ -39,7 +43,7 @@ gives you:
 Built-in defaults
    └─ + Account standards
         └─ + Workspace tweaks
-             └─ selected per-run, per-step  →  agent prompt
+             └─ assigned per service  →  code-aware agent steps
 ```
 
 ::: tip Start small

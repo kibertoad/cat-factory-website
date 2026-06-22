@@ -55,6 +55,19 @@ Blueprints are the descriptive in-repo artifact ("what the code is"). Their pres
 counterpart, "what must be true", is the [requirements](./requirements.md#the-unified-in-repo-requirements-document)
 document the **Requirements Writer** keeps under `requirements/` in the same repo.
 
+## Monorepos
+
+One repository can back several services. Flag the repository as a **monorepo**, then pin each
+service to a **subdirectory** of it. When you add a service from a monorepo, you browse the repo's
+tree and pick the directory that service owns.
+
+Agents that edit code run scoped to that subdirectory: the **coder**, **mocker**, and **CI fixer**
+work with the service's directory as their working directory, so they stay inside their part of the
+repo. Repo-wide agents (**blueprints**, **requirements**, **merger**, and **conflict resolver**)
+run at the repository root by design, since their job spans the whole repo.
+
+Repositories that are not flagged as monorepos are unchanged: the service owns the whole repo.
+
 ## Keeping in sync via webhooks
 
 Because the GitHub App sends webhooks, changes made directly in GitHub (pushes, PR merges,

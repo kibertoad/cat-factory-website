@@ -29,7 +29,7 @@ against a fork.
 - A Cloudflare account with Worker and D1 database access.
 - Your [deployment project](#your-deployment-project) depending on the published `@cat-factory/*` packages.
 - A GitHub App configured for authentication and repository operations (see [GitHub App](./github-app.md)).
-- LLM provider API keys, or use the free Cloudflare Workers AI default.
+- LLM provider API keys, or use the Cloudflare Workers AI default (no key required; billed under your Cloudflare account's Workers AI pricing).
 - `wrangler` and `pnpm` installed locally.
 
 ## 1. Deploy the backend
