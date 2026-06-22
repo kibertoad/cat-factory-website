@@ -36,9 +36,11 @@ plan hands out more individual seats, not one shared credential). Cat Factory ho
 per-user mode rather than a workspace pool:
 
 - Each **user** connects their own credential, and only that user's runs can use it.
-- These vendors are never poolable on any workspace, personal or org. To give a whole organization
-  access to Claude models, that is what a direct `ANTHROPIC_API_KEY` is for. Flagging a vendor as
-  individual-use routes orgs to API keys; it does not lock anyone out.
+- These vendors are never poolable on any workspace, personal or org. The restriction is on
+  *sharing one subscription credential*, not on the models themselves: an organization that wants
+  every member to use Claude or GPT models sets a direct provider API key (`ANTHROPIC_API_KEY`,
+  `OPENAI_API_KEY`), which is the supported path for shared, org-wide access. The models stay
+  available to the org; only pooling a personal subscription is off the table.
 
 ### Why a personal password
 
