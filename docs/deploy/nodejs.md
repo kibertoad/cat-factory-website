@@ -66,7 +66,7 @@ infrastructure adapters differ:
 
 The Node runtime has no built-in per-run container. Inline agent kinds (architect, reviewer,
 …) work out of the box, but the repo-operating kinds (coder, mocker, blueprints, ci-fixer,
-conflict-resolver, merger, requirements-writer, analysis) need a [runner pool](./runner-pools.md) to
+conflict-resolver, merger, spec-writer, analysis) need a [runner pool](./runner-pools.md) to
 run in. Container execution turns on once the deployment has the GitHub App credentials, a public
 URL, a session secret, and a runner-pool encryption key configured. Until then, container kinds
 fail loudly rather than faking success. See [Configuration](./configuration.md#node-container-execution).

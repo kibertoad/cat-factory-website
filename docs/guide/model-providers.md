@@ -7,12 +7,28 @@ them per agent kind. This page explains the options and how to connect a coding-
 
 | Source | How it is set up | When it applies |
 | --- | --- | --- |
-| **Cloudflare Workers AI** | Nothing. The zero-setup default, no provider API key required. | Always available as a fallback. |
-| **Direct provider API key** | An operator sets `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, etc. (see [Configuration](../deploy/configuration.md#llm-providers)). | A model upgrades to its direct provider automatically once the key is present. |
+| **Cloudflare Workers AI** | Register the Workers AI provider (the `AI` binding on Cloudflare, or `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` over REST elsewhere). No provider key. | The zero-cost fallback whenever a model has no richer flavour configured. |
+| **Direct provider API key** | Connect the key in the UI (below). Stored encrypted under [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption). | A model upgrades to its direct provider automatically once a key for that provider is in scope. |
 | **Vendor subscription or key** | Connected in the UI (below). | A model runs in the Claude Code or Codex harness, authenticated with a coding-plan subscription or a vendor API key. |
 
 When more than one source could serve a model, **subscriptions win first**, then a direct API key,
 then Cloudflare. Direct keys are the right path for org-wide and programmatic access.
+
+## Connecting a direct provider key
+
+Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot) are onboarded in the UI and
+stored encrypted, not set through environment variables. Each key is connected at one of three
+**scopes**, and a run draws from all the scopes that apply to it:
+
+- **Account**: shared by every workspace in the organization.
+- **Workspace**: limited to one board.
+- **User** (your own `/me` keys): only your runs use them.
+
+Connect more than one key for a provider and Cat Factory pools and rotates across them. A model's
+direct flavour becomes selectable as soon as a key for that provider is in scope; remove the last
+one and the model falls back to a subscription or Cloudflare. Because the keys are pooled and shared,
+this is the supported path for **org-wide, programmatic, and unattended** access, including the
+Claude and GPT models that a personal subscription keeps per-user.
 
 ## Connecting a subscription
 

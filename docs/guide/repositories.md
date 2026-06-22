@@ -52,8 +52,8 @@ For existing repositories, the blueprint agent keeps board and code aligned:
 This is how an established codebase gets represented on the board without hand-modeling every piece.
 
 Blueprints are the descriptive in-repo artifact ("what the code is"). Their prescriptive
-counterpart, "what must be true", is the [requirements](./requirements.md#the-unified-in-repo-requirements-document)
-document the **Requirements Writer** keeps under `requirements/` in the same repo.
+counterpart, "what must be true", is the [spec](./requirements.md#the-unified-in-repo-spec) the
+**Spec Writer** keeps under `spec/` in the same repo.
 
 ## Monorepos
 

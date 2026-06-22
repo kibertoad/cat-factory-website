@@ -3,7 +3,7 @@
 On Cloudflare, per-run coding work executes in Cloudflare Containers by default. If you want control
 over where agents run, or you want to bring your own compute, Cat Factory supports self-hosted runner
 pools. On the Node.js runtime there is no built-in per-run container, so repo-operating agent
-kinds (coder, mocker, blueprints, ci-fixer, conflict-resolver, merger, requirements-writer,
+kinds (coder, mocker, blueprints, ci-fixer, conflict-resolver, merger, spec-writer,
 analysis) run on a runner pool. Wiring one up is what turns those kinds on there.
 
 ## When to use a runner pool

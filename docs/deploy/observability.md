@@ -40,8 +40,8 @@ setting also governs what the Langfuse sink sends.
 
 When you want full traces in [Langfuse](https://langfuse.com), turn on the sink. It streams every
 LLM call as a generation grouped under its run's trace: container-agent calls (through the backend
-proxy) and inline calls alike (requirements review, the document planner, the fragment selector),
-plus tool spans from container executions.
+proxy) and inline calls alike (requirements review and the document planner), plus tool spans from
+container executions.
 
 ```bash
 LANGFUSE_ENABLED=true
@@ -66,7 +66,7 @@ and the rest as plain vars. On Node and local, put them in your `.env` or secret
 | Call site | Built-in dashboard | Langfuse |
 | --- | --- | --- |
 | Container agents (coder, ci-fixer, tester, …) | yes (via the proxy) | yes, with tool spans |
-| Inline agents (requirements review, document planner, fragment selector) | yes | yes |
+| Inline agents (requirements review, document planner) | yes | yes |
 
 Traces are sent per call rather than batched, bounded by a short timeout, so a slow or unreachable
 Langfuse never blocks a run.

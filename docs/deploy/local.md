@@ -69,6 +69,14 @@ container.
 Model keys, observability, and Slack work exactly as in the
 [shared configuration reference](./configuration.md).
 
+::: tip Forgot the PAT?
+Local mode reaches GitHub through `GITHUB_PAT` and has no GitHub App connect flow, so without it
+every repo-operating step (clone, push, open PR, CI gate, merge) is bound to fail at runtime. If you
+boot without one, Cat Factory does not leave you guessing: it logs a warning with a click-through
+GitHub token-creation link (scopes `repo` and `workflow` pre-selected) and shows the same one-click
+link as a dismissible banner over the board. Create the token, set `GITHUB_PAT`, and restart.
+:::
+
 ## A note on security
 
 With the auth gate open, the server binds to all interfaces so that agent containers on native

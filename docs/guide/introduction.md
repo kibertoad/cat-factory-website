@@ -40,7 +40,7 @@ list as the plan. Cat Factory is built around three ideas:
 | **Visual planning** | A pannable, zoomable canvas with frames, modules, and tasks; drag-and-drop reparenting and dependency edges. |
 | **Agent pipelines** | Reusable, ordered chains of agent steps with per-block model selection and human decision points. |
 | **Real code** | Agents clone repos, implement work, and open PRs; merges flip blocks to "done". |
-| **Requirements** | A reviewer agent finds gaps and risks per task; a requirements-writer keeps a unified, in-repo spec (with Gherkin scenarios) for the whole service. |
+| **Requirements** | A reviewer agent finds gaps and risks per task; the Spec Writer keeps a unified, in-repo spec (with Gherkin scenarios) for the whole service. |
 | **Shared services** | A service is account-owned and can be mounted onto many teams' boards in an org as one shared, synced copy. |
 | **Recurring pipelines** | Schedule maintenance (dependency updates, tech-debt passes) to re-run a pipeline on a cadence. |
 | **Integrations** | GitHub App for repo/PR/issue operations; import context from Jira, GitHub Issues, Confluence, Notion, and GitHub repo docs. |

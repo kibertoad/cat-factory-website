@@ -39,27 +39,28 @@ neither, signup is refused.
 
 ## LLM providers
 
-Supply credentials for the providers you want to use. With none set, Cat Factory falls back to
-Cloudflare Workers AI, which needs no provider key (it runs on your Cloudflare account's Workers AI
-allowance and pricing).
+Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot) are no longer read from
+environment variables. They are onboarded **in the UI**, scoped to an account, workspace, or user,
+pooled, and stored encrypted under [`ENCRYPTION_KEY`](#credential-encryption). The same is true of
+**vendor credentials**: a coding-plan subscription (Claude, GLM, or Codex, kept per-user) or a
+poolable vendor credential (Kimi, DeepSeek), run through the Claude Code or Codex harness. None of
+these needs a provider env var; they only need `ENCRYPTION_KEY` set. See
+[Model Providers & Subscriptions](../guide/model-providers.md).
 
-| Variable | Provider |
+What stays in the environment is the Cloudflare Workers AI fallback, AWS Bedrock, and routing
+defaults:
+
+| Variable | Purpose |
 | --- | --- |
-| `ANTHROPIC_API_KEY` | Claude API access. |
-| `OPENAI_API_KEY` | OpenAI model access. |
-| `QWEN_API_KEY` / `DEEPSEEK_API_KEY` / `MOONSHOT_API_KEY` | OpenAI-compatible vendors. |
-| `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | Cloudflare Workers AI over REST (the default tier, no provider key; optional `CLOUDFLARE_AI_GATEWAY`). |
+| `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | Serve Cloudflare Workers AI over REST off Cloudflare (no provider key; optional `CLOUDFLARE_AI_GATEWAY`). On the Worker, the `AI` binding serves it instead. |
+| `OPENAI_BASE_URL` / `QWEN_BASE_URL` / `DEEPSEEK_BASE_URL` / `MOONSHOT_BASE_URL` | Optional base-URL overrides for the OpenAI-compatible direct providers (the keys themselves come from the UI pool). |
 | `BEDROCK_REGION` + AWS credentials + `BEDROCK_MODELS` | AWS Bedrock, via `@cat-factory/provider-bedrock`. |
 
-Unconfigured providers simply aren't registered. Default routing is tunable with
-`AGENT_DEFAULT_PROVIDER`, `AGENT_DEFAULT_MODEL`, `AGENT_DEFAULT_TEMPERATURE`, and
-`AGENT_MAX_OUTPUT_TOKENS`; a workspace can override the model per agent kind at runtime (see
+With no Cloudflare provider registered and no keys connected, a model has nothing to resolve to.
+Default routing is tunable with `AGENT_DEFAULT_PROVIDER`, `AGENT_DEFAULT_MODEL`,
+`AGENT_DEFAULT_TEMPERATURE`, `AGENT_MAX_OUTPUT_TOKENS`, and per-kind overrides via `AGENT_MODELS`; a
+workspace can override the model per agent kind at runtime (see
 [Choosing models](../guide/running-pipelines.md#choosing-models)).
-
-Besides direct API keys, workspaces and users can connect **vendor credentials** through the UI: a
-coding-plan subscription (Claude, GLM, Kimi) or a vendor API key (DeepSeek), run through the Claude
-Code or Codex harness. Those need no provider env vars; they only need `ENCRYPTION_KEY` set so the
-tokens can be stored encrypted. See [Model Providers & Subscriptions](../guide/model-providers.md).
 
 ## Credential encryption
 

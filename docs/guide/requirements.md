@@ -3,11 +3,11 @@
 Agents succeed or fail on the quality of their context. Cat Factory works requirements at two
 levels:
 
-1. A **per-task clarification loop**: the stateless *requirements reviewer* makes one block
-   unambiguous *before* any code is generated.
-2. A **service-level prescriptive spec**: the *requirements-writer* aggregates every task's
-   clarified requirements into a unified, in-repo `requirements/` document (plus Gherkin acceptance
-   scenarios) that every later agent builds against.
+1. A **per-task clarification loop**: the *requirements reviewer* makes one block unambiguous
+   *before* any code is generated.
+2. A **service-level prescriptive spec**: the **Spec Writer** aggregates every task's clarified
+   requirements into a unified, in-repo `spec/` document (plus Gherkin acceptance scenarios) that
+   every later agent builds against.
 
 ## Why this matters
 
@@ -26,9 +26,8 @@ A block's requirements can come from:
 
 ## The reviewer agent
 
-The reviewer is a **stateless** agent you trigger on a block. It analyzes the description and
-linked context and raises **review items**, each tagged with a category and a severity (low,
-medium, or high):
+The reviewer is an inline (no-container) agent. It analyzes the description and linked context and
+raises **findings**, each tagged with a category and a severity (low, medium, or high):
 
 | Category | What it surfaces |
 | --- | --- |
@@ -38,58 +37,75 @@ medium, or high):
 | **risk** | Aspects that could go wrong or have outsized impact. |
 | **question** | Open questions for a product owner to answer directly. |
 
-You trigger a review from the block in the inspector. Unlike a pipeline run, the review is
-**synchronous and stateless**, with no container, and its items are persisted so you can
-answer them over several sittings.
+The review runs both as a pipeline gate (the first step of **Full build**) and on demand from the
+block in the inspector. Either way it opens a dedicated **review window** rather than a generic
+approve/reject panel, and the findings are persisted so you can work through them over several
+sittings.
 
-## Answering the open questions
+## The review loop
 
-Each item is **open** until you engage, then **answered** once you reply, and **resolved** or
-**dismissed** once you settle it. Work through the list in the inspector, replying to and triaging
-each item.
+Requirements review is **iterative**. Each round:
 
-Once every item is settled, **incorporate** folds your answers back into the block's requirements,
-so the coding agent later works from a complete, agreed-upon spec.
+1. The reviewer raises its findings.
+2. You **answer** or **dismiss** each one in the review window.
+3. An **incorporation companion** folds your answers into one standard-format requirements document.
+4. The reviewer **re-reviews** that document and either converges or raises a fresh round.
+
+The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
+merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
+
+Two per-task knobs on the [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
+tune the loop:
+
+- **`maxRequirementIterations`** (default **3**): how many reviewer passes run before the loop stops
+  and asks you to choose one more round, proceed anyway, or stop and reset the task.
+- **`maxRequirementConcernAllowed`** (default none): findings at or below this severity are recorded
+  but auto-advance the run, with no human gate and the companion skipped, so only the findings that
+  matter to you pause the run.
 
 ::: tip Do this before running a pipeline
 Resolving requirements first means the **Coder**, **Tester**, and **Acceptance** steps all work from
 the same clear definition, which means fewer wasted runs and fewer surprise PRs.
 :::
 
-## The unified in-repo requirements document
+## The unified in-repo spec
 
-Where the reviewer clarifies one task at a time, the **requirements-writer** agent produces the
-durable, **prescriptive** spec for the whole service. It is the mirror image of a
+Where the reviewer clarifies one task at a time, the **Spec Writer** agent produces the durable,
+**prescriptive** spec for the whole service. It is the mirror image of a
 [blueprint](./repositories.md#service-blueprints--reconciliation): a blueprint is *descriptive*
-("what the code is"), while requirements are *prescriptive* ("what must be true").
+("what the code is"), while the spec is *prescriptive* ("what must be true").
 
-The writer runs **before the Coder** in the Full build pipeline (and standalone via the
-**Write requirements** pipeline). It aggregates the clarified requirements of
-**every task** under the service frame and commits a `requirements/` folder to the implementation
-branch so the spec is present while the code is written:
+The Spec Writer runs **before the Architect** in the Full build pipeline (and standalone via the
+**Write spec** pipeline). Every task gets a shared work branch created up front, so the spec lands
+on that branch first and the spec-aware Architect designs against it, rather than the spec being
+written only after the design is settled. The writer aggregates the clarified requirements of
+**every task** under the service frame and commits a `spec/` folder:
 
 | File | Contents |
 | --- | --- |
-| `requirements/requirements.json` | The canonical machine-readable tree (the source of truth). |
-| `requirements/overview.md` | High-level overview, the file agents read first. |
-| `requirements/rules.md` | Cross-cutting domain rules, invariants, and constraints. |
-| `requirements/version.json` | A tiny manifest (version, hash, counts) for cheap staleness checks. |
-| `requirements/features/*.feature` | Gherkin features, one `Scenario` per acceptance criterion. |
+| `spec/spec.json` | The canonical machine-readable tree (the source of truth). |
+| `spec/overview.md` | High-level overview, the file agents read first. |
+| `spec/rules.md` | Cross-cutting domain rules, invariants, and constraints. |
+| `spec/version.json` | A tiny manifest (version, hash, counts) for cheap staleness checks. |
+| `spec/features/*.feature` | Gherkin features, one `Scenario` per acceptance criterion. |
 
 Each requirement carries a MoSCoW priority (must, should, or could), a kind (functional,
 non-functional, or constraint), provenance back to the board task(s) it came from, and structured
 **Given/When/Then** acceptance criteria. Those criteria seed the Gherkin scenarios in a two-pass
-flow: the **Requirements Writer** seeds the `.feature` files, the **Acceptance Author** agent
-polishes them, and the **Acceptance Test Author** agent turns each scenario into a runnable test.
-Re-runs rewrite the canonical files but never clobber the polished features.
+flow: the **Spec Writer** seeds the `.feature` files, the **Acceptance Author** agent polishes them,
+and the **Acceptance Test Author** agent turns each scenario into a runnable test. Re-runs rewrite
+the canonical files but never clobber the polished features.
 
-Every container agent reads the in-repo requirements as context, and the engine strictly validates
-any returned document before ingesting it. The in-repo files are the source of truth.
+The spec is **not** human-gated. Instead of pausing for your approval, the Spec Writer's companion,
+the **Spec Reviewer**, rates the spec (especially its acceptance-scenario coverage) and loops the
+writer back with the feedback folded in until the spec clears the bar. Every container agent reads
+the in-repo spec as context, and the engine strictly validates any returned document before
+ingesting it. The in-repo files are the source of truth.
 
 ## Recommended flow
 
 ```
-Write/​link context  →  Run reviewer  →  Answer items  →  Incorporate  →  requirements-writer aggregates  →  Ready to build
+Write/​link context  →  Run reviewer  →  Answer findings  →  Incorporate  →  Spec Writer aggregates  →  Ready to build
 ```
 
 ---

@@ -51,20 +51,23 @@ A **pipeline** is a reusable, ordered chain of **steps**. Each step is handled b
 of agent. The default **Full build** pipeline runs:
 
 ```
-Requirements Reviewer → Architect → Requirements Writer → Researcher → Coder
-  → Blueprinter → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
+Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Researcher → Coder
+  → Blueprinter → Mock Builder → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
 ```
 
 The **Requirements Reviewer** and the **Architect** proposal pause for **human approval**; the rest
-run to completion. The closing steps are engine automation: the **Conflicts Gate** keeps the PR
+run to completion. The **Spec Writer** runs before the Architect so the design is built against a
+written spec, and the spec is not human-gated: its **Spec Reviewer** companion rates it and loops the
+writer back instead. The closing steps are engine automation: the **Conflicts Gate** keeps the PR
 mergeable with its base, the **CI Gate** gates it on green CI (looping a fixer agent on failure), and
 the **Merger** scores the PR and either auto-merges within the task's thresholds or raises a review
 notification.
 
-Other agent kinds include the **Mock Builder**, **Acceptance Author**, **Acceptance Test Author**,
-**Documenter**, **Integrator**, a tech-debt analysis step, and an issue/ticket tracker step. Agent
+Other agent kinds include the **Acceptance Author**, **Acceptance Test Author**, **Documenter**,
+**Integrator**, the **Fixer**, a tech-debt analysis step, and an issue/ticket tracker step. Agent
 kinds are an **open set**: a deployment can [register custom kinds](../reference/packages.md). You
-choose the pipeline, and set **default models per agent kind**.
+choose the pipeline (cloning a built-in to make an editable copy, then reordering or disabling
+steps), and set **default models per agent kind**.
 
 ## Decision prompts
 
@@ -97,8 +100,8 @@ default, the deployment's routing for that kind applies, then its global default
 Services link to Git repositories. Cat Factory can also **bootstrap** a new repository from a
 reference architecture, and **reconcile** an existing repository's structure back onto the board
 via service blueprints (`service → modules → features` maps stored in-repo). Alongside the
-descriptive blueprint, a service also keeps a prescriptive [requirements](./requirements.md)
-document in-repo under `requirements/`.
+descriptive blueprint, a service also keeps a prescriptive [spec](./requirements.md) in-repo under
+`spec/`, written by the Spec Writer.
 
 ## Prompt fragments
 

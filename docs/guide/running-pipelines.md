@@ -8,30 +8,51 @@ request. This page covers starting a run, choosing a model, and steering the run
 The default **Full build** pipeline runs these steps in order:
 
 ```
-Requirements Reviewer → Architect → Requirements Writer → Researcher → Coder
-  → Blueprinter → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
+Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Researcher → Coder
+  → Blueprinter → Mock Builder → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
 ```
 
 | Step | What it does |
 | --- | --- |
 | **Requirements Reviewer** | Reviews the collected requirements for gaps; pauses for human approval. |
-| **Architect** | Plans the implementation approach; pauses for human approval. |
-| **Requirements Writer** | Aggregates tasks into the service's in-repo [requirements](./requirements.md#the-unified-in-repo-requirements-document) spec + Gherkin. |
+| **Spec Writer** | Aggregates tasks into the service's in-repo [spec](./requirements.md#the-unified-in-repo-spec) + Gherkin, on a shared work branch before the design. |
+| **Spec Reviewer** | The Spec Writer's companion: rates the spec and loops the writer back below threshold (no human gate). |
+| **Architect** | Designs the approach against the just-written spec; pauses for human approval. |
 | **Researcher** | Investigates prior art, libraries, and constraints. |
 | **Coder** | Clones the repo and writes the implementation. |
 | **Blueprinter** | Refreshes the service → modules → features map in-repo from the new code. |
-| **Tester** | Runs and validates tests against the change. |
-| **Reviewer** | Reviews the work for quality and correctness. |
+| **Mock Builder** | Stands up WireMock mocks for external services and the compose wiring so the suite runs locally. |
+| **Tester** | Runs the software against the mocks and the spec's acceptance scenarios and reports what it observed. |
+| **Reviewer** | The Coder's companion: rates the change and loops it back for rework below threshold. |
 | **Conflicts Gate** | Keeps the PR mergeable with its base, looping a resolver agent on conflicts. |
 | **CI Gate** | Gates the PR on green CI, looping a CI Fixer agent on failure. |
 | **Merger** | Scores the PR and auto-merges within thresholds, or raises a review notification. |
 
+The **Spec Writer** runs before the **Architect** so the design is built against a written spec, and
+the spec itself is no longer human-gated: its **Spec Reviewer** companion handles quality by looping
+the writer back automatically. See [Requirements](./requirements.md) for the spec and the review loop.
+
 Other built-in pipelines include **Quick implement**, **Complex fullstack feature**, **Map
-service** (run after bootstrap), **Write requirements**, and the recurring presets **Dependency
+service** (run after bootstrap), **Write spec**, and the recurring presets **Dependency
 updates** / **Tech debt** (see [Recurring Pipelines](./recurring-pipelines.md)). Additional agent
-kinds include the **Mock Builder**, **Fixer** (loops on failing tests), **Acceptance Test Author**,
-**Acceptance Author**, **Documenter**, **Integrator**, and a tech-debt analysis step; a deployment
-can also [register custom kinds and pipelines](../reference/packages.md).
+kinds include the **Fixer** (loops on failing tests inside the Tester gate), **Acceptance Test
+Author**, **Acceptance Author**, **Documenter**, **Integrator**, and a tech-debt analysis step; a
+deployment can also [register custom kinds and pipelines](../reference/packages.md).
+
+Hover any step in the builder, the draft chain, or a board task card to see what that agent does:
+each kind's description shows as a tooltip.
+
+## Editing pipelines
+
+The built-in pipelines are read-only templates, but you can shape your own:
+
+- **Clone** any pipeline, built-in or custom, into a new editable copy. This is how a read-only
+  default becomes a starting point you can change.
+- **Edit** a custom pipeline in place: reorder, add, or remove steps. Built-in pipelines carry a
+  **default** badge and offer Clone instead of Edit.
+- **Disable a step** without deleting it. A disabled step stays in the saved pipeline but is skipped
+  at run start, so you can drop, say, the Researcher for a run without rebuilding the chain. At least
+  one step must stay enabled.
 
 ## Starting a run
 
@@ -60,6 +81,8 @@ Model selection is set per agent kind, in **Configuration → Default models**:
 - Where a kind has no default, the deployment's routing for that kind applies, then its global
   default.
 
+The picker shows each model's list price next to its provider and context window (quota-based
+subscription models show their quota burn rate instead), so you can weigh cost as you assign kinds.
 Reserve stronger (and pricier) models for architecturally significant kinds and keep cheaper ones on
 routine steps to manage [spend](./budgets.md).
 
@@ -75,6 +98,19 @@ Runs stream over WebSockets, so there's no polling. As the run executes you'll s
 
 Every board and run share one live connection, so progress appears the moment the dashboard is
 open.
+
+**Companion steps** (the Spec Reviewer, the Architect's reviewer, the Coder's Reviewer, and the
+Tester's Fixer) render as distinct sub-nodes on their parent step, so you can see a companion rate,
+rework, or skip rather than wondering why a step looped.
+
+## Reading the test report
+
+The **Tester** does hands-on work: it stands up the Mock Builder's mocks, runs the software, and
+greenlights only on behaviour it actually observed, starting from the spec's Gherkin acceptance
+scenarios and probing edge and error cases. Open its step to get a structured **test-report window**
+that lays out the scenarios it exercised, the per-area outcomes, any concerns it linked, and the
+greenlight verdict, plus the state of any **Fixer** attempt. When the tests fail, the Fixer
+companion runs inside the Tester gate to fix them and is skipped when they pass.
 
 ## Responding to decision prompts
 
