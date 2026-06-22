@@ -23,8 +23,8 @@ features:
     details: Runs are checkpointed, so they survive interruptions and resume where they left off. Watch each step, decision prompt, and failure as it happens.
   - title: Cost under control
     details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
-  - title: Run it on your laptop
-    details: Local mode runs the whole platform on one machine, with the orchestrator, agent containers, and a local database side by side. Real clones, real CI, real merged PRs, with no cloud account or runner pool to stand up first.
+  - title: Run it on your laptop (optional)
+    details: Local mode is one way to run Cat Factory, not the only one. It puts the whole platform on one machine, with the orchestrator, agent containers, and a local database side by side, so you get real clones, real CI, and real merged PRs with no cloud account or runner pool to stand up first. For more complex scenarios you can run fully in the cloud instead, on Cloudflare Workers or self-hosted Node.js.
   - title: Bring your own subscription
     details: Run agents on a coding plan you already pay for (Claude, GLM, or ChatGPT/Codex) instead of metered API spend. Kept per-user by design, so each vendor's individual-use terms stay respected.
   - title: Maintenance on a schedule
