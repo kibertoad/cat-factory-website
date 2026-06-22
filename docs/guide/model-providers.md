@@ -44,14 +44,16 @@ per-user mode rather than a workspace pool:
 
 ### Why a personal password
 
-When a run will use one of your personal subscriptions, Cat Factory asks for a **personal password**
-to unlock it. It helps to be clear about what that password is and is not for.
+A run that uses one of your personal subscriptions asks for a **personal password** to unlock it.
+It is worth being precise about what that password does, since it is easy to assume it protects more
+than it does.
 
 The password is about **intentionality, not security against attackers**. Your token is stored
 double-encrypted: the system seals it with the deployment's `ENCRYPTION_KEY`, and your password
-seals it again underneath. The system layer alone already protects your token against everyone who
-does not hold that key: an external attacker, a database leak, a curious teammate. Against those, the
-password adds nothing extra, because none of them have the system key in the first place.
+seals it again underneath. The system seal is what actually keeps your token safe at rest. An
+external attacker, a database leak, or a curious teammate has no way past it without the system key,
+and your password makes no difference to any of them. It only comes into play against someone who
+already holds the system key.
 
 What the password actually buys is twofold:
 
@@ -67,7 +69,7 @@ What the password actually buys is twofold:
 ### How unlocking works in practice
 
 You are not re-prompted on every action. After you enter it once, the password is cached in your
-browser for about 8 hours, so starting, retrying, and approving runs ride along without asking
+browser for about 8 hours, so starting, retrying, and approving from your side runs ride along without asking
 again. The server never stores the password; it travels as a request header, never in a saved record.
 
 Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to
