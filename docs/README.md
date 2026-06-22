@@ -19,13 +19,13 @@ features:
     details: Compose ordered agent chains (Architect → Coder → Reviewer → Tester → Acceptance) with default models per agent kind and human decision points along the way.
   - title: Human in the loop
     details: A reviewer agent flags open questions and risky assumptions before code is written. You answer the questions, approve the plan, and review every PR before merge.
-  - title: Durable & observable
+  - title: Durable and observable
     details: Runs are checkpointed, so they survive interruptions and resume where they left off. Watch each step, decision prompt, and failure as it happens.
   - title: Cost under control
     details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
-  - title: Runs where you need it
+  - title: Runtime to fit the job
     details: Pick the runtime that fits the job. For heavy production workloads, run fully in the cloud on Cloudflare Workers or self-hosted Node.js. For solo developers or a quick test drive, local mode puts the whole platform on one machine, with the orchestrator, agent containers, and a local database side by side. You get the complete development experience, from agents picking up work to PRs landing with passing CI, all without a cloud account or runner pool to stand up first.
-  - title: Bring your own subscription
+  - title: Subscriptions you already pay for
     details: Run agents on a coding plan you already pay for (Claude, GLM, or ChatGPT/Codex) instead of metered API spend. Kept per-user by design, so each vendor's individual-use terms stay respected.
   - title: Maintenance on a schedule
     details: Attach a recurring pipeline to a service and let agents handle dependency bumps and tech debt on a cadence. Routine upkeep ships as reviewed PRs without anyone kicking it off.
