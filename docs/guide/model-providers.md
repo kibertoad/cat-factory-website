@@ -1,24 +1,27 @@
 # Model Providers & Subscriptions
 
-Agents need a model behind them. Cat Factory can reach models three ways, and a single run can mix
+Agents need a model behind them. Cat Factory can reach models four ways, and a single run can mix
 them per agent kind. This page explains the options and how to connect a coding-plan subscription.
 
-## The three ways a model is served
+## The four ways a model is served
 
 | Source | How it is set up | When it applies |
 | --- | --- | --- |
-| **Cloudflare Workers AI** | Register the Workers AI provider (the `AI` binding on Cloudflare, or `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` over REST elsewhere). No provider key. | The zero-cost fallback whenever a model has no richer flavour configured. |
+| **Cloudflare Workers AI** | Register the Workers AI provider (the `AI` binding on Cloudflare, or `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` over REST elsewhere). No provider key. | The low-cost fallback whenever a model has no richer flavour configured. |
 | **Direct provider API key** | Connect the key in the UI (below). Stored encrypted under [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption). | A model upgrades to its direct provider automatically once a key for that provider is in scope. |
 | **Vendor subscription or key** | Connected in the UI (below). | A model runs in the Claude Code or Codex harness, authenticated with a coding-plan subscription or a vendor API key. |
+| **Your own local runner** | Each user adds a runner (Ollama, LM Studio, …) in [My local runners](#running-on-a-local-llm-ollama-lm-studio). No API key. | The enabled local models appear in the picker for that user's runs, resolved on their machine. |
 
-When more than one source could serve a model, **subscriptions win first**, then a direct API key,
-then Cloudflare. Direct keys are the right path for org-wide and programmatic access.
+When more than one source could serve a model, **subscriptions win first**, then a direct API key (a
+local runner counts as a direct-flavour key for the initiating user), then Cloudflare. Direct keys
+are the right path for org-wide and programmatic access.
 
 ## Connecting a direct provider key
 
-Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot) are onboarded in the UI and
-stored encrypted, not set through environment variables. Each key is connected at one of three
-**scopes**, and a run draws from all the scopes that apply to it:
+Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
+self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted, not set through
+environment variables. Each key is connected at one of three **scopes**, and a run draws from all
+the scopes that apply to it:
 
 - **Account**: shared by every workspace in the organization.
 - **Workspace**: limited to one board.
@@ -29,6 +32,19 @@ direct flavour becomes selectable as soon as a key for that provider is in scope
 one and the model falls back to a subscription or Cloudflare. Because the keys are pooled and shared,
 this is the supported path for **org-wide, programmatic, and unattended** access, including the
 Claude and GPT models that a personal subscription keeps per-user.
+
+### Aggregator gateways: OpenRouter and LiteLLM
+
+Two of the direct providers are OpenAI-compatible gateways that front many upstream models:
+
+- **OpenRouter** reaches hundreds of models through one key (`sk-or-…`). Connect the key like any
+  other direct provider; the curated OpenRouter catalog entries (Claude Opus, Gemini 3 Pro, GPT-5.5,
+  DeepSeek, Llama 3.3) become selectable immediately, since the gateway URL has a public default.
+- **LiteLLM** is a gateway **you host**. Connect a virtual key (or its master key) the same way, but
+  its model stays unselectable until your operator sets the gateway's base URL
+  ([`LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)) — a pipeline that pins a LiteLLM
+  model is blocked at start until then, rather than failing mid-run. Rename the catalog's generic
+  entry and tune its pricing to match your gateway's actual routing.
 
 ## Connecting a subscription
 
@@ -110,6 +126,35 @@ one. A background sweep reclaims any stragglers.
 A [scheduled pipeline](./recurring-pipelines.md) fires with no one present to enter a password, so
 Cat Factory refuses to start one that resolves to an individual-usage model. Point recurring work at
 a pooled subscription, a direct API key, or the Cloudflare default.
+:::
+
+## Running on a local LLM (Ollama, LM Studio, …)
+
+You can point agents at a model running **on your own machine** — Ollama, LM Studio, llama.cpp,
+vLLM, or any OpenAI-compatible server — so no tokens leave your network and there is no per-token
+spend. Like personal subscriptions, runners are **per-user**: each person configures their own, and
+only that person's runs use them.
+
+Add one under **Settings → My local runners**:
+
+1. Pick the runner type (the base URL is prefilled — e.g. `http://localhost:11434/v1` for Ollama,
+   `http://localhost:1234/v1` for LM Studio) or choose **Custom** and enter your own URL. An
+   API-key/bearer token is optional, for a runner that requires one.
+2. Cat Factory **probes the runner** (its `/v1/models`) and lists the models it found. Enable the
+   ones you want to use.
+3. The enabled models appear in the picker as a **direct**-flavour model, with no API key. When you
+   start a run, the proxy resolves *your* runner's endpoint for that step.
+
+A model is only offered once you've enabled that specific model id, so a pin to a model you later
+disable is caught at the pipeline-start guard rather than failing mid-run.
+
+::: warning Local runners must be reachable from the backend
+The base URL is called **server-side** (both the test probe and the run-time proxy), so it is
+constrained to a loopback/LAN allow-list: `localhost`, `*.local`, and private
+(RFC1918 / IPv6 ULA) addresses are accepted; public hosts and the cloud-metadata address
+(`169.254.169.254`) are rejected. On a cloud deployment the backend can't reach a runner on your
+laptop — local runners are intended for [local mode](../deploy/local.md) or a self-hosted backend on
+the same network.
 :::
 
 ## Subscription-only models

@@ -71,7 +71,10 @@ These plans are licensed for individual use, so Cat Factory keeps them per-user:
 own credential, only your runs use it, and it is never pooled across a team. That respects each
 vendor's terms while unlocking [subscription-only models](/guide/model-providers.html), such as the
 Claude Opus and Sonnet coding-plan models and the Codex GPT models, that have no API-key or
-Cloudflare equivalent. For shared, org-wide access, set a direct provider API key instead. See
+Cloudflare equivalent. For shared, org-wide access, set a direct provider API key instead — including
+aggregator gateways like OpenRouter and a self-hosted LiteLLM. Or skip the cloud entirely and run
+agents on [a model on your own machine](/guide/model-providers.html#running-on-a-local-llm-ollama-lm-studio)
+(Ollama, LM Studio, …), with no key and no spend. See
 [Model Providers & Subscriptions](/guide/model-providers.html) for how connecting and unlocking
 works.
 

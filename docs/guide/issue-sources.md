@@ -30,6 +30,21 @@ your own org's content.
 Imported content can also be expanded into structural components. A large epic, for example,
 can seed a module with several task leaves, each carrying its slice of context.
 
+## Creating a task straight from an issue
+
+Beyond attaching an issue to a task you're already writing, you can turn an imported **GitHub issue
+or Jira ticket into a brand-new board task** in one step. In the task-source import modal, pick the
+service frame or module to create tasks in, then hit **Create task** on an issue:
+
+- A new leaf block is created (titled `KEY: summary`, its description seeded from the issue body) in
+  the container you chose.
+- The issue is linked to the new task, so every agent step still sees the full issue — description,
+  comments, and metadata — as context.
+
+The issue stays the source of truth: re-importing refreshes it. Creating a *second* task from an
+already-linked issue is refused, so one issue maps to one task rather than silently re-pointing.
+GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, and local).
+
 ## Using sources as agent context
 
 Once linked and imported, source content travels with the block:
@@ -43,7 +58,7 @@ Once linked and imported, source content travels with the block:
 Document and issue integrations are controlled by feature toggles and credentials on the
 deployment side: Confluence and Notion API access, the Jira task source, and the GitHub-backed
 sources (which ride the workspace's GitHub App installation). See
-[Configuration](../deploy/configuration.md#issue-tracker--task-sources) for the relevant settings.
+[Configuration](../deploy/configuration.md#document--task-sources) for the relevant settings.
 
 ::: tip Keep the source of truth where your team works
 Linking beats copy-pasting: when the upstream ticket or doc is the canonical spec, importing keeps

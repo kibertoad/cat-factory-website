@@ -37,10 +37,12 @@ raises **findings**, each tagged with a category and a severity (low, medium, or
 | **risk** | Aspects that could go wrong or have outsized impact. |
 | **question** | Open questions for a product owner to answer directly. |
 
-The review runs both as a pipeline gate (the first step of **Full build**) and on demand from the
-block in the inspector. Either way it opens a dedicated **review window** rather than a generic
-approve/reject panel, and the findings are persisted so you can work through them over several
-sittings.
+The reviewer **always runs automatically** as the first gate step when a task's pipeline starts —
+there is no separate "Review requirements" button to remember. It opens a dedicated **review
+window** rather than a generic approve/reject panel, and the findings are persisted so you can work
+through them over several sittings. If the task names a [responsible product
+person](./team-and-access.md#the-responsible-product-person), they get the "findings raised"
+notification flagged to them directly; otherwise it goes to the task's creator.
 
 ## The review loop
 
@@ -53,6 +55,13 @@ Requirements review is **iterative**. Each round:
 
 The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
 merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
+
+Incorporation and re-review run **in the background** — clicking "Incorporate answers" no longer
+freezes the window. You go straight back to the board, and the task card shows which stage is
+running ("Incorporating answers…" then "Re-reviewing…") instead of an approval badge, since no
+action is needed until the reviewer comes back. You're summoned again only if the re-review raises
+fresh findings or hits the iteration cap; a converged round just advances the pipeline. (If you
+dismissed everything and left nothing to fold in, the round settles with no LLM call at all.)
 
 Two per-task knobs on the [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
 tune the loop:

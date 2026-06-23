@@ -50,8 +50,12 @@ Model choice is a direct lever on spend:
 
 - Cloudflare Workers AI is the default and needs no provider key. It runs on your Cloudflare
   account's Workers AI allowance and pricing, so it is the cheapest tier but not literally free.
-- Direct provider APIs (Anthropic, OpenAI, AWS Bedrock) are available when you supply
-  credentials, for higher-capability models where they're worth it.
+- Direct provider APIs (Anthropic, OpenAI, AWS Bedrock, OpenRouter, a self-hosted LiteLLM gateway)
+  are available when you supply credentials, for higher-capability models where they're worth it.
+- A coding-plan **subscription** you already pay for (Claude, GLM, Codex) runs outside per-token
+  metering entirely — see [Model Providers](./model-providers.md).
+- A model on **your own local runner** (Ollama, LM Studio, …) incurs no API spend at all, since it
+  runs on your hardware.
 
 Assign cheaper models to routine agent kinds and reserve stronger ones for architecturally
 significant work, all from **Configuration → Default models**. See

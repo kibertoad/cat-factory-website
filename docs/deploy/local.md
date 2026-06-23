@@ -28,7 +28,9 @@ developer machine instead of a server:
 - A GitHub personal access token for the repositories you want agents to work in. A fine-grained
   token scoped to those repos with **contents: write** and **pull-requests: write** is recommended.
 - The executor-harness image, either pulled from GHCR or built locally.
-- At least one model provider key, or rely on the default Cloudflare Workers AI routing.
+- A way to serve models (see [Models in local mode](#models-in-local-mode)). Local mode ships with
+  **no** model provider configured, so the picker is empty until you set one up — connect a provider
+  key in the UI, point it at Cloudflare Workers AI, or add a local runner.
 
 ## Quick start
 
@@ -69,6 +71,23 @@ container.
 Model keys, observability, and Slack work exactly as in the
 [shared configuration reference](./configuration.md).
 
+## Models in local mode
+
+A stock local install configures no model provider, so nothing is selectable until you set one up.
+You have three options, in rough order of "no cloud account needed":
+
+- **Your own local LLM** — the natural fit for local mode. Run Ollama, LM Studio, llama.cpp, or
+  vLLM on the same machine and add it under **Settings → My local runners**; the enabled models
+  appear in the picker with no key and no spend. See
+  [Running on a local LLM](../guide/model-providers.md#running-on-a-local-llm-ollama-lm-studio).
+- **A provider key or subscription** — connect an OpenAI/Anthropic/etc. key, or your personal
+  Claude/GLM/Codex subscription, in the UI exactly as on a hosted deployment. See
+  [Model Providers & Subscriptions](../guide/model-providers.md).
+- **Cloudflare Workers AI over REST** — off-Worker there is no `AI` binding, so Workers AI is served
+  through Cloudflare's REST API and is gated on **`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`**
+  (mint a Workers AI API token; find the account id with `wrangler whoami`). Set both and the
+  `workers-ai` models become selectable.
+
 ::: tip Forgot the PAT?
 Local mode reaches GitHub through `GITHUB_PAT` and has no GitHub App connect flow, so without it
 every repo-operating step (clone, push, open PR, CI gate, merge) is bound to fail at runtime. If you
@@ -94,9 +113,13 @@ native Linux, keep the default bind and close the gate instead.
 
 ## Linking repositories
 
-Local mode discovers repositories through your `GITHUB_PAT` rather than a GitHub App installation,
-so the `linkRepo` helper seeds the repository projections from the token. After that, [link a
-repository](../guide/repositories.md) to a service and run pipelines as usual.
+Local mode discovers repositories through your `GITHUB_PAT` rather than a GitHub App installation.
+With a PAT set, the **Add from existing repo** board flow works just like on a hosted deployment: the
+picker lists your repos (via `/user/repos`), with a search/filter box for accounts that expose many,
+and importing links and syncs the repo behind a service frame. The PAT's `repo` and `workflow`
+scopes light the flow up — CLI- and UI-linked repos share one synthetic installation, so the
+`linkRepo` helper still works and points at the same place. After linking, [run
+pipelines](../guide/running-pipelines.md) as usual.
 
 ---
 

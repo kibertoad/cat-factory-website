@@ -7,8 +7,15 @@ separate backlog to keep in sync. This page covers building and organizing that 
 
 The board is a pannable, zoomable canvas rendered with Vue Flow. As you zoom, the canvas uses
 semantic level-of-detail rendering: high-level frames stay legible when zoomed out, and detail
-appears as you zoom in. Service frames are resizable. Drag a frame's border to set its size, or
-leave it to auto-size from its contents.
+appears as you zoom in. Keep zooming into an in-flight task and its card grows downward — first into
+its full **build-pipeline steps**, then one notch further into each step's live **subtask**
+breakdown — so you can watch a run's internals spatially, not only in the inspector. (Cards expand
+only when they're on screen, and where two would overlap only the centre-most opens, so deep zoom
+stays readable.)
+
+Both **service frames and the module frames inside them are resizable**, Miro-style: drag a frame's
+right or bottom edge (or its bottom-right corner) to set its size, or leave it to auto-size from its
+contents. A frame never shrinks below the blocks it holds, and the size is remembered.
 
 ## Navigating: navbar and command bar
 
@@ -43,12 +50,15 @@ feels like it spans several PRs, split it into sibling leaves.
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
   controls, at the level you need.
-- **Edit** its title, description, status, chosen pipeline, prompt fragments, and merge-policy
-  preset in the inspector.
+- **Edit** its title, description, status, chosen pipeline, prompt fragments, merge-policy preset,
+  and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
+  in the inspector.
 - **Reparent** by dragging a block onto a new parent, which is useful as your design evolves. Moving
   a task into another service's frame re-homes it onto that service.
-- **Delete** a block to remove it. Deletion cascades to its children, so deleting a service
-  removes its modules and tasks too.
+- **Delete** a block to remove it. Deletion is **optimistic** — the block disappears at once and
+  only reappears (with an error toast) if the backend rejects it — and **idempotent**, so deleting a
+  block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
+  to children, so deleting a service removes its modules and tasks too.
 
 ## Dependency edges
 

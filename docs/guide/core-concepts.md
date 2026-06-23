@@ -52,7 +52,7 @@ of agent. The default **Full build** pipeline runs:
 
 ```
 Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Researcher → Coder
-  → Blueprinter → Mock Builder → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
+  → Reviewer → Blueprinter → Mock Builder → Tester → Conflicts Gate → CI Gate → Merger
 ```
 
 The **Requirements Reviewer** and the **Architect** proposal pause for **human approval**; the rest
@@ -79,10 +79,11 @@ into the block's description and the run continues.
 ## Workspaces and accounts
 
 - An **account** is the top-level owner you work under. It can be a **personal account** (one per
-  user) or a shared **organization account** with multiple members holding an **owner** or
-  **member** role. Either way it owns shared services and account-wide standards, and spans all of
-  its workspaces. You sign in with GitHub, Google, or email/password, and owners bring teammates in
-  by email invitation. See [Members, Roles & Invitations](./team-and-access.md).
+  user) or a shared **organization account** whose members each hold a combinable set of
+  **admin / developer / product** roles. Either way it owns shared services and account-wide
+  standards, and spans all of its workspaces. You sign in with GitHub, Google, or email/password,
+  and an admin brings teammates in by email invitation. See
+  [Members, Roles & Invitations](./team-and-access.md).
 - A **workspace** is a per-team, per-project container with **membership controls** that determine
   who can see and act on its boards. Boards carry a name and description.
 - Repositories and credentials are isolated **per workspace**; the LLM **budget** is metered
