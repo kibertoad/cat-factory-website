@@ -74,7 +74,7 @@ Model keys, observability, and Slack work exactly as in the
 ## Models in local mode
 
 A stock local install configures no model provider, so nothing is selectable until you set one up.
-You have three options, in rough order of "no cloud account needed":
+You have several options, in rough order of "no cloud account needed":
 
 - **Your own local LLM** — the natural fit for local mode. Run Ollama, LM Studio, llama.cpp, or
   vLLM on the same machine and add it under **Settings → My local runners**; the enabled models
@@ -87,6 +87,10 @@ You have three options, in rough order of "no cloud account needed":
   through Cloudflare's REST API and is gated on **`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`**
   (mint a Workers AI API token; find the account id with `wrangler whoami`). Set both and the
   `workers-ai` models become selectable.
+- **AWS Bedrock** — local mode shares the Node runtime's provider setup, so Bedrock registers when
+  you set **`BEDROCK_REGION`** plus AWS credentials (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`,
+  and `AWS_SESSION_TOKEN` if you use one). `BEDROCK_MODELS` is the comma-separated allow-list
+  (`""` allows all). See [Configuration → LLM providers](./configuration.md#llm-providers).
 
 ::: tip Forgot the PAT?
 Local mode reaches GitHub through `GITHUB_PAT` and has no GitHub App connect flow, so without it
