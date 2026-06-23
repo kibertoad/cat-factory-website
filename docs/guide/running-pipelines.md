@@ -9,7 +9,7 @@ The default **Full build** pipeline runs these steps in order:
 
 ```
 Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Researcher → Coder
-  → Blueprinter → Mock Builder → Tester → Reviewer → Conflicts Gate → CI Gate → Merger
+  → Reviewer → Blueprinter → Mock Builder → Tester → Conflicts Gate → CI Gate → Merger
 ```
 
 | Step | What it does |
@@ -20,24 +20,49 @@ Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Resear
 | **Architect** | Designs the approach against the just-written spec; pauses for human approval. |
 | **Researcher** | Investigates prior art, libraries, and constraints. |
 | **Coder** | Clones the repo and writes the implementation. |
+| **Reviewer** | The Coder's companion: rates the change and loops it back for rework below threshold, **immediately after the Coder** so review happens on fresh code before the map/test tail. |
 | **Blueprinter** | Refreshes the service → modules → features map in-repo from the new code. |
 | **Mock Builder** | Stands up WireMock mocks for external services and the compose wiring so the suite runs locally. |
 | **Tester** | Runs the software against the mocks and the spec's acceptance scenarios and reports what it observed. |
-| **Reviewer** | The Coder's companion: rates the change and loops it back for rework below threshold. |
 | **Conflicts Gate** | Keeps the PR mergeable with its base, looping a resolver agent on conflicts. |
 | **CI Gate** | Gates the PR on green CI, looping a CI Fixer agent on failure. |
 | **Merger** | Scores the PR and auto-merges within thresholds, or raises a review notification. |
 
 The **Spec Writer** runs before the **Architect** so the design is built against a written spec, and
-the spec itself is no longer human-gated: its **Spec Reviewer** companion handles quality by looping
-the writer back automatically. See [Requirements](./requirements.md) for the spec and the review loop.
+the spec itself is not human-gated: its **Spec Reviewer** companion handles quality by looping the
+writer back automatically. See [Requirements](./requirements.md) for the spec and the review loop.
 
-Other built-in pipelines include **Quick implement**, **Complex fullstack feature**, **Map
-service** (run after bootstrap), **Write spec**, and the recurring presets **Dependency
-updates** / **Tech debt** (see [Recurring Pipelines](./recurring-pipelines.md)). Additional agent
-kinds include the **Fixer** (loops on failing tests inside the Tester gate), **Acceptance Test
-Author**, **Acceptance Author**, **Documenter**, **Integrator**, and a tech-debt analysis step; a
-deployment can also [register custom kinds and pipelines](../reference/packages.md).
+Other built-in pipelines each new workspace seeds:
+
+| Pipeline | What it's for |
+| --- | --- |
+| **Simple** | The leanest end-to-end build: Coder → Reviewer → Mock Builder → Tester, then the standard Conflicts → CI → Merger tail. No design, spec, or documentation phases. |
+| **Quick implement** | Coder → Blueprinter → Mock Builder → Tester, then the merge tail — no Reviewer and no design/spec phases. |
+| **Triage & fix bug** | A bug-fix front end: a read-only **Bug Investigator** explores the repo from the raw report, then a **Clarity Review** gate triages the report for *fixability* before the Coder runs. See below. |
+| **Complex fullstack feature** | The fullest pipeline: adds a Researcher, the Playwright e2e author, and business/feature documenters around the Full-build core. |
+| **Map service** | Blueprint only — run after bootstrapping to reconcile a repo onto the board. |
+| **Write spec** | Spec Writer only — regenerate a service's in-repo spec on its own. |
+| **Integrate & ship** | Integrator → Mock Builder → Tester → Documenter, for wiring an existing change through. |
+| **Dependency updates** / **Tech debt** | The recurring presets (see [Recurring Pipelines](./recurring-pipelines.md)). |
+
+Additional agent kinds include the **Fixer** (loops on failing tests inside the Tester gate),
+**Bug Investigator**, **Playwright** (runnable e2e tests from the spec's acceptance scenarios),
+**Documenter**, **Integrator**, and a tech-debt analysis step; a deployment can also
+[register custom kinds and pipelines](../reference/packages.md).
+
+### Triaging and fixing a bug
+
+The **Triage & fix bug** pipeline is built for a bug report rather than a feature brief:
+
+- The **Bug Investigator** is a read-only agent that clones the repo, reads the code against the raw
+  report, and returns an enriched report — plus an *optional* working hypothesis, which it omits
+  unless reasonably confident so a weak guess never misdirects the fix. It commits nothing and opens
+  no PR.
+- The **Clarity Review** gate then triages the report for whether it is actually *fixable*: are
+  there repro steps, expected-vs-actual behaviour, the environment, and the affected area? It runs
+  the same iterative answer → incorporate → re-review loop as the [requirements
+  reviewer](./requirements.md#the-review-loop), and the converged, clarified report becomes the task
+  description the Coder builds from.
 
 Hover any step in the builder, the draft chain, or a board task card to see what that agent does:
 each kind's description shows as a tooltip.
@@ -118,6 +143,17 @@ When a step needs human input it moves to **Needs decision** and shows a **decis
 Answer the questions to continue. The most common prompts are the **Requirements Reviewer** and the
 **Architect**, which pause for your approval before implementation proceeds.
 
+A second kind of prompt comes from a **companion that has spent its automatic rework budget**. When
+the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer above
+its quality bar within the allowed retries, it stops auto-looping and parks for you with a **Decide**
+button (rather than a plain Approve) offering three choices — the same three the requirements
+reviewer offers at its iteration cap:
+
+- **One more round** — raise the budget by one and loop the producer back for another pass.
+- **Proceed anyway** — accept the producer's current output and advance the pipeline.
+- **Stop & reset** — cancel the run and return the task to phase zero (editable), with the
+  producer's latest output preserved on its branch.
+
 ## Durability, failures, and retries
 
 Runs are checkpointed and resumable: each completed step is durably recorded by Cloudflare Workflows
@@ -129,7 +165,34 @@ without editing files.
 Cat Factory also owns the Git delivery contract: the agent commits its own work and validates
 locally, while the harness pushes the branch and opens the pull request, so a container agent
 never needs push credentials. Your existing CI/CD takes it from there. If a step fails, the
-error is captured and the run surfaces a manual retry from the failure point.
+error is captured and the run surfaces a manual retry from the failure point. The board shows the
+**real failure reason** (the agent's actual error, with the raw detail under "Show detail"), not a
+generic "the container reported a failure".
+
+### Retry, restart, stop, and reset
+
+You have four distinct controls over a run:
+
+- **Retry** resumes a failed run at its **first failed step**, reusing the same branch and PR.
+- **Restart from here** rewinds to a **step you pick** and re-runs the pipeline from there onward —
+  even on a finished run. The steps before it are preserved verbatim, so their outputs still reach
+  the restarted step as context; the chosen step and every later step have their iteration counters
+  (companion attempts, gate/test attempts) reset. Use it to re-run work that already completed. The
+  control appears on the step-detail overlay, on each step in the zoomed-in pipeline timeline, and in
+  the dedicated result windows (test report, CI/Conflicts gate, requirements review). As with start
+  and retry, restarting a step that uses a personal subscription prompts for your password.
+- **Stop** halts the run but **keeps it**: the run stays readable and retryable and the block goes
+  *blocked*. Nothing is discarded.
+- **Reset** is the explicit destructive action — it discards the run and returns the task to
+  *planned*.
+
+### Watching the gates
+
+The **CI** and **Conflicts** gates open a dedicated **gate window** when you click into them, so you
+can see *why* a gate is looping rather than a bare prose panel: the verdict, the gated commit, the
+helper's remaining attempt budget, and — for CI — exactly which checks failed. Each gate's helper
+(the **CI Fixer** / **Conflict Resolver**) renders as a sub-node that reads possible / running /
+completed / skipped, the same as the Tester's Fixer.
 
 ::: tip Web research
 When [web search is configured](../deploy/configuration.md#web-search) on the deployment, container

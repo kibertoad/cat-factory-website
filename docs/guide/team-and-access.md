@@ -37,19 +37,41 @@ An **account** is the top-level owner you work under:
 - A **personal account**, one per user, owned by that user.
 - An **organization account**, shared by several members.
 
-Members of an account hold one of two roles:
+Each member of an account holds a **combinable set** of roles (at least one). A member can hold any
+combination — for example an admin who is also a product owner:
 
-| Role | Can do |
+| Role | Grants |
 | --- | --- |
-| **Owner** | Everything a member can, plus invite and revoke invitations, manage members, and connect the account's email sender. |
-| **Member** | See and act on the account's boards. Finer access is governed by per-workspace [membership controls](./core-concepts.md#workspaces-and-accounts). |
+| **Admin** | Modify everything about the org account: its settings, members and their roles, invitations, the account's email sender, and account-scoped provider API keys. |
+| **Developer** | The default role. Membership itself — see and act on the account's boards — with no special account-management powers. |
+| **Product** | Can be set as a task's **responsible product person** and is notified when a requirement (or bug-clarity) review raises findings on that task. Pair it with `developer` or `admin` for build access. |
 
-Whoever creates an organization account is its first owner.
+Whoever creates an organization account becomes its first **admin** (and cannot drop their own admin
+role while they are the one editing). An admin assigns roles per member from the team settings.
+Finer access *within* a board is still governed by per-workspace
+[membership controls](./core-concepts.md#workspaces-and-accounts).
+
+::: tip Roles, not seats
+Roles describe what someone may do in the account, not which models they can use. A product owner
+who never writes code still needs no key of their own — repo and model access come from the
+account/workspace pools. Conversely, granting `admin` is the only way to let someone manage the
+org's keys, email sender, and members.
+:::
+
+## The responsible product person
+
+A task can name a **responsible product person** — any account member who holds the **product**
+role. Set it from the task's run settings in the inspector ("Responsible product"). When that task's
+[requirements review](./requirements.md) (or the bug-fix pipeline's clarity review) raises findings,
+the responsible person's inbox highlights the notification as theirs, so the right product owner is
+pulled in to answer the open questions. The notification stays visible to the whole workspace; the
+responsible person just gets it flagged directly. Leave it unassigned and the findings notify the
+task's creator instead.
 
 ## Inviting teammates
 
-From the account's team settings, an owner invites a teammate by email and picks the role to grant
-(defaults to **member**). Cat Factory mints a single-use, tokened accept link and:
+From the account's team settings, an **admin** invites a teammate by email and picks the role set to
+grant (defaults to **developer**). Cat Factory mints a single-use, tokened accept link and:
 
 - emails it through the account's [connected email sender](#sending-invitation-emails) when one is
   configured, or
@@ -62,7 +84,7 @@ Invitations are deliberately narrow:
   address the invite was sent to, so a leaked link is useless to anyone else.
 - Re-inviting the same address **supersedes** any still-pending invite, so only the most recent link
   stays redeemable.
-- An owner can **revoke** a pending invitation at any time.
+- An admin can **revoke** a pending invitation at any time.
 
 The invitee opens the link, signs in or signs up (the invitation satisfies the invite-only gate),
 and joins the organization with the role they were given.
@@ -70,7 +92,7 @@ and joins the organization with the role they were given.
 ## Sending invitation emails
 
 Email delivery is connected **per account in the UI**, not through environment variables. Like the
-[Slack bot token](../deploy/notifications.md), an owner onboards it in settings and the credential is
+[Slack bot token](../deploy/notifications.md), an admin onboards it in settings and the credential is
 stored sealed in the database under `ENCRYPTION_KEY`:
 
 1. Pick a provider, **SendGrid** or **Resend**.

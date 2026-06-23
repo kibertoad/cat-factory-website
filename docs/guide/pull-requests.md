@@ -26,10 +26,12 @@ The Full build pipeline finishes with three engine steps that prepare the PR for
 
 - **Conflicts Gate** - keeps the PR mergeable with its base, looping a **Conflict Resolver** agent to
   merge the base in and resolve any conflicts on the same branch.
-- **CI Gate** - gates the (now up-to-date) PR on green CI, looping a **CI Fixer** agent on failure.
+- **CI Gate** - gates the up-to-date PR on green CI, looping a **CI Fixer** agent on failure.
 - **Merger** - scores the PR on complexity, risk, and impact, then either auto-merges when the
   scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
-  or raises a review notification for a human.
+  or raises a review notification for a human. It only auto-merges a PR it could actually examine:
+  if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
+  review rather than merging on a hollow score.
 
 ## Reviewing the PR
 
@@ -59,7 +61,9 @@ If the change needs more work, you have the usual options:
 
 - Push commits or request changes on the PR directly.
 - Refine the block's [requirements](./requirements.md) and start a new run.
-- Use the run's **retry** to re-run from a failed step.
+- Use the run's **retry** to re-run from a failed step, or
+  [**restart from a step you pick**](./running-pipelines.md#retry-restart-stop-and-reset) — even on a
+  finished run — to redo, say, the Coder and everything after it without touching the earlier work.
 
 Each iteration is fully visible on the board and in the run's event log.
 
