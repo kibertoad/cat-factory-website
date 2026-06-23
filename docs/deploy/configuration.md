@@ -39,9 +39,9 @@ neither, signup is refused.
 
 ## LLM providers
 
-Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, LiteLLM) are no
-longer read from environment variables. They are onboarded **in the UI**, scoped to an account,
-workspace, or user, pooled, and stored encrypted under [`ENCRYPTION_KEY`](#credential-encryption).
+Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, LiteLLM) are
+onboarded **in the UI**, scoped to an account, workspace, or user, pooled, and stored encrypted
+under [`ENCRYPTION_KEY`](#credential-encryption).
 The same is true of **vendor credentials**: a coding-plan subscription (Claude, GLM, or Codex, kept
 per-user) or a poolable vendor credential (Kimi, DeepSeek), run through the Claude Code or Codex
 harness. None of these needs a provider env var; they only need `ENCRYPTION_KEY` set. **Local
