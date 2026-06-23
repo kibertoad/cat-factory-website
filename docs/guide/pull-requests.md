@@ -26,7 +26,7 @@ The Full build pipeline finishes with three engine steps that prepare the PR for
 
 - **Conflicts Gate** - keeps the PR mergeable with its base, looping a **Conflict Resolver** agent to
   merge the base in and resolve any conflicts on the same branch.
-- **CI Gate** - gates the (now up-to-date) PR on green CI, looping a **CI Fixer** agent on failure.
+- **CI Gate** - gates the up-to-date PR on green CI, looping a **CI Fixer** agent on failure.
 - **Merger** - scores the PR on complexity, risk, and impact, then either auto-merges when the
   scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
   or raises a review notification for a human. It only auto-merges a PR it could actually examine:

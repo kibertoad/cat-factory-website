@@ -76,11 +76,9 @@ key is safe across all of them.
 | --- | --- |
 | `ENCRYPTION_KEY` | Base64 key, ≥ 32 bytes decoded (`openssl rand -base64 32`). Required. The always-on Jira task-source integration fails to boot with a loud config error until it is set. |
 
-::: warning One key, not four
-Earlier builds used separate `DOCUMENTS_ENCRYPTION_KEY`, `TASKS_ENCRYPTION_KEY`,
-`ENVIRONMENTS_ENCRYPTION_KEY`, and `RUNNERS_ENCRYPTION_KEY` values. These are gone. Provision a
-single `ENCRYPTION_KEY` instead. Use the same key value across restarts and replicas, or existing
-encrypted credentials become unreadable.
+::: warning Use one stable key
+A single `ENCRYPTION_KEY` backs all of these integrations. Use the same key value across restarts
+and replicas, or encrypted credentials become unreadable.
 :::
 
 ## Infrastructure
@@ -133,14 +131,14 @@ Inline search only takes effect on providers with a hosted search tool (Anthropi
 
 Document sources (Confluence, Notion, GitHub repo docs) and the Jira task source are **always on**:
 they ship enabled and each workspace connects its own site through the UI, with credentials stored
-encrypted under `ENCRYPTION_KEY`. There is no per-integration enable flag anymore. The integrations
-fail loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning errors later.
+encrypted under `ENCRYPTION_KEY`. There is no per-integration enable flag. The integrations fail
+loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning errors later.
 
 | Variable | Purpose |
 | --- | --- |
 | `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to all (`confluence,notion,github`). |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
-| `TASK_SOURCES` | Comma-separated task sources to enable. Both `jira` and `github` now work on every runtime (Cloudflare, Node, and local). GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT) and needs no env. |
+| `TASK_SOURCES` | Comma-separated task sources to enable. Both `jira` and `github` work on every runtime (Cloudflare, Node, and local). GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT) and needs no env. |
 
 The tech-debt [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the
 workspace's chosen tracker (see [Issue & Document Sources](../guide/issue-sources.md)).

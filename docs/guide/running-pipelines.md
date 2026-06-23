@@ -29,8 +29,8 @@ Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Resear
 | **Merger** | Scores the PR and auto-merges within thresholds, or raises a review notification. |
 
 The **Spec Writer** runs before the **Architect** so the design is built against a written spec, and
-the spec itself is no longer human-gated: its **Spec Reviewer** companion handles quality by looping
-the writer back automatically. See [Requirements](./requirements.md) for the spec and the review loop.
+the spec itself is not human-gated: its **Spec Reviewer** companion handles quality by looping the
+writer back automatically. See [Requirements](./requirements.md) for the spec and the review loop.
 
 Other built-in pipelines each new workspace seeds:
 

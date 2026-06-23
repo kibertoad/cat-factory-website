@@ -37,10 +37,9 @@ raises **findings**, each tagged with a category and a severity (low, medium, or
 | **risk** | Aspects that could go wrong or have outsized impact. |
 | **question** | Open questions for a product owner to answer directly. |
 
-The reviewer **always runs automatically** as the first gate step when a task's pipeline starts —
-there is no separate "Review requirements" button to remember. It opens a dedicated **review
-window** rather than a generic approve/reject panel, and the findings are persisted so you can work
-through them over several sittings. If the task names a [responsible product
+The reviewer **runs automatically** as the first gate step when a task's pipeline starts. It opens a
+dedicated **review window**, and the findings are persisted so you can work through them over several
+sittings. If the task names a [responsible product
 person](./team-and-access.md#the-responsible-product-person), they get the "findings raised"
 notification flagged to them directly; otherwise it goes to the task's creator.
 
@@ -56,11 +55,11 @@ Requirements review is **iterative**. Each round:
 The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
 merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
 
-Incorporation and re-review run **in the background** — clicking "Incorporate answers" no longer
-freezes the window. You go straight back to the board, and the task card shows which stage is
-running ("Incorporating answers…" then "Re-reviewing…") instead of an approval badge, since no
-action is needed until the reviewer comes back. You're summoned again only if the re-review raises
-fresh findings or hits the iteration cap; a converged round just advances the pipeline. (If you
+Incorporation and re-review run **in the background**. After you click "Incorporate answers" you go
+straight back to the board, and the task card shows which stage is running ("Incorporating answers…"
+then "Re-reviewing…") in place of an approval badge, since no action is needed until the reviewer
+comes back. You're summoned again only if the re-review raises fresh findings or hits the iteration
+cap; a converged round just advances the pipeline. (If you
 dismissed everything and left nothing to fold in, the round settles with no LLM call at all.)
 
 Two per-task knobs on the [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
