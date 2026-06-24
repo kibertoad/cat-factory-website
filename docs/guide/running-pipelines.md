@@ -16,11 +16,11 @@ Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Resear
 | --- | --- |
 | **Requirements Reviewer** | Reviews the collected requirements for gaps; pauses for human approval. |
 | **Spec Writer** | Aggregates tasks into the service's in-repo [spec](./requirements.md#the-unified-in-repo-spec) + Gherkin, on a shared work branch before the design. |
-| **Spec Reviewer** | The Spec Writer's companion: rates the spec and loops the writer back below threshold (no human gate). |
+| **Spec Reviewer** | The Spec Writer's companion. Rates the spec and loops the writer back below threshold (no human gate). |
 | **Architect** | Designs the approach against the just-written spec; pauses for human approval. |
 | **Researcher** | Investigates prior art, libraries, and constraints. |
 | **Coder** | Clones the repo and writes the implementation. |
-| **Reviewer** | The Coder's companion: rates the change and loops it back for rework below threshold, **immediately after the Coder** so review happens on fresh code before the map/test tail. |
+| **Reviewer** | The Coder's companion. Rates the change and loops it back for rework below threshold, **immediately after the Coder**, so review happens on fresh code before the map/test tail. |
 | **Blueprinter** | Refreshes the service → modules → features map in-repo from the new code. |
 | **Mock Builder** | Stands up WireMock mocks for external services and the compose wiring so the suite runs locally. |
 | **Tester** | Runs the software against the mocks and the spec's acceptance scenarios and reports what it observed. |
@@ -37,11 +37,11 @@ Other built-in pipelines each new workspace seeds:
 | Pipeline | What it's for |
 | --- | --- |
 | **Simple** | The leanest end-to-end build: Coder → Reviewer → Mock Builder → Tester, then the standard Conflicts → CI → Merger tail. No design, spec, or documentation phases. |
-| **Quick implement** | Coder → Blueprinter → Mock Builder → Tester, then the merge tail — no Reviewer and no design/spec phases. |
+| **Quick implement** | Coder → Blueprinter → Mock Builder → Tester, then the merge tail, with no Reviewer and no design/spec phases. |
 | **Triage & fix bug** | A bug-fix front end: a read-only **Bug Investigator** explores the repo from the raw report, then a **Clarity Review** gate triages the report for *fixability* before the Coder runs. See below. |
 | **Complex fullstack feature** | The fullest pipeline: adds a Researcher, the Playwright e2e author, and business/feature documenters around the Full-build core. |
-| **Map service** | Blueprint only — run after bootstrapping to reconcile a repo onto the board. |
-| **Write spec** | Spec Writer only — regenerate a service's in-repo spec on its own. |
+| **Map service** | Blueprint only. Run after bootstrapping to reconcile a repo onto the board. |
+| **Write spec** | Spec Writer only. Regenerate a service's in-repo spec on its own. |
 | **Integrate & ship** | Integrator → Mock Builder → Tester → Documenter, for wiring an existing change through. |
 | **Dependency updates** / **Tech debt** | The recurring presets (see [Recurring Pipelines](./recurring-pipelines.md)). |
 
@@ -55,7 +55,7 @@ Additional agent kinds include the **Fixer** (loops on failing tests inside the 
 The **Triage & fix bug** pipeline is built for a bug report rather than a feature brief:
 
 - The **Bug Investigator** is a read-only agent that clones the repo, reads the code against the raw
-  report, and returns an enriched report — plus an *optional* working hypothesis, which it omits
+  report, and returns an enriched report, plus an *optional* working hypothesis, which it omits
   unless reasonably confident so a weak guess never misdirects the fix. It commits nothing and opens
   no PR.
 - The **Clarity Review** gate then triages the report for whether it is actually *fixable*: are
@@ -79,16 +79,16 @@ The built-in pipelines are read-only templates, but you can shape your own:
   at run start, so you can drop, say, the Researcher for a run without rebuilding the chain. At least
   one step must stay enabled.
 
-In the builder, the agent palette is grouped into collapsible categories — **Review & triage**,
+In the builder, the agent palette is grouped into collapsible categories (**Review & triage**,
 **Design & research**, **Implementation**, **Testing**, **Documentation**, and
-**Gates & observability** — with any custom kinds in a trailing bucket, so a long catalog stays
+**Gates & observability**), with any custom kinds in a trailing bucket, so a long catalog stays
 navigable. You can also tag a pipeline with **labels** and **archive** ones you no longer run to keep
 the list focused; archiving hides a pipeline without deleting it.
 
 ## Estimating and gating expensive steps
 
 The **Task Estimator** is an agent kind you can add early in a pipeline. After requirements are
-clarified, it scores the task on three 0–100% axes — **complexity**, **risk**, and **impact** — and
+clarified, it scores the task on three 0–100% axes (**complexity**, **risk**, and **impact**) and
 shows them as a small estimate badge in the task inspector, with the model's rationale.
 
 That estimate lets you **gate** expensive companion steps so they run only when the work warrants it.
@@ -106,15 +106,15 @@ certain steps through more than one model and reconcile the results instead of t
 pass. In the builder, eligible steps (**Architect**, **Researcher/analysis**, **Reviewer**, and the
 **Task Estimator**) gain an **Enable Consensus** toggle with three strategies:
 
-- **Specialist panel** — several models reason in parallel under assigned roles, then a synthesizer
+- **Specialist panel**: several models reason in parallel under assigned roles, then a synthesizer
   combines them.
-- **Debate** — models draft, critique, and refine over a set number of rounds (1–5).
-- **Ranked voting** — models score candidates against a rubric and the scores are aggregated.
+- **Debate**: models draft, critique, and refine over a set number of rounds (1–5).
+- **Ranked voting**: models score candidates against a rubric and the scores are aggregated.
 
 You define the participants (each a role plus an optional model) and an optional synthesizer model.
 Consensus can itself be gated on the task estimate, so it only kicks in on risky or high-impact work.
-The step returns output in the same shape as the single-model version, and the full transcript —
-each contribution, the synthesis, a confidence score, and any unresolved dissent — is viewable from
+The step returns output in the same shape as the single-model version, and the full transcript
+(each contribution, the synthesis, a confidence score, and any unresolved dissent) is viewable from
 the step. Consensus only applies to the eligible kinds; other steps run normally even if a config is
 present.
 
@@ -124,13 +124,13 @@ From a selected block, start a run:
 
 1. **Choose a pipeline** appropriate to the task.
 2. **Confirm the spend estimate** against your remaining [budget](./budgets.md).
-3. **Launch** - the run is created and begins streaming progress.
+3. **Launch**: the run is created and begins streaming progress.
 
 If your workspace caps [running tasks per service](./designing-your-board.md#workspace-settings) and
 the service is already at its limit, starting another task there is refused with a clear message
 until a running task finishes.
 
-Each agent runs on its kind's default model - see [Choosing models](#choosing-models) below.
+Each agent runs on its kind's default model; see [Choosing models](#choosing-models) below.
 
 ::: tip Personal subscriptions ask for a password once
 If a step uses a model from a personal (individual-usage) subscription such as Claude, GLM, or
@@ -189,15 +189,15 @@ Answer the questions to continue. The most common prompts are the **Requirements
 A second kind of prompt comes from a **companion that has spent its automatic rework budget**. When
 the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer above
 its quality bar within the allowed retries, it stops auto-looping and parks for you with a **Decide**
-button (rather than a plain Approve) offering three choices — the same three the requirements
+button (rather than a plain Approve) offering three choices, the same three the requirements
 reviewer offers at its iteration cap:
 
-- **One more round** — raise the budget by one and loop the producer back for another pass.
-- **Proceed anyway** — accept the producer's current output and advance the pipeline.
-- **Stop & reset** — cancel the run and return the task to phase zero (editable), with the
+- **One more round**: raise the budget by one and loop the producer back for another pass.
+- **Proceed anyway**: accept the producer's current output and advance the pipeline.
+- **Stop & reset**: cancel the run and return the task to phase zero (editable), with the
   producer's latest output preserved on its branch.
 
-A run parked on a decision waits as long as it needs — it is never cancelled for taking too long.
+A run parked on a decision waits as long as it needs; it is never cancelled for taking too long.
 Instead, its inbox notification turns red and is flagged **Overdue** once it has waited past the
 workspace's escalation threshold, so an unattended decision gets louder rather than silently
 expiring. Set that threshold under [Workspace settings](./designing-your-board.md#workspace-settings).
@@ -222,7 +222,7 @@ generic "the container reported a failure".
 You have four distinct controls over a run:
 
 - **Retry** resumes a failed run at its **first failed step**, reusing the same branch and PR.
-- **Restart from here** rewinds to a **step you pick** and re-runs the pipeline from there onward —
+- **Restart from here** rewinds to a **step you pick** and re-runs the pipeline from there onward,
   even on a finished run. The steps before it are preserved verbatim, so their outputs still reach
   the restarted step as context; the chosen step and every later step have their iteration counters
   (companion attempts, gate/test attempts) reset. Use it to re-run work that already completed. The
@@ -231,14 +231,14 @@ You have four distinct controls over a run:
   and retry, restarting a step that uses a personal subscription prompts for your password.
 - **Stop** halts the run but **keeps it**: the run stays readable and retryable and the block goes
   *blocked*. Nothing is discarded.
-- **Reset** is the explicit destructive action — it discards the run and returns the task to
+- **Reset** is the explicit destructive action: it discards the run and returns the task to
   *planned*.
 
 ### Watching the gates
 
 The **CI** and **Conflicts** gates open a dedicated **gate window** when you click into them, so you
 can see *why* a gate is looping rather than a bare prose panel: the verdict, the gated commit, the
-helper's remaining attempt budget, and — for CI — exactly which checks failed. Each gate's helper
+helper's remaining attempt budget, and (for CI) exactly which checks failed. Each gate's helper
 (the **CI Fixer** / **Conflict Resolver**) renders as a sub-node that reads possible / running /
 completed / skipped, the same as the Tester's Fixer.
 

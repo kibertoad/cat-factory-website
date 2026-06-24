@@ -7,9 +7,9 @@ separate backlog to keep in sync. This page covers building and organizing that 
 
 The board is a pannable, zoomable canvas rendered with Vue Flow. As you zoom, the canvas uses
 semantic level-of-detail rendering: high-level frames stay legible when zoomed out, and detail
-appears as you zoom in. Keep zooming into an in-flight task and its card grows downward — first into
+appears as you zoom in. Keep zooming into an in-flight task and its card grows downward, first into
 its full **build-pipeline steps**, then one notch further into each step's live **subtask**
-breakdown — so you can watch a run's internals spatially, not only in the inspector. (Cards expand
+breakdown, so you can watch a run's internals spatially, not only in the inspector. (Cards expand
 only when they're on screen, and where two would overlap only the centre-most opens, so deep zoom
 stays readable.)
 
@@ -29,19 +29,19 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 
 **Configuration** holds workspace-wide settings panels:
 
-- **Default models** - pick a default model per agent kind (see [Assigning models](#assigning-models)).
-- **Merge thresholds** - manage the merge-threshold presets the **Merger** step uses to decide
+- **Default models**: pick a default model per agent kind (see [Assigning models](#assigning-models)).
+- **Merge thresholds**: manage the merge-threshold presets the **Merger** step uses to decide
   auto-merge vs. raising a review.
-- **Workspace settings** - the running-task limit and the waiting-decision escalation threshold
+- **Workspace settings**: the running-task limit and the waiting-decision escalation threshold
   (see [Workspace settings](#workspace-settings)).
 
 ## The three levels
 
 Build top-down using the [block hierarchy](./core-concepts.md#blocks):
 
-1. **Frames (services)** - one per deployable service, usually linked to a repository.
-2. **Subframes (modules)** - major areas inside a service.
-3. **Leaves (tasks)** - concrete, agent-sized units of work.
+1. **Frames (services)**: one per deployable service, usually linked to a repository.
+2. **Subframes (modules)**: major areas inside a service.
+3. **Leaves (tasks)**: concrete, agent-sized units of work.
 
 ::: tip Sizing tasks
 A task should be something an agent can implement and land in a single pull request. If a leaf
@@ -51,16 +51,16 @@ feels like it spans several PRs, split it into sibling leaves.
 ## Adding and editing blocks
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
-  controls, at the level you need. When you add a task, pick its **type** — **Feature**, **Bug**,
-  **Document**, or **Spike** — which adjusts the form (a Bug collects severity and steps to
+  controls, at the level you need. When you add a task, pick its **type** (**Feature**, **Bug**,
+  **Document**, or **Spike**), which adjusts the form (a Bug collects severity and steps to
   reproduce, a Spike a time-box, a Document its kind) and lets the workspace cap concurrency per type.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, merge-policy preset,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
 - **Reparent** by dragging a block onto a new parent, which is useful as your design evolves. Moving
   a task into another service's frame re-homes it onto that service.
-- **Delete** a block to remove it. Deletion is **optimistic** — the block disappears at once and
-  only reappears (with an error toast) if the backend rejects it — and **idempotent**, so deleting a
+- **Delete** a block to remove it. Deletion is **optimistic** (the block disappears at once and
+  only reappears, with an error toast, if the backend rejects it) and **idempotent**, so deleting a
   block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
   to children, so deleting a service removes its modules and tasks too.
 
@@ -94,11 +94,11 @@ models on architecturally significant kinds and cheaper ones on routine steps to
 
 **Configuration → Workspace settings** holds two team-wide controls:
 
-- **Running tasks per service** - cap how many tasks may run concurrently under one service frame.
+- **Running tasks per service**: cap how many tasks may run concurrently under one service frame.
   Choose **No limit**, a single **shared** cap across all task types, or a **per-type** cap (a
   separate number for Feature, Bug, Document, and Spike). Starting a task that would exceed the cap is
   refused until a running task finishes, so a busy service doesn't fan out more agents than you want.
-- **Waiting for a human** - how many minutes a run may sit parked on a decision before its inbox
+- **Waiting for a human**: how many minutes a run may sit parked on a decision before its inbox
   notification escalates to red and is flagged **Overdue** (default 120). Parked runs are never
   cancelled; the escalation just makes a neglected decision more visible.
 

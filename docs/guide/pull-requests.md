@@ -24,10 +24,10 @@ The **Tester** step then validates the change before the closing automation runs
 
 The Full build pipeline finishes with three engine steps that prepare the PR for merge:
 
-- **Conflicts Gate** - keeps the PR mergeable with its base, looping a **Conflict Resolver** agent to
+- **Conflicts Gate**: keeps the PR mergeable with its base, looping a **Conflict Resolver** agent to
   merge the base in and resolve any conflicts on the same branch.
-- **CI Gate** - gates the up-to-date PR on green CI, looping a **CI Fixer** agent on failure.
-- **Merger** - scores the PR on complexity, risk, and impact, then either auto-merges when the
+- **CI Gate**: gates the up-to-date PR on green CI, looping a **CI Fixer** agent on failure.
+- **Merger**: scores the PR on complexity, risk, and impact, then either auto-merges when the
   scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
   or raises a review notification for a human. It only auto-merges a PR it could actually examine:
   if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
@@ -35,7 +35,7 @@ The Full build pipeline finishes with three engine steps that prepare the PR for
 
 A pipeline can add a **Post-release-health** gate after the Merger that watches Datadog monitors and
 SLOs for a window after the merge and escalates to an on-call agent on a regression. It's optional
-and needs a connected Datadog deployment — see
+and needs a connected Datadog deployment; see
 [Observability → Post-release health](../deploy/observability.md#post-release-health-and-agent-on-call).
 
 ## Reviewing the PR
@@ -70,11 +70,11 @@ If the change needs more work, you have the usual options:
 - Push commits or request changes on the PR directly.
 - Refine the block's [requirements](./requirements.md) and start a new run.
 - Use the run's **retry** to re-run from a failed step, or
-  [**restart from a step you pick**](./running-pipelines.md#retry-restart-stop-and-reset) — even on a
-  finished run — to redo, say, the Coder and everything after it without touching the earlier work.
+  [**restart from a step you pick**](./running-pipelines.md#retry-restart-stop-and-reset) (even on a
+  finished run) to redo, say, the Coder and everything after it without touching the earlier work.
 
 Each iteration is fully visible on the board and in the run's event log.
 
 ---
 
-Next: connect and bootstrap the repositories agents work in - [Repositories](./repositories.md).
+Next: connect and bootstrap the repositories agents work in, [Repositories](./repositories.md).

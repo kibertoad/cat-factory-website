@@ -50,9 +50,9 @@ infrastructure (and cost) running indefinitely.
 
 ## When the manifest isn't enough
 
-If your platform's API can't be expressed as request/response templates — asynchronous provisioning,
+If your platform's API can't be expressed as request/response templates (asynchronous provisioning,
 a live URL buried in a dynamic response shape, a status vocabulary of its own, or a non-HTTP
-protocol — implement the `EnvironmentProvider` port in code instead and inject it when you build the
+protocol), implement the `EnvironmentProvider` port in code instead and inject it when you build the
 container. See [Custom Providers (Code Adapters)](./custom-providers.md) for a worked example,
 per-workspace configuration via `providerConfig`, and the gotchas (status mapping, async provision,
 idempotent teardown).

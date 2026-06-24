@@ -38,12 +38,12 @@ An **account** is the top-level owner you work under:
 - An **organization account**, shared by several members.
 
 Each member of an account holds a **combinable set** of roles (at least one). A member can hold any
-combination — for example an admin who is also a product owner:
+combination, for example an admin who is also a product owner:
 
 | Role | Grants |
 | --- | --- |
 | **Admin** | Modify everything about the org account: its settings, members and their roles, invitations, the account's email sender, and account-scoped provider API keys. |
-| **Developer** | The default role. Membership itself — see and act on the account's boards — with no special account-management powers. |
+| **Developer** | The default role. Membership itself (see and act on the account's boards) with no special account-management powers. |
 | **Product** | Can be set as a task's **responsible product person** and is notified when a requirement (or bug-clarity) review raises findings on that task. Pair it with `developer` or `admin` for build access. |
 
 Whoever creates an organization account becomes its first **admin** (and cannot drop their own admin
@@ -53,14 +53,14 @@ Finer access *within* a board is still governed by per-workspace
 
 ::: tip Roles, not seats
 Roles describe what someone may do in the account, not which models they can use. A product owner
-who never writes code still needs no key of their own — repo and model access come from the
+who never writes code still needs no key of their own; repo and model access come from the
 account/workspace pools. Conversely, granting `admin` is the only way to let someone manage the
 org's keys, email sender, and members.
 :::
 
 ## The responsible product person
 
-A task can name a **responsible product person** — any account member who holds the **product**
+A task can name a **responsible product person**: any account member who holds the **product**
 role. Set it from the task's run settings in the inspector ("Responsible product"). When that task's
 [requirements review](./requirements.md) (or the bug-fix pipeline's clarity review) raises findings,
 the responsible person's inbox highlights the notification as theirs, so the right product owner is

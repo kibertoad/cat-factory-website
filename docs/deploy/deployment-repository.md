@@ -1,7 +1,7 @@
 # Your Deployment Repository
 
-Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR). You don't fork
-it — you assemble a small **deployment repository** of thin packages that depend on the published
+Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR and Docker Hub). You don't fork
+it. Instead, you assemble a small **deployment repository** of thin packages that depend on the published
 libraries and carry only your configuration: environment, secrets, a `Dockerfile`, and any
 [custom providers](./custom-providers.md) you wire in.
 
@@ -53,7 +53,7 @@ packages:
   - 'deploy/*'
 ```
 
-Root `package.json` — note `packageManager` and a Node 24+ engine (the deploy entries run
+Root `package.json` (note `packageManager` and a Node 24+ engine, since the deploy entries run
 TypeScript directly via Node's native type stripping, so there's no build step for them):
 
 ```json
@@ -69,7 +69,7 @@ TypeScript directly via Node's native type stripping, so there's no build step f
 ## 2. Depend on the published libraries
 
 Each deploy package depends on exactly one Cat Factory runtime library, pinned to a published
-version (**not** `workspace:*` — that only works inside the source monorepo):
+version (**not** `workspace:*`, which only works inside the source monorepo):
 
 ```jsonc
 // deploy/backend/package.json
@@ -124,12 +124,12 @@ startLocal().catch((err: unknown) => {
 // deploy/frontend/nuxt.config.ts
 export default defineNuxtConfig({
   extends: ['@cat-factory/app'],
-  app: { head: { title: 'Your Org — Agent Board' } },
+  app: { head: { title: 'Your Org Agent Board' } },
 })
 ```
 
 When you're ready to inject a [custom provider](./custom-providers.md), these are the exact files
-where it plugs in — both `start()` and `startLocal()` take an options object for that, and nothing
+where it plugs in. Both `start()` and `startLocal()` take an options object for that, and nothing
 else changes.
 
 ## 4. Configure
@@ -148,7 +148,7 @@ The full set of variables is documented in [Configuration](./configuration.md). 
 
 ## 5. The local development loop
 
-For day-to-day work, run the `local` package — it's the same backend wired for one machine (agent
+For day-to-day work, run the `local` package. It's the same backend wired for one machine (agent
 jobs as local containers, GitHub via a PAT). See [Run Locally](./local.md) for the full setup.
 
 ```bash

@@ -1,7 +1,7 @@
 # Custom Providers (Code Adapters)
 
-For most deployments you connect infrastructure you own — a preview-environment platform or a
-runner scheduler — with a declarative [manifest](../reference/manifests.md), and a single generic
+For most deployments you connect infrastructure you own (a preview-environment platform or a
+runner scheduler) with a declarative [manifest](../reference/manifests.md), and a single generic
 adapter drives it over HTTP. No code.
 
 Sometimes the manifest isn't enough: your platform speaks a protocol that doesn't map cleanly onto
@@ -24,8 +24,8 @@ Use code when the manifest genuinely can't express the integration.
 
 | Port | Package | Methods | Backed by, by default |
 | --- | --- | --- | --- |
-| **`EnvironmentProvider`** | `@cat-factory/kernel` | `provision` · `status` · `teardown` | the manifest-driven HTTP environment adapter |
-| **`RunnerPoolProvider`** | `@cat-factory/kernel` | `dispatch` · `poll` · `release` | the manifest-driven HTTP runner adapter |
+| **`EnvironmentProvider`** | `@cat-factory/kernel` | `provision`, `status`, `teardown` | the manifest-driven HTTP environment adapter |
+| **`RunnerPoolProvider`** | `@cat-factory/kernel` | `dispatch`, `poll`, `release` | the manifest-driven HTTP runner adapter |
 
 You implement the port as a class, then inject it when you build the container. Your implementation
 **replaces** the default adapter for that capability; everything else (the deployer/tester agents,
@@ -33,22 +33,22 @@ the durable execution worker, the TTL sweeper) is unchanged.
 
 ## How configuration reaches your adapter
 
-A code adapter is a **deployment-wide singleton** — one instance serves every workspace. So it must
+A code adapter is a **deployment-wide singleton**: one instance serves every workspace. So it must
 not bake in per-workspace settings. Two channels carry configuration:
 
-1. **Deployment-wide defaults** — read once from the environment when you construct the adapter
+1. **Deployment-wide defaults**, read once from the environment when you construct the adapter
    (base URL fallback, a service-account identity, timeouts).
-2. **Per-workspace settings** — arrive on **every call** as the connection `manifest`. Each workspace
+2. **Per-workspace settings**, which arrive on **every call** as the connection `manifest`. Each workspace
    registers a connection (the same registration the manifest path uses), and your adapter reads:
-   - `manifest.baseUrl` — your platform's API root for that workspace;
-   - `resolveSecret(key)` — the per-workspace credential, decrypted in memory only at call time and
+   - `manifest.baseUrl`, your platform's API root for that workspace;
+   - `resolveSecret(key)`, the per-workspace credential, decrypted in memory only at call time and
      never logged;
-   - `manifest.providerConfig` — an **opaque key/value bag** for native-adapter settings the generic
-     manifest has no field for (a project name, a target service, status overrides, …).
+   - `manifest.providerConfig`, an **opaque key/value bag** for native-adapter settings the generic
+     manifest has no field for (a project name, a target service, status overrides, and so on).
 
 ::: tip `providerConfig` is your structured config slot
 The manifest models the generic HTTP adapter (URL, templates, auth, response mapping). Anything a
-native adapter needs beyond that goes in `providerConfig` — validate and read it yourself; the HTTP
+native adapter needs beyond that goes in `providerConfig`: validate and read it yourself; the HTTP
 adapter ignores it. This is what lets one deployment serve many workspaces with different projects
 or targets. See [Integration Manifests](../reference/manifests.md#per-workspace-config-for-code-adapters).
 :::
@@ -91,7 +91,7 @@ function resolve(defaults: Defaults, manifest: EnvironmentManifest, resolveSecre
 ## Example: a custom environment provider
 
 Say your org runs an internal **Preview Platform** with a REST API the generic manifest can't quite
-model — creation is asynchronous, the live URL lives in a `endpoints[]` array you must filter by
+model: creation is asynchronous, the live URL lives in a `endpoints[]` array you must filter by
 health, and its status vocabulary is its own.
 
 Imagine its API as:
@@ -117,7 +117,7 @@ import type {
 } from '@cat-factory/kernel'
 
 // Map the platform's vocabulary onto Cat Factory's lifecycle states. The set of incoming
-// values is closed and small — enumerate it, and treat anything unexpected as a failure
+// values is closed and small, so enumerate it and treat anything unexpected as a failure
 // rather than silently looping in "provisioning".
 const STATE_MAP: Record<string, EnvironmentStatus> = {
   queued: 'provisioning',
@@ -158,7 +158,7 @@ export class PreviewPlatformProvider implements EnvironmentProvider {
     const cfg = resolve(this.defaults, req.manifest, req.resolveSecret)
     const res = await this.call(cfg, 'GET', `/v1/previews/${encodeURIComponent(id)}`)
     if (res === null) {
-      // 404 after provision: the platform no longer knows this env — treat as gone.
+      // 404 after provision: the platform no longer knows this env, so treat as gone.
       return { externalId: id, url: null, status: 'torn_down', expiresAt: null, access: null, fields: req.provisionFields }
     }
     return this.toHandle(cfg, res, 'provisioning')
@@ -216,7 +216,7 @@ function ttlSeconds(manifest: EnvironmentManifest): number | undefined {
 | `teardown` | On run completion or TTL expiry. | `{ status: 'torn_down' }`. Must be idempotent. |
 
 `provisionContext` gives you typed git/PR/repo facts (`branch`, `pullNumber`, `repoOwner`,
-`repoName`, `pullUrl`); the same values are mirrored into `inputs` as strings. `fields` you return
+`repoName`, `pullUrl`), and the same values are mirrored into `inputs` as strings. `fields` you return
 from `provision` are persisted and handed back to `status`/`teardown` as `provisionFields`, so stash
 anything you need to re-address the environment (its id, a region, a sub-resource).
 
@@ -252,11 +252,11 @@ startLocal({
 ```
 
 `startLocal({ environmentProvider })` keeps all of local mode's boot behaviour (container-runtime
-preflight, orphan reaping, PAT/auth warnings) and just threads your provider through — so the local
+preflight, orphan reaping, PAT/auth warnings) and just threads your provider through, so the local
 entry stays a one-liner.
 
 The environments module still needs to be enabled (`ENVIRONMENTS_ENABLED=true` + an encryption key)
-and each workspace registers a **connection** — that connection is what holds the sealed token and
+and each workspace registers a **connection**. That connection is what holds the sealed token and
 the `providerConfig`. That requirement is intentional, not a workaround.
 
 ## Example: a custom runner pool
@@ -318,7 +318,7 @@ What your scheduler runs is **not** your concern to define: every job is the sta
 **executor-harness** container image (the same payload Cloudflare Containers run). Your scheduler
 pulls that image, runs it, and exposes its job lifecycle; the harness does the coding, the Git
 operations, and produces the branch the platform opens a PR from. The job `spec` you receive in
-`dispatch` is opaque — forward it to the harness verbatim.
+`dispatch` is opaque: forward it to the harness verbatim.
 
 A custom runner pool is wired through the Node runtime's runner-transport seam (the same one the
 manifest adapter uses), keyed per workspace from the registered connection. Because that plumbing is
@@ -328,7 +328,7 @@ your scheduler truly can't be driven over HTTP.
 
 ## Testing your adapter
 
-Inject `fetch`, and your adapter is a pure unit under test — no network, no platform:
+Inject `fetch`, and your adapter is a pure unit under test, with no network and no platform:
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -358,14 +358,14 @@ selection, a 404 on `status`/`teardown`, and a missing token.
 These are the ones that actually bite when adapting a real platform:
 
 - **Enumerate the status vocabulary; don't guess.** Map the platform's *complete, real* set of
-  states onto the lifecycle. Treat an unknown value as `failed`, not `provisioning` — an unknown
+  states onto the lifecycle. Treat an unknown value as `failed`, not `provisioning`: an unknown
   status usually means the contract changed, and silently waiting hides it. Confirm the exhaustive
   list with the platform's owners rather than inferring it from a few observed responses.
 - **The live URL is often not where you'd expect.** Generic "links" or "outputs" maps are frequently
   user-authored, may contain un-rendered templates, or aren't the app endpoint at all. Find the
   field that carries the *real, reachable* URL and prefer a healthy one. Make `providerConfig` choose
   it (which service/endpoint) so different workspaces can differ.
-- **Provision is usually async — return `provisioning`, not `ready`.** Don't synthesize a URL at
+- **Provision is usually async; return `provisioning`, not `ready`.** Don't synthesize a URL at
   create time; let `status` surface it once the platform reports the env up. Claiming `ready` early
   sends the tester at a URL that isn't live yet.
 - **Make `teardown` idempotent.** The TTL sweeper calls it, and the platform tombstones the local
@@ -376,7 +376,7 @@ These are the ones that actually bite when adapting a real platform:
   it created; treat the platform's expiry as a backstop and don't rely on a TTL you can't verify
   round-trips.
 - **Watch the platform's input constraints.** Many "create" APIs accept exactly one of a set of
-  fields (a PR number *or* a branch *or* a commit), and reject more than one — or silently rewrite
+  fields (a PR number *or* a branch *or* a commit), and reject more than one, or silently rewrite
   one into another. Send the single most specific ref you have, and persist the *returned* id, not
   the one you sent, in `fields`.
 - **Resolve secrets per call; never construct-time, never logged.** The token arrives via

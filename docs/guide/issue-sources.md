@@ -38,8 +38,8 @@ service frame or module to create tasks in, then hit **Create task** on an issue
 
 - A new leaf block is created (titled `KEY: summary`, its description seeded from the issue body) in
   the container you chose.
-- The issue is linked to the new task, so every agent step still sees the full issue — description,
-  comments, and metadata — as context.
+- The issue is linked to the new task, so every agent step still sees the full issue (description,
+  comments, and metadata) as context.
 
 The issue stays the source of truth: re-importing refreshes it. Creating a *second* task from an
 already-linked issue is refused, so one issue maps to one task rather than silently re-pointing.

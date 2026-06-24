@@ -1,6 +1,6 @@
 # cat-factory-website
 
-Documentation site for [Cat Factory](https://github.com/kibertoad/cat-factory) — the software
+Documentation site for [Cat Factory](https://github.com/kibertoad/cat-factory), the software
 development agent management platform. Built with [VuePress 2](https://v2.vuepress.vuejs.org/) and
 deployed to GitHub Pages.
 

@@ -17,7 +17,7 @@ Each block has a title, description, and status, and can carry a chosen pipeline
 [prompt fragments](./prompt-fragments.md), and, once an agent opens one, its pull request. Blocks
 can be **reparented** by dragging them to a new parent. Deleting a block cascades to its children.
 
-A task also has a **type** — **Feature**, **Bug**, **Document**, or **Spike** — chosen when you
+A task also has a **type** (**Feature**, **Bug**, **Document**, or **Spike**) chosen when you
 create it. The type tailors the task form (a Bug captures severity and repro steps, a Spike a
 time-box) and lets a workspace cap how many tasks of each type run at once under a service.
 
@@ -79,8 +79,8 @@ agent kind**. On deployments with it enabled, eligible steps can also run throug
 ## Decision prompts
 
 When an agent needs a human, the step enters a **Needs decision** state and surfaces a **decision
-prompt**, a set of questions for you to answer. The most common example: the reviewer agent
-asks you to resolve open gaps and assumptions *before* code is generated. Your answers are folded back
+prompt**, a set of questions for you to answer. The most common example is the reviewer agent
+asking you to resolve open gaps and assumptions *before* code is generated. Your answers are folded back
 into the block's description and the run continues.
 
 ## Workspaces and accounts
