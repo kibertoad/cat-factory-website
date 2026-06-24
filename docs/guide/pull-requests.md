@@ -33,6 +33,11 @@ The Full build pipeline finishes with three engine steps that prepare the PR for
   if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
   review rather than merging on a hollow score.
 
+A pipeline can add a **Post-release-health** gate after the Merger that watches Datadog monitors and
+SLOs for a window after the merge and escalates to an on-call agent on a regression. It's optional
+and needs a connected Datadog deployment — see
+[Observability → Post-release health](../deploy/observability.md#post-release-health-and-agent-on-call).
+
 ## Reviewing the PR
 
 Review the pull request exactly as you would any human contribution:
@@ -40,6 +45,9 @@ Review the pull request exactly as you would any human contribution:
 - Read the diff and the agent's description of what it changed.
 - Confirm CI is green.
 - Request changes or leave comments if something's off.
+
+Once an agent has pushed a branch, the task inspector shows a **branch quick-link** that opens the
+task's work branch on GitHub, so you can jump straight from a board task to its code.
 
 Because the work is a real PR in your repository, all your existing branch protections, required
 checks, and review rules apply unchanged.

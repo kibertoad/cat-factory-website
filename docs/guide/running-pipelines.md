@@ -79,6 +79,45 @@ The built-in pipelines are read-only templates, but you can shape your own:
   at run start, so you can drop, say, the Researcher for a run without rebuilding the chain. At least
   one step must stay enabled.
 
+In the builder, the agent palette is grouped into collapsible categories — **Review & triage**,
+**Design & research**, **Implementation**, **Testing**, **Documentation**, and
+**Gates & observability** — with any custom kinds in a trailing bucket, so a long catalog stays
+navigable. You can also tag a pipeline with **labels** and **archive** ones you no longer run to keep
+the list focused; archiving hides a pipeline without deleting it.
+
+## Estimating and gating expensive steps
+
+The **Task Estimator** is an agent kind you can add early in a pipeline. After requirements are
+clarified, it scores the task on three 0–100% axes — **complexity**, **risk**, and **impact** — and
+shows them as a small estimate badge in the task inspector, with the model's rationale.
+
+That estimate lets you **gate** expensive companion steps so they run only when the work warrants it.
+On a companion (the Coder's Reviewer, the Architect's or Spec Writer's reviewer), open its gate
+controls and set minimum thresholds on any of the axes. The companion then runs only when the
+estimate meets a threshold and is skipped otherwise, so light tasks bypass a full quality review
+while risky ones still get one. A gated companion needs a **Task Estimator** earlier in the same
+pipeline to have an estimate to consult, and must set at least one threshold (otherwise it would
+always skip).
+
+## Multi-model consensus
+
+On deployments where [consensus is enabled](../deploy/configuration.md#feature-toggles), you can run
+certain steps through more than one model and reconcile the results instead of trusting a single
+pass. In the builder, eligible steps (**Architect**, **Researcher/analysis**, **Reviewer**, and the
+**Task Estimator**) gain an **Enable Consensus** toggle with three strategies:
+
+- **Specialist panel** — several models reason in parallel under assigned roles, then a synthesizer
+  combines them.
+- **Debate** — models draft, critique, and refine over a set number of rounds (1–5).
+- **Ranked voting** — models score candidates against a rubric and the scores are aggregated.
+
+You define the participants (each a role plus an optional model) and an optional synthesizer model.
+Consensus can itself be gated on the task estimate, so it only kicks in on risky or high-impact work.
+The step returns output in the same shape as the single-model version, and the full transcript —
+each contribution, the synthesis, a confidence score, and any unresolved dissent — is viewable from
+the step. Consensus only applies to the eligible kinds; other steps run normally even if a config is
+present.
+
 ## Starting a run
 
 From a selected block, start a run:
@@ -86,6 +125,10 @@ From a selected block, start a run:
 1. **Choose a pipeline** appropriate to the task.
 2. **Confirm the spend estimate** against your remaining [budget](./budgets.md).
 3. **Launch** - the run is created and begins streaming progress.
+
+If your workspace caps [running tasks per service](./designing-your-board.md#workspace-settings) and
+the service is already at its limit, starting another task there is refused with a clear message
+until a running task finishes.
 
 Each agent runs on its kind's default model - see [Choosing models](#choosing-models) below.
 
@@ -153,6 +196,11 @@ reviewer offers at its iteration cap:
 - **Proceed anyway** — accept the producer's current output and advance the pipeline.
 - **Stop & reset** — cancel the run and return the task to phase zero (editable), with the
   producer's latest output preserved on its branch.
+
+A run parked on a decision waits as long as it needs — it is never cancelled for taking too long.
+Instead, its inbox notification turns red and is flagged **Overdue** once it has waited past the
+workspace's escalation threshold, so an unattended decision gets louder rather than silently
+expiring. Set that threshold under [Workspace settings](./designing-your-board.md#workspace-settings).
 
 ## Durability, failures, and retries
 

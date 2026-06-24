@@ -27,11 +27,13 @@ for creating blocks and building pipelines.
 The board toolbar adds an **Add service** menu to [mount a shared service](./shared-services.md)
 from your org, and a service frame offers **Add task** and **Add recurring pipeline**.
 
-**Configuration** holds two workspace-wide settings panels:
+**Configuration** holds workspace-wide settings panels:
 
 - **Default models** - pick a default model per agent kind (see [Assigning models](#assigning-models)).
 - **Merge thresholds** - manage the merge-threshold presets the **Merger** step uses to decide
   auto-merge vs. raising a review.
+- **Workspace settings** - the running-task limit and the waiting-decision escalation threshold
+  (see [Workspace settings](#workspace-settings)).
 
 ## The three levels
 
@@ -49,7 +51,9 @@ feels like it spans several PRs, split it into sibling leaves.
 ## Adding and editing blocks
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
-  controls, at the level you need.
+  controls, at the level you need. When you add a task, pick its **type** — **Feature**, **Bug**,
+  **Document**, or **Spike** — which adjusts the form (a Bug collects severity and steps to
+  reproduce, a Spike a time-box, a Document its kind) and lets the workspace cap concurrency per type.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, merge-policy preset,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
@@ -85,6 +89,18 @@ strong model for the **Architect** and a cheaper one for the **Tester**. Where a
 default, the deployment's routing for that kind applies, then its global default. Use stronger
 models on architecturally significant kinds and cheaper ones on routine steps to manage
 [spend](./budgets.md). See [Choosing models](./running-pipelines.md#choosing-models).
+
+## Workspace settings
+
+**Configuration → Workspace settings** holds two team-wide controls:
+
+- **Running tasks per service** - cap how many tasks may run concurrently under one service frame.
+  Choose **No limit**, a single **shared** cap across all task types, or a **per-type** cap (a
+  separate number for Feature, Bug, Document, and Spike). Starting a task that would exceed the cap is
+  refused until a running task finishes, so a busy service doesn't fan out more agents than you want.
+- **Waiting for a human** - how many minutes a run may sit parked on a decision before its inbox
+  notification escalates to red and is flagged **Overdue** (default 120). Parked runs are never
+  cancelled; the escalation just makes a neglected decision more visible.
 
 ## A suggested workflow
 

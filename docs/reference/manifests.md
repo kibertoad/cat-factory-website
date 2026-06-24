@@ -58,9 +58,18 @@ back. The manifest describes:
 | **poll** | Read a job's status until it finishes. |
 | **release** (optional) | Release / clean up a finished job. |
 
-Template variables come from `{{input.jobId}}` (the execution id the pool is keyed on) and
-`{{input.job}}` (the full harness job spec as JSON; embed it raw to forward it verbatim). The
-response mapping translates your scheduler's own status strings onto the harness states
+Template variables expose the job's metadata as first-class `{{input.*}}` values, so dispatch and
+poll templates can route and size a job without decoding the job spec:
+
+- `{{input.jobId}}` — the execution id the pool is keyed on (sticky routing target).
+- `{{input.job}}` — the full harness job spec as JSON; embed it raw to forward it verbatim.
+- `{{input.kind}}` — the agent kind (`run`, `blueprint`, `spec`, `explore`, `ci-fix`,
+  `resolve-conflicts`, `merge`, `on-call`, `test`, `fix-tests`, `bootstrap`), for routing to a
+  per-kind handler or queue.
+- `{{input.instanceType}}` / `{{input.cloudProvider}}` — the instance type and cloud provider a
+  service pins (empty when unpinned), for node selection and sizing.
+
+The response mapping translates your scheduler's own status strings onto the harness states
 (`running` / `done` / `failed`) and pulls out the work product (PR URL, branch, summary) and any
 live subtask progress.
 

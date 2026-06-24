@@ -158,6 +158,15 @@ optional settings tune what is recorded and where it is sent. Both are covered i
 
 Langfuse honours `LLM_RECORD_PROMPTS`: with prompts off, the traces carry only numeric telemetry.
 
+The **post-release-health** gate and **Agent-On-Call** watch production via Datadog after a merge.
+They are opt-in and covered in [Observability → Post-release health](./observability.md#post-release-health-and-agent-on-call).
+
+| Variable | Purpose |
+| --- | --- |
+| `DATADOG_ENABLED` | Set to `true` to enable the post-release-health gate and Agent-On-Call (also requires `ENCRYPTION_KEY`). Off by default; the gate is a pass-through when unset. The per-workspace Datadog site and keys are entered in the UI and sealed at rest. |
+| `PAGERDUTY_API_TOKEN` + `PAGERDUTY_FROM_EMAIL` | Optional. Post the on-call investigation as an annotation onto an open PagerDuty incident. |
+| `INCIDENTIO_API_KEY` | Optional. The same enrichment for incident.io. |
+
 ## Notifications (Slack)
 
 Board notifications (merge reviews, pipeline completions, CI failures, requirement reviews) land in
@@ -193,6 +202,8 @@ Optional integrations enabled by their own flag:
 | --- | --- |
 | `ENVIRONMENTS_ENABLED` | Set to `true` for ephemeral preview environments (also requires `ENCRYPTION_KEY`). See [Environments](./environments.md). |
 | `PROMPT_LIBRARY_ENABLED` | Set to `true` to source [prompt fragments](../guide/prompt-fragments.md) from a Git library repository. |
+| `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
+| `DATADOG_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
 
 ::: warning Treat secrets as secrets
 Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse

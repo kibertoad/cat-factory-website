@@ -17,6 +17,10 @@ Each block has a title, description, and status, and can carry a chosen pipeline
 [prompt fragments](./prompt-fragments.md), and, once an agent opens one, its pull request. Blocks
 can be **reparented** by dragging them to a new parent. Deleting a block cascades to its children.
 
+A task also has a **type** — **Feature**, **Bug**, **Document**, or **Spike** — chosen when you
+create it. The type tailors the task form (a Bug captures severity and repro steps, a Spike a
+time-box) and lets a workspace cap how many tasks of each type run at once under a service.
+
 A task moves through these statuses:
 
 ```
@@ -63,11 +67,14 @@ mergeable with its base, the **CI Gate** gates it on green CI (looping a fixer a
 the **Merger** scores the PR and either auto-merges within the task's thresholds or raises a review
 notification.
 
-Other agent kinds include the **Acceptance Author**, **Acceptance Test Author**, **Documenter**,
-**Integrator**, the **Fixer**, a tech-debt analysis step, and an issue/ticket tracker step. Agent
-kinds are an **open set**: a deployment can [register custom kinds](../reference/packages.md). You
-choose the pipeline (cloning a built-in to make an editable copy, then reordering or disabling
-steps), and set **default models per agent kind**.
+Other agent kinds include the **Task Estimator** (scores a task's complexity, risk, and impact so
+later steps can be [gated](./running-pipelines.md#estimating-and-gating-expensive-steps) on it), the
+**Acceptance Author**, **Acceptance Test Author**, **Documenter**, **Integrator**, the **Fixer**, a
+tech-debt analysis step, and an issue/ticket tracker step. Agent kinds are an **open set**: a
+deployment can [register custom kinds](../reference/packages.md). You choose the pipeline (cloning a
+built-in to make an editable copy, then reordering or disabling steps), and set **default models per
+agent kind**. On deployments with it enabled, eligible steps can also run through
+[multi-model consensus](./running-pipelines.md#multi-model-consensus).
 
 ## Decision prompts
 

@@ -16,7 +16,7 @@ developer machine instead of a server:
 
 | Concern | Node.js deployment | Local mode |
 | --- | --- | --- |
-| **Agent jobs** | Self-hosted [runner pool](./runner-pools.md) | Local Docker / Podman containers |
+| **Agent jobs** | Self-hosted [runner pool](./runner-pools.md) | Local containers (Docker, Podman, OrbStack, Colima, or Apple `container`) |
 | **GitHub access** | GitHub App (per-installation tokens) | A personal access token (`GITHUB_PAT`) |
 | **Auth gate** | Real GitHub OAuth sessions | Open by default (`AUTH_DEV_OPEN=true`) |
 | **Database** | Your PostgreSQL | A local PostgreSQL (docker-compose) |
@@ -24,7 +24,9 @@ developer machine instead of a server:
 ## Prerequisites
 
 - Node.js 24+.
-- Docker (or Podman) running locally, used both for the PostgreSQL service and for agent jobs.
+- A [container runtime](#choosing-a-container-runtime) running locally, used both for the
+  PostgreSQL service and for agent jobs. Docker is the default; Podman, OrbStack, Colima, and Apple's
+  `container` are also supported.
 - A GitHub personal access token for the repositories you want agents to work in. A fine-grained
   token scoped to those repos with **contents: write** and **pull-requests: write** is recommended.
 - The executor-harness image, either pulled from GHCR or built locally.
@@ -63,13 +65,40 @@ container.
 | `LOCAL_HARNESS_IMAGE` | yes | The executor-harness image run per agent job. |
 | `GITHUB_PAT` | yes | Personal access token agent containers use to clone, push branches, and open PRs. |
 | `PORT` | no | Listen port. Defaults to 8787. |
-| `LOCAL_DOCKER_BINARY` | no | Container CLI to use, e.g. `podman`. Defaults to `docker`. |
-| `LOCAL_DOCKER_NETWORK` | no | Attach job containers to a specific Docker network. |
-| `LOCAL_DOCKER_ADD_HOST_GATEWAY` | no | Add the `host.docker.internal` gateway alias on Linux. Defaults to `true`. |
-| `LOCAL_DOCKER_PRIVILEGED_TEST_JOBS` | no | Run Tester jobs privileged so they can stand up docker-compose infra (Docker-in-Docker). Defaults to `true`. |
+| `LOCAL_CONTAINER_RUNTIME` | no | Which runtime to use: `docker` (default), `podman`, `orbstack`, `colima`, or `apple`. See [Choosing a container runtime](#choosing-a-container-runtime). |
+| `LOCAL_DOCKER_BINARY` | no | Override the CLI binary the runtime profile selects, e.g. a non-default `podman` path. |
+| `LOCAL_DOCKER_NETWORK` | no | Attach job containers to a specific Docker network (Docker-family runtimes). |
+| `LOCAL_DOCKER_ADD_HOST_GATEWAY` | no | Add the `host-gateway` host alias on Linux. Defaults per runtime (`true` for Docker/Podman/OrbStack, `false` for Colima). |
+| `LOCAL_DOCKER_PRIVILEGED_TEST_JOBS` | no | Run Tester jobs privileged so they can stand up docker-compose infra (Docker-in-Docker). Defaults to `true`; set `false` for rootless Podman. |
+| `LOCAL_HARNESS_HOST_ALIAS` | no | Override the hostname agent containers use to reach the LLM proxy. Defaults per runtime (see the table below). |
 
 Model keys, observability, and Slack work exactly as in the
 [shared configuration reference](./configuration.md).
+
+## Choosing a container runtime
+
+Set `LOCAL_CONTAINER_RUNTIME` to pick how agent jobs and PostgreSQL run. There is no auto-detection:
+an unset or unrecognized value falls back to `docker` (logged as a misconfiguration at boot). At
+startup Cat Factory logs the resolved runtime, its CLI binary, the host alias, and whether
+Docker-in-Docker is available, so you can confirm the choice took effect.
+
+| Runtime | CLI binary | Reaches the proxy via | Docker-in-Docker | Notes |
+| --- | --- | --- | --- | --- |
+| `docker` | `docker` | `host.docker.internal` | yes | The default. Docker Desktop or Docker Engine. |
+| `podman` | `podman` | `host.docker.internal` | yes | Image refs must be fully qualified (`ghcr.io/…`, `localhost/…`). For rootless Podman set `LOCAL_DOCKER_PRIVILEGED_TEST_JOBS=false`. |
+| `orbstack` | `docker` | `host.docker.internal` | yes | Drop-in `docker` CLI; nothing else to configure. |
+| `colima` | `docker` | `host.lima.internal` | yes | Runs dockerd inside a Lima VM. If the harness can't reach the proxy, set `PUBLIC_URL` or `LOCAL_HARNESS_HOST_ALIAS` to your machine's LAN IP. |
+| `apple` | `container` | `192.168.64.1` | **no** | macOS Apple `container` CLI; one lightweight VM per container. See the Tester limitation below. |
+
+::: warning Apple `container` can't run the Tester's local infra
+The `apple` runtime has no Docker-in-Docker, so the **Tester** cannot stand up local docker-compose
+infrastructure. Tasks must either use an [ephemeral environment](./environments.md) or be marked as
+having no infra dependencies; the boot log warns about this when the `apple` runtime is selected.
+:::
+
+Whatever the runtime, agent containers reach the backend's LLM proxy through a host alias rather than
+a baked-in key. If that alias doesn't route on your machine, override it with `PUBLIC_URL` or
+`LOCAL_HARNESS_HOST_ALIAS` (commonly your LAN IP).
 
 ## Models in local mode
 
