@@ -22,11 +22,11 @@ Link any repository the GitHub App can access to a service frame. From then on, 
 under that service clone and open PRs against it.
 
 The quickest path is **Add from existing repo** (sidebar → Repositories). It opens a picker of every
-repo the GitHub App can reach — including ones the workspace doesn't track yet — with a
+repo the GitHub App can reach (including ones the workspace doesn't track yet) with a
 search/filter box (by owner or name, with a "showing X of Y" count) so a wide install of hundreds of
 repos stays manageable, plus a link to grant the App access to more. Importing links and syncs the
 repo, drops a **ready** service frame named after it, and points the frame at the repo, so tasks you
-add under it target that repo — with **no bootstrap run**. Right after adding, the modal shows the
+add under it target that repo, with **no bootstrap run**. Right after adding, the modal shows the
 same configuration controls as the service inspector (test infra, the docker-compose path, cloud
 provider and instance size, and best-practice [fragments](./prompt-fragments.md)), so you can finish
 setting the service up without a second trip to the inspector.
@@ -60,7 +60,7 @@ For existing repositories, the blueprint agent keeps board and code aligned:
 4. It suggests structural updates and additions so the board reflects reality.
 
 The decomposition is **domain-driven**: each module is a **business domain** (a bounded context,
-aggregate, or subdomain) named after a business concept — not a technical layer. Shapes like `api`,
+aggregate, or subdomain) named after a business concept, not a technical layer. Shapes like `api`,
 `routes`, `controllers`, `utils`, `config`, `types`, and `db` are explicitly *not* domains; the
 genuinely cross-cutting plumbing collapses into a single `infrastructure` module rather than
 scattering across many technical ones. So the board reflects what the service *does*, not how it is

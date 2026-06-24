@@ -10,7 +10,7 @@ them per agent kind. This page explains the options and how to connect a coding-
 | **Cloudflare Workers AI** | Register the Workers AI provider (the `AI` binding on Cloudflare, or `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` over REST elsewhere). No provider key. | The low-cost fallback whenever a model has no richer flavour configured. |
 | **Direct provider API key** | Connect the key in the UI (below). Stored encrypted under [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption). | A model upgrades to its direct provider automatically once a key for that provider is in scope. |
 | **Vendor subscription or key** | Connected in the UI (below). | A model runs in the Claude Code or Codex harness, authenticated with a coding-plan subscription or a vendor API key. |
-| **Your own local runner** | Each user adds a runner (Ollama, LM Studio, …) in [My local runners](#running-on-a-local-llm-ollama-lm-studio). No API key. | The enabled local models appear in the picker for that user's runs, resolved on their machine. |
+| **Your own local runner** | Each user adds a runner (Ollama, LM Studio, and similar) in [My local runners](#running-on-a-local-llm-ollama-lm-studio). No API key. | The enabled local models appear in the picker for that user's runs, resolved on their machine. |
 
 When more than one source could serve a model, **subscriptions win first**, then a direct API key (a
 local runner counts as a direct-flavour key for the initiating user), then Cloudflare. Direct keys
@@ -42,7 +42,7 @@ Two of the direct providers are OpenAI-compatible gateways that front many upstr
   DeepSeek, Llama 3.3) become selectable immediately, since the gateway URL has a public default.
 - **LiteLLM** is a gateway **you host**. Connect a virtual key (or its master key) the same way, but
   its model stays unselectable until your operator sets the gateway's base URL
-  ([`LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)) — a pipeline that pins a LiteLLM
+  ([`LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)). A pipeline that pins a LiteLLM
   model is blocked at start until then, rather than failing mid-run. Rename the catalog's generic
   entry and tune its pricing to match your gateway's actual routing.
 
@@ -80,8 +80,8 @@ per-user mode rather than a workspace pool:
 ### Why a personal password
 
 A run that uses one of your personal subscriptions asks for a **personal password** to unlock it.
-It is worth being precise about what that password does, since it is easy to assume it protects more
-than it does.
+What that password does is easy to misjudge, since it is tempting to assume it protects more than it
+does.
 
 The password is about **intentionality, not security against attackers**. Your token is stored
 double-encrypted: the system seals it with the deployment's `ENCRYPTION_KEY`, and your password
@@ -130,14 +130,14 @@ a pooled subscription, a direct API key, or the Cloudflare default.
 
 ## Running on a local LLM (Ollama, LM Studio, …)
 
-You can point agents at a model running **on your own machine** — Ollama, LM Studio, llama.cpp,
-vLLM, or any OpenAI-compatible server — so no tokens leave your network and there is no per-token
+You can point agents at a model running **on your own machine** (Ollama, LM Studio, llama.cpp,
+vLLM, or any OpenAI-compatible server), so no tokens leave your network and there is no per-token
 spend. Like personal subscriptions, runners are **per-user**: each person configures their own, and
 only that person's runs use them.
 
 Add one under **Settings → My local runners**:
 
-1. Pick the runner type (the base URL is prefilled — e.g. `http://localhost:11434/v1` for Ollama,
+1. Pick the runner type (the base URL is prefilled, e.g. `http://localhost:11434/v1` for Ollama,
    `http://localhost:1234/v1` for LM Studio) or choose **Custom** and enter your own URL. An
    API-key/bearer token is optional, for a runner that requires one.
 2. Cat Factory **probes the runner** (its `/v1/models`) and lists the models it found. Enable the
@@ -153,7 +153,7 @@ The base URL is called **server-side** (both the test probe and the run-time pro
 constrained to a loopback/LAN allow-list: `localhost`, `*.local`, and private
 (RFC1918 / IPv6 ULA) addresses are accepted; public hosts and the cloud-metadata address
 (`169.254.169.254`) are rejected. On a cloud deployment the backend can't reach a runner on your
-laptop — local runners are intended for [local mode](../deploy/local.md) or a self-hosted backend on
+laptop; local runners are intended for [local mode](../deploy/local.md) or a self-hosted backend on
 the same network.
 :::
 

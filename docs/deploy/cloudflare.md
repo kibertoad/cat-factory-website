@@ -6,7 +6,7 @@ work executes in Cloudflare Containers.
 
 ## Your deployment project
 
-Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR), which you
+Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR and Docker Hub), which you
 assemble into a small deployment project of two thin packages that depend on the published
 libraries and point at your own Cloudflare resources:
 

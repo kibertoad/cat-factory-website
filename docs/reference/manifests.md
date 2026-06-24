@@ -31,6 +31,16 @@ supply the actual values once at registration, where they are stored encrypted a
 resolved in memory only at call time. This keeps raw secrets out of the manifest, out of logs, and
 out of the per-run container.
 
+### Per-workspace config for code adapters
+
+A manifest can also carry an optional **`providerConfig`**, an opaque key/value bag that the
+generic HTTP adapter ignores, but a [custom code adapter](../deploy/custom-providers.md) reads for
+settings the standard fields don't cover (a project name, a target service, status-vocabulary
+overrides). Because it rides the connection, it is **per workspace**: one deployment-wide code
+adapter can serve many workspaces, each with its own `providerConfig`, while deployment-wide
+defaults come from the environment. See
+[Custom Providers → How configuration reaches your adapter](../deploy/custom-providers.md#how-configuration-reaches-your-adapter).
+
 ## Environment provider manifest
 
 After a `deployer` step provisions an environment, the resulting handle (notably a live URL) is
@@ -61,12 +71,12 @@ back. The manifest describes:
 Template variables expose the job's metadata as first-class `{{input.*}}` values, so dispatch and
 poll templates can route and size a job without decoding the job spec:
 
-- `{{input.jobId}}` — the execution id the pool is keyed on (sticky routing target).
-- `{{input.job}}` — the full harness job spec as JSON; embed it raw to forward it verbatim.
-- `{{input.kind}}` — the agent kind (`run`, `blueprint`, `spec`, `explore`, `ci-fix`,
+- `{{input.jobId}}`: the execution id the pool is keyed on (sticky routing target).
+- `{{input.job}}`: the full harness job spec as JSON; embed it raw to forward it verbatim.
+- `{{input.kind}}`: the agent kind (`run`, `blueprint`, `spec`, `explore`, `ci-fix`,
   `resolve-conflicts`, `merge`, `on-call`, `test`, `fix-tests`, `bootstrap`), for routing to a
   per-kind handler or queue.
-- `{{input.instanceType}}` / `{{input.cloudProvider}}` — the instance type and cloud provider a
+- `{{input.instanceType}}` / `{{input.cloudProvider}}`: the instance type and cloud provider a
   service pins (empty when unpinned), for node selection and sizing.
 
 The response mapping translates your scheduler's own status strings onto the harness states
