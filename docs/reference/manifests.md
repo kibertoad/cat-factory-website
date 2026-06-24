@@ -31,6 +31,16 @@ supply the actual values once at registration, where they are stored encrypted a
 resolved in memory only at call time. This keeps raw secrets out of the manifest, out of logs, and
 out of the per-run container.
 
+### Per-workspace config for code adapters
+
+A manifest can also carry an optional **`providerConfig`** — an opaque key/value bag that the
+generic HTTP adapter ignores, but a [custom code adapter](../deploy/custom-providers.md) reads for
+settings the standard fields don't cover (a project name, a target service, status-vocabulary
+overrides). Because it rides the connection, it is **per workspace**: one deployment-wide code
+adapter can serve many workspaces, each with its own `providerConfig`, while deployment-wide
+defaults come from the environment. See
+[Custom Providers → How configuration reaches your adapter](../deploy/custom-providers.md#how-configuration-reaches-your-adapter).
+
 ## Environment provider manifest
 
 After a `deployer` step provisions an environment, the resulting handle (notably a live URL) is

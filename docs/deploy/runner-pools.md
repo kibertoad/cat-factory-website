@@ -45,7 +45,8 @@ The generic manifest adapter covers any HTTP scheduler and is the supported path
 deployment. If your scheduler can't be driven over HTTP at all, the Node.js runtime exposes the
 runner-pool and environment-provisioning ports as code seams: you can build the container with your
 own adapter implementation instead of the manifest-driven one. This is an advanced, code-level
-extension; reach for the manifest first.
+extension; reach for the manifest first. For a full walkthrough — the `RunnerPoolProvider` port,
+a worked example, wiring, and gotchas — see [Custom Providers (Code Adapters)](./custom-providers.md).
 
 Cat Factory dispatches per-run jobs to the pool, which executes the executor-harness container
 image. That's the same payload that runs the coding agent, performs Git operations, and produces the

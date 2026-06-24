@@ -17,6 +17,8 @@ and calls its `start()`, plus your own `.env` and (if you containerize) a `Docke
 it, copy the `deploy/node` example directory, swap its `workspace:*` dependency for the published
 npm version, and point the config at your resources. You can layer in
 [proprietary agents and providers](../reference/architecture.md#extending-a-deployment) the same way.
+For a step-by-step on the workspace layout, the local dev loop, and where custom code plugs in, see
+[Your Deployment Repository](./deployment-repository.md).
 
 ## Prerequisites
 
