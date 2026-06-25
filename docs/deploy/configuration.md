@@ -139,7 +139,7 @@ loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning err
 | `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to all (`confluence,notion,github`). |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
 
-Task sources (Jira, GitHub Issues) are no longer gated by a `TASK_SOURCES` env var. Each workspace
+Task sources (Jira, GitHub Issues) are configured per workspace, not by an env var. Each workspace
 turns its sources on or off in the UI (**Workspace settings → Issue tracker**); both work on every
 runtime, and GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT)
 with no env. See [Issue & Document Sources](../guide/issue-sources.md). The tech-debt
@@ -167,7 +167,7 @@ observability provider (Datadog today) after a merge. They are opt-in and covere
 
 | Variable | Purpose |
 | --- | --- |
-| `OBSERVABILITY_ENABLED` | Set to `true` to enable the post-release-health gate and Agent-On-Call (also requires `ENCRYPTION_KEY`). Off by default; the gate is a pass-through when unset. The per-workspace provider site and keys are entered in the UI and sealed at rest. Renamed from `DATADOG_ENABLED`. |
+| `OBSERVABILITY_ENABLED` | Set to `true` to enable the post-release-health gate and Agent-On-Call (also requires `ENCRYPTION_KEY`). Off by default; the gate is a pass-through when unset. The per-workspace provider site and keys are entered in the UI and sealed at rest. |
 | `PAGERDUTY_API_TOKEN` + `PAGERDUTY_FROM_EMAIL` | Optional. Post the on-call investigation as an annotation onto an open PagerDuty incident. |
 | `INCIDENTIO_API_KEY` | Optional. The same enrichment for incident.io. |
 
@@ -207,7 +207,7 @@ Optional integrations enabled by their own flag:
 | `ENVIRONMENTS_ENABLED` | Set to `true` for ephemeral preview environments (also requires `ENCRYPTION_KEY`). See [Environments](./environments.md). |
 | `PROMPT_LIBRARY_ENABLED` | Set to `true` to source [prompt fragments](../guide/prompt-fragments.md) from a Git library repository. |
 | `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
-| `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). Renamed from `DATADOG_ENABLED`. |
+| `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
 
 ::: warning Treat secrets as secrets
 Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse

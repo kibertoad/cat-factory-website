@@ -117,8 +117,7 @@ investigation is posted onto it as an annotation (it never opens or re-alerts an
 
 ### Enabling it
 
-1. Set `OBSERVABILITY_ENABLED=true` (and `ENCRYPTION_KEY`, which seals the connection at rest). This
-   flag was previously named `DATADOG_ENABLED`.
+1. Set `OBSERVABILITY_ENABLED=true` (and `ENCRYPTION_KEY`, which seals the connection at rest).
 2. Connect an observability provider per workspace in the UI (**Integrations → Observability**). For
    Datadog: site, API key, and application key. Keys are stored encrypted and never read back. The
    site must be a recognized Datadog host (`datadoghq.com`, `datadoghq.eu`,

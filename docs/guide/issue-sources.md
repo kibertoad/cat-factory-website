@@ -55,8 +55,7 @@ three parts:
   field).
 - **Linking**: per-source toggles for whether that tracker can be linked as task context. These are
   per-workspace and default on, so a workspace can use GitHub repos without offering their issues, or
-  park a connected Jira. (This replaces the old deployment-level `TASK_SOURCES` env allow-list, which
-  no longer exists.)
+  park a connected Jira.
 - **Writeback**: see below.
 
 Each source has a **Check setup** button that runs a live diagnostic and reports a concrete status,
