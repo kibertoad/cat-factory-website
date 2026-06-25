@@ -257,7 +257,7 @@ entry stays a one-liner.
 
 The environments module still needs to be enabled (`ENVIRONMENTS_ENABLED=true` + an encryption key)
 and each workspace registers a **connection**. That connection is what holds the sealed token and
-the `providerConfig`. That requirement is intentional, not a workaround.
+the `providerConfig`. That requirement is intentional.
 
 ## Example: a custom runner pool
 
@@ -358,14 +358,14 @@ selection, a 404 on `status`/`teardown`, and a missing token.
 These are the ones that actually bite when adapting a real platform:
 
 - **Enumerate the status vocabulary; don't guess.** Map the platform's *complete, real* set of
-  states onto the lifecycle. Treat an unknown value as `failed`, not `provisioning`: an unknown
+  states onto the lifecycle. Treat an unknown value as `failed`: an unknown
   status usually means the contract changed, and silently waiting hides it. Confirm the exhaustive
   list with the platform's owners rather than inferring it from a few observed responses.
 - **The live URL is often not where you'd expect.** Generic "links" or "outputs" maps are frequently
   user-authored, may contain un-rendered templates, or aren't the app endpoint at all. Find the
   field that carries the *real, reachable* URL and prefer a healthy one. Make `providerConfig` choose
   it (which service/endpoint) so different workspaces can differ.
-- **Provision is usually async; return `provisioning`, not `ready`.** Don't synthesize a URL at
+- **Provision is usually async; return `provisioning`.** Don't synthesize a URL at
   create time; let `status` surface it once the platform reports the env up. Claiming `ready` early
   sends the tester at a URL that isn't live yet.
 - **Make `teardown` idempotent.** The TTL sweeper calls it, and the platform tombstones the local
@@ -383,9 +383,9 @@ These are the ones that actually bite when adapting a real platform:
   `resolveSecret` on each call (it's decrypted in memory only then). Don't cache it on the instance,
   don't put it in error messages, and bound your error bodies so a hostile response can't dump into
   logs.
-- **Authentication is a question, not an assumption.** Confirm the scheme (bearer vs. a custom
+- **Authentication is a question to confirm.** Confirm the scheme (bearer vs. a custom
   header vs. a signed request) and whether the token is scoped. A token with blanket access is a
-  finding worth raising with the platform's owners, not something to design around silently.
+  finding worth raising with the platform's owners.
 - **Set timeouts and treat the adapter as untrusted I/O.** Use `AbortSignal.timeout`, cap response
   sizes, and if any URL is operator-supplied, guard against SSRF (validate the host, don't follow
   redirects blindly).

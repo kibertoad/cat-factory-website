@@ -26,8 +26,7 @@ serve, the task inspector flags the mismatch so a run never silently falls back.
 ## Connecting a direct provider key
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
-self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted, not set through
-environment variables. Each key is connected at one of three **scopes**, and a run draws from all
+self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. Each key is connected at one of three **scopes**, and a run draws from all
 the scopes that apply to it:
 
 - **Account**: shared by every workspace in the organization.
@@ -69,7 +68,7 @@ plain API key for DeepSeek), and so does whether it can be shared, which sorts t
 
 ### Pooled (workspace) credentials
 
-Kimi (Moonshot's coding plan) and DeepSeek (a commercial API key, not a consumer subscription) both
+Kimi (Moonshot's coding plan) and DeepSeek (a commercial API key) both
 permit organizational use under their terms, so a workspace connects one credential and shares it
 across the team. Connect it once and every member's runs use it; add more than one and Cat Factory
 rotates across them.
@@ -79,12 +78,12 @@ rotates across them.
 Claude, GLM, and ChatGPT/Codex are licensed for **individual use only**. Anthropic's consumer
 Claude (Pro/Max), Z.ai's GLM Coding Plan, and a ChatGPT/Codex seat are each tied to one person, and
 their terms forbid sharing one credential across a team, at every tier (a ChatGPT Team or Enterprise
-plan hands out more individual seats, not one shared credential). Cat Factory honours that with a
+plan hands out more individual seats). Cat Factory honours that with a
 per-user mode rather than a workspace pool:
 
 - Each **user** connects their own credential, and only that user's runs can use it.
 - These vendors are never poolable on any workspace, personal or org. The restriction is on
-  *sharing one subscription credential*, not on the models themselves: an organization that wants
+  *sharing one subscription credential*: an organization that wants
   every member to use Claude or GPT models sets a direct provider API key (`ANTHROPIC_API_KEY`,
   `OPENAI_API_KEY`), which is the supported path for shared, org-wide access. The models stay
   available to the org; only pooling a personal subscription is off the table.
@@ -95,7 +94,7 @@ A run that uses one of your personal subscriptions asks for a **personal passwor
 What that password does is easy to misjudge, since it is tempting to assume it protects more than it
 does.
 
-The password is about **intentionality, not security against attackers**. Your token is stored
+The password is about **intentionality**. Your token is stored
 double-encrypted: the system seals it with the deployment's `ENCRYPTION_KEY`, and your password
 seals it again underneath. The system seal is what actually keeps your token safe at rest. An
 external attacker, a database leak, or a curious teammate has no way past it without the system key,
@@ -122,8 +121,8 @@ again. The server never stores the password; it travels as a request header, nev
 Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to
 that one run) so the asynchronous container steps can authenticate while you are away. That
 activation is deleted the moment the run finishes, and a healthy run that you keep tending re-mints
-it on each interaction, so the activation only ever expires on a stuck or abandoned run, not a live
-one. A background sweep reclaims any stragglers.
+it on each interaction, so the activation only ever expires on a stuck or abandoned run. A
+background sweep reclaims any stragglers.
 
 ### Responsible use
 
@@ -179,7 +178,7 @@ requirements reviewer) fall back to the deployment's default routing rather than
 ## Model presets
 
 Whichever source serves a model, you assign models with **presets** under
-**Configuration → Model Configuration**, not one model per agent kind. A preset names a single
+**Configuration → Model Configuration**. A preset names a single
 **base model** for every agent kind, plus optional **per-kind overrides** (point the Architect at a
 stronger model while everything else stays on the base). Exactly one preset is the workspace
 **default**. Every new workspace seeds two built-ins, **Kimi K2.7** (the default) and **GLM-5.2**,

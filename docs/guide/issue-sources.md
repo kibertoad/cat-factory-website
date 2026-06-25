@@ -83,7 +83,7 @@ Once linked and imported, source content travels with the block:
 - The coder agent uses it to implement the task accurately.
 - Subsequent steps reference the same shared definition.
 
-Container agents get the linked material in full, not a truncated excerpt: each step's prompt carries
+Container agents get the linked material in full: each step's prompt carries
 a short summary index, and the complete bodies are written into a git-excluded `.cat-context/`
 directory in the workspace for the agent to read on demand. Cat Factory also resolves references you
 name in a description, Jira keys, `owner/repo#123`, and URLs, against the imported corpus, so a task
@@ -94,7 +94,7 @@ that mentions a ticket picks up that ticket's content even without an explicit l
 Document and issue integrations ship enabled; each workspace connects its own site and credentials
 in the UI (Confluence and Notion API access, Jira, and the GitHub-backed sources, which ride the
 workspace's GitHub App installation). Which task sources a workspace actually offers is then the
-per-workspace toggle described above, not a deployment env var. See
+per-workspace toggle described above. See
 [Configuration → Document & task sources](../deploy/configuration.md#document--task-sources) for the
 deployment-side knobs that remain.
 

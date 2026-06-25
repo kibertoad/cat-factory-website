@@ -51,8 +51,8 @@ role while they are the one editing). An admin assigns roles per member from the
 Finer access *within* a board is still governed by per-workspace
 [membership controls](./core-concepts.md#workspaces-and-accounts).
 
-::: tip Roles, not seats
-Roles describe what someone may do in the account, not which models they can use. A product owner
+::: tip What roles control
+Roles describe what someone may do in the account. A product owner
 who never writes code still needs no key of their own; repo and model access come from the
 account/workspace pools. Conversely, granting `admin` is the only way to let someone manage the
 org's keys, email sender, and members.
@@ -91,7 +91,7 @@ and joins the organization with the role they were given.
 
 ## Sending invitation emails
 
-Email delivery is connected **per account in the UI**, not through environment variables. Like the
+Email delivery is connected **per account in the UI**. Like the
 [Slack bot token](../deploy/notifications.md), an admin onboards it in settings and the credential is
 stored sealed in the database under `ENCRYPTION_KEY`:
 

@@ -70,11 +70,10 @@ For existing repositories, the blueprint agent keeps board and code aligned:
 4. It suggests structural updates and additions so the board reflects reality.
 
 The decomposition is **domain-driven**: each module is a **business domain** (a bounded context,
-aggregate, or subdomain) named after a business concept, not a technical layer. Shapes like `api`,
+aggregate, or subdomain) named after a business concept. Shapes like `api`,
 `routes`, `controllers`, `utils`, `config`, `types`, and `db` are explicitly *not* domains; the
 genuinely cross-cutting plumbing collapses into a single `infrastructure` module rather than
-scattering across many technical ones. So the board reflects what the service *does*, not how it is
-wired.
+scattering across many technical ones. So the board reflects what the service *does*.
 
 This is how an established codebase gets represented on the board without hand-modeling every piece.
 

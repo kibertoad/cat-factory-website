@@ -10,7 +10,7 @@ A custom agent becomes a first-class citizen: a palette block in the pipeline bu
 chain into pipelines, a live result window, all from registering it once at startup. This page shows
 the model, the seam, two worked examples, how to package and wire it, and the gotchas.
 
-::: tip This is a code extension, not a manifest
+::: tip This is a code extension
 Unlike a [provider manifest](../reference/manifests.md), an agent is code you write and ship in your
 deployment repo. It is the supported way to extend the agent set; you don't need to touch the core
 packages or the harness image.
@@ -108,7 +108,7 @@ The `agent.surface` decides where the LLM step runs:
 
 | Surface | What it does | Typical use |
 | --- | --- | --- |
-| `inline` | One-shot LLM call over the block context. No repo, no container. | A reviewer or classifier that judges the description, not the code. |
+| `inline` | One-shot LLM call over the block context. No repo, no container. | A reviewer or classifier that judges the description. |
 | `container-explore` | Clones the repo **read-only**, explores, returns prose or structured JSON (surfaced as `result.custom`). Never pushes. | An auditor or analyzer whose output a `postOp` turns into a committed artifact. |
 | `container-coding` | Clones, edits a working tree, commits and pushes, optionally opens a PR. | A custom code-writing or migration agent. |
 
@@ -186,7 +186,7 @@ Two patterns make this production-grade and are worth copying into your own post
 
 - **Coerce the model's output leniently.** A model may omit fields or return a slightly different
   shape. Parse defensively into your own type and never throw on a missing field; a malformed run
-  should produce no commit, not a crashed step.
+  should produce no commit.
 - **Make the commit idempotent.** Render deterministically (same input, same bytes), read the
   existing file, and skip the commit when it's identical.
 
@@ -346,7 +346,7 @@ artifact (skips the commit), and a coercion that drops unexpected fields.
 
 ## Gotchas
 
-- **Keep mechanical work in the hooks, not the prompt.** Anything deterministic (rendering a file,
+- **Keep mechanical work in the hooks.** Anything deterministic (rendering a file,
   computing a path, pruning a stale artifact) belongs in a `preOp`/`postOp` as TypeScript. Asking the
   LLM to "also write the file" is slower, costs tokens, and is non-deterministic.
 - **Coerce the agent's output; never trust the shape.** Treat `result.custom` as untrusted JSON.
@@ -355,7 +355,7 @@ artifact (skips the commit), and a coercion that drops unexpected fields.
 - **Make every post-op idempotent.** A durable-execution replay can re-enter a post-op after its
   commit landed but before the run state persisted. Render deterministically, compare against what's
   already on the branch, and skip an identical commit.
-- **Pick the right surface.** Use `inline` when the judgement is about the description, not the code.
+- **Pick the right surface.** Use `inline` when the judgement is about the description.
   Use `container-explore` for read-only analysis whose product is a rendered artifact. Reserve
   `container-coding` for agents that genuinely edit and push.
 - **Choose the clone branch deliberately.** `pr` reviews the change under test, `base` reads the

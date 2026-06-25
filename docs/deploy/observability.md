@@ -95,7 +95,7 @@ release it watches the Datadog **monitors** and **SLOs** configured on that bloc
   and does not fail the gate.
 - If a watched monitor alerts or an SLO breaches, the gate **fails and escalates to Agent-On-Call**.
 - If the window elapses with no alert, the gate **passes**. Running out of poll budget while still
-  healthy is also a pass, not a timeout.
+  healthy is also a pass.
 
 Tune the window and the number of on-call investigations per release through the task's
 [merge preset](../guide/designing-your-board.md#navigating-navbar-and-command-bar)

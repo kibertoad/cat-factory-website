@@ -69,7 +69,7 @@ task-source integration on a deployment.
 
 ::: tip Shared services fire once per org
 A schedule on a [shared service](./shared-services.md) is visible on every board that mounts the
-service but is a single record, so it fires **once per org**, not once per mounting workspace.
+service but is a single record, so it fires **once per org**, no matter how many workspaces mount it.
 :::
 
 ---

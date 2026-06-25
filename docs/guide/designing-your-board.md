@@ -9,7 +9,7 @@ The board is a pannable, zoomable canvas rendered with Vue Flow. As you zoom, th
 semantic level-of-detail rendering: high-level frames stay legible when zoomed out, and detail
 appears as you zoom in. Keep zooming into an in-flight task and its card grows downward, first into
 its full **build-pipeline steps**, then one notch further into each step's live **subtask**
-breakdown, so you can watch a run's internals spatially, not only in the inspector. (Cards expand
+breakdown, so you can watch a run's internals spatially as you zoom. (Cards expand
 only when they're on screen, and where two would overlap only the centre-most opens, so deep zoom
 stays readable.)
 
@@ -98,8 +98,7 @@ All of this is covered in [Repositories](./repositories.md).
 
 ## Assigning models
 
-Models are assigned through **presets** under **Configuration → Model Configuration**, not one model
-per kind. A preset sets a **base model** for every agent kind plus optional **per-kind overrides**,
+Models are assigned through **presets** under **Configuration → Model Configuration**. A preset sets a **base model** for every agent kind plus optional **per-kind overrides**,
 so you can point the **Architect** at a stronger model while everything else stays on the base. One
 preset is the workspace **default** (every workspace seeds **Kimi K2.7** and **GLM-5.2** to start),
 and a task picks the preset it runs on in its inspector. Use stronger models on architecturally

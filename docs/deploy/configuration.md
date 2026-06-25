@@ -139,7 +139,7 @@ loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning err
 | `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to all (`confluence,notion,github`). |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
 
-Task sources (Jira, GitHub Issues) are configured per workspace, not by an env var. Each workspace
+Task sources (Jira, GitHub Issues) are configured per workspace. Each workspace
 turns its sources on or off in the UI (**Workspace settings → Issue tracker**); both work on every
 runtime, and GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT)
 with no env. See [Issue & Document Sources](../guide/issue-sources.md). The tech-debt
@@ -188,7 +188,7 @@ setup is in [Notifications](./notifications.md).
 
 Email carries [invitation](../guide/team-and-access.md#inviting-teammates) links. It is opt-in at the
 deployment level; the provider, API key, and From address are then onboarded **per account in the
-UI** and stored sealed in the database (like the Slack bot token), not read from env. Adapters exist
+UI** and stored sealed in the database (like the Slack bot token). Adapters exist
 for SendGrid and Resend. With email off or no sender connected, invitations still work: the accept
 link is returned for manual sharing.
 
