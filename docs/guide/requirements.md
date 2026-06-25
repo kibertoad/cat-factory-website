@@ -55,6 +55,11 @@ Requirements review is **iterative**. Each round:
 The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
 merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
 
+Answering is low-friction: each answer **auto-saves** as you move off the field, so a half-finished
+review is never lost. When you're unsure how to answer a finding, hit **Recommend** and a Requirement
+Writer drafts a grounded suggestion from the task's context for you to accept or edit, rather than
+leaving you with a blank box.
+
 Incorporation and re-review run **in the background**. After you click "Incorporate answers" you go
 straight back to the board, and the task card shows which stage is running ("Incorporating answers…"
 then "Re-reviewing…") in place of an approval badge, since no action is needed until the reviewer
@@ -87,15 +92,21 @@ The Spec Writer runs **before the Architect** in the Full build pipeline (and st
 **Write spec** pipeline). Every task gets a shared work branch created up front, so the spec lands
 on that branch first and the spec-aware Architect designs against it, rather than the spec being
 written only after the design is settled. The writer aggregates the clarified requirements of
-**every task** under the service frame and commits a `spec/` folder:
+**every task** under the service frame and commits a `spec/` folder, **sharded by module → feature**
+so two task branches editing different features never collide on merge:
 
-| File | Contents |
+| Path | Contents |
 | --- | --- |
-| `spec/spec.json` | The canonical machine-readable tree (the source of truth). |
-| `spec/overview.md` | High-level overview, the file agents read first. |
-| `spec/rules.md` | Cross-cutting domain rules, invariants, and constraints. |
-| `spec/version.json` | A tiny manifest (version, hash, counts) for cheap staleness checks. |
-| `spec/features/*.feature` | Gherkin features, one `Scenario` per acceptance criterion. |
+| `spec/service.json` | A tiny file with the service name and a one-paragraph summary. |
+| `spec/overview.md` | The module → feature index, the file agents read first. |
+| `spec/modules/<module>/<group>.json` | The canonical machine-readable shard for one feature group: its requirements and the domain rules scoped to it. These shards are the source of truth. |
+| `spec/modules/<module>/<group>.md` | A rendered Markdown view of the same group. |
+| `spec/features/<module>/<group>.feature` | Gherkin features, one `Scenario` per acceptance criterion. |
+
+Each module (a business domain) holds feature groups, and each group nests its own requirements and
+rules, so a group's file changes only when that group changes. There is no monolithic `spec.json`
+and no `version.json`: change detection is per file, and re-runs reuse the closest existing
+module/feature rather than spawning near-duplicates.
 
 Each requirement carries a MoSCoW priority (must, should, or could), a kind (functional,
 non-functional, or constraint), provenance back to the board task(s) it came from, and structured
@@ -109,6 +120,27 @@ the **Spec Reviewer**, rates the spec (especially its acceptance-scenario covera
 writer back with the feedback folded in until the spec clears the bar. Every container agent reads
 the in-repo spec as context, and the engine strictly validates any returned document before
 ingesting it. The in-repo files are the source of truth.
+
+### Business specs vs. technical tasks
+
+The spec captures **business** requirements, so the Spec Writer only writes one when a task has
+business behaviour to specify. A purely technical task (a refactor, a dependency bump, plumbing)
+produces no business requirements, and the writer commits nothing for it rather than inventing
+filler; the implementer then treats the task description as primary and the spec as a regression
+reference.
+
+Each task carries a **technical** label in its inspector with three states: **Unset (auto-detect)**
+lets the engine infer it, while **Technical** and **Business** are authoritative choices the engine
+never overrides. Set it explicitly when you want to force the call (mark a clearly technical task
+Technical to skip business-spec work, or mark a misclassified one Business to ensure it gets a spec).
+
+### Viewing the spec
+
+Open **View Requirements** from a service's inspector to browse the committed spec in a structured
+window: modules, then feature groups, then each requirement with its Given/When/Then criteria, plus
+a toggle to read the rendered Gherkin scenarios. The window reads the spec from the repo's default
+branch, so it shows an empty state (rather than an error) on a service with no spec yet or no
+connected repository.
 
 ## Recommended flow
 

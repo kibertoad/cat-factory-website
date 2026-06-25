@@ -1,7 +1,7 @@
 # Shared Services
 
 A **service** - a service frame plus its modules, tasks, linked repository, runs, and sync - is
-owned by your **account (organization)**, not by a single workspace. A workspace is a curated
+owned by your **account (organization)**. A workspace is a curated
 view that **mounts** the services it cares about. The same service can be mounted onto several
 teams' boards at once, where it is one shared subtree rather than a copy.
 
@@ -54,7 +54,7 @@ to reload to see another team's run advance on a service you both mount.
 
 A [recurring pipeline](./recurring-pipelines.md) attached to a shared service is **visible on every
 board that mounts it**, and its reused on-board task block renders on each. The schedule is a single
-record, so it **fires once per org**, not once per mounting workspace.
+record, so it **fires once per org**, no matter how many boards mount it.
 
 ---
 

@@ -9,7 +9,7 @@ The board is a pannable, zoomable canvas rendered with Vue Flow. As you zoom, th
 semantic level-of-detail rendering: high-level frames stay legible when zoomed out, and detail
 appears as you zoom in. Keep zooming into an in-flight task and its card grows downward, first into
 its full **build-pipeline steps**, then one notch further into each step's live **subtask**
-breakdown, so you can watch a run's internals spatially, not only in the inspector. (Cards expand
+breakdown, so you can watch a run's internals spatially as you zoom. (Cards expand
 only when they're on screen, and where two would overlap only the centre-most opens, so deep zoom
 stays readable.)
 
@@ -29,7 +29,7 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 
 **Configuration** holds workspace-wide settings panels:
 
-- **Default models**: pick a default model per agent kind (see [Assigning models](#assigning-models)).
+- **Model Configuration**: manage the [model presets](#assigning-models) tasks run on.
 - **Merge thresholds**: manage the merge-threshold presets the **Merger** step uses to decide
   auto-merge vs. raising a review.
 - **Workspace settings**: the running-task limit and the waiting-decision escalation threshold
@@ -64,11 +64,25 @@ feels like it spans several PRs, split it into sibling leaves.
   block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
   to children, so deleting a service removes its modules and tasks too.
 
-## Dependency edges
+## Epics and dependency edges
 
-Draw **dependency edges** between blocks to capture ordering and relationships. Edges are a
-first-class part of the design: they communicate intent to your team and inform how work is
-sequenced.
+Beyond the parent/child hierarchy, two relationships connect tasks across the board.
+
+**Dependency edges** capture ordering. Drag from the handle on a task card to another task to draw a
+"depends on" edge, and Cat Factory enforces it:
+
+- A task **won't start** while any task it depends on is still unfinished; the start button reports
+  what it's waiting on instead of launching.
+- An edge that would **close a cycle** is rejected, so the graph stays runnable.
+- Turn on **Auto-start dependents** (task inspector) and, when this task merges, the engine starts
+  the tasks that depend on it automatically. Dependents pinned to an individual-usage model are
+  skipped, since those need someone present to unlock the credential.
+
+**Epics** group related tasks that span services or modules. Membership is a tag rather than a
+container, so an epic can pull in tasks from several frames, and deleting the epic clears the
+grouping without deleting the tasks. Importing a Jira epic or a GitHub parent issue can create the
+epic and all its child tasks at once, seeding dependency edges from the issues' "blocked by" links
+(see [Issue & Document Sources](./issue-sources.md)).
 
 ## Linking a repository
 
@@ -84,11 +98,12 @@ All of this is covered in [Repositories](./repositories.md).
 
 ## Assigning models
 
-Set a **default model per agent kind** under **Configuration → Default models**. For example, use a
-strong model for the **Architect** and a cheaper one for the **Tester**. Where a kind has no
-default, the deployment's routing for that kind applies, then its global default. Use stronger
-models on architecturally significant kinds and cheaper ones on routine steps to manage
-[spend](./budgets.md). See [Choosing models](./running-pipelines.md#choosing-models).
+Models are assigned through **presets** under **Configuration → Model Configuration**. A preset sets a **base model** for every agent kind plus optional **per-kind overrides**,
+so you can point the **Architect** at a stronger model while everything else stays on the base. One
+preset is the workspace **default** (every workspace seeds **Kimi K2.7** and **GLM-5.2** to start),
+and a task picks the preset it runs on in its inspector. Use stronger models on architecturally
+significant kinds and cheaper ones on routine steps to manage [spend](./budgets.md). See
+[Choosing models](./running-pipelines.md#choosing-models).
 
 ## Workspace settings
 

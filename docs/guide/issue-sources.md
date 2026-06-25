@@ -45,6 +45,36 @@ The issue stays the source of truth: re-importing refreshes it. Creating a *seco
 already-linked issue is refused, so one issue maps to one task rather than silently re-pointing.
 GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, and local).
 
+## The issue-tracker panel
+
+A workspace's tracker is configured in one place: **Workspace settings → Issue tracker**. It has
+three parts:
+
+- **Filing tracker**: where the [tech-debt recurring pipeline](./recurring-pipelines.md) and similar
+  steps file new tickets, **None**, **GitHub Issues**, or **Jira** (Jira reveals a project-key
+  field).
+- **Linking**: per-source toggles for whether that tracker can be linked as task context. These are
+  per-workspace and default on, so a workspace can use GitHub repos without offering their issues, or
+  park a connected Jira.
+- **Writeback**: see below.
+
+Each source has a **Check setup** button that runs a live diagnostic and reports a concrete status,
+`ready`, `not_installed`, `not_connected`, `auth_failed`, `forbidden`, or `unreachable`, so you can
+tell a missing GitHub App install from a bad Jira credential without starting a run to find out.
+
+## Writing back to the tracker
+
+Cat Factory can keep the upstream issue updated as work progresses, so the tracker reflects reality
+without manual status-shuffling. Two workspace toggles under **Issue tracker → Writeback** control it:
+
+- **Comment when a PR opens**: posts a comment on the linked issue when the task's pull request opens.
+- **Close as resolved when a PR merges**: closes the issue when the PR merges (GitHub closes it
+  natively; Jira transitions it to its first "Done" status).
+
+Both default off and can be overridden per task in the task inspector (**Inherit workspace**, **On**,
+or **Off**), so a one-off task can opt out of (or into) writeback without changing the workspace
+default.
+
 ## Using sources as agent context
 
 Once linked and imported, source content travels with the block:
@@ -53,12 +83,20 @@ Once linked and imported, source content travels with the block:
 - The coder agent uses it to implement the task accurately.
 - Subsequent steps reference the same shared definition.
 
+Container agents get the linked material in full: each step's prompt carries
+a short summary index, and the complete bodies are written into a git-excluded `.cat-context/`
+directory in the workspace for the agent to read on demand. Cat Factory also resolves references you
+name in a description, Jira keys, `owner/repo#123`, and URLs, against the imported corpus, so a task
+that mentions a ticket picks up that ticket's content even without an explicit link.
+
 ## Enabling integrations
 
-Document and issue integrations are controlled by feature toggles and credentials on the
-deployment side: Confluence and Notion API access, the Jira task source, and the GitHub-backed
-sources (which ride the workspace's GitHub App installation). See
-[Configuration](../deploy/configuration.md#document--task-sources) for the relevant settings.
+Document and issue integrations ship enabled; each workspace connects its own site and credentials
+in the UI (Confluence and Notion API access, Jira, and the GitHub-backed sources, which ride the
+workspace's GitHub App installation). Which task sources a workspace actually offers is then the
+per-workspace toggle described above. See
+[Configuration → Document & task sources](../deploy/configuration.md#document--task-sources) for the
+deployment-side knobs that remain.
 
 ::: tip Keep the source of truth where your team works
 Linking beats copy-pasting: when the upstream ticket or doc is the canonical spec, importing keeps

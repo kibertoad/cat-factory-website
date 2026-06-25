@@ -58,8 +58,8 @@ Model choice is a direct lever on spend:
   runs on your hardware.
 
 Assign cheaper models to routine agent kinds and reserve stronger ones for architecturally
-significant work, all from **Configuration → Default models**. See
-[Choosing models](./running-pipelines.md#choosing-models).
+significant work, all through the **model presets** under **Configuration → Model Configuration**.
+See [Choosing models](./running-pipelines.md#choosing-models).
 
 ::: warning Set a budget before scaling up
 Metering protects you only if a cap is configured. Set an organization budget before turning many

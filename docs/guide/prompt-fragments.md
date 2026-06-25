@@ -21,7 +21,7 @@ your code. On Node and local that library source is opt-in: set
 
 ## How agents use them
 
-Fragments are assigned **per service**, not picked fresh on every run. You choose which fragments a
+Fragments are assigned **per service**. You choose which fragments a
 service uses in its inspector, and from then on every run on that service applies them. To avoid
 setting the same list on each new service, set **workspace defaults** that new services inherit.
 

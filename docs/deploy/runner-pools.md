@@ -71,6 +71,21 @@ The manifest's structure is documented in
 [Integration Manifests](../reference/manifests.md#runner-pool-manifest); registration is part of the
 Infrastructure configuration. See [Configuration → Infrastructure](./configuration.md#infrastructure).
 
+### Reaching an internal pool
+
+The pool URL must be `https` and a public host by default; private, internal, and cloud-metadata
+addresses are blocked (SSRF protection). To dispatch to a scheduler on an internal host, widen the
+allow-list:
+
+| Variable | Purpose |
+| --- | --- |
+| `RUNNERS_ALLOW_URL_HOSTS` | Comma-separated hostnames exempt from the private/internal-host block. Each matches the URL host exactly (`pool.corp`, `10.1.2.3`) or as a dot suffix when it starts with `.` (`.internal`). |
+| `RUNNERS_ALLOW_HTTP_URLS` | Set to `true` to also permit plain `http` (not just `https`). |
+
+This is scoped **independently** from the [environment integration](./environments.md#reaching-an-internal-provider)'s
+`ENVIRONMENTS_*` allow-list: a host you allow here is not thereby reachable by the environment
+provider.
+
 ## Bring-your-own infrastructure
 
 Combined with the Node.js backend and your own PostgreSQL, runner pools let you run the entire

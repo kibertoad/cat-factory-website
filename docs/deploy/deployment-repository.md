@@ -9,8 +9,8 @@ This page walks through standing one up from scratch, the layout that keeps upgr
 dependency bump, and the local development loop.
 
 ::: tip Why a wrapper instead of a fork
-A thin layer over the published packages means upgrading Cat Factory is `pnpm up`, not a merge
-against a long-lived fork. All of your code lives in your repository; none of the platform does.
+A thin layer over the published packages means upgrading Cat Factory is `pnpm up`. All of your code
+lives in your repository; none of the platform does.
 :::
 
 ## What you're assembling

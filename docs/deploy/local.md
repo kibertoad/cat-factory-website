@@ -78,6 +78,7 @@ container.
 | `LOCAL_DOCKER_ADD_HOST_GATEWAY` | no | Add the `host-gateway` host alias on Linux. Defaults per runtime (`true` for Docker/Podman/OrbStack, `false` for Colima). |
 | `LOCAL_DOCKER_PRIVILEGED_TEST_JOBS` | no | Run Tester jobs privileged so they can stand up docker-compose infra (Docker-in-Docker). Defaults to `true`; set `false` for rootless Podman. |
 | `LOCAL_HARNESS_HOST_ALIAS` | no | Override the hostname agent containers use to reach the LLM proxy. Defaults per runtime (see the table below). |
+| `ENCRYPTION_KEY` | no | Seals UI-connected credentials (provider keys, subscriptions, local runners) at rest. In local mode a per-process key is generated when this is unset, so the app boots without it, but those credentials are then lost on every restart. Set a stable `ENCRYPTION_KEY` (`openssl rand -base64 32`) to keep them across restarts. |
 
 Model keys, observability, and Slack work exactly as in the
 [shared configuration reference](./configuration.md).

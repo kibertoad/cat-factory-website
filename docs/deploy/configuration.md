@@ -138,10 +138,13 @@ loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning err
 | --- | --- |
 | `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to all (`confluence,notion,github`). |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
-| `TASK_SOURCES` | Comma-separated task sources to enable. Both `jira` and `github` work on every runtime (Cloudflare, Node, and local). GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT) and needs no env. |
 
-The tech-debt [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the
-workspace's chosen tracker (see [Issue & Document Sources](../guide/issue-sources.md)).
+Task sources (Jira, GitHub Issues) are configured per workspace. Each workspace
+turns its sources on or off in the UI (**Workspace settings → Issue tracker**); both work on every
+runtime, and GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT)
+with no env. See [Issue & Document Sources](../guide/issue-sources.md). The tech-debt
+[recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the workspace's chosen
+filing tracker.
 
 ## Observability
 
@@ -158,12 +161,13 @@ optional settings tune what is recorded and where it is sent. Both are covered i
 
 Langfuse honours `LLM_RECORD_PROMPTS`: with prompts off, the traces carry only numeric telemetry.
 
-The **post-release-health** gate and **Agent-On-Call** watch production via Datadog after a merge.
-They are opt-in and covered in [Observability → Post-release health](./observability.md#post-release-health-and-agent-on-call).
+The **post-release-health** gate and **Agent-On-Call** watch production through a pluggable
+observability provider (Datadog today) after a merge. They are opt-in and covered in
+[Observability → Post-release health](./observability.md#post-release-health-and-agent-on-call).
 
 | Variable | Purpose |
 | --- | --- |
-| `DATADOG_ENABLED` | Set to `true` to enable the post-release-health gate and Agent-On-Call (also requires `ENCRYPTION_KEY`). Off by default; the gate is a pass-through when unset. The per-workspace Datadog site and keys are entered in the UI and sealed at rest. |
+| `OBSERVABILITY_ENABLED` | Set to `true` to enable the post-release-health gate and Agent-On-Call (also requires `ENCRYPTION_KEY`). Off by default; the gate is a pass-through when unset. The per-workspace provider site and keys are entered in the UI and sealed at rest. |
 | `PAGERDUTY_API_TOKEN` + `PAGERDUTY_FROM_EMAIL` | Optional. Post the on-call investigation as an annotation onto an open PagerDuty incident. |
 | `INCIDENTIO_API_KEY` | Optional. The same enrichment for incident.io. |
 
@@ -184,7 +188,7 @@ setup is in [Notifications](./notifications.md).
 
 Email carries [invitation](../guide/team-and-access.md#inviting-teammates) links. It is opt-in at the
 deployment level; the provider, API key, and From address are then onboarded **per account in the
-UI** and stored sealed in the database (like the Slack bot token), not read from env. Adapters exist
+UI** and stored sealed in the database (like the Slack bot token). Adapters exist
 for SendGrid and Resend. With email off or no sender connected, invitations still work: the accept
 link is returned for manual sharing.
 
@@ -203,7 +207,7 @@ Optional integrations enabled by their own flag:
 | `ENVIRONMENTS_ENABLED` | Set to `true` for ephemeral preview environments (also requires `ENCRYPTION_KEY`). See [Environments](./environments.md). |
 | `PROMPT_LIBRARY_ENABLED` | Set to `true` to source [prompt fragments](../guide/prompt-fragments.md) from a Git library repository. |
 | `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
-| `DATADOG_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
+| `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
 
 ::: warning Treat secrets as secrets
 Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse

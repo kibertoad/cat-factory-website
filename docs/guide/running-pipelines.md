@@ -39,6 +39,7 @@ Other built-in pipelines each new workspace seeds:
 | **Simple** | The leanest end-to-end build: Coder → Reviewer → Mock Builder → Tester, then the standard Conflicts → CI → Merger tail. No design, spec, or documentation phases. |
 | **Quick implement** | Coder → Blueprinter → Mock Builder → Tester, then the merge tail, with no Reviewer and no design/spec phases. |
 | **Triage & fix bug** | A bug-fix front end: a read-only **Bug Investigator** explores the repo from the raw report, then a **Clarity Review** gate triages the report for *fixability* before the Coder runs. See below. |
+| **Build & human-test** | Coder → Reviewer, then a **human-test** gate that stands up a live environment and parks for a person to validate before the merge tail. Opt-in (it needs someone present). See [Human-testing a change](#human-testing-a-change). |
 | **Complex fullstack feature** | The fullest pipeline: adds a Researcher, the Playwright e2e author, and business/feature documenters around the Full-build core. |
 | **Map service** | Blueprint only. Run after bootstrapping to reconcile a repo onto the board. |
 | **Write spec** | Spec Writer only. Regenerate a service's in-repo spec on its own. |
@@ -48,7 +49,7 @@ Other built-in pipelines each new workspace seeds:
 Additional agent kinds include the **Fixer** (loops on failing tests inside the Tester gate),
 **Bug Investigator**, **Playwright** (runnable e2e tests from the spec's acceptance scenarios),
 **Documenter**, **Integrator**, and a tech-debt analysis step; a deployment can also
-[register custom kinds and pipelines](../reference/packages.md).
+[register its own agent kinds and pipelines](../deploy/custom-agents.md).
 
 ### Triaging and fixing a bug
 
@@ -66,6 +67,30 @@ The **Triage & fix bug** pipeline is built for a bug report rather than a featur
 
 Hover any step in the builder, the draft chain, or a board task card to see what that agent does:
 each kind's description shows as a tooltip.
+
+### Human-testing a change
+
+The **human-test** gate puts a person in the loop before a change merges. When the run reaches it,
+Cat Factory spins up an [ephemeral environment](../deploy/environments.md), surfaces its live URL,
+and **parks** the run (the task shows "Awaiting your validation") until you act on it. It ships as
+the opt-in **Build & human-test** pipeline (Coder → Reviewer → human-test → the standard Conflicts →
+CI → Merger tail), and you can add the step to any custom pipeline.
+
+Open the gate's window to validate the change against the live URL, then choose an action:
+
+- **Confirm** — the change passes, the environment is torn down, and the run advances to the merge
+  tail.
+- **Submit findings** — describe what's wrong and Cat Factory dispatches the Tester's **Fixer** to
+  address it, then re-parks for another look.
+- **Pull main + redeploy** — pull the latest `main` into the branch (looping the conflict resolver
+  if needed) and redeploy, so you test against current code.
+- **Recreate** or **Destroy** the environment.
+
+It also raises a **human-test-ready** notification (in-app and, if connected, Slack) so the right
+person knows the change is waiting. The gate needs someone present, which is why it isn't in the
+always-on default pipelines. If no ephemeral-environment provider is wired, it falls back to a
+degraded manual mode: it still parks for your confirmation but stands up no live URL and the
+environment actions are disabled.
 
 ## Editing pipelines
 
@@ -136,18 +161,19 @@ Each agent runs on its kind's default model; see [Choosing models](#choosing-mod
 If a step uses a model from a personal (individual-usage) subscription such as Claude, GLM, or
 Codex, Cat Factory asks for your personal password to unlock your credential. After the first
 unlock it is cached in your browser for a few hours, so subsequent starts, retries, and approvals
-don't re-prompt. The password is about using *your own* credential on purpose, not a security wall.
+don't re-prompt. The password is about using *your own* credential on purpose.
 See [Model Providers & Subscriptions](./model-providers.md#why-a-personal-password).
 :::
 
 ## Choosing models
 
-Model selection is set per agent kind, in **Configuration → Default models**:
+Models are assigned through **presets**, managed in **Configuration → Model Configuration**:
 
-- Set a **default model per agent kind** to point a whole kind (say, the **Architect**) at a
-  stronger model.
-- Where a kind has no default, the deployment's routing for that kind applies, then its global
-  default.
+- A **preset** sets one **base model** for every agent kind, plus optional **per-kind overrides** to
+  point a single kind (say, the **Architect**) at a stronger model.
+- One preset is the workspace **default**; every workspace seeds two built-ins, **Kimi K2.7** and
+  **GLM-5.2**. A task selects which preset it runs on (in the new-task form or its inspector), and
+  changing the preset only affects steps that haven't started yet.
 
 The picker shows each model's list price next to its provider and context window (quota-based
 subscription models show their quota burn rate instead), so you can weigh cost as you assign kinds.
@@ -214,8 +240,7 @@ Cat Factory also owns the Git delivery contract: the agent commits its own work 
 locally, while the harness pushes the branch and opens the pull request, so a container agent
 never needs push credentials. Your existing CI/CD takes it from there. If a step fails, the
 error is captured and the run surfaces a manual retry from the failure point. The board shows the
-**real failure reason** (the agent's actual error, with the raw detail under "Show detail"), not a
-generic "the container reported a failure".
+**real failure reason** (the agent's actual error, with the raw detail under "Show detail").
 
 ### Retry, restart, stop, and reset
 
