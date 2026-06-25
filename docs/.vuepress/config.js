@@ -71,6 +71,7 @@ export default defineUserConfig({
           '/deploy/runner-pools.md',
           '/deploy/environments.md',
           '/deploy/custom-providers.md',
+          '/deploy/custom-agents.md',
         ],
       },
       {
@@ -129,6 +130,7 @@ export default defineUserConfig({
             '/deploy/runner-pools.md',
             '/deploy/environments.md',
             '/deploy/custom-providers.md',
+            '/deploy/custom-agents.md',
           ],
         },
       ],

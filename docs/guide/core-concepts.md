@@ -84,7 +84,7 @@ Other agent kinds include the **Task Estimator** (scores a task's complexity, ri
 later steps can be [gated](./running-pipelines.md#estimating-and-gating-expensive-steps) on it), the
 **Acceptance Author**, **Acceptance Test Author**, **Documenter**, **Integrator**, the **Fixer**, a
 tech-debt analysis step, and an issue/ticket tracker step. Agent kinds are an **open set**: a
-deployment can [register custom kinds](../reference/packages.md). You choose the pipeline (cloning a
+deployment can [register custom kinds](../deploy/custom-agents.md). You choose the pipeline (cloning a
 built-in to make an editable copy, then reordering or disabling steps), and assign models through a
 **model preset**. On deployments with it enabled, eligible steps can also run through
 [multi-model consensus](./running-pipelines.md#multi-model-consensus).

@@ -49,7 +49,7 @@ Other built-in pipelines each new workspace seeds:
 Additional agent kinds include the **Fixer** (loops on failing tests inside the Tester gate),
 **Bug Investigator**, **Playwright** (runnable e2e tests from the spec's acceptance scenarios),
 **Documenter**, **Integrator**, and a tech-debt analysis step; a deployment can also
-[register custom kinds and pipelines](../reference/packages.md).
+[register its own agent kinds and pipelines](../deploy/custom-agents.md).
 
 ### Triaging and fixing a bug
 
