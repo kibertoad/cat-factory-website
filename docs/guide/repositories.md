@@ -16,6 +16,16 @@ Repository, pull request, and issue operations all flow through a GitHub App:
 
 Repositories are tracked per workspace, with credentials isolated to that workspace.
 
+### Your personal GitHub token
+
+You can optionally connect your own GitHub personal access token under **Integrations → Source
+control → My GitHub token** (a classic `ghp_…` token with `repo` and `workflow` scopes). Cat Factory
+validates it against GitHub and shows who it authenticated as. Once set, **runs you initiate prefer
+your token** over the deployment's GitHub App for pushing the work branch and reading the CI and
+merge state, so the resulting commits and PR are attributed to you. The token is stored per-user and
+write-only (never shown again); leave it unset and runs fall back to the workspace's GitHub App as
+before.
+
 ## Linking an existing repository
 
 Link any repository the GitHub App can access to a service frame. From then on, runs on tasks

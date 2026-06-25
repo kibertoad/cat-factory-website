@@ -30,7 +30,20 @@ Planned → Ready → In progress → (Needs attention) → PR ready → Done
 **Needs attention** means a step is paused waiting on a human **decision**, and **PR ready** means a
 pull request is open and awaiting review/merge.
 
-**Dependency edges** between blocks express ordering and relationships.
+## Epics and dependencies
+
+Two relationships sit on top of the parent/child hierarchy:
+
+- An **epic** groups related tasks that may live in different services or modules. Membership is a
+  tag on each task, so deleting an epic clears the grouping but keeps the tasks. Importing a Jira
+  epic or a GitHub parent issue can spawn the epic and all its children in one step.
+- A **dependency edge** ("blocked by" / "depends on") sequences work, and it is **enforced**: a task
+  refuses to start while any dependency is still unfinished, and Cat Factory rejects an edge that
+  would close a cycle. A task can also be set to **auto-start its dependents** when it merges, so a
+  chain advances on its own (steps on an individual-usage model are skipped, since they can't unlock
+  unattended).
+
+See [Designing Your Board → Epics and dependency edges](./designing-your-board.md#epics-and-dependency-edges).
 
 ## Services and mounts
 
@@ -72,8 +85,8 @@ later steps can be [gated](./running-pipelines.md#estimating-and-gating-expensiv
 **Acceptance Author**, **Acceptance Test Author**, **Documenter**, **Integrator**, the **Fixer**, a
 tech-debt analysis step, and an issue/ticket tracker step. Agent kinds are an **open set**: a
 deployment can [register custom kinds](../reference/packages.md). You choose the pipeline (cloning a
-built-in to make an editable copy, then reordering or disabling steps), and set **default models per
-agent kind**. On deployments with it enabled, eligible steps can also run through
+built-in to make an editable copy, then reordering or disabling steps), and assign models through a
+**model preset**. On deployments with it enabled, eligible steps can also run through
 [multi-model consensus](./running-pipelines.md#multi-model-consensus).
 
 ## Decision prompts
@@ -96,11 +109,13 @@ into the block's description and the run continues.
 - Repositories and credentials are isolated **per workspace**; the LLM **budget** is metered
   account-wide (across all workspaces in the organization).
 
-## Model selection
+## Model presets
 
-You set a **default model per agent kind** under **Configuration → Default models**. For example,
-use a strong model for the **Architect** and a cheaper one for the **Tester**. Where a kind has no
-default, the deployment's routing for that kind applies, then its global default. See
+You assign models with **presets** under **Configuration → Model Configuration**. A preset names one
+**base model** for every agent kind plus optional **per-kind overrides** (for example, a strong model
+for the **Architect** and a cheaper one for the **Tester**). One preset is the workspace **default**;
+every workspace seeds two built-ins (**Kimi K2.7** and **GLM-5.2**). A task picks its preset, and
+changing it only affects steps that haven't started. See
 [Running Pipelines](./running-pipelines.md#choosing-models).
 
 ## Repositories

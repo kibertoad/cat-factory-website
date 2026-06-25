@@ -78,9 +78,10 @@ Langfuse never blocks a run.
 
 ## Post-release health and Agent-On-Call
 
-When a deployment connects Datadog, a pipeline can carry a **post-release-health** gate that watches
-production after a PR merges, and escalates to an on-call agent if the release looks bad. It turns
-a "merged" state into "merged and verified healthy" without a human babysitting the dashboard.
+When a deployment connects an **observability provider** (Datadog today, through a pluggable adapter),
+a pipeline can carry a **post-release-health** gate that watches production after a PR merges, and
+escalates to an on-call agent if the release looks bad. It turns a "merged" state into "merged and
+verified healthy" without a human babysitting the dashboard.
 
 ### How the gate works
 
@@ -116,16 +117,19 @@ investigation is posted onto it as an annotation (it never opens or re-alerts an
 
 ### Enabling it
 
-1. Set `DATADOG_ENABLED=true` (and `ENCRYPTION_KEY`, which seals the connection at rest).
-2. Connect Datadog per workspace in the UI (**Settings → Datadog**): site, API key, and application
-   key. Keys are stored encrypted and never read back. The site must be a recognized Datadog host
-   (`datadoghq.com`, `datadoghq.eu`, `us3`/`us5`/`ap1.datadoghq.com`, `ddog-gov.com`).
-3. On each block you want watched, list the Datadog **monitor IDs** and **SLO IDs**, and optionally
-   an env tag used to scope error-log evidence.
-4. Add the **post-release-health** step to a pipeline. The builder offers it only once a Datadog
-   connection exists, and the backend refuses to enable the step without one.
+1. Set `OBSERVABILITY_ENABLED=true` (and `ENCRYPTION_KEY`, which seals the connection at rest). This
+   flag was previously named `DATADOG_ENABLED`.
+2. Connect an observability provider per workspace in the UI (**Integrations → Observability**). For
+   Datadog: site, API key, and application key. Keys are stored encrypted and never read back. The
+   site must be a recognized Datadog host (`datadoghq.com`, `datadoghq.eu`,
+   `us3`/`us5`/`ap1.datadoghq.com`, `ddog-gov.com`).
+3. On each block you want watched, list the provider's **monitor IDs** and **SLO IDs**, and
+   optionally an env tag used to scope error-log evidence.
+4. Add the **post-release-health** step to a pipeline. The builder offers it only once a connection
+   exists, and the backend refuses to enable the step without one.
 
-With `DATADOG_ENABLED` unset, the gate is a pass-through, so pipelines that include it still run.
+With `OBSERVABILITY_ENABLED` unset, the gate is a pass-through, so pipelines that include it still
+run.
 
 ---
 

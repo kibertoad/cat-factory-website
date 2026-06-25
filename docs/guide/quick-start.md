@@ -57,7 +57,8 @@ Select a task and start a run:
 2. Confirm the **spend estimate** against your budget.
 3. Watch the run stream live, and answer any **decision prompts** the agents raise.
 
-Each agent runs on its kind's default model, set in **Configuration → Default models**.
+Each agent runs on the model its kind draws from the task's **model preset**, set in
+**Configuration → Model Configuration**.
 
 See [Running Pipelines](./running-pipelines.md).
 

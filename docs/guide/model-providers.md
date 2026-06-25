@@ -16,6 +16,13 @@ When more than one source could serve a model, **subscriptions win first**, then
 local runner counts as a direct-flavour key for the initiating user), then Cloudflare. Direct keys
 are the right path for org-wide and programmatic access.
 
+::: tip First-run setup
+A fresh workspace with no usable model source shows a **"No AI model configured"** banner and opens a
+**Set up an AI model provider** prompt that routes you to provider keys, OpenRouter, or a local
+runner. If your default [preset](#model-presets) points at a model none of your connected sources can
+serve, the task inspector flags the mismatch so a run never silently falls back.
+:::
+
 ## Connecting a direct provider key
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
@@ -37,9 +44,14 @@ Claude and GPT models that a personal subscription keeps per-user.
 
 Two of the direct providers are OpenAI-compatible gateways that front many upstream models:
 
-- **OpenRouter** reaches hundreds of models through one key (`sk-or-…`). Connect the key like any
-  other direct provider; the curated OpenRouter catalog entries (Claude Opus, Gemini 3 Pro, GPT-5.5,
-  DeepSeek, Llama 3.3) become selectable immediately, since the gateway URL has a public default.
+- **OpenRouter** reaches hundreds of models through one key (`sk-or-…`), and is a first-class entry
+  in the **Models & providers** group of the Integrations hub. Connect the key inline there, then
+  **Refresh catalog** to browse OpenRouter's live model list, filter it, and tick the subset you want
+  to enable (or hit **Enable recommended** for a curated starter set). Enabled models surface in the
+  picker as `openrouter:<slug>` with their live context window and per-million price, metered against
+  your [budget](./budgets.md). When only an OpenRouter key is in scope, a logical model routes through
+  OpenRouter automatically; add the native vendor key and it switches to the vendor. The gateway URL
+  has a public default, so the catalog works as soon as the key is connected.
 - **LiteLLM** is a gateway **you host**. Connect a virtual key (or its master key) the same way, but
   its model stays unselectable until your operator sets the gateway's base URL
   ([`LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)). A pipeline that pins a LiteLLM
@@ -164,12 +176,19 @@ Claude Opus and Sonnet coding-plan models and the Codex GPT models. Because they
 they only appear once the matching subscription is connected, and inline steps (such as the
 requirements reviewer) fall back to the deployment's default routing rather than using them.
 
-## Choosing per agent kind
+## Model presets
 
-Whichever source serves a model, you still pick a **default model per agent kind** under
-**Configuration → Default models**. Reserve stronger models for architecturally significant kinds
-and keep cheaper ones on routine steps. See [Choosing models](./running-pipelines.md#choosing-models)
-and [Budgets & Spend](./budgets.md).
+Whichever source serves a model, you assign models with **presets** under
+**Configuration → Model Configuration**, not one model per agent kind. A preset names a single
+**base model** for every agent kind, plus optional **per-kind overrides** (point the Architect at a
+stronger model while everything else stays on the base). Exactly one preset is the workspace
+**default**. Every new workspace seeds two built-ins, **Kimi K2.7** (the default) and **GLM-5.2**,
+and you can add your own.
+
+A task picks its preset in the new-task form or the inspector; changing it affects only the steps
+that haven't started yet. Reserve stronger models for architecturally significant kinds and keep
+cheaper ones on routine steps. See [Choosing models](./running-pipelines.md#choosing-models) and
+[Budgets & Spend](./budgets.md).
 
 ---
 

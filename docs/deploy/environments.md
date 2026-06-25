@@ -48,6 +48,21 @@ Environments are removed on completion or timeout, so a stuck run won't leave pr
 infrastructure (and cost) running indefinitely.
 :::
 
+### Reaching an internal provider
+
+By default the provider URL must be `https` and a public host: private, internal, and
+cloud-metadata addresses are blocked (SSRF protection). If your provisioning API lives on an
+internal host, widen the allow-list with two operator env vars:
+
+| Variable | Purpose |
+| --- | --- |
+| `ENVIRONMENTS_ALLOW_URL_HOSTS` | Comma-separated hostnames exempt from the private/internal-host block. Each entry matches the URL host exactly (`envs.corp`, `10.1.2.3`), or as a dot suffix when it starts with `.` (`.internal` matches `a.b.internal`). |
+| `ENVIRONMENTS_ALLOW_HTTP_URLS` | Set to `true` to also permit plain `http` (not just `https`). |
+
+The [runner-pool integration](./runner-pools.md#reaching-an-internal-pool) has matching `RUNNERS_*`
+knobs. The two are scoped **independently**: a host you allow for environments is not thereby
+reachable by the runner pool, and vice versa.
+
 ## When the manifest isn't enough
 
 If your platform's API can't be expressed as request/response templates (asynchronous provisioning,
