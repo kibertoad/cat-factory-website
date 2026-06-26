@@ -154,12 +154,26 @@ optional settings tune what is recorded and where it is sent. Both are covered i
 
 | Variable | Purpose |
 | --- | --- |
-| `LLM_RECORD_PROMPTS` | Set to `false` to drop prompt text from recorded metrics (tokens, timing, finish reason, and counts are still kept). Defaults to recording prompts. |
+| `LLM_RECORD_PROMPTS` | Set to `false` to drop prompt text from recorded metrics and to skip full agent-context capture (tokens, timing, finish reason, and counts are still kept). Defaults to recording prompts. |
 | `LANGFUSE_ENABLED` | Set to `true` to stream every LLM call to Langfuse as a trace. Off by default. |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | Langfuse project keys (`pk-lf-…` / `sk-lf-…`). Both required when enabled. |
 | `LANGFUSE_BASE_URL` | Langfuse host. Optional; defaults to `https://cloud.langfuse.com`. |
 
 Langfuse honours `LLM_RECORD_PROMPTS`: with prompts off, the traces carry only numeric telemetry.
+
+### Telemetry store
+
+Call metrics and full agent-context snapshots live in an isolated telemetry store, separate from the
+main application database. On Cloudflare it is a dedicated D1 database; on Node and local it is a
+`telemetry` schema inside the existing `DATABASE_URL` database. A retention cron prunes it on a
+schedule. See [Observability → The telemetry store](./observability.md#the-telemetry-store).
+
+| Variable | Purpose |
+| --- | --- |
+| `TELEMETRY_DB` | Cloudflare only. D1 binding for the telemetry store. Required on the Worker: the build path and the retention cron fail fast if it is unbound. On Node and local the store is a `telemetry` schema in `DATABASE_URL`, with no separate binding. |
+| `PROVISIONING_DB` | Cloudflare only. Optional D1 binding for the ephemeral-environment and container-provisioning event log. The log is off when unbound. On Node and local it is a `provisioning` schema in `DATABASE_URL`. |
+| `LLM_CALL_METRICS_RETENTION_DAYS` | How long call metrics and agent-context snapshots are kept before the retention cron prunes them. Defaults to 3 days. |
+| `PROVISIONING_LOG_RETENTION_DAYS` | How long provisioning events are kept. Defaults to 14 days. |
 
 The **post-release-health** gate and **Agent-On-Call** watch production through a pluggable
 observability provider (Datadog today) after a merge. They are opt-in and covered in
@@ -208,6 +222,7 @@ Optional integrations enabled by their own flag:
 | `PROMPT_LIBRARY_ENABLED` | Set to `true` to source [prompt fragments](../guide/prompt-fragments.md) from a Git library repository. |
 | `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
 | `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
+| `SANDBOX_DB` | Cloudflare only. Optional D1 binding that turns on the [Sandbox](../guide/sandbox.md) for prompt and model testing. The Sandbox is off until it is bound. On Node and local it is a `sandbox` schema in `DATABASE_URL`. |
 
 ::: warning Treat secrets as secrets
 Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse

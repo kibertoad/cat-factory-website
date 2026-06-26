@@ -73,9 +73,10 @@ poll templates can route and size a job without decoding the job spec:
 
 - `{{input.jobId}}`: the execution id the pool is keyed on (sticky routing target).
 - `{{input.job}}`: the full harness job spec as JSON; embed it raw to forward it verbatim.
-- `{{input.kind}}`: the agent kind (`run`, `blueprint`, `spec`, `explore`, `ci-fix`,
-  `resolve-conflicts`, `merge`, `on-call`, `test`, `fix-tests`, `bootstrap`), for routing to a
-  per-kind handler or queue.
+- `{{input.kind}}`: the harness dispatch kind. Every coding job dispatches a single generic `agent`
+  kind, so this is `agent`; the harness reads the specific work mode (coding, explore, merge,
+  bootstrap, and the rest) from the job body, so a manifest does not route by it. It is exposed flat
+  for completeness alongside the sizing hints.
 - `{{input.instanceType}}` / `{{input.cloudProvider}}`: the instance type and cloud provider a
   service pins (empty when unpinned), for node selection and sizing.
 

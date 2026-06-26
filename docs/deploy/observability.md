@@ -1,8 +1,9 @@
 # Observability
 
 Cat Factory records every model call so you can see what agents are doing, what it costs, and where
-runs slow down or fail. There are two layers: a built-in dashboard that always runs, and an optional
-Langfuse trace sink for teams that already centralize LLM observability.
+runs slow down or fail. There are three layers: a built-in dashboard that always runs, the telemetry
+and provisioning data it draws on (kept in an isolated store you configure), and an optional Langfuse
+trace sink for teams that already centralize LLM observability.
 
 ## The built-in dashboard
 
@@ -19,15 +20,101 @@ Every LLM call is metered, with no configuration required. Beyond the spend tota
   in the observability panel to see its **Reasoning** section (shown only when the model emitted
   one). No configuration is needed; it's recorded automatically.
 
-This data is stored in your own database (D1 on Cloudflare, PostgreSQL on Node and local).
-
 The **Model activity** panel streams calls live: each call appears the moment the proxy records it,
 pushed over the workspace event stream rather than fetched once when the panel opens. Because the
 proxy records independently of the run's execution driver, model activity keeps updating even if the
 driver stalls, which distinguishes a healthy agent from a wedged one. The live rows carry only
 compact telemetry; the full prompt and response load on demand when you expand a call. Live updates
 ride the workspace realtime stream (the Cloudflare deployment today); every runtime still records the
-same calls to the database, so the panel is accurate on open everywhere.
+same calls, so the panel is accurate on open everywhere.
+
+## The telemetry store
+
+Telemetry is append-heavy, high-volume, and short-retention, a very different write profile from the
+transactional domain. It lives in its own store, physically separate from the main database:
+
+- On **Cloudflare**, a dedicated D1 database bound as `TELEMETRY_DB`, with its own migrations under
+  `telemetry-migrations/`.
+- On **Node and local**, a separate `telemetry` Postgres schema inside the same database your
+  `DATABASE_URL` points at. The boot migrator creates the schema; no extra connection string is
+  needed.
+
+The store holds two tables: `llm_call_metrics` (the per-call telemetry the dashboard reads) and
+`agent_context_snapshots` (described below).
+
+`TELEMETRY_DB` is required on Cloudflare. The worker fails fast when it is unbound: both the
+per-request container build and the daily retention cron resolve it through one guard that throws a
+clear error (`TELEMETRY_DB binding is required …`) instead of failing deep inside a repository. Add a
+`[[d1_databases]]` entry with `binding = "TELEMETRY_DB"` to `wrangler.toml`:
+
+```toml
+[[d1_databases]]
+binding = "TELEMETRY_DB"
+database_name = "cat_factory_telemetry"
+migrations_dir = "telemetry-migrations"
+```
+
+### Captured agent context
+
+Beyond the per-call telemetry, Cat Factory can capture the **full context** each container agent was
+provided for a dispatch: the composed system and user prompts, the bodies of any best-practice prompt
+fragments folded in, and the full content of the files injected into the container (the
+`.cat-context/*` files the agent reads through its tools, which never reach proxy telemetry). This
+lands in the `agent_context_snapshots` table and renders on demand in the **Provided context** view
+when you expand a run in the observability panel.
+
+Capture is gated twice and must pass both: the deployment-wide `LLM_RECORD_PROMPTS` switch (on by
+default) AND a per-workspace **store agent context** setting (on by default). With prompt recording
+off, nothing is captured.
+
+The snapshot is a redacted allow-list projection: it never copies a token or a credential-bearing
+URL. Any `user:pass@` userinfo embedded in an injected document URL or in a tester's ephemeral
+environment URL is stripped before the snapshot is stored. Each snapshot is also size-bounded
+(a shared 4 MiB budget, consumed prompts-first) so a dispatch that injects many large files cannot
+produce an oversized row.
+
+## The provisioning event log
+
+A separate append-only log records every attempt to spin up or tear down throwaway infrastructure:
+ephemeral environments and the runner-pool / per-run containers. Each row carries the outcome and, on
+failure, the verbatim provider error. You read it per workspace from the env-provider and runner-pool
+config panels (**View logs**), and per run from the **Infrastructure attempts** drawer on a run step.
+A container that never starts is classified as a dispatch failure ("Container failed to start" plus
+the verbatim provider error) rather than a generic run failure.
+
+Like telemetry, the log has high write churn and lives in its own store, separate from the main
+database:
+
+- On **Cloudflare**, a dedicated D1 database bound as `PROVISIONING_DB`, with its own
+  `migrations-provisioning/` directory. The binding is optional: with no `PROVISIONING_DB` bound,
+  the feature is simply off and nothing is recorded.
+- On **Node and local**, a separate `provisioning` Postgres schema in the same database. The boot
+  migrator creates it.
+
+The verbatim error and the structured detail are scrubbed for credentials at the single recorder
+choke point before they are persisted or served: bearer/basic tokens, `Authorization` and
+`x-api-key` header echoes, credentialed URLs, secret-ish query and JSON params, and recognizable
+token shapes (OpenAI `sk-…`, GitHub `ghp_…` / `github_pat_…`, AWS `AKIA…`, Slack `xox…`, JWTs). The
+field name, URL host, and token scheme are kept so the row stays diagnostic; only the secret itself
+is dropped.
+
+## Retention cron
+
+Neither the telemetry store nor the provisioning log self-limits, so a cron prunes each table to its
+configured age window. On Cloudflare this runs on the scheduled handler alongside the run sweeper; the
+deletes are indexed range-scans and usually reclaim nothing, so they are cheap. A non-positive window
+disables that table's pass.
+
+| Variable | Prunes | Default |
+| --- | --- | --- |
+| `LLM_CALL_METRICS_RETENTION_DAYS` | `llm_call_metrics` and `agent_context_snapshots` (both ride this window) | 3 days |
+| `PROVISIONING_LOG_RETENTION_DAYS` | the provisioning event log | 14 days |
+
+The agent-context snapshots are heavy (full prompt plus injected-file bodies) and the LLM call
+metrics keep full per-call prompt and response, so both default to an aggressive 3-day window. The
+provisioning log is high-churn and defaults to 14 days. On Cloudflare the cron resolves `TELEMETRY_DB`
+through the same fail-fast guard as the build path, so an unbound binding surfaces the same clear
+error rather than an opaque failure logged only as "retention sweep failed".
 
 ## Controlling prompt retention
 
@@ -39,7 +126,7 @@ LLM_RECORD_PROMPTS=false
 ```
 
 Tokens, timing, finish reason, and counts are still recorded; only the prompt body is omitted. This
-setting also governs what the Langfuse sink sends.
+switch also gates agent-context capture and governs what the Langfuse sink sends.
 
 ## Langfuse trace sink
 

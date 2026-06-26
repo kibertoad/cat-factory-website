@@ -88,6 +88,95 @@ function resolve(defaults: Defaults, manifest: EnvironmentManifest, resolveSecre
 }
 ```
 
+## Letting the UI configure your adapter
+
+The three lifecycle methods are all an adapter must implement. Implement three more optional methods
+and your native adapter gets a generated connect form under **Settings → Integrations**, a connection
+test before save, and a place in the unconfigured-provider banner, instead of asking operators to
+hand-author the connection manifest.
+
+| Method | Returns | What it gives you |
+| --- | --- | --- |
+| `describeConfig(manifest?)` | `ProviderConfigField[]` | The fields the connect form renders, one per config value you need. |
+| `describeManifestTemplate()` | `EnvironmentManifest` / `RunnerPoolManifest` | The base manifest the SPA overlays the flat form values onto, so storage stays one manifest. |
+| `testConnection(req)` | `Promise<ConnectionTestResult>` | A probe the UI calls before save; `{ ok, message }`, never throws to the client. |
+
+Each `ProviderConfigField` is one form field:
+
+```ts
+import type { ProviderConfigField } from '@cat-factory/kernel'
+
+describeConfig(): ProviderConfigField[] {
+  return [
+    { key: 'baseUrl', label: 'API base URL', required: true, placeholder: 'https://preview.internal' },
+    { key: 'apiToken', label: 'API token', secret: true, required: true },
+    { key: 'project', label: 'Project', help: 'Target project for this workspace' },
+    { key: 'region', label: 'Region', type: 'select',
+      options: [{ value: 'eu', label: 'EU' }, { value: 'us', label: 'US' }], default: 'eu' },
+  ]
+}
+```
+
+Field rules that matter:
+
+- `secret: true` renders a password input, never echoes the value back, and routes it into the
+  encrypted secret bundle. A secret field never has a `default` and must be re-entered on every
+  re-save (the form notes this); a missing secret on re-save is a loud register-time error, not a
+  silent loss.
+- `default` makes a field optional in practice: a blank input falls back to the default, and the form
+  shows a "defaulted to …" hint. Never set `default` on a secret.
+- `required` without a `default` and with no stored value yet is what drives the banner (below).
+
+### How the flat form becomes one stored manifest
+
+A native adapter is configured through flat fields but stored as a single manifest, so
+`describeManifestTemplate()` returns the scaffold the SPA overlays those fields onto:
+
+- a `secret` field goes into the secret bundle (your scaffold's `auth` already references its key),
+- a non-secret field goes into `providerConfig[key]`,
+- a field named `baseUrl` goes onto the manifest's `baseUrl`.
+
+The scaffold supplies the parts no flat field carries: the `auth` scheme, the request templates (a
+native adapter ignores them at run time but the manifest schema requires them), and the `response`
+mapping. It carries no secret values, only the shape and the secret-ref key names. On re-save the
+form overlays edits onto the connection's current saved manifest (not a bare scaffold), so the
+existing stored `providerConfig`, including nested values the flat form does not render, stays
+preserved.
+
+If you skip these methods, the provider falls back to the hand-authored manifest editor: the
+adapter still works, operators just configure it as a [manifest](../reference/manifests.md) by hand.
+
+### The unconfigured-provider banner
+
+When a provider is wired into the container but a workspace has not supplied every `required`
+field that has no `default`, Cat Factory shows a loud banner in **Settings → Integrations** listing
+exactly what is missing. The signal is computed server-side from the stored secret bundle plus the
+manifest's `providerConfig` and `baseUrl`, so the connect form, the banner, and register-time
+validation read one source of truth. The banner clears itself once the last missing field is
+supplied. A `required` field that you back with a `default` never triggers the banner.
+
+### Connection test
+
+If you implement `testConnection`, the connect form gains a test button that runs before save. The
+request carries the candidate config (`config` for a native adapter, the candidate `manifest` for a
+manifest provider) and a `resolveSecret` over the unpersisted secret values, so you can probe the
+real endpoint with the about-to-be-saved credentials:
+
+```ts
+async testConnection(req: EnvironmentConnectionTestRequest): Promise<ConnectionTestResult> {
+  try {
+    const cfg = resolve(this.defaults, req.manifest ?? {} as any, req.resolveSecret)
+    const res = await this.call(cfg, 'GET', '/v1/health')
+    return { ok: true, message: `reached ${cfg.baseUrl}` }
+  } catch (e) {
+    return { ok: false, message: e instanceof Error ? e.message : 'unreachable' }
+  }
+}
+```
+
+Return `{ ok: false, message }` for a failure rather than throwing; the message is shown to the
+operator. Omit the method entirely and the form shows nothing to test.
+
 ## Example: a custom environment provider
 
 Say your org runs an internal **Preview Platform** with a REST API the generic manifest can't quite

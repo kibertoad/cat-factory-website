@@ -55,10 +55,31 @@ Requirements review is **iterative**. Each round:
 The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
 merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
 
-Answering is low-friction: each answer **auto-saves** as you move off the field, so a half-finished
-review is never lost. When you're unsure how to answer a finding, hit **Recommend** and a Requirement
-Writer drafts a grounded suggestion from the task's context for you to accept or edit, rather than
-leaving you with a blank box.
+Answering is low-friction: each answer **auto-saves** as you move off the field (there is no Save
+button), so a half-finished review is never lost. Your typed answers are flushed before any other
+action and preserved across background work, so they are still there when you come back.
+
+### Recommend an answer
+
+When you're unsure how to answer a finding, click **Recommend something** on it (the label flips to
+**Marked for recommendation**), then click **Request N recommendation(s)** in the action rail. A
+**Requirement Writer** drafts a grounded suggestion for each marked finding. It grounds each one in
+this order:
+
+1. The service's **best-practice [prompt fragments](./prompt-fragments.md)** (your team/org standards),
+   flagged as the current standard when one settles the finding.
+2. The **in-repo `spec/` and `tech-spec/`** documents.
+3. **Web search**, for what the project material leaves open.
+
+Recommendations run **in the background**, like every other review action. The request returns at
+once: the review shows an **N / M ready** counter with a per-finding "Generating a grounded
+suggestion…" placeholder while the Writer fills each one, and the task card shows a **Recommending…**
+badge. Both are server-driven, so they survive closing the window, and you get a notification when the
+batch is ready. You can close the window and come back.
+
+Recommendations are not AI-reviewed: you decide. For each ready suggestion you can **Accept** it (it
+becomes the finding's answer, folded into the next incorporation), **Reject** it (the finding reopens
+so you answer it manually), or **Re-request** it with a note to steer a fresh draft.
 
 Incorporation and re-review run **in the background**. After you click "Incorporate answers" you go
 straight back to the board, and the task card shows which stage is running ("Incorporating answers…"

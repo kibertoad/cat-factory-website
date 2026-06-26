@@ -26,7 +26,19 @@ serve, the task inspector flags the mismatch so a run never silently falls back.
 ## Connecting a direct provider key
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
-self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. Each key is connected at one of three **scopes**, and a run draws from all
+self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. The **Vendors & keys**
+screen (under the sidebar's **Configuration** group) splits them into horizontal tabs so the kind of
+credential is clear at a glance:
+
+- **Workspace pool**: pooled coding-plan subscriptions and commercial keys a team shares (Kimi,
+  DeepSeek).
+- **Direct providers**: per-vendor API keys that talk straight to the vendor (OpenAI, Anthropic,
+  Qwen, DeepSeek, Moonshot).
+- **Proxies**: OpenAI-compatible gateways that front many upstream models (OpenRouter, LiteLLM),
+  kept separate because they are intermediaries, not vendors.
+- **Personal subscriptions**: individual-use credentials each member connects for their own runs.
+
+Each key is connected at one of three **scopes**, and a run draws from all
 the scopes that apply to it:
 
 - **Account**: shared by every workspace in the organization.
