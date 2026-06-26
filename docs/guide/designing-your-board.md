@@ -17,6 +17,11 @@ Both **service frames and the module frames inside them are resizable**, Miro-st
 right or bottom edge (or its bottom-right corner) to set its size, or leave it to auto-size from its
 contents. A frame never shrinks below the blocks it holds, and the size is remembered.
 
+Service frames are also **freely draggable**: grab anywhere on a service's header bar (the action
+buttons stay clickable) and the frame tracks the cursor. Moving one service never pushes others
+aside, so frames can overlap as much as you like. When two overlap, hover the one you want and it
+lifts to the front; the frame you're dragging always sits on top.
+
 ## Navigating: navbar and command bar
 
 The left rail is a navbar grouped into Create, Repositories, Integrations, Workspace context

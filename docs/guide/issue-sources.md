@@ -50,6 +50,10 @@ first; a bare issue number resolves against the service's repo. Then:
 - The issue is linked to the new task, so every agent step still sees the full issue (description,
   comments, and metadata) as context.
 
+When the add-task form opens with a linked issue, it shows that issue's description read-only above
+your own editable field (labelled **Additional notes**). The issue body is folded into the saved
+description first, then your notes, so you add context without retyping the ticket.
+
 The issue stays the source of truth: re-importing refreshes it. Creating a *second* task from an
 already-linked issue is refused, so one issue maps to one task rather than silently re-pointing.
 GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, and local).
