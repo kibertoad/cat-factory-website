@@ -33,8 +33,17 @@ can seed a module with several task leaves, each carrying its slice of context.
 ## Creating a task straight from an issue
 
 Beyond attaching an issue to a task you're already writing, you can turn an imported **GitHub issue
-or Jira ticket into a brand-new board task** in one step. In the task-source import modal, pick the
-service frame or module to create tasks in, then hit **Create task** on an issue:
+or Jira ticket into a brand-new board task** in one step. There are two ways in:
+
+- A service frame header carries a **Create task from issue** button (shown when a tracker is
+  offered). It opens the tracker-issue modal pinned to that service, with the issue search scoped to
+  the service's linked GitHub repo, and the new task lands in that frame.
+- The task-source import modal lets you pick the service frame or module to create tasks in, then
+  hit **Create task** on an issue.
+
+You search the tracker by title to find a hit, no need to know the issue key. In a repo-scoped GitHub
+search, a pasted issue URL (or `owner/repo#n` shorthand) resolves to that exact issue and is offered
+first; a bare issue number resolves against the service's repo. Then:
 
 - A new leaf block is created (titled `KEY: summary`, its description seeded from the issue body) in
   the container you chose.

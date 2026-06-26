@@ -8,6 +8,25 @@ preview environments on demand and tear them down when the run finishes.
 Tests that need a live instance, such as integration tests, Playwright end-to-end runs, and
 acceptance checks, get an isolated environment spun up just for that run, then cleaned up automatically.
 
+## Local vs ephemeral, per service and per task
+
+The Tester stands the system under test up one of two ways:
+
+- **local**: the dependencies run alongside the job via the service's docker-compose file (or the
+  task declares no infra).
+- **ephemeral**: the job runs against a provisioned ephemeral environment, as described below.
+
+A service frame carries a default test environment that the tasks under it inherit. Set it in the
+service's **Test infrastructure** panel; the task inspector shows the inherited value. A task can
+override the inherited default through its Tester agent config (`tester.environment`). At run time
+the engine resolves the effective environment in this order: the task's own pin, then the service
+default, then ephemeral. Cloud provider and instance size are ephemeral-provisioning hints and only
+apply when the resolved environment is ephemeral.
+
+Local infrastructure needs Docker-in-Docker on the runtime. A [local-mode runtime without
+it](./local.md#choosing-a-container-runtime) (Apple `container`) refuses a local-infra Tester run at
+start and steers it to an ephemeral environment or a no-infra service.
+
 ## How it works
 
 You register a preview environment provider via a declarative HTTP manifest that points at

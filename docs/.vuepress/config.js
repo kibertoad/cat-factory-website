@@ -55,6 +55,7 @@ export default defineUserConfig({
           '/guide/model-providers.md',
           '/guide/budgets.md',
           '/guide/prompt-fragments.md',
+          '/guide/sandbox.md',
         ],
       },
       {
@@ -111,6 +112,7 @@ export default defineUserConfig({
             '/guide/model-providers.md',
             '/guide/budgets.md',
             '/guide/prompt-fragments.md',
+            '/guide/sandbox.md',
           ],
         },
       ],
