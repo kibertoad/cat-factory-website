@@ -87,6 +87,7 @@ and replicas, or encrypted credentials become unreadable.
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string (Node.js deployment only). |
 | Container image registry + pull credentials | Source of the executor-harness image. |
+| `HARNESS_SHARED_SECRET` | Optional inbound-auth secret for the executor harness. When set, the backend injects it into each per-run container's env and sends it as the `x-harness-secret` header, so the harness rejects any call that doesn't carry it. Leave it unset and the harness stays open, relying on internal-only addressing. A self-hosted runner pool configures its own secret pool-side. |
 | `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |
 | Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
 
@@ -226,7 +227,7 @@ Optional integrations enabled by their own flag:
 
 ::: warning Treat secrets as secrets
 Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse
-secret key, and the webhook secret are all sensitive. On Cloudflare, set them as **secret
+secret key, `HARNESS_SHARED_SECRET`, and the webhook secret are all sensitive. On Cloudflare, set them as **secret
 bindings** (`wrangler secret put …`); on Node.js and local, keep them in your `.env` / secret
 manager and never commit them.
 :::

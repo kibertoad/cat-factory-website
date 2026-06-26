@@ -175,7 +175,9 @@ disable is caught at the pipeline-start guard rather than failing mid-run.
 The base URL is called **server-side** (both the test probe and the run-time proxy), so it is
 constrained to a loopback/LAN allow-list: `localhost`, `*.local`, and private
 (RFC1918 / IPv6 ULA) addresses are accepted; public hosts and the cloud-metadata address
-(`169.254.169.254`) are rejected. On a cloud deployment the backend can't reach a runner on your
+(`169.254.169.254`) are rejected. Redirects are followed one hop at a time and every hop is
+re-checked against the same allow-list, and URLs that embed credentials are refused, so a runner
+can't bounce the backend to a public host or the metadata endpoint. On a cloud deployment the backend can't reach a runner on your
 laptop; local runners are intended for [local mode](../deploy/local.md) or a self-hosted backend on
 the same network.
 :::
