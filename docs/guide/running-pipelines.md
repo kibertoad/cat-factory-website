@@ -32,6 +32,13 @@ The **Spec Writer** runs before the **Architect** so the design is built against
 the spec itself is not human-gated: its **Spec Reviewer** companion handles quality by looping the
 writer back automatically. See [Requirements](./requirements.md) for the spec and the review loop.
 
+The Full build and Complex fullstack pipelines also carry two opt-in **brainstorm** steps,
+**disabled by default**: a **Requirements brainstorm** before the requirements review and an
+**Architecture brainstorm** before the Architect. Each proposes options with trade-offs and parks for
+you to converge on a direction, then hands that direction to the step it precedes. Toggle one on for a
+cloned pipeline when you want to explore the space first. See
+[Brainstorming a direction first](./requirements.md#brainstorming-a-direction-first).
+
 Other built-in pipelines each new workspace seeds:
 
 | Pipeline | What it's for |
@@ -91,6 +98,24 @@ person knows the change is waiting. The gate needs someone present, which is why
 always-on default pipelines. If no ephemeral-environment provider is wired, it falls back to a
 degraded manual mode: it still parks for your confirmation but stands up no live URL and the
 environment actions are disabled.
+
+### Coder follow-ups
+
+As the Coder works it streams **forward-looking items** it noticed but did not act on: loose ends and
+side-tasks (**follow-ups**) and clarifications it raised mid-run (**questions**). A blinking
+**Follow-up** companion on the Coder step surfaces each item the moment it appears. The pipeline's
+**later steps don't start** until every item is decided, so nothing builds on an unresolved loose end.
+
+For each item you can:
+
+- **File** a follow-up as a tracker issue (it records the issue link).
+- **Send it back** to the Coder to handle now (it folds into the Coder's next loop-back as rework).
+- **Answer** a question (the Q&A folds into the next loop-back).
+- **Dismiss** it as not worth acting on.
+
+Once everything is decided, the Coder loops once more for any sent-back follow-ups and answered
+questions, then the pipeline advances. The companion is **on per Coder step** and can be disabled for
+a step in the pipeline builder.
 
 ## Editing pipelines
 

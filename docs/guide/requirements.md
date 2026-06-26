@@ -24,6 +24,22 @@ A block's requirements can come from:
   documents, imported and expanded into the block's context. See [Issue & Document
   Sources](./issue-sources.md).
 
+## Brainstorming a direction first
+
+When a task starts as a rough idea rather than a written brief, an optional **Requirements
+brainstorm** step runs ahead of the reviewer. Instead of expecting the requirements upfront, it
+**proposes options** as cards, each with explicit trade-offs, and lets you converge on a direction.
+In its window you **choose** an option, **steer** it with a comment, or **dismiss** it, then
+**incorporate** your choice and re-run for a fresh round. The direction you settle on becomes the
+subject the [reviewer](#the-reviewer-agent) then clarifies, so brainstorming feeds straight into the
+review loop.
+
+There is a matching **Architecture brainstorm** for exploring approaches before the Architect (see
+[Running Pipelines](./running-pipelines.md#anatomy-of-a-pipeline)). Both steps ship in the **Full
+build** and **Complex fullstack feature** pipelines but are **disabled by default**: toggle the one
+you want on for a [cloned pipeline](./running-pipelines.md#editing-pipelines). Each is a human gate,
+so it only runs when you opt in and are present to steer it.
+
 ## The reviewer agent
 
 The reviewer is an inline (no-container) agent. It analyzes the description and linked context and
