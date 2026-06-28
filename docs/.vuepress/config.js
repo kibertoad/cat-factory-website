@@ -43,19 +43,39 @@ export default defineUserConfig({
       {
         text: 'Using Cat Factory',
         children: [
-          '/guide/designing-your-board.md',
-          '/guide/team-and-access.md',
-          '/guide/shared-services.md',
-          '/guide/requirements.md',
-          '/guide/running-pipelines.md',
-          '/guide/recurring-pipelines.md',
-          '/guide/pull-requests.md',
-          '/guide/repositories.md',
-          '/guide/issue-sources.md',
-          '/guide/model-providers.md',
-          '/guide/budgets.md',
-          '/guide/prompt-fragments.md',
-          '/guide/sandbox.md',
+          {
+            text: 'Board & Team',
+            children: [
+              '/guide/designing-your-board.md',
+              '/guide/team-and-access.md',
+              '/guide/shared-services.md',
+            ],
+          },
+          {
+            text: 'Planning & Pipelines',
+            children: [
+              '/guide/requirements.md',
+              '/guide/running-pipelines.md',
+              '/guide/recurring-pipelines.md',
+              '/guide/pull-requests.md',
+            ],
+          },
+          {
+            text: 'Repos & Sources',
+            children: [
+              '/guide/repositories.md',
+              '/guide/issue-sources.md',
+            ],
+          },
+          {
+            text: 'Models & Prompts',
+            children: [
+              '/guide/model-providers.md',
+              '/guide/budgets.md',
+              '/guide/prompt-fragments.md',
+              '/guide/sandbox.md',
+            ],
+          },
         ],
       },
       {
