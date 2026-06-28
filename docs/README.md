@@ -11,6 +11,8 @@ actions:
     link: /guide/core-concepts.html
     type: secondary
 features:
+  - title: 100% free and open source
+    details: MIT licensed and free, with no paid tier, no open-core holdback, and nothing gated behind a license key. You run the whole platform on your own infrastructure, so your code, data, and model credentials never leave it. Every capability on this page is in the box.
   - title: The board is the plan
     details: Lay out services, modules, and tasks on a pannable, zoomable canvas. Every block is both your plan and a unit of work, so there's no separate backlog to keep in sync.
   - title: Agents do real work
@@ -19,18 +21,42 @@ features:
     details: Compose ordered agent chains (Architect → Coder → Reviewer → Tester → Acceptance) with default models per agent kind and human decision points along the way.
   - title: Human in the loop
     details: A reviewer agent flags open questions and risky assumptions before code is written. You answer the questions, approve the plan, and review every PR before merge.
-  - title: Durable and observable
-    details: Runs are checkpointed, so they survive interruptions and resume where they left off. Watch each step, decision prompt, and failure as it happens.
-  - title: Cost under control
-    details: Set an organization-wide monthly LLM budget. Spend is metered per run, runs pause at the cap, and resume automatically on the next billing period.
-  - title: Runtime to fit the job
-    details: Pick the runtime that fits the job. For heavy production workloads, run fully in the cloud on Cloudflare Workers or self-hosted Node.js. For solo developers or a quick test drive, local mode puts the whole platform on one machine, with the orchestrator, agent containers, and a local database side by side. You get the complete development experience, from agents picking up work to PRs landing with passing CI, all without a cloud account or runner pool to stand up first.
   - title: Subscriptions you already pay for
     details: Run agents on a coding plan you already pay for (Claude, GLM, or ChatGPT/Codex) instead of metered API spend. Kept per-user by design, so each vendor's individual-use terms stay respected.
-  - title: Maintenance on a schedule
-    details: Attach a recurring pipeline to a service and let agents handle dependency bumps and tech debt on a cadence. Routine upkeep ships as reviewed PRs without anyone kicking it off.
+  - title: Runtime to fit the job
+    details: Run heavy production workloads fully in the cloud on Cloudflare Workers or self-hosted Node.js. Or put the whole platform on one machine in local mode, with the orchestrator, agent containers, and a local database side by side, for solo work or a quick test drive with no cloud account to stand up first.
 footer: MIT Licensed | Copyright © Cat Factory contributors
 ---
+
+## More in every deployment
+
+The spotlight features above are the headline, not the whole list. Every deployment also ships:
+
+**Plan and collaborate**
+
+- **Shared services** — an account-owned service mounts onto many teams' boards in an org as one synced copy.
+- **Members, roles, and invitations** — sign in with GitHub, Google, or email and password, and invite teammates into a shared organization.
+- **Issue sources** — pull from Jira and GitHub Issues, seed tasks straight from issues, and write progress back.
+- **Context import** — attach best-practice docs from Confluence, Notion, and GitHub repos as prompt fragments.
+- **Localized interface** — English, Spanish, French, Polish, and Ukrainian, with more languages on the way.
+- **Mobile friendly (experimental)** — a responsive board shell with touch pan, pinch zoom, and a phone minimap.
+
+**Build and test**
+
+- **Requirements review** — a reviewer agent finds gaps and risks per task; a Spec Writer keeps a unified, in-repo spec with Gherkin scenarios.
+- **Sandbox** — test prompts and models side by side against graded fixtures, scored by a judge, before you commit to a preset.
+- **Recurring pipelines** — schedule dependency bumps and tech-debt passes to run on a cadence and ship as reviewed PRs without anyone kicking them off.
+- **Ephemeral environments** — spin up a live preview per run for integration and end-to-end tests, then tear it down automatically.
+- **Custom agents and gates** — extend the pipeline through a manifest model and the published `@cat-factory/*` packages.
+- **Model providers** — bring a direct API key, an aggregator like OpenRouter or self-hosted LiteLLM, or a local model via Ollama or LM Studio.
+
+**Operate with confidence**
+
+- **Durable runs** — every run is checkpointed, survives interruptions, and resumes where it left off.
+- **Live observability** — watch each step, decision, failure, and spend update stream over WebSockets.
+- **Budgets and metering** — set an organization-wide monthly LLM cap with per-run metering, prompt caching, auto-pause, and rollover resumption.
+- **Notifications** — an always-on in-app inbox, with optional per-workspace Slack delivery.
+- **Runner pools** — provision agent containers across your own runners.
 
 ## From board to merged PRs
 
@@ -38,6 +64,8 @@ Cat Factory is a self-hosted platform that turns a visual board of work into shi
 You lay out the work visually; LLM agents pick up each block, implement it against a real
 repository checkout, and open pull requests for your team to review and merge. The board is also
 your central place to work: you can see every run as it happens and step in when an agent needs you.
+It is free and open source under the MIT license, with no paid tier, so the whole platform is yours
+to run.
 
 You assemble a thin deployment project on top of the published `@cat-factory/*` packages, then
 deploy it:
