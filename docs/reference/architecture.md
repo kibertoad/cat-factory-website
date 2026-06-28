@@ -74,12 +74,16 @@ is retained for debugging.
 The dashboard surfaces live run execution, decision-prompt forms, a spend gauge, searchable
 historical logs, and access to container/job logs.
 
-## Outbound services
+## Agent isolation
 
-Outbound calls go through the backend, never the per-run container directly. An LLM proxy meters
-every model call and injects the prompt-cache key, and an optional web-search proxy lets
-container agents use `web_search`/`web_fetch` without a provider key ever entering the sandbox. See
-[Configuration → Web search](../deploy/configuration.md#web-search).
+The agent that runs in a per-run container never holds your credentials, never connects to your
+linked systems, and never pushes to GitHub itself. It reads and edits a single checkout; trusted
+backend code does everything else. Outbound calls go through the backend, never the container
+directly: an LLM proxy meters every model call without a provider key entering the sandbox, and the
+short-lived GitHub token a run uses lives in the harness, not the model.
+
+See [Agent Isolation Model](./agent-isolation.md) for the full treatment of the trust boundary, the
+narrow pathways in and out, and what the model never gets.
 
 ## Multi-tenant isolation
 
