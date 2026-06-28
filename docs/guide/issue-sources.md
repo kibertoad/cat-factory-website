@@ -28,6 +28,14 @@ Linear personal API key. It works across four capacities:
 Treat it as preview-quality: confirm the behaviour on a non-critical workspace before you rely on it.
 :::
 
+::: tip Figma is coming
+A **Figma** design-context source is on the way. It connects per workspace with a Figma personal
+access token, pulls component structure, layout, and design tokens over Figma's REST API, and renders
+them to Markdown so the UI coding agents get the design as context. It pairs naturally with the
+[Visual Confirmation](./running-pipelines.md#visual-confirmation) flow. The connector is still early,
+so treat it as a preview of where design context is headed rather than a finished source.
+:::
+
 ## Finding and linking context
 
 When you create a task, the Add task popup includes a context picker. For any connected

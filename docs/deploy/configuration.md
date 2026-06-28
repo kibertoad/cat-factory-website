@@ -130,15 +130,16 @@ Inline search only takes effect on providers with a hosted search tool (Anthropi
 
 ## Document & task sources
 
-Document sources (Confluence, Notion, GitHub repo docs, Figma, and the experimental Linear Docs) and
-the Jira task source are **always on**: they ship enabled and each workspace connects its own site
+Document sources (Confluence, Notion, GitHub repo docs, the upcoming Figma design-context source, and
+the experimental Linear Docs) and the Jira task source are **always on**: they ship enabled and each
+workspace connects its own site
 through the UI, with credentials stored encrypted under `ENCRYPTION_KEY`. There is no per-integration
 enable flag. The integrations fail loudly at boot if `ENCRYPTION_KEY` is missing rather than silently
 returning errors later.
 
 | Variable | Purpose |
 | --- | --- |
-| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to `confluence,notion,github,figma,linear`. Linear is experimental. The provisional `claude-design` source is off unless you add it explicitly. |
+| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to `confluence,notion,github,figma,linear`. `figma` is an upcoming design-context source and `linear` is experimental. The provisional `claude-design` source is off unless you add it explicitly. |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
 
 Task sources (Jira, GitHub Issues, and the experimental Linear) are configured per workspace. Each
