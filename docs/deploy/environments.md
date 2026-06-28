@@ -27,6 +27,11 @@ Local infrastructure needs Docker-in-Docker on the runtime. A [local-mode runtim
 it](./local.md#choosing-a-container-runtime) (Apple `container`) refuses a local-infra Tester run at
 start and steers it to an ephemeral environment or a no-infra service.
 
+In [local mode](./local.md), an un-pinned Tester task defaults to the **local** environment. Turn on
+**Delegate the test environment to a provider** (see
+[Delegating infrastructure off the host](./local.md#delegating-infrastructure-off-the-host)) to make
+the local-mode default ephemeral instead; per-service and per-task pins still override it.
+
 ## How it works
 
 You register a preview environment provider via a declarative HTTP manifest that points at

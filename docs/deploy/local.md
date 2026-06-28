@@ -108,6 +108,28 @@ Whatever the runtime, agent containers reach the backend's LLM proxy through a h
 a baked-in key. If that alias doesn't route on your machine, override it with `PUBLIC_URL` or
 `LOCAL_HARNESS_HOST_ALIAS` (commonly your LAN IP).
 
+## Delegating infrastructure off the host
+
+By default local mode does everything on the host container runtime: agent jobs run as local
+containers and the Tester stands up its dependencies with Docker-in-Docker. A workspace can opt out
+of either, **independently**, and hand that work to an external service instead. Both toggles live on
+the **Ephemeral environments** screen (local mode only) and each lights up only once its provider is
+registered:
+
+- **Delegate agents to a runner pool**: container agent jobs dispatch to the registered
+  [runner pool](./runner-pools.md) instead of host Docker. With the toggle on and no pool registered,
+  a run is refused at start with a clear message (register a pool first) rather than an opaque error.
+- **Delegate the test environment to a provider**: flips the local-mode **default** Tester
+  environment from local (host DinD) to ephemeral, provisioned through your registered
+  [environment provider](./environments.md). Per-service and per-task choices still win over the
+  default. An ephemeral run is refused at start if the toggle is on with no provider connected.
+
+Both default off. A single wrapper package can implement the `EnvironmentProvider` and
+`RunnerPoolProvider` ports together (Kargo, for example) to serve both concerns; see
+[Custom Providers](./custom-providers.md). Ephemeral environments are enabled by default in local
+mode (`ENVIRONMENTS_ENABLED=true`), and an un-pinned Tester task defaults to the local environment
+until you delegate.
+
 ## Models in local mode
 
 A stock local install configures no model provider, so nothing is selectable until you set one up.

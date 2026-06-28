@@ -51,6 +51,11 @@ one and the model falls back to a subscription or Cloudflare. Because the keys a
 this is the supported path for **org-wide, programmatic, and unattended** access, including the
 Claude and GPT models that a personal subscription keeps per-user.
 
+Models served through OpenRouter, LiteLLM, and the other OpenAI-compatible direct providers back the
+**repo-operating container agents** (Coder, CI Fixer, and the repo bootstrap), not just the inline
+ones: the backend proxy forwards them the same way, so any connected provider is selectable for every
+agent kind.
+
 ### Aggregator gateways: OpenRouter and LiteLLM
 
 Two of the direct providers are OpenAI-compatible gateways that front many upstream models:

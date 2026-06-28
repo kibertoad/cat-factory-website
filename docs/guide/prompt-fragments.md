@@ -19,6 +19,11 @@ You can also source fragments from a repository so they live under version contr
 your code. On Node and local that library source is opt-in: set
 [`PROMPT_LIBRARY_ENABLED`](../deploy/configuration.md#feature-toggles).
 
+Manage **workspace** fragments from a board's fragment library, and **account** fragments (authored,
+document-backed, and repo-sourced alike) from **[Account settings](./team-and-access.md#opening-account-settings)**,
+which works for both personal and organization accounts. The two libraries cross-link, so you can
+jump between an account standard and the board that layers on top of it.
+
 ## How agents use them
 
 Fragments are assigned **per service**. You choose which fragments a

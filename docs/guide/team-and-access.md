@@ -51,6 +51,15 @@ role while they are the one editing). An admin assigns roles per member from the
 Finer access *within* a board is still governed by per-workspace
 [membership controls](./core-concepts.md#workspaces-and-accounts).
 
+### Opening account settings
+
+Open **Account settings** from the sidebar's **Configuration** group (or the account switcher). It
+hosts the account's members and roles, invitations, the email sender, account-scoped provider keys,
+and the [account-tier prompt fragments](./prompt-fragments.md). The panel follows the **active
+account**: switch accounts while it is open and it reloads for the one you switched to. On a
+**personal** account the membership controls prompt you to create an organization first (members,
+roles, and invitations are org-scoped); the email sender is available on a personal account too.
+
 ::: tip What roles control
 Roles describe what someone may do in the account. A product owner
 who never writes code still needs no key of their own; repo and model access come from the
@@ -99,8 +108,8 @@ stored sealed in the database under `ENCRYPTION_KEY`:
 2. Paste its API key and set the From address.
 3. Send a test email to confirm it works.
 
-Operators turn the feature on at the deployment level with `EMAIL_ENABLED=true` and an `APP_BASE_URL`
-(the origin that accept links point at). See
+Email needs no deployment enable flag: it is available whenever an `ENCRYPTION_KEY` is set (that key
+seals the per-account API key). Set `APP_BASE_URL` to the origin that accept links point at. See
 [Configuration → Email](../deploy/configuration.md#email-invitations). Without a connected sender,
 invitations still work; the accept link is returned for you to share manually.
 

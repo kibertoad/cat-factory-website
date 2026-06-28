@@ -201,15 +201,15 @@ setup is in [Notifications](./notifications.md).
 
 ## Email (invitations)
 
-Email carries [invitation](../guide/team-and-access.md#inviting-teammates) links. It is opt-in at the
-deployment level; the provider, API key, and From address are then onboarded **per account in the
-UI** and stored sealed in the database (like the Slack bot token). Adapters exist
-for SendGrid and Resend. With email off or no sender connected, invitations still work: the accept
-link is returned for manual sharing.
+Email carries [invitation](../guide/team-and-access.md#inviting-teammates) links. There is no
+separate enable flag: email is available whenever an encryption key is set (the per-account API key
+is sealed with it). The provider, API key, and From address are then onboarded **per account in the
+UI** and stored sealed in the database (like the Slack bot token). Adapters exist for SendGrid and
+Resend. With no sender connected, invitations still work: the accept link is returned for manual
+sharing.
 
 | Variable | Purpose |
 | --- | --- |
-| `EMAIL_ENABLED` | Set to `true` to make the email feature available. Requires an encryption key. |
 | `APP_BASE_URL` | The SPA origin that invitation accept links point at. Falls back to `AUTH_SUCCESS_REDIRECT_URL`. |
 | `EMAIL_ENCRYPTION_KEY` | Optional. Seals the per-account email API key at rest; falls back to the shared `ENCRYPTION_KEY`. |
 

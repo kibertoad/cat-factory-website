@@ -163,6 +163,31 @@ and the rest as plain vars. On Node and local, put them in your `.env` or secret
 Traces are sent per call rather than batched, bounded by a short timeout, so a slow or unreachable
 Langfuse never blocks a run.
 
+## Post-run grading (Kaizen)
+
+The **Kaizen** agent grades how well each agent step actually went. After a run reaches a terminal
+state, a background sweep (a Cloudflare cron, a Node interval) grades each completed step on how
+smooth and efficient versus confused and chaotic the interaction was, reading the context and prompt
+the step was given plus its [per-call interaction telemetry](#the-telemetry-store). Each grading is a
+**1–5 grade with recommendations**, recorded for later review. Kaizen never appears in the pipeline
+builder; it runs only after the fact.
+
+You read the results two ways:
+
+- The **Kaizen screen** shows the grading history and the verified combos (below).
+- Inside a run window, each step shows its grading status (scheduled, running, or complete) with the
+  result.
+
+To stop re-grading a combination that has proven itself, a `(prompt version, agent kind, model)`
+combo that grades **high** (a 4 or 5 with no recommendations) **five times running** is marked
+**verified** and is no longer graded. Any lower grade, or a grade that still carries a
+recommendation, resets the streak.
+
+Kaizen is a **per-workspace** setting, **on by default** (turn it off in workspace settings). The
+grader uses its own model, configured like any pipeline step under
+**Configuration → Model Configuration** (the `kaizen` kind); with no grader model wired, grading is
+skipped rather than failing.
+
 ## Post-release health and Agent-On-Call
 
 When a deployment connects an **observability provider** (Datadog today, through a pluggable adapter),
