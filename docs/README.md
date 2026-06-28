@@ -12,7 +12,7 @@ actions:
     type: secondary
 features:
   - title: 100% free and open source
-    details: MIT licensed and free, with no paid tier, no open-core holdback, and nothing gated behind a license key. You run the whole platform on your own infrastructure, so your code, data, and model credentials never leave it. Every capability on this page is in the box.
+    details: MIT licensed, no paid tier, no open-core holdback, nothing behind a license key. You run the whole platform on your own infrastructure, so your code, data, and model credentials never leave it.
   - title: The board is the plan
     details: Lay out services, modules, and tasks on a pannable, zoomable canvas. Every block is both your plan and a unit of work, so there's no separate backlog to keep in sync.
   - title: Agents do real work
@@ -21,90 +21,77 @@ features:
     details: Compose ordered agent chains (Architect → Coder → Reviewer → Tester → Acceptance) with default models per agent kind and human decision points along the way.
   - title: Human in the loop
     details: A reviewer agent flags open questions and risky assumptions before code is written. You answer the questions, approve the plan, and review every PR before merge.
-  - title: Subscriptions you already pay for
-    details: Run agents on a coding plan you already pay for (Claude, GLM, or ChatGPT/Codex) instead of metered API spend. Kept per-user by design, so each vendor's individual-use terms stay respected.
-  - title: Runtime to fit the job
-    details: Run heavy production workloads fully in the cloud on Cloudflare Workers or self-hosted Node.js. Or put the whole platform on one machine in local mode, with the orchestrator, agent containers, and a local database side by side, for solo work or a quick test drive with no cloud account to stand up first.
+  - title: Run it your way
+    details: Heavy cloud workloads on Cloudflare Workers or self-hosted Node.js, or the whole platform on one machine in local mode. Run agents on coding subscriptions you already pay for instead of metered API spend.
 footer: MIT Licensed | Copyright © Cat Factory contributors
 ---
 
-## More in every deployment
+## What it does
 
-The spotlight features above are the headline, not the whole list. Every deployment also ships:
+You lay out work on a visual board. LLM agents pick up each block, implement it against a real
+repository checkout, and open pull requests for your team to review and merge. The same board is
+where you watch every run as it happens and step in when an agent needs you. It is self-hosted and
+MIT licensed, so the whole platform is yours to run.
 
-**Plan and collaborate**
+## Integrations
 
-- **Shared services** — an account-owned service mounts onto many teams' boards in an org as one synced copy.
-- **Members, roles, and invitations** — sign in with GitHub, Google, or email and password, and invite teammates into a shared organization.
-- **Issue sources** — pull from Jira and GitHub Issues, seed tasks straight from issues, and write progress back.
-- **Context import** — attach best-practice docs from Confluence, Notion, and GitHub repos as prompt fragments.
-- **Localized interface** — English, Spanish, French, Polish, and Ukrainian, with more languages on the way.
-- **Mobile friendly** — a responsive board shell with touch pan, pinch zoom, and a phone minimap.
+Cat Factory connects to the tools you already use. Everything below ships in every deployment.
 
-**Build and test**
+| Category | Connects to |
+| --- | --- |
+| **Repositories & pull requests** | GitHub (via GitHub App); GitLab (experimental) |
+| **Issue trackers** | Jira, GitHub Issues, Linear (experimental) — seed tasks from issues and write progress back |
+| **Document & context sources** | Confluence, Notion, GitHub repo docs, Figma (upcoming), Linear Docs (experimental) |
+| **Model providers** | Coding subscriptions (Claude, GLM, ChatGPT/Codex); direct API keys (Anthropic, OpenAI, Qwen, DeepSeek, Moonshot); aggregators (OpenRouter, LiteLLM); local runners (Ollama, LM Studio) |
+| **Sign-in** | GitHub, Google, or email and password |
+| **Notifications** | In-app inbox, optional Slack, email invitations |
 
-- **Requirements review** — a reviewer agent finds gaps and risks per task; a Spec Writer keeps a unified, in-repo spec with Gherkin scenarios.
+See [Issue & Document Sources](/guide/issue-sources.html) and
+[Model Providers & Subscriptions](/guide/model-providers.html) for setup.
+
+## Advanced capabilities
+
+**Build & review**
+
+- **Multi-stage agent pipelines** — ordered chains with per-agent models and human decision gates.
+- **Requirements & spec** — a reviewer agent flags gaps and risks per task; the Spec Writer keeps a unified, in-repo spec with Gherkin acceptance scenarios.
+- **Visual confirmation** (experimental) — a UI Tester screenshots each screen, then a gate parks for you to compare them against reference designs.
+- **Custom agents & gates** — extend the pipeline through a manifest model and the published `@cat-factory/*` packages.
+
+**Test & iterate**
+
 - **Sandbox** — test prompts and models side by side against graded fixtures, scored by a judge, before you commit to a preset.
-- **Recurring pipelines** — schedule dependency bumps and tech-debt passes to run on a cadence and ship as reviewed PRs without anyone kicking them off.
 - **Ephemeral environments** — spin up a live preview per run for integration and end-to-end tests, then tear it down automatically.
-- **Custom agents and gates** — extend the pipeline through a manifest model and the published `@cat-factory/*` packages.
-- **Model providers** — bring a direct API key, an aggregator like OpenRouter or self-hosted LiteLLM, or a local model via Ollama or LM Studio.
+- **Recurring pipelines** — schedule dependency bumps and tech-debt passes to ship as reviewed PRs on a cadence, with no one kicking them off.
 
-**Operate with confidence**
+**Operate**
 
 - **Durable runs** — every run is checkpointed, survives interruptions, and resumes where it left off.
 - **Live observability** — watch each step, decision, failure, and spend update stream over WebSockets.
-- **Budgets and metering** — set an organization-wide monthly LLM cap with per-run metering, prompt caching, auto-pause, and rollover resumption.
-- **Notifications** — an always-on in-app inbox, with optional per-workspace Slack delivery.
+- **Budgets & metering** — an org-wide monthly LLM cap with per-run metering, prompt caching, auto-pause, and rollover resumption.
 - **Runner pools** — provision agent containers across your own runners.
 
-## From board to merged PRs
+**Collaborate**
 
-Cat Factory is a self-hosted platform that turns a visual board of work into shipped code.
-You lay out the work visually; LLM agents pick up each block, implement it against a real
-repository checkout, and open pull requests for your team to review and merge. The board is also
-your central place to work: you can see every run as it happens and step in when an agent needs you.
-It is free and open source under the MIT license, with no paid tier, so the whole platform is yours
-to run.
+- **Shared services** — one account-owned service mounts onto many teams' boards as a single synced copy.
+- **Members, roles & invitations** — invite teammates into a shared organization with role-based access.
+- **Localized, mobile-friendly UI** — English, Spanish, French, Polish, and Ukrainian, with a responsive board shell (touch pan, pinch zoom, phone minimap).
 
-You assemble a thin deployment project on top of the published `@cat-factory/*` packages, then
-deploy it:
+## Deploy anywhere
 
-```bash
-# Deploy the backend to Cloudflare
-wrangler d1 migrations apply <your-d1-database> --remote
-pnpm deploy
+| Runtime | Best for |
+| --- | --- |
+| [Local mode](/deploy/local.html) | One machine, no cloud account: fastest way to try it end to end. Agents clone, commit, and push to real repos; CI gates on real GitHub Actions. |
+| [Cloudflare](/deploy/cloudflare.html) | Heavy production workloads on Workers (D1, Durable Objects, Workflows). |
+| [Node.js](/deploy/nodejs.html) | Self-hosted production on Node with PostgreSQL and pg-boss. |
 
-# Build and publish the frontend
-NUXT_PUBLIC_API_BASE=https://your-api-domain.com pnpm generate
-pnpm deploy
-```
-
-## Start on one machine
-
-[Local mode](/deploy/local.html) runs the entire platform on a single machine: the orchestrator as
-a Node process, each agent job as a local Docker container, GitHub through a personal access token,
-and persistence on a local PostgreSQL. There is no cloud account, runner pool, or GitHub App to
-register first. It is the fastest way to try Cat Factory end to end, and it does real work: agent
-containers clone, commit, and push to real repositories, CI gates on real GitHub Actions, and PRs
-merge for real. Use it for evaluation, demos, and single-operator workflows, then move the same
-backend to [Cloudflare](/deploy/cloudflare.html) or [Node.js](/deploy/nodejs.html) when you want a
-shared deployment.
-
-## Use the subscriptions you already pay for
-
-Cat Factory can run agents on a coding-plan subscription you already hold (Anthropic's Claude
-Pro/Max, Z.ai's GLM Coding Plan, or a ChatGPT/Codex seat) instead of metered, per-token API spend.
-These plans are licensed for individual use, so Cat Factory keeps them per-user: you connect your
-own credential, only your runs use it, and it is never pooled across a team. That respects each
-vendor's terms while unlocking [subscription-only models](/guide/model-providers.html), such as the
-Claude Opus and Sonnet coding-plan models and the Codex GPT models, that have no API-key or
-Cloudflare equivalent. For shared, org-wide access, set a direct provider API key instead, including
-aggregator gateways like OpenRouter and a self-hosted LiteLLM. Or skip the cloud entirely and run
-agents on [a model on your own machine](/guide/model-providers.html#running-on-a-local-llm-ollama-lm-studio)
-(Ollama, LM Studio, …), with no key and no spend. See
-[Model Providers & Subscriptions](/guide/model-providers.html) for how connecting and unlocking
-works.
+Run agents on a coding subscription you already hold (Claude Pro/Max, GLM Coding Plan, or
+ChatGPT/Codex) instead of metered API spend. These plans are kept per-user, so each vendor's
+individual-use terms stay respected, and they unlock
+[subscription-only models](/guide/model-providers.html) with no API-key equivalent. For shared,
+org-wide access, set a direct provider key, an aggregator like OpenRouter or LiteLLM, or run a
+[local model](/guide/model-providers.html#running-on-a-local-llm-ollama-lm-studio) with no key and
+no spend.
 
 ## Where to next?
 
