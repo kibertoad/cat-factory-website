@@ -3,10 +3,10 @@
 An agent run is a language model doing work on a checkout of one repository. This page explains the
 boundary around that model: what it can reach, what it never gets, and what mediates each pathway.
 
-The short version: the model never holds your credentials, never connects to your linked systems,
-and never pushes to GitHub itself. It reads and edits files in a single checkout, and it talks to a
-model provider through a backend proxy. Everything else is done for it by trusted backend code, or
-not at all.
+The short version: the model never holds the credentials to your own systems, never connects to your
+linked systems, and never pushes to GitHub itself. It reads and edits files in a single checkout, and
+reaches a model provider only over a tightly scoped channel. Everything else is done for it by
+trusted backend code, or not at all.
 
 ## Two different things run in the container
 
@@ -33,7 +33,7 @@ The model can reach exactly four things, and nothing else:
 | --- | --- | --- |
 | The checkout | One repository, one branch, on local disk | The harness clones it; the model reads and edits files |
 | Linked context | Read-only copies of requirements, RFCs, and tracker issues, written into a `.cat-context/` folder | The backend fetches them before the run and materialises them as files |
-| Model inference | Calls to a language model | The backend LLM proxy, authenticated with a per-run, model-locked session token |
+| Model inference | Calls to a language model | The backend LLM proxy with a model-locked session token, or, for a subscription harness, a direct vendor call with a leased, scoped token |
 | Web search/fetch (optional) | `web_search` / `web_fetch` tools, when a deployment enables them | The same backend proxy; no provider key reaches the container |
 
 That is the complete list of channels in and out. Each one is brokered by the backend or by the
@@ -41,19 +41,20 @@ harness. The model never opens a connection of its own choosing to anything.
 
 ## What the model never gets
 
-- **External credentials.** No GitHub token, no model-provider API key, no integration tokens for
-  Jira, Linear, GitLab, Slack, or email. These live on the backend, encrypted at rest, and are never
-  placed in the model's process environment.
+- **External credentials.** No GitHub token and no integration tokens for Jira, Linear, GitLab,
+  Slack, or email. These live on the backend, encrypted at rest, and are never placed in the model's
+  process environment. The only credential the model process can hold is the scoped, model-locked
+  token it uses to reach a provider, covered below.
 - **A way to push to GitHub.** The model cannot push a branch, open a pull request, or merge one. It
   has no GitHub token in its environment, so a `git push` it tried to run would simply fail to
   authenticate.
 - **Live access to your linked systems.** The model never connects to Jira, Confluence, Linear, or
   any other tracker. It sees only the specific copies the backend already fetched for that one task,
   written to `.cat-context/`. It cannot comment on an issue, post to Slack, or send mail.
-- **Arbitrary network egress.** Outbound calls go through the backend proxy. The GitHub host is
-  allow-listed; a poisoned clone URL pointing somewhere else is rejected. Runner pools and
-  environment providers add SSRF protection that blocks private, internal, and cloud-metadata
-  addresses.
+- **Arbitrary network egress.** The model's outbound calls go to fixed, brokered endpoints: the
+  backend proxy, or its provider's API for a subscription harness. The GitHub host is allow-listed,
+  so a poisoned clone URL pointing somewhere else is rejected, and runner pools and environment
+  providers add SSRF protection that blocks private, internal, and cloud-metadata addresses.
 
 ## Credentials stay on the backend
 
@@ -132,8 +133,8 @@ To be precise about where the boundary actually sits:
   place a leased subscription token leaves the backend to reach your runner.
 
 The model itself is treated as untrusted throughout, which is the point: even a fully compromised
-agent run cannot read your secrets, reach your linked systems, or change anything beyond a branch you
-review before it merges.
+agent run cannot read the credentials to your systems, reach your linked systems, or change anything
+beyond a branch you review before it merges.
 
 ---
 
