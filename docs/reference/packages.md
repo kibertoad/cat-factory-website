@@ -8,12 +8,13 @@ so you know where to look when extending or debugging the platform.
 | Package | Responsibility |
 | --- | --- |
 | `@cat-factory/app` | Nuxt SPA layer - board UI and Pinia stores. |
-| `@cat-factory/kernel` | Domain types, constants, repository ports, and the extension registries: the pipeline registry (`registerPipeline`), the gate registry (`registerGate`), the step-resolver registry (`registerStepResolver`), and the typed provider registry (`defineProviderToken` / `wireProvider` / `requireProvider`). |
+| `@cat-factory/kernel` | Domain types, constants, repository ports, and the extension registries: the pipeline registry (`registerPipeline`), the gate registry (`registerGate`), the step-resolver registry (`registerStepResolver`), the typed provider registry (`defineProviderToken` / `wireProvider` / `requireProvider`), and the provider-neutral VCS registry (`registerVcsProvider` / `resolveVcsProvider`). |
 | `@cat-factory/orchestration` | Service composition root and workflow engines. Boot-time registration validation (`validateRegistrations` / `validateRegistrationsOnce`) lives here, since it cross-checks the gate, agent-kind, and pipeline registries. |
 | `@cat-factory/agents` | Agent catalog, prompt composition, model-provider facade, the agent-kind registry (`registerAgentKind`), schema-driven structured output (`defineStructuredOutput`), and web-research/cache policy. |
 | `@cat-factory/gates` | The built-in polling-gate suite (CI, merge-conflicts, post-release health, plus the on-call escalation), authored entirely through the public `registerGate` seam. Depends only on `@cat-factory/kernel` + `@cat-factory/contracts`, never the engine. A deployment imports it for its side effect and wires each gate's provider via the exported `wireX` handles. See [Custom Agents & Gates](../deploy/custom-agents.md). |
 | `@cat-factory/server` | Runtime-neutral HTTP controllers, the shared agent-execution machinery (composite/container executors, runner-job client, GitHub App auth), and the web-search proxy. |
-| `@cat-factory/integrations` | GitHub, document/task sources, ticket trackers, environments, runner pools. |
+| `@cat-factory/integrations` | GitHub, document/task sources (including the experimental Linear connector), ticket trackers, environments, runner pools. |
+| `@cat-factory/gitlab` | Experimental GitLab backend for the provider-neutral VCS layer: the neutral VCS client over GitLab's REST v4 API, a webhook verifier and mapper, and project provisioning. Registers itself with `registerVcsProvider('gitlab')` but is not yet wired into the live flow. |
 | `@cat-factory/contracts` | Wire formats, validated with Valibot. Also the canonical `RESULT_VIEW_IDS` an agent kind's `presentation.resultView` is validated against. |
 
 ::: tip Extending a deployment
