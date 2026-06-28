@@ -47,6 +47,9 @@ Other built-in pipelines each new workspace seeds:
 | **Quick implement** | Coder → Blueprinter → Mock Builder → Tester, then the merge tail, with no Reviewer and no design/spec phases. |
 | **Triage & fix bug** | A bug-fix front end: a read-only **Bug Investigator** explores the repo from the raw report, then a **Clarity Review** gate triages the report for *fixability* before the Coder runs. See below. |
 | **Build & human-test** | Coder → Reviewer, then a **human-test** gate that stands up a live environment and parks for a person to validate before the merge tail. Opt-in (it needs someone present). See [Human-testing a change](#human-testing-a-change). |
+| **Build & PR review** | Adds an opt-in **Human Review** gate before the merge: the run waits for a human code review on the PR and loops the Fixer to address feedback. See [Human review on the pull request](#human-review-on-the-pull-request). |
+| **Build & visual confirmation** | Experimental. A UI-focused build whose **UI Tester** screenshots each screen, then a **Visual Confirmation** gate parks for a person to compare them against the uploaded reference designs. See [Visual confirmation](#visual-confirmation). |
+| **Author a document** / **Quick document** | A forward-authoring track that produces an in-repo Markdown document (PRD, RFC, ADR, design, runbook, …) shipped as a pull request. See [Authoring a document](#authoring-a-document). |
 | **Complex fullstack feature** | The fullest pipeline: adds a Researcher, the Playwright e2e author, and business/feature documenters around the Full-build core. |
 | **Map service** | Blueprint only. Run after bootstrapping to reconcile a repo onto the board. |
 | **Write spec** | Spec Writer only. Regenerate a service's in-repo spec on its own. |
@@ -99,6 +102,67 @@ always-on default pipelines. If no ephemeral-environment provider is wired, it f
 degraded manual mode: it still parks for your confirmation but stands up no live URL and the
 environment actions are disabled.
 
+### Human review on the pull request
+
+The **Human Review** gate puts a required human code review in the pipeline. It ships as the opt-in
+**Build & PR review** pipeline (Coder → Reviewer → Blueprinter → Mock Builder → Tester → Conflicts →
+CI → Human Review → Merger), and you can add the `human-review` step to any custom pipeline.
+
+When a run reaches it, the gate watches the task's pull request on GitHub:
+
+- It advances once the PR meets GitHub's required approvals (read from branch protection) with no
+  unresolved review threads.
+- On outstanding review threads it dispatches the **Fixer** to address the feedback (immediately once
+  the PR is approved; after a per-task grace window otherwise) and resolves each handled thread so the
+  next check sees it cleared. A reviewer re-opening a thread re-triggers the Fixer.
+- It waits indefinitely for the human, re-arming rather than auto-failing, and raises a
+  **human-review** notification while it waits.
+- From the gate window a person can request a freeform fix at any time, dispatched immediately.
+
+The grace window is the per-task **human-review grace** merge-preset knob. The gate is opt-in (it
+needs a real reviewer and a wired PR-review provider) and passes through when unwired, which is why
+it isn't in the always-on default pipelines.
+
+### Visual confirmation
+
+::: warning Experimental
+The **Build & visual confirmation** pipeline is flagged experimental in the library. The UI Tester's
+automatic screenshot capture is not wired end to end yet, so today the **Visual Confirmation** gate
+runs in manual mode: a person uploads the reference designs and the screenshots and reviews them.
+:::
+
+This UI-focused pipeline runs Coder → Reviewer → Mock Builder → **UI Tester** → **Visual
+Confirmation** → the standard Conflicts → CI → Merger tail. The UI Tester drives a browser through the
+new screens and captures a screenshot of each distinct view; the Visual Confirmation gate pairs those
+screenshots with the uploaded reference designs by view and **parks** for a person to compare actual
+against reference. From the gate you can:
+
+- **Approve** — the change matches; the run advances to the merge tail.
+- **Request a fix** — describe what's off and the Tester's **Fixer** addresses it, then the gate
+  re-parks for another look.
+- **Recapture** — re-run the UI Tester to refresh the screenshots.
+
+It raises a **visual-confirmation-ready** notification and needs a binary-artifact store for the
+screenshots; the gate passes through when no store is wired.
+
+### Authoring a document
+
+The document track produces a **new in-repo Markdown document** shipped as a pull request, the
+forward counterpart to the reverse-documentation agents (Documenter, Blueprinter) that describe
+existing code. Two pipelines seed it:
+
+- **Author a document**: doc-researcher → doc-outliner (**human gate** on the outline) → doc-writer →
+  doc-reviewer (an AI review loop, then a **human gate** on the converged draft) → doc-finalizer →
+  Conflicts → CI → Merger.
+- **Quick document**: doc-writer → doc-reviewer → the merge tail, for a small or low-stakes doc, so
+  even a quick doc can't merge over a conflict or a red build.
+
+A document task carries a **document kind** (PRD, RFC, ADR, design, technical reference, API,
+runbook, research report, or reference) plus optional **audience**, **target path**, and **outline
+hints**, which steer the doc agents' prompts. The doc-writer branches off base, writes the Markdown,
+and opens the PR through the same coding harness the Coder uses; the doc-finalizer polishes on the PR
+branch. The committed Markdown is the durable artifact, so no new storage is involved.
+
 ### Coder follow-ups
 
 As the Coder works it streams **forward-looking items** it noticed but did not act on: loose ends and
@@ -128,6 +192,12 @@ The built-in pipelines are read-only templates, but you can shape your own:
 - **Disable a step** without deleting it. A disabled step stays in the saved pipeline but is skipped
   at run start, so you can drop, say, the Researcher for a run without rebuilding the chain. At least
   one step must stay enabled.
+
+On app open, a startup check surfaces pipelines that need attention: a custom pipeline that
+references an agent kind that no longer exists or has an invalid shape (offered for deletion), a
+built-in with an invalid shape (offered a reseed), and a built-in whose seeded definition has moved
+ahead of your stored copy (offered a reseed to adopt it). **Reseeding** a built-in restores its
+canonical definition while preserving your labels and archive state.
 
 In the builder, the agent palette is grouped into collapsible categories (**Review & triage**,
 **Design & research**, **Implementation**, **Testing**, **Documentation**, and

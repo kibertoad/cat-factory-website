@@ -130,20 +130,22 @@ Inline search only takes effect on providers with a hosted search tool (Anthropi
 
 ## Document & task sources
 
-Document sources (Confluence, Notion, GitHub repo docs) and the Jira task source are **always on**:
-they ship enabled and each workspace connects its own site through the UI, with credentials stored
-encrypted under `ENCRYPTION_KEY`. There is no per-integration enable flag. The integrations fail
-loudly at boot if `ENCRYPTION_KEY` is missing rather than silently returning errors later.
+Document sources (Confluence, Notion, GitHub repo docs, Figma, and the experimental Linear Docs) and
+the Jira task source are **always on**: they ship enabled and each workspace connects its own site
+through the UI, with credentials stored encrypted under `ENCRYPTION_KEY`. There is no per-integration
+enable flag. The integrations fail loudly at boot if `ENCRYPTION_KEY` is missing rather than silently
+returning errors later.
 
 | Variable | Purpose |
 | --- | --- |
-| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to all (`confluence,notion,github`). |
+| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to `confluence,notion,github,figma,linear`. Linear is experimental. The provisional `claude-design` source is off unless you add it explicitly. |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
 
-Task sources (Jira, GitHub Issues) are configured per workspace. Each workspace
-turns its sources on or off in the UI (**Workspace settings → Issue tracker**); both work on every
-runtime, and GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the PAT)
-with no env. See [Issue & Document Sources](../guide/issue-sources.md). The tech-debt
+Task sources (Jira, GitHub Issues, and the experimental Linear) are configured per workspace. Each
+workspace turns its sources on or off in the UI (**Workspace settings → Issue tracker**); they work
+on every runtime, GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the
+PAT) with no env, and Linear uses a per-workspace personal API key. See
+[Issue & Document Sources](../guide/issue-sources.md). The tech-debt
 [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the workspace's chosen
 filing tracker.
 

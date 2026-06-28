@@ -100,6 +100,21 @@ Because the GitHub App sends webhooks, changes made directly in GitHub (pushes, 
 issue edits) are projected back into Cat Factory's database, so the board stays current even when
 work happens outside the platform.
 
+## GitLab (experimental)
+
+Cat Factory is growing a provider-neutral VCS layer so repositories can live on hosts other than
+GitHub. A GitLab backend (`@cat-factory/gitlab`) is the first additional provider. It implements the
+neutral VCS client over the GitLab REST v4 API (repository, branch, merge-request, issue, and CI
+reads and writes), a webhook verifier and mapper (merge request, issue, push, and pipeline hooks),
+and project provisioning.
+
+::: warning Experimental, not yet selectable in the UI
+GitLab support is a foundation, not a finished feature. The provider is registered across all
+runtimes, but the live flow (linking, bootstrapping, running pipelines) still routes through GitHub,
+and there is no GitLab option in the UI yet. Treat it as preview plumbing for deployers tracking
+where this is headed, not something to point a workspace at today.
+:::
+
 ---
 
 Next: pull requirements straight from your trackers with [Issue Sources](./issue-sources.md).

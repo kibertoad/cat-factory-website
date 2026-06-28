@@ -56,6 +56,11 @@ task's work branch on GitHub, so you can jump straight from a board task to its 
 Because the work is a real PR in your repository, all your existing branch protections, required
 checks, and review rules apply unchanged.
 
+To make a human code review a required step rather than an after-the-fact check, add the **Human
+Review** gate: the run waits for the PR to meet GitHub's required approvals with no unresolved
+threads, and loops the Fixer to address review comments in between. See
+[Human review on the pull request](./running-pipelines.md#human-review-on-the-pull-request).
+
 ## Merging closes the loop
 
 When you **merge** the pull request:
