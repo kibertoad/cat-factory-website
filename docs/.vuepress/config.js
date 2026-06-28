@@ -79,6 +79,7 @@ export default defineUserConfig({
         text: 'Reference',
         children: [
           '/reference/architecture.md',
+          '/reference/agent-isolation.md',
           '/reference/manifests.md',
           '/reference/packages.md',
         ],
@@ -142,6 +143,7 @@ export default defineUserConfig({
           collapsible: false,
           children: [
             '/reference/architecture.md',
+            '/reference/agent-isolation.md',
             '/reference/manifests.md',
             '/reference/packages.md',
           ],
