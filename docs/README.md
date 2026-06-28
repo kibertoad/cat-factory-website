@@ -39,7 +39,7 @@ The spotlight features above are the headline, not the whole list. Every deploym
 - **Issue sources** — pull from Jira and GitHub Issues, seed tasks straight from issues, and write progress back.
 - **Context import** — attach best-practice docs from Confluence, Notion, and GitHub repos as prompt fragments.
 - **Localized interface** — English, Spanish, French, Polish, and Ukrainian, with more languages on the way.
-- **Mobile friendly (experimental)** — a responsive board shell with touch pan, pinch zoom, and a phone minimap.
+- **Mobile friendly** — a responsive board shell with touch pan, pinch zoom, and a phone minimap.
 
 **Build and test**
 
