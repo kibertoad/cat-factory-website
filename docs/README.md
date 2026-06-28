@@ -39,12 +39,12 @@ Cat Factory connects to the tools you already use. Everything below ships in eve
 
 | Category | Connects to |
 | --- | --- |
-| **Repositories & pull requests** | GitHub (via GitHub App); GitLab (experimental) |
-| **Issue trackers** | Jira, GitHub Issues, Linear (experimental) — seed tasks from issues and write progress back |
-| **Document & context sources** | Confluence, Notion, GitHub repo docs, Figma (upcoming), Linear Docs (experimental) |
-| **Model providers** | Coding subscriptions (Claude, GLM, ChatGPT/Codex); direct API keys (Anthropic, OpenAI, Qwen, DeepSeek, Moonshot); aggregators (OpenRouter, LiteLLM); local runners (Ollama, LM Studio) |
-| **Sign-in** | GitHub, Google, or email and password |
-| **Notifications** | In-app inbox, optional Slack, email invitations |
+| **Repositories & pull requests** | <ul><li>GitHub (via GitHub App)</li><li>GitLab (experimental)</li></ul> |
+| **Issue trackers** | <ul><li>Jira</li><li>GitHub Issues</li><li>Linear (experimental)</li></ul>Seed tasks from issues and write progress back. |
+| **Document & context sources** | <ul><li>Confluence</li><li>Notion</li><li>GitHub repo docs</li><li>Figma (upcoming)</li><li>Linear Docs (experimental)</li></ul> |
+| **Model providers** | <ul><li>Coding subscriptions: Claude, GLM, ChatGPT/Codex</li><li>Direct API keys: Anthropic, OpenAI, Qwen, DeepSeek, Moonshot</li><li>Aggregators: OpenRouter, LiteLLM</li><li>Local runners: Ollama, LM Studio</li></ul> |
+| **Sign-in** | <ul><li>GitHub</li><li>Google</li><li>Email and password</li></ul> |
+| **Notifications** | <ul><li>In-app inbox</li><li>Slack (optional)</li><li>Email invitations</li></ul> |
 
 See [Issue & Document Sources](/guide/issue-sources.html) and
 [Model Providers & Subscriptions](/guide/model-providers.html) for setup.
