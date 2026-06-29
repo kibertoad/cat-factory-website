@@ -13,6 +13,11 @@ There are two manifests, and they share the same building blocks:
 - Runner pool: your container/runner scheduler's dispatch / poll / release API. See
   [Runner Pools](../deploy/runner-pools.md).
 
+You author both in-app, in the Integrations hub's **Infrastructure** window (a **Container agents**
+tab for the runner pool, a **Test environments** tab for the environment provider). Each tab has a
+JSON manifest editor and a write-only secrets sub-form, validates your input client-side against the
+same Valibot contract the backend enforces, and offers a test call before you save.
+
 ## Shared building blocks
 
 Both manifests are built from the same pieces:

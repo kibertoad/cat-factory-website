@@ -143,7 +143,9 @@ against reference. From the gate you can:
 - **Recapture** — re-run the UI Tester to refresh the screenshots.
 
 It raises a **visual-confirmation-ready** notification and needs a binary-artifact store for the
-screenshots; the gate passes through when no store is wired.
+screenshots; the gate passes through when no store is wired. The store is configured per account under
+Account → Deployment settings (see
+[Content storage](../deploy/configuration.md#content-storage-binary-artifacts)).
 
 ### Authoring a document
 

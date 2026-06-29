@@ -67,6 +67,14 @@ registration, where they're stored encrypted at rest. The manifest's structure i
 through the **Environment provider manifest** feature toggle. See
 [Configuration → Feature Toggles](./configuration.md#feature-toggles).
 
+You register, test, and rotate the provider entirely in-app. The Integrations hub has a single
+**Infrastructure** window with two tabs, **Container agents** (the [runner pool](./runner-pools.md))
+and **Test environments** (this provider); open the **Test environments** tab and use the in-app JSON
+manifest editor to paste or edit the manifest, fill the write-only secrets sub-form, and run a test
+connection. The editor validates against the same wire contract the backend enforces, so a malformed
+manifest is caught before you save. In [local mode](./local.md), the delegation toggles sit at the top
+of the same window.
+
 ::: tip Automatic cleanup
 Environments are removed on completion or timeout, so a stuck run won't leave preview
 infrastructure (and cost) running indefinitely.
@@ -95,6 +103,27 @@ protocol), implement the `EnvironmentProvider` port in code instead and inject i
 container. See [Custom Providers (Code Adapters)](./custom-providers.md) for a worked example,
 per-workspace configuration via `providerConfig`, and the gotchas (status mapping, async provision,
 idempotent teardown).
+
+## Managing the provider's repo config
+
+Some platforms keep their environment definition in a config file inside the deployed repository. A
+code adapter can opt into managing that file, so the UI helps you get a repo to a provisionable state
+instead of failing the first run:
+
+- **Validate**: mechanical repo-config validation, run on demand and as a pre-flight gate before each
+  provision. An invalid config fails synchronously with a clear reason rather than as a stuck
+  provisioning attempt.
+- **Bootstrap**: the adapter generates the config file from variables you supply in the UI; the engine
+  commits it (idempotently, optionally as a PR) and re-validates.
+- **Agent repair**: when the mechanical generation can't produce a valid config, the engine dispatches
+  a coding agent that clones the repo at the write branch, fixes the config file in place, pushes the
+  fix onto the same branch, and the connection re-validates. The agent only edits an existing repo; it
+  never re-initialises history or force-pushes.
+
+All repo I/O goes through the same VCS-neutral file abstraction the rest of the platform uses, so the
+adapter never sees a host or a token. These are optional adapter capabilities: a stock deployment
+running the generic manifest provider is unaffected. See
+[Custom Providers (Code Adapters)](./custom-providers.md).
 
 ---
 

@@ -56,6 +56,13 @@ Models served through OpenRouter, LiteLLM, and the other OpenAI-compatible direc
 ones: the backend proxy forwards them the same way, so any connected provider is selectable for every
 agent kind.
 
+The model picker tags each model with a **Prompt caching** or **No prompt caching** badge, derived
+from the provider that would actually serve it. A model on the Workers AI fallback shows no caching;
+connect a direct key for that provider and the same model upgrades to its cache-capable direct
+flavour, which the badge reflects. The step metrics bar then breaks out cached input tokens, and the
+[observability dashboard](../deploy/observability.md#the-built-in-dashboard) reports the cache-hit
+rate per run. See [Budgets → Prompt caching](./budgets.md#prompt-caching).
+
 ### Aggregator gateways: OpenRouter and LiteLLM
 
 Two of the direct providers are OpenAI-compatible gateways that front many upstream models:
@@ -98,7 +105,9 @@ their terms forbid sharing one credential across a team, at every tier (a ChatGP
 plan hands out more individual seats). Cat Factory honours that with a
 per-user mode rather than a workspace pool:
 
-- Each **user** connects their own credential, and only that user's runs can use it.
+- Each **user** connects their own credential, and only that user's runs can use it. Connecting (or
+  disconnecting) one refreshes the model catalog, so the **"No AI model configured"** banner clears
+  the moment the subscription makes a model usable, and a default-preset mismatch surfaces right away.
 - These vendors are never poolable on any workspace, personal or org. The restriction is on
   *sharing one subscription credential*: an organization that wants
   every member to use Claude or GPT models sets a direct provider API key (`ANTHROPIC_API_KEY`,

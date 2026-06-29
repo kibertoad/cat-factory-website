@@ -1,10 +1,10 @@
 # Run Locally
 
 Local mode runs the whole product on one machine: the orchestrator as a Node process, each agent
-job as a local Docker container, GitHub through a personal access token, and persistence on a local
-PostgreSQL. It is the fastest way to try Cat Factory end to end, and unlike a pure dev setup it does
-real work: agent containers clone, commit, and push to real repositories, CI gates on real GitHub
-Actions, and PRs merge for real.
+job as a local Docker container, GitHub or GitLab through a personal access token, and persistence on
+a local PostgreSQL. It is the fastest way to try Cat Factory end to end, and unlike a pure dev setup
+it does real work: agent containers clone, commit, and push to real repositories, CI gates on real
+GitHub Actions, and PRs (or GitLab merge requests) merge for real.
 
 Use it for evaluation, demos, and single-operator workflows. For a shared or production deployment,
 use [Cloudflare](./cloudflare.md) or [Node.js](./nodejs.md).
@@ -17,8 +17,8 @@ developer machine instead of a server:
 | Concern | Node.js deployment | Local mode |
 | --- | --- | --- |
 | **Agent jobs** | Self-hosted [runner pool](./runner-pools.md) | Local containers (Docker, Podman, OrbStack, Colima, or Apple `container`) |
-| **GitHub access** | GitHub App (per-installation tokens) | A personal access token (`GITHUB_PAT`) |
-| **Auth gate** | Real GitHub OAuth sessions | Open by default (`AUTH_DEV_OPEN=true`) |
+| **Source-control access** | GitHub App (per-installation tokens) | A personal access token (`GITHUB_PAT`, or `GITLAB_PAT` for GitLab) |
+| **Sign-in** | Real OAuth sessions | Sign in with the configured PAT, or email/password. See [Signing in](#signing-in). |
 | **Database** | Your PostgreSQL | A local PostgreSQL (docker-compose) |
 
 ## Prerequisites
@@ -27,8 +27,13 @@ developer machine instead of a server:
 - A [container runtime](#choosing-a-container-runtime) running locally, used both for the
   PostgreSQL service and for agent jobs. Docker is the default; Podman, OrbStack, Colima, and Apple's
   `container` are also supported.
-- A GitHub personal access token for the repositories you want agents to work in. A fine-grained
-  token scoped to those repos with **contents: write** and **pull-requests: write** is recommended.
+- A source-control personal access token for the repositories you want agents to work in. For
+  GitHub, a fine-grained token scoped to those repos with **contents: write** and
+  **pull-requests: write** is recommended; for GitLab, a token with the **api** scope. The same token
+  is how you [sign in](#signing-in).
+- Stable `ENCRYPTION_KEY` and `AUTH_SESSION_SECRET` values. Local mode requires both and fails to boot
+  without them; generate the pair with `pnpm secrets` (run in `deploy/local`). See
+  [Configuration](#configuration).
 - The executor-harness image, either pulled from a registry or built locally. It is published to
   both [GHCR](https://github.com/kibertoad/cat-factory/pkgs/container/cat-factory-executor)
   (`ghcr.io/kibertoad/cat-factory-executor`) and
@@ -38,9 +43,34 @@ developer machine instead of a server:
   **no** model provider configured, so the picker is empty until you set one up: connect a provider
   key in the UI, point it at Cloudflare Workers AI, or add a local runner.
 
-## Quick start
+## Bootstrap with the CLI
 
-From the `deploy/local` example directory:
+The fastest way to a runnable local deployment is `@cat-factory/cli`, which scaffolds a standalone
+project on the **published** libraries (no monorepo checkout needed) in one command:
+
+```bash
+npm create @cat-factory/cli@latest      # or: pnpm dlx @cat-factory/cli, npx @cat-factory/cli
+```
+
+It asks for a project name, lets you pick the source-control provider (GitHub or GitLab) and
+[container runtime](#choosing-a-container-runtime), generates the crypto secrets in the formats the
+server needs (`AUTH_SESSION_SECRET` as hex, `ENCRYPTION_KEY` as base64), mints a PAT by opening the
+provider's token page with the right scopes pre-selected and reading the token you paste back, and
+writes the populated, git-ignored `.env` files. Drive it non-interactively with flags (`--yes`,
+`--provider`, `--token`, `--db-url`, `--container-runtime`, …) for scripts or CI. The generated
+`README.md` lists the remaining steps (pull the executor image, configure a model provider) with your
+chosen values. See [`@cat-factory/cli`](../reference/packages.md).
+
+After scaffolding, run the backend and frontend:
+
+```bash
+cd <dir>/local && npm install && npm run db:up && npm start     # backend on :8787
+cd ../frontend && npm install && npm run dev                    # SPA on :3000
+```
+
+## Quick start (from the repo)
+
+To run from a clone of the `deploy/local` example directory instead:
 
 ```bash
 # 1. Start PostgreSQL
@@ -54,7 +84,8 @@ docker build -t cat-factory-executor:local backend/internal/executor-harness
 
 # 3. Configure
 cp .env.example .env
-# Set GITHUB_PAT and LOCAL_HARNESS_IMAGE; add a model key if you want a specific provider
+pnpm secrets   # prints ENCRYPTION_KEY + AUTH_SESSION_SECRET to paste in
+# Set GITHUB_PAT (or GITLAB_PAT) and LOCAL_HARNESS_IMAGE; add a model key if you want a specific provider
 
 # 4. Run
 pnpm start
@@ -70,7 +101,11 @@ container.
 | --- | --- | --- |
 | `DATABASE_URL` | yes | PostgreSQL connection string (the docker-compose service). |
 | `LOCAL_HARNESS_IMAGE` | yes | The executor-harness image run per agent job. |
-| `GITHUB_PAT` | yes | Personal access token agent containers use to clone, push branches, and open PRs. |
+| `ENCRYPTION_KEY` | yes | Base64 key (≥ 32 bytes decoded) sealing UI-connected credentials (provider keys, subscriptions, local runners) at rest. Required and must stay stable: a fresh key each boot orphans every credential sealed under the previous one, and boot fails loudly when it is unset. Generate it with `pnpm secrets`. |
+| `AUTH_SESSION_SECRET` | yes | Signs the session token. Required and must stay stable: a fresh value each boot invalidates your session and forces a re-login. Generate it with `pnpm secrets`. |
+| `GITHUB_PAT` | one of | Personal access token agent containers use to clone, push branches, and open PRs, and the credential you [sign in](#signing-in) with. |
+| `GITLAB_PAT` | one of | GitLab personal access token (scope `api`). Drives clone/push, the CI gate, merge-request creation and merge, and GitLab sign-in. Set at least one of `GITHUB_PAT` / `GITLAB_PAT`. |
+| `GITLAB_API_BASE` | no | GitLab REST v4 base for a self-managed instance, e.g. `https://gitlab.example.com/api/v4`. |
 | `PORT` | no | Listen port. Defaults to 8787. |
 | `LOCAL_CONTAINER_RUNTIME` | no | Which runtime to use: `docker` (default), `podman`, `orbstack`, `colima`, or `apple`. See [Choosing a container runtime](#choosing-a-container-runtime). |
 | `LOCAL_DOCKER_BINARY` | no | Override the CLI binary the runtime profile selects, e.g. a non-default `podman` path. |
@@ -78,7 +113,10 @@ container.
 | `LOCAL_DOCKER_ADD_HOST_GATEWAY` | no | Add the `host-gateway` host alias on Linux. Defaults per runtime (`true` for Docker/Podman/OrbStack, `false` for Colima). |
 | `LOCAL_DOCKER_PRIVILEGED_TEST_JOBS` | no | Run Tester jobs privileged so they can stand up docker-compose infra (Docker-in-Docker). Defaults to `true`; set `false` for rootless Podman. |
 | `LOCAL_HARNESS_HOST_ALIAS` | no | Override the hostname agent containers use to reach the LLM proxy. Defaults per runtime (see the table below). |
-| `ENCRYPTION_KEY` | no | Seals UI-connected credentials (provider keys, subscriptions, local runners) at rest. In local mode a per-process key is generated when this is unset, so the app boots without it, but those credentials are then lost on every restart. Set a stable `ENCRYPTION_KEY` (`openssl rand -base64 32`) to keep them across restarts. |
+| `CAT_FACTORY_STATE_DIR` | no | Where local mode keeps its state directory. Defaults to `~/.cat-factory`. |
+| `AUTH_PASSWORD_ENABLED` | no | Offer email/password sign-in. On by default in local mode. |
+| `AUTH_OPEN_SIGNUP` | no | Allow creating a local account with no invite. On by default in local mode. |
+| `AUTH_DEV_OPEN` | no | Keep the API open for unauthenticated reads. Defaults to `true`; see [A note on security](#a-note-on-security). |
 
 Model keys, observability, and Slack work exactly as in the
 [shared configuration reference](./configuration.md).
@@ -152,12 +190,40 @@ You have several options, in rough order of "no cloud account needed":
   (`""` allows all). See [Configuration → LLM providers](./configuration.md#llm-providers).
 
 ::: tip Forgot the PAT?
-Local mode reaches GitHub through `GITHUB_PAT` and has no GitHub App connect flow, so without it
-every repo-operating step (clone, push, open PR, CI gate, merge) is bound to fail at runtime. If you
-boot without one, Cat Factory does not leave you guessing: it logs a warning with a click-through
-GitHub token-creation link (scopes `repo` and `workflow` pre-selected) and shows the same one-click
-link as a dismissible banner over the board. Create the token, set `GITHUB_PAT`, and restart.
+Local mode reaches source control through `GITHUB_PAT` (or `GITLAB_PAT`) and has no GitHub App connect
+flow, so without one every repo-operating step (clone, push, open PR or MR, CI gate, merge) is bound to
+fail at runtime. If you boot without one, Cat Factory does not leave you guessing: it logs a warning
+with a click-through token-creation link (scopes pre-selected) and shows the same one-click link as a
+dismissible banner over the board. Create the token, set the variable, and restart.
 :::
+
+## Signing in
+
+Local mode requires sign-in. Per-user features (personal subscriptions, your own provider keys) need
+a real identity to attach to, so the SPA shows a login screen rather than running anonymous. You sign
+in one of two ways:
+
+- **With the configured PAT** (recommended). When `GITHUB_PAT` or `GITLAB_PAT` is set, the login
+  screen shows a one-click "Sign in with configured GitHub/GitLab PAT" button, and the token's account
+  becomes your identity. The token stays on the server; it is never typed into or shown in the browser.
+  Your choice is remembered, so a refresh, and a server restart, keep you signed in (the
+  `AUTH_SESSION_SECRET` is stable, so the session survives reboots).
+- **With email and password**. On by default in local mode with open signup, so you can create a local
+  account with no invite. Turn signup off with `AUTH_OPEN_SIGNUP=false` and password sign-in off with
+  `AUTH_PASSWORD_ENABLED=false`.
+
+The API itself still serves unauthenticated reads under `AUTH_DEV_OPEN=true`; a real session is what
+unlocks the per-user features. With no PAT configured, the login screen shows scopes-preset
+token-creation links for GitHub and GitLab so you can mint one.
+
+## GitLab in local mode
+
+Local mode treats GitLab as a first-class source-control backend, not just a sign-in provider. Set
+`GITLAB_PAT` (scope `api`; add `GITLAB_API_BASE` for a self-managed instance) and a GitLab repo gets
+the same flow a GitHub repo does: the agent containers clone and push with the token, the CI gate
+reads pipeline status, mergeability and the real merge run against GitLab, and the executor opens a
+real **merge request** (reusing an open one on a resumed run). The provider is picked per repo from
+the clone-URL host, so a deployment can drive both.
 
 ## A note on security
 
@@ -181,8 +247,8 @@ With a PAT set, the **Add from existing repo** board flow works just like on a h
 picker lists your repos (via `/user/repos`), with a search/filter box for accounts that expose many,
 and importing links and syncs the repo behind a service frame. The PAT's `repo` and `workflow`
 scopes light the flow up; CLI- and UI-linked repos share one synthetic installation, so the
-`linkRepo` helper still works and points at the same place. After linking, [run
-pipelines](../guide/running-pipelines.md) as usual.
+`linkRepo` helper still works and points at the same place. A `GITLAB_PAT` links GitLab repositories
+the same way. After linking, [run pipelines](../guide/running-pipelines.md) as usual.
 
 ---
 
