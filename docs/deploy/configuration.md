@@ -91,6 +91,22 @@ and replicas, or encrypted credentials become unreadable.
 | `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |
 | Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
 
+## Content storage (binary artifacts)
+
+The Tester's screenshots for the [Visual Confirmation](../guide/running-pipelines.md#visual-confirmation)
+gate are kept in a binary-artifact store. This is configured **per account in the UI** (Account →
+Deployment settings), not through environment variables, and each account picks its own backend:
+
+| Backend | Runtimes | Notes |
+| --- | --- | --- |
+| `fs` | Node, local | On-disk under a base path (default `.file-storage`, git-ignored). The default on **local**. Local-disk only, so it is unsafe for a scaled or ephemeral Node deployment where instances don't share a disk. |
+| `s3` | Node, local | An S3 bucket. Enter the bucket and keys (sealed at rest) in the UI; the keys can fall back to ambient AWS credentials. |
+| `r2` | Cloudflare | The Worker's R2 binding. The default and only backend on Cloudflare (the AWS SDK is kept out of the Worker bundle; for S3, run Node/local). |
+
+The default is `fs` on local, `r2` on Cloudflare, and **off** on Node until an account configures one.
+With no store wired, the Visual Confirmation gate passes through. Switching an account's backend
+orphans artifacts stored under the previous one.
+
 ## Node container execution
 
 On the Node.js runtime, repo-operating agent kinds run on a [runner pool](./runner-pools.md), and

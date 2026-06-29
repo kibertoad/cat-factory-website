@@ -71,6 +71,12 @@ The manifest's structure is documented in
 [Integration Manifests](../reference/manifests.md#runner-pool-manifest); registration is part of the
 Infrastructure configuration. See [Configuration → Infrastructure](./configuration.md#infrastructure).
 
+You register the pool in-app. Open the Integrations hub's **Infrastructure** window, **Container
+agents** tab, and use the in-app JSON manifest editor to paste or edit the manifest, fill the
+write-only secrets sub-form, and run a test dispatch. The editor validates against the same wire
+contract the backend enforces. The **Test environments** tab in the same window registers an
+[environment provider](./environments.md); a single pool can back both jobs.
+
 ### Reaching an internal pool
 
 The pool URL must be `https` and a public host by default; private, internal, and cloud-metadata

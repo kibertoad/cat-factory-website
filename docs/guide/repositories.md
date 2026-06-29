@@ -108,11 +108,14 @@ neutral VCS client over the GitLab REST v4 API (repository, branch, merge-reques
 reads and writes), a webhook verifier and mapper (merge request, issue, push, and pipeline hooks),
 and project provisioning.
 
-::: warning Experimental, not yet selectable in the UI
-GitLab support is a foundation, not a finished feature. The provider is registered across all
-runtimes, but the live flow (linking, bootstrapping, running pipelines) still routes through GitHub,
-and there is no GitLab option in the UI yet. Treat it as preview plumbing for deployers tracking
-where this is headed, not something to point a workspace at today.
+In [local mode](../deploy/local.md#gitlab-in-local-mode) GitLab is a first-class backend: set a
+`GITLAB_PAT` and a GitLab repo clones, pushes, gates on CI, and merges through a real merge request,
+and you can sign in with the same token.
+
+::: warning Cloud deployments are still GitHub-only
+On the hosted Cloudflare and Node deployments the live flow (linking, bootstrapping, running
+pipelines) routes through the GitHub App; there is no GitLab option in that UI yet. GitLab as a
+source-control backend is wired in local mode today, with the cloud path to follow.
 :::
 
 ---
