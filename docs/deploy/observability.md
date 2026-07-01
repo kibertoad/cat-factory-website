@@ -98,6 +98,24 @@ token shapes (OpenAI `sk-…`, GitHub `ghp_…` / `github_pat_…`, AWS `AKIA…
 field name, URL host, and token scheme are kept so the row stays diagnostic; only the secret itself
 is dropped.
 
+## Run and step diagnostics
+
+Beyond the metered call data, a run's own UI surfaces what its containers and environments are doing,
+so a slow or broken step is diagnosable without reading logs:
+
+- **Container lifecycle**: each agent step shows its container status (starting, up, errored, or
+  destroyed), and while it is up, the live phase (for example "Preparing workspace" or "Running agent
+  call"), the container id, and a clickable container URL when there is one.
+- **Spin-up failures**: a container or environment that never comes up is reported on the step as a
+  provisioning failure with the verbatim provider error, rather than a generic run failure. The same
+  attempts are in the [provisioning event log](#the-provisioning-event-log).
+- **Tester stand-up**: when the Tester stands its dependencies up with docker-compose, the test report
+  shows whether `docker compose up --wait` succeeded, the compose file, how long it took, and the
+  captured (redacted) logs. A readiness banner announces when all infrastructure is up and testing can
+  start.
+- **Stalled runs**: if a run's durable driver is lost (an orchestrator crash or restart) and recovery
+  can't resume it, the board marks it **stalled**, distinct from a plain failure, and offers a retry.
+
 ## Retention cron
 
 Neither the telemetry store nor the provisioning log self-limits, so a cron prunes each table to its

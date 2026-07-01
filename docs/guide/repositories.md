@@ -60,6 +60,24 @@ into the privileged App tier, which creates the repo programmatically; see
 
 Every new service starts from a consistent, known-good baseline.
 
+## Repository types
+
+When you add a service from a repo or bootstrap a new one, you pick a **repository type** that shapes
+which pipelines and infrastructure apply to it:
+
+| Type | For | Behaviour |
+| --- | --- | --- |
+| **Service** | A backend service (the default). | Full pipelines, ephemeral environments, and the Tester's infra. |
+| **Frontend** | A UI app. | Backend links and a UI-test flow (see below). |
+| **Library** | A published package. | Build, test, and merge, with no deploy step, no ephemeral environment, and no Tester infra. |
+| **Document** | A docs repo. | Only `spike` and `document` tasks, and the document pipelines. Non-doc tasks are refused, and a task dragged into a doc frame is re-typed. |
+
+The type is stamped on the service frame when it is created. A **frontend** frame carries a build,
+serve, and test config, plus **backend bindings**: you map a frontend env var (e.g.
+`VITE_BACKEND_URL`) to a backend service's live preview URL or a WireMock stub. A binding to another
+service draws a **board link** (a cyan edge) between the two frames, so the board shows which backend
+a frontend is wired to.
+
 ## Service blueprints & reconciliation
 
 For existing repositories, the blueprint agent keeps board and code aligned:
@@ -100,22 +118,30 @@ Because the GitHub App sends webhooks, changes made directly in GitHub (pushes, 
 issue edits) are projected back into Cat Factory's database, so the board stays current even when
 work happens outside the platform.
 
-## GitLab (experimental)
+## GitLab
 
-Cat Factory is growing a provider-neutral VCS layer so repositories can live on hosts other than
-GitHub. A GitLab backend (`@cat-factory/gitlab`) is the first additional provider. It implements the
-neutral VCS client over the GitLab REST v4 API (repository, branch, merge-request, issue, and CI
-reads and writes), a webhook verifier and mapper (merge request, issue, push, and pipeline hooks),
-and project provisioning.
+Cat Factory runs on GitLab as well as GitHub, through a provider-neutral VCS layer. The GitLab backend
+(`@cat-factory/gitlab`) implements the neutral VCS client over the GitLab REST v4 API (repository,
+branch, merge-request, issue, and CI reads and writes), a webhook verifier and mapper (merge request,
+issue, push, and pipeline hooks), and project provisioning.
 
-In [local mode](../deploy/local.md#gitlab-in-local-mode) GitLab is a first-class backend: set a
-`GITLAB_PAT` and a GitLab repo clones, pushes, gates on CI, and merges through a real merge request,
-and you can sign in with the same token.
+GitLab is first-class on **every runtime**, hosted Cloudflare and Node included, not just local mode.
+A GitLab repo clones, pushes, gates on real CI, and merges through a real merge request, and the
+engine syncs from GitLab webhooks. The VCS flow reaches feature parity with GitHub, including squash
+merge, rebase, mergeability, and human review (merge-request approvals and resolvable discussion
+threads). Users can **sign in with a GitLab PAT** on hosted deployments, and GitLab group membership
+counts toward the `AUTH_ALLOWED_ORGS` allowlist.
 
-::: warning Cloud deployments are still GitHub-only
-On the hosted Cloudflare and Node deployments the live flow (linking, bootstrapping, running
-pipelines) routes through the GitHub App; there is no GitLab option in that UI yet. GitLab as a
-source-control backend is wired in local mode today, with the cloud path to follow.
+Enable it with a single token per deployment: `GITLAB_TOKEN` on Cloudflare and Node (see
+[Configuration → GitLab](../deploy/configuration.md#gitlab-source-control)), or `GITLAB_PAT` in
+[local mode](../deploy/local.md#gitlab-in-local-mode). The provider is picked per repo from the
+clone-URL host, so a deployment can drive both GitHub and GitLab.
+
+::: warning Accepted GitLab gaps
+GitLab uses a single-token model (one `GITLAB_TOKEN`/`GITLAB_PAT` per deployment); a per-workspace
+OAuth connect flow with many GitLab connections is future work. GitLab is a source-control backend
+only, not an issue source, and code search and issue sub-hierarchies are unavailable (GitLab's basic
+API doesn't provide them).
 :::
 
 ---

@@ -34,11 +34,12 @@ developer machine instead of a server:
 - Stable `ENCRYPTION_KEY` and `AUTH_SESSION_SECRET` values. Local mode requires both and fails to boot
   without them; generate the pair with `pnpm secrets` (run in `deploy/local`). See
   [Configuration](#configuration).
-- The executor-harness image, either pulled from a registry or built locally. It is published to
-  both [GHCR](https://github.com/kibertoad/cat-factory/pkgs/container/cat-factory-executor)
+- The executor-harness image. Leave `LOCAL_HARNESS_IMAGE` unset and the version-matched image is
+  pulled at boot automatically; see [The executor-harness image](#the-executor-harness-image). It is
+  published to both [GHCR](https://github.com/kibertoad/cat-factory/pkgs/container/cat-factory-executor)
   (`ghcr.io/kibertoad/cat-factory-executor`) and
   [Docker Hub](https://hub.docker.com/r/kibertoad/cat-factory-executor)
-  (`docker.io/kibertoad/cat-factory-executor`). Pull whichever your runtime prefers.
+  (`docker.io/kibertoad/cat-factory-executor`), or you can build it locally.
 - A way to serve models (see [Models in local mode](#models-in-local-mode)). Local mode ships with
   **no** model provider configured, so the picker is empty until you set one up: connect a provider
   key in the UI, point it at Cloudflare Workers AI, or add a local runner.
@@ -100,7 +101,8 @@ container.
 | Variable | Required | Purpose |
 | --- | --- | --- |
 | `DATABASE_URL` | yes | PostgreSQL connection string (the docker-compose service). |
-| `LOCAL_HARNESS_IMAGE` | yes | The executor-harness image run per agent job. |
+| `LOCAL_HARNESS_IMAGE` | no | The executor-harness image run per agent job. Optional: unset, it defaults to the version-matched image the backend recommends, which is pulled at boot (see [The executor-harness image](#the-executor-harness-image)). Set it to pin a specific tag or digest, or to a bare local tag you build yourself. |
+| `LOCAL_HARNESS_IMAGE_REFRESH` | no | Set to `off` (or `false`/`0`/`no`/`none`/`disabled`) to skip the boot-time image pull. Any other value keeps the default refresh on. |
 | `ENCRYPTION_KEY` | yes | Base64 key (≥ 32 bytes decoded) sealing UI-connected credentials (provider keys, subscriptions, local runners) at rest. Required and must stay stable: a fresh key each boot orphans every credential sealed under the previous one, and boot fails loudly when it is unset. Generate it with `pnpm secrets`. |
 | `AUTH_SESSION_SECRET` | yes | Signs the session token. Required and must stay stable: a fresh value each boot invalidates your session and forces a re-login. Generate it with `pnpm secrets`. |
 | `GITHUB_PAT` | one of | Personal access token agent containers use to clone, push branches, and open PRs, and the credential you [sign in](#signing-in) with. |
@@ -120,6 +122,22 @@ container.
 
 Model keys, observability, and Slack work exactly as in the
 [shared configuration reference](./configuration.md).
+
+## The executor-harness image
+
+`LOCAL_HARNESS_IMAGE` is optional. Unset, local mode runs the executor-harness image that matches the
+backend version and refreshes it at boot, so a fresh checkout runs a compatible harness with no manual
+pull:
+
+- A **registry ref** (e.g. `ghcr.io/kibertoad/cat-factory-executor:1.27.6`) is pulled at boot so a
+  mutable tag stays current. If the registry is unreachable, boot falls back to the local copy.
+- A **digest-pinned ref** (`…@sha256:…`) is already immutable, so the pull is a fast no-op.
+- A **bare local tag** (e.g. `cat-factory-executor:local`) is checked for presence; the boot log
+  reminds you to rebuild it after harness changes with
+  `docker build -t cat-factory-executor:local backend/internal/executor-harness`.
+
+Set `LOCAL_HARNESS_IMAGE_REFRESH=off` to skip the boot pull. The refresh is skipped on the Apple
+`container` runtime (its CLI differs); refresh that image out of band.
 
 ## Choosing a container runtime
 
@@ -167,6 +185,11 @@ Both default off. A single wrapper package can implement the `EnvironmentProvide
 [Custom Providers](./custom-providers.md). Ephemeral environments are enabled by default in local
 mode (`ENVIRONMENTS_ENABLED=true`), and an un-pinned Tester task defaults to the local environment
 until you delegate.
+
+To run agents and previews on a local Kubernetes cluster instead, use the native **Kubernetes**
+backends. The `cat-factory k3s` command provisions a local k3d/kind/k3s cluster, wires least-privilege
+access, and hands off to the app to fill the connect form. See
+[Kubernetes → Local k3s guided setup](./kubernetes.md#local-k3s-guided-setup).
 
 ## Models in local mode
 

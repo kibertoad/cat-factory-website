@@ -32,10 +32,57 @@ In [local mode](./local.md), an un-pinned Tester task defaults to the **local** 
 [Delegating infrastructure off the host](./local.md#delegating-infrastructure-off-the-host)) to make
 the local-mode default ephemeral instead; per-service and per-task pins still override it.
 
+## Choosing a backend
+
+The **Test environments** tab in the top-level **Infrastructure** window offers several backend kinds.
+Pick the one that matches how your previews run:
+
+| Backend | Runtimes | What it does |
+| --- | --- | --- |
+| **Kubernetes** | all | Applies the repo's own manifests into a per-PR namespace. Native, form-driven. See [Kubernetes](./kubernetes.md#ephemeral-environments-on-kubernetes). |
+| **Docker Compose** | local | Stands the repo's compose file up on the host Docker daemon. See [below](#docker-compose-environments). |
+| **HTTP manifest** | all | Drives your own management API through request/response templates. See [below](#registering-an-http-manifest-provider). |
+| **Custom code adapter** | Node, local | Implements the `EnvironmentProvider` port when a manifest can't express your platform. See [Custom Providers](./custom-providers.md). |
+
+Which backend a given service uses is decided by its [provision type](#per-service-provision-types),
+so one workspace can preview a Kubernetes service and a Compose service side by side.
+
+## Per-service provision types
+
+A preview needs two decisions: **what** to stand up and **where/how** to run it. A service owns the
+first by declaring a **provision type** (`kubernetes`, `docker-compose`, `custom`, or `infraless`).
+The workspace owns the second by mapping each provision type to a **handler** (an engine plus its
+connection) on the **Test environments** tab. A `kubernetes` service routes to Local k3s or Remote
+Kubernetes, a `docker-compose` service to Local Docker, a `custom` service to its remote-custom
+handler. When you add a service from a repo, Cat Factory auto-detects a recommended provisioning
+config (manifest roots, overlays, monorepo slices) and offers candidates to accept or change. The
+full model, including custom manifest types and the generate/fix repair agent, is on the
+[Kubernetes](./kubernetes.md#per-service-provision-types) page.
+
+## Docker Compose environments
+
+In [local mode](./local.md), select the **Docker Compose** backend to stand a service up from the
+compose file already in its repo, on the host Docker daemon. It reads the PR repo's compose file,
+rewrites it into a per-PR project with isolated host ports, runs `docker compose up -d --wait`, and
+returns `http://localhost:<port>` as the preview URL. Teardown runs `docker compose down -v`.
+
+| Field | Purpose |
+| --- | --- |
+| **Service** | The service key in the compose file to target (it must publish its port). |
+| **Port** | The container port that service publishes. |
+| **Compose path** | The compose file's path relative to the repo root. |
+| **Image template** | Optional. A CI-built image tag to substitute in. |
+| **Env template** | Optional. Extra env vars passed to `docker compose up`. |
+| **Scheme** | Optional. `http` (default) or `https`. |
+| **Default TTL** | Optional. Fallback lifetime for auto-teardown. |
+
+Build contexts, host bind mounts, relative `env_file`s, and privileged services are rejected: the
+compose stack is meant for preview, not to mirror production. It needs a host Docker daemon, so it is
+local-mode only.
+
 ## How it works
 
-You register a preview environment provider via a declarative HTTP manifest that points at
-your provisioning and cleanup endpoints. During a run:
+The generic HTTP manifest provider spins environments up by calling your management API. During a run:
 
 1. The deployer agent calls your provider endpoints to spin up an isolated environment.
 2. The tester (and `playwright`) agents run against the preview instance.
@@ -48,7 +95,7 @@ Run starts
              └─ run completes or times out → environment torn down
 ```
 
-## Registering a provider
+## Registering an HTTP manifest provider
 
 You describe your provider declaratively with a manifest. There are no per-provider presets
 and no per-org code:
@@ -67,13 +114,13 @@ registration, where they're stored encrypted at rest. The manifest's structure i
 through the **Environment provider manifest** feature toggle. See
 [Configuration → Feature Toggles](./configuration.md#feature-toggles).
 
-You register, test, and rotate the provider entirely in-app. The Integrations hub has a single
-**Infrastructure** window with two tabs, **Container agents** (the [runner pool](./runner-pools.md))
-and **Test environments** (this provider); open the **Test environments** tab and use the in-app JSON
-manifest editor to paste or edit the manifest, fill the write-only secrets sub-form, and run a test
-connection. The editor validates against the same wire contract the backend enforces, so a malformed
-manifest is caught before you save. In [local mode](./local.md), the delegation toggles sit at the top
-of the same window.
+You register, test, and rotate the provider entirely in-app. The top-level **Infrastructure** window
+has two tabs, **Agent containers** (the [runner pool](./runner-pools.md)) and **Test environments**
+(this provider); open the **Test environments** tab, select the **HTTP manifest** backend, and use the
+in-app JSON manifest editor to paste or edit the manifest, fill the write-only secrets sub-form, and
+run a test connection. The editor validates against the same wire contract the backend enforces, so a
+malformed manifest is caught before you save. In [local mode](./local.md), the delegation toggles sit
+at the top of the same window.
 
 ::: tip Automatic cleanup
 Environments are removed on completion or timeout, so a stuck run won't leave preview

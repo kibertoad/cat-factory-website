@@ -14,6 +14,10 @@ A deployment can offer any combination of three sign-in providers, each enabled 
 - **Google** OAuth.
 - **Email + password** (hashed with PBKDF2).
 
+You can also **sign in with your own GitHub or GitLab personal access token**: paste the token and the
+server resolves it to your account, subject to the deployment's allowlists. A hosted deployment always
+requires one of these; it has no anonymous access.
+
 A person does not need a GitHub account to use Cat Factory. Because repository access comes from the
 GitHub App rather than a user's own token, a Google- or password-only user works fully.
 
@@ -112,6 +116,15 @@ Email needs no deployment enable flag: it is available whenever an `ENCRYPTION_K
 seals the per-account API key). Set `APP_BASE_URL` to the origin that accept links point at. See
 [Configuration → Email](../deploy/configuration.md#email-invitations). Without a connected sender,
 invitations still work; the accept link is returned for you to share manually.
+
+## Interface language
+
+The app ships in English plus additional, still-experimental locales: Spanish, French, Hebrew,
+Japanese, Polish, Turkish, and Ukrainian. Switch language from the picker next to the user menu; your
+choice is remembered per user in the browser. Hebrew renders right-to-left. On any non-English
+language a banner flags the translation as unofficial and possibly inaccurate, with a link to report
+a mistake or open a fix; dismiss it per language. There is no operator setting for a default language:
+the app starts in English and each user picks their own.
 
 ## Named boards
 
