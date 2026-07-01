@@ -118,24 +118,30 @@ Because the GitHub App sends webhooks, changes made directly in GitHub (pushes, 
 issue edits) are projected back into Cat Factory's database, so the board stays current even when
 work happens outside the platform.
 
-## GitLab (experimental)
+## GitLab
 
-Cat Factory is growing a provider-neutral VCS layer so repositories can live on hosts other than
-GitHub. A GitLab backend (`@cat-factory/gitlab`) is the first additional provider. It implements the
-neutral VCS client over the GitLab REST v4 API (repository, branch, merge-request, issue, and CI
-reads and writes), a webhook verifier and mapper (merge request, issue, push, and pipeline hooks),
-and project provisioning.
+Cat Factory runs on GitLab as well as GitHub, through a provider-neutral VCS layer. The GitLab backend
+(`@cat-factory/gitlab`) implements the neutral VCS client over the GitLab REST v4 API (repository,
+branch, merge-request, issue, and CI reads and writes), a webhook verifier and mapper (merge request,
+issue, push, and pipeline hooks), and project provisioning.
 
-In [local mode](../deploy/local.md#gitlab-in-local-mode) GitLab is a first-class backend: set a
-`GITLAB_PAT` and a GitLab repo clones, pushes, gates on CI, and merges through a real merge request,
-and you can sign in with the same token. The VCS flow reaches feature parity with GitHub, including
-squash merge, rebase, mergeability, and human review (merge-request approvals and resolvable
-discussion threads). GitLab is a source-control backend only; it is not offered as an issue source.
+GitLab is first-class on **every runtime**, hosted Cloudflare and Node included, not just local mode.
+A GitLab repo clones, pushes, gates on real CI, and merges through a real merge request, and the
+engine syncs from GitLab webhooks. The VCS flow reaches feature parity with GitHub, including squash
+merge, rebase, mergeability, and human review (merge-request approvals and resolvable discussion
+threads). Users can **sign in with a GitLab PAT** on hosted deployments, and GitLab group membership
+counts toward the `AUTH_ALLOWED_ORGS` allowlist.
 
-::: warning Cloud deployments are still GitHub-only
-On the hosted Cloudflare and Node deployments the live flow (linking, bootstrapping, running
-pipelines) routes through the GitHub App; there is no GitLab option in that UI yet. GitLab as a
-source-control backend is wired in local mode today, with the cloud path to follow.
+Enable it with a single token per deployment: `GITLAB_TOKEN` on Cloudflare and Node (see
+[Configuration → GitLab](../deploy/configuration.md#gitlab-source-control)), or `GITLAB_PAT` in
+[local mode](../deploy/local.md#gitlab-in-local-mode). The provider is picked per repo from the
+clone-URL host, so a deployment can drive both GitHub and GitLab.
+
+::: warning Accepted GitLab gaps
+GitLab uses a single-token model (one `GITLAB_TOKEN`/`GITLAB_PAT` per deployment); a per-workspace
+OAuth connect flow with many GitLab connections is future work. GitLab is a source-control backend
+only, not an issue source, and code search and issue sub-hierarchies are unavailable (GitLab's basic
+API doesn't provide them).
 :::
 
 ---

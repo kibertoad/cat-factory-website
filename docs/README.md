@@ -39,7 +39,7 @@ Cat Factory connects to the tools you already use. Everything below ships in eve
 
 | Category | Connects to |
 | --- | --- |
-| **Repositories & pull requests** | <ul><li>GitHub (via GitHub App)</li><li>GitLab (local mode)</li></ul> |
+| **Repositories & pull requests** | <ul><li>GitHub (via GitHub App)</li><li>GitLab (all runtimes)</li></ul> |
 | **Issue trackers** | <ul><li>Jira</li><li>GitHub Issues</li><li>Linear</li></ul>Seed tasks from issues and write progress back. |
 | **Document & context sources** | <ul><li>Confluence</li><li>Notion</li><li>GitHub repo docs</li><li>Figma & Zeplin (design context)</li><li>Linear Docs</li></ul> |
 | **Model providers** | <ul><li>Coding subscriptions: Claude, GLM, ChatGPT/Codex</li><li>Direct API keys: Anthropic, OpenAI, Qwen, DeepSeek, Moonshot</li><li>Aggregators: OpenRouter, LiteLLM</li><li>Local runners: Ollama, LM Studio</li></ul> |

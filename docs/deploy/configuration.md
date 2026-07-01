@@ -45,7 +45,23 @@ provider is configured (GitHub OAuth, Google OAuth, or `AUTH_PASSWORD_ENABLED` w
 token, the server resolves it to their account, and the same `AUTH_ALLOWED_LOGINS` /
 `AUTH_ALLOWED_ORGS` / `AUTH_ALLOWED_EMAIL_DOMAINS` allowlists decide who gets in (it fails closed when
 all three are empty). [Local mode](./local.md#signing-in) is the exception: it signs in with the
-deployment's configured PAT or a local password.
+deployment's configured PAT or a local password. GitLab PAT sign-in is offered only when the
+deployment has a GitLab connection configured (`GITLAB_TOKEN`, below); GitLab group membership then
+counts toward `AUTH_ALLOWED_ORGS`, matching GitHub.
+
+## GitLab (source control)
+
+GitLab is a first-class source-control backend on every runtime, not just local mode. It is opt-in
+and off until you set a token. With it configured, a GitLab repo clones, pushes, gates on real CI, and
+merges through a real merge request, and users can sign in with a GitLab PAT. See
+[Repositories → GitLab](../guide/repositories.md#gitlab).
+
+| Variable | Purpose |
+| --- | --- |
+| `GITLAB_TOKEN` | Enables GitLab on Cloudflare and Node (single-token model, one connection per deployment). In [local mode](./local.md) the equivalent is `GITLAB_PAT`. Needs the `api` scope. |
+| `GITLAB_API_BASE` | Optional. GitLab REST v4 base for a self-managed instance, e.g. `https://gitlab.example.com/api/v4`. Defaults to the public GitLab API. |
+| `GITLAB_WEBHOOK_SECRET` | Optional. Verifies inbound GitLab webhook payloads (merge request, issue, push, pipeline). |
+| `GITLAB_CONNECTION_ID` | Optional. Logical id for the GitLab connection. Defaults to `gitlab`. |
 
 ## LLM providers
 
@@ -103,6 +119,12 @@ providers keep working rather than the whole config failing.
 | `HARNESS_SHARED_SECRET` | Optional inbound-auth secret for the executor harness. When set, the backend injects it into each per-run container's env and sends it as the `x-harness-secret` header, so the harness rejects any call that doesn't carry it. Leave it unset and the harness stays open, relying on internal-only addressing. A self-hosted runner pool configures its own secret pool-side. |
 | `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |
 | Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
+
+When a workspace is missing infrastructure a run needs, the app says so up front rather than failing
+mid-run. It raises a per-area setup banner, with a deep link to the right config screen, when
+ephemeral environments, the agent executor (self-hosted runner pool, remote Node), or binary
+[content storage](#content-storage-binary-artifacts) is undefined. Each banner can be dismissed for
+the session or permanently per user.
 
 ## Content storage (binary artifacts)
 
