@@ -119,11 +119,12 @@ invitations still work; the accept link is returned for you to share manually.
 
 ## Interface language
 
-The app ships in English plus community translations for Spanish, French, Hebrew, Japanese, Polish,
-Turkish, and Ukrainian. Switch language from the picker next to the user menu; your choice is
-remembered per user in the browser. Hebrew renders right-to-left. On any non-English language a banner
-notes the translations are community-provided and may be inaccurate; dismiss it per language. There is
-no operator setting for a default language: the app starts in English and each user picks their own.
+The app ships in English plus additional, still-experimental locales: Spanish, French, Hebrew,
+Japanese, Polish, Turkish, and Ukrainian. Switch language from the picker next to the user menu; your
+choice is remembered per user in the browser. Hebrew renders right-to-left. On any non-English
+language a banner flags the translation as unofficial and possibly inaccurate, with a link to report
+a mistake or open a fix; dismiss it per language. There is no operator setting for a default language:
+the app starts in English and each user picks their own.
 
 ## Named boards
 
