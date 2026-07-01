@@ -91,6 +91,7 @@ export default defineUserConfig({
           '/deploy/notifications.md',
           '/deploy/runner-pools.md',
           '/deploy/environments.md',
+          '/deploy/kubernetes.md',
           '/deploy/custom-providers.md',
           '/deploy/custom-agents.md',
         ],

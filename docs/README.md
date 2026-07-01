@@ -39,9 +39,9 @@ Cat Factory connects to the tools you already use. Everything below ships in eve
 
 | Category | Connects to |
 | --- | --- |
-| **Repositories & pull requests** | <ul><li>GitHub (via GitHub App)</li><li>GitLab (experimental)</li></ul> |
-| **Issue trackers** | <ul><li>Jira</li><li>GitHub Issues</li><li>Linear (experimental)</li></ul>Seed tasks from issues and write progress back. |
-| **Document & context sources** | <ul><li>Confluence</li><li>Notion</li><li>GitHub repo docs</li><li>Figma (upcoming)</li><li>Linear Docs (experimental)</li></ul> |
+| **Repositories & pull requests** | <ul><li>GitHub (via GitHub App)</li><li>GitLab (local mode)</li></ul> |
+| **Issue trackers** | <ul><li>Jira</li><li>GitHub Issues</li><li>Linear</li></ul>Seed tasks from issues and write progress back. |
+| **Document & context sources** | <ul><li>Confluence</li><li>Notion</li><li>GitHub repo docs</li><li>Figma & Zeplin (design context)</li><li>Linear Docs</li></ul> |
 | **Model providers** | <ul><li>Coding subscriptions: Claude, GLM, ChatGPT/Codex</li><li>Direct API keys: Anthropic, OpenAI, Qwen, DeepSeek, Moonshot</li><li>Aggregators: OpenRouter, LiteLLM</li><li>Local runners: Ollama, LM Studio</li></ul> |
 | **Sign-in** | <ul><li>GitHub</li><li>Google</li><li>Email and password</li></ul> |
 | **Notifications** | <ul><li>In-app inbox</li><li>Slack (optional)</li><li>Email invitations</li></ul> |

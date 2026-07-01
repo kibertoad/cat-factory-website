@@ -7,33 +7,31 @@ you link those sources directly to blocks, import them, and use them as agent co
 
 | Type | Sources |
 | --- | --- |
-| **Issue trackers** | Jira, GitHub Issues, Linear (experimental) |
-| **Documents** | Confluence, Notion, GitHub repo docs, Linear Docs (experimental) |
+| **Issue trackers** | Jira, GitHub Issues, Linear |
+| **Documents** | Confluence, Notion, GitHub repo docs, Linear Docs |
+| **Design context** | Figma, Zeplin |
 
 **GitHub repo docs** lets you pull a Markdown/spec file straight from a connected repository
 (`owner/repo:path`, or a file URL), reusing the workspace's installed GitHub App.
 
-::: warning Linear is experimental
-Linear support is new and still maturing. Connect it per workspace under **Integrations** with a
-Linear personal API key. It works across four capacities:
+Connect **Linear** per workspace under **Integrations**, either through OAuth (the "Connect" flow) or
+with a personal API key. It works across four capacities:
 
 - **Document source**: import Linear Docs as task context.
-- **Task source**: import Linear issues (with their sub-issues and relations) to link to a task or to
-  seed a new board task.
+- **Task source**: import Linear issues (with their sub-issues and relations, paginated) to link to a
+  task or to seed a new board task.
 - **Filing tracker**: the [tech-debt recurring pipeline](./recurring-pipelines.md) and similar steps
-  file new issues into a Linear team (set a **Linear team id** in the tracker panel).
+  file new issues into a Linear team. Pick the team from a **typeahead team picker** in the tracker
+  panel rather than pasting a team id.
 - **Writeback**: comment on the linked Linear issue when its PR opens, and transition the issue to a
   completed workflow state when the PR merges.
 
-Treat it as preview-quality: confirm the behaviour on a non-critical workspace before you rely on it.
-:::
-
-::: tip Figma is coming
-A **Figma** design-context source is on the way. It connects per workspace with a Figma personal
-access token, pulls component structure, layout, and design tokens over Figma's REST API, and renders
-them to Markdown so the UI coding agents get the design as context. It pairs naturally with the
-[Visual Confirmation](./running-pipelines.md#visual-confirmation) flow. The connector is still early,
-so treat it as a preview of where design context is headed rather than a finished source.
+::: tip Design context (Figma and Zeplin)
+**Figma** and **Zeplin** are design-context sources. Connect either per workspace with a personal
+access token; Cat Factory pulls component structure, layout, and design tokens and renders them to
+Markdown so the UI coding agents get the design as context. Link a frame or screen to a task like any
+other document. This pairs with the
+[Visual Confirmation](./running-pipelines.md#visual-confirmation) flow.
 :::
 
 ## Finding and linking context
@@ -79,8 +77,8 @@ description first, then your notes, so you add context without retyping the tick
 
 The issue stays the source of truth: re-importing refreshes it. Creating a *second* task from an
 already-linked issue is refused, so one issue maps to one task rather than silently re-pointing.
-GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, and local); Linear
-(experimental) is offered as a task source for import and linking too.
+GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, and local); Linear is
+offered as a task source for import and linking too.
 
 ## The issue-tracker panel
 
@@ -89,7 +87,7 @@ three parts:
 
 - **Filing tracker**: where the [tech-debt recurring pipeline](./recurring-pipelines.md) and similar
   steps file new tickets, **None**, **GitHub Issues**, **Jira** (reveals a project-key field), or
-  **Linear** (experimental; reveals a team-id field).
+  **Linear** (reveals a team picker).
 - **Linking**: per-source toggles for whether that tracker can be linked as task context. These are
   per-workspace and default on, so a workspace can use GitHub repos without offering their issues, or
   park a connected Jira.

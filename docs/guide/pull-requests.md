@@ -37,6 +37,17 @@ The Full build pipeline finishes with three engine steps that prepare the PR for
   if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
   review rather than merging on a hollow score.
 
+Presets live in a per-workspace library, and each task picks one (tasks with no explicit choice use
+the workspace default). Two ship built in:
+
+- **Balanced** (the default): auto-merges a PR when its complexity, risk, and impact scores fall
+  within the thresholds, and routes anything above them to human review.
+- **Manual review only**: never auto-merges. Every PR, whatever its scores, raises a merge-review
+  notification for a person to merge. Reach for it on a board where a human always makes the final
+  call.
+
+Edit these or add your own thresholds in the workspace's merge-preset panel.
+
 A pipeline can add a **Post-release-health** gate after the Merger that watches Datadog monitors and
 SLOs for a window after the merge and escalates to an on-call agent on a regression. It's optional
 and needs a connected Datadog deployment; see

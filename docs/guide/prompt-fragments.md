@@ -27,8 +27,10 @@ jump between an account standard and the board that layers on top of it.
 ## How agents use them
 
 Fragments are assigned **per service**. You choose which fragments a
-service uses in its inspector, and from then on every run on that service applies them. To avoid
-setting the same list on each new service, set **workspace defaults** that new services inherit.
+service uses in its inspector, and from then on every run on that service applies them. The picker
+also links straight to the board's fragment library and to account fragments, so you can author or
+edit a fragment without leaving the assignment step. To avoid setting the same list on each new
+service, set **workspace defaults** that new services inherit.
 
 Fragments only fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
 and architect). A code-style or review-checklist fragment reaches those steps automatically; steps

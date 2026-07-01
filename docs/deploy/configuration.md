@@ -23,7 +23,9 @@ create an account and how roles and invitations work, see
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret. |
 | `GOOGLE_OAUTH_REDIRECT_URL` | Optional. Explicit callback; defaults to `${origin}/auth/google/callback`. |
 | `AUTH_PASSWORD_ENABLED` | Set to `true` to offer email/password signup and login. |
-| `AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated domains allowed to self-sign-up without an invite (password/Google). Empty means invite-only. |
+| `AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated domains allowed to self-sign-up without an invite (password/Google), and allowed to sign in with a PAT. Empty means invite-only. |
+| `AUTH_ALLOWED_LOGINS` | Comma-separated GitHub/GitLab logins allowed to sign in with a PAT. |
+| `AUTH_ALLOWED_ORGS` | Comma-separated orgs whose members may sign in with a PAT. |
 | `GITHUB_APP_ID` | Identifies the GitHub App used for repository operations. |
 | `GITHUB_APP_PRIVATE_KEY` | PKCS#8 private key that signs App requests and mints installation tokens. |
 | `GITHUB_WEBHOOK_SECRET` | Verifies inbound webhook payloads. |
@@ -36,6 +38,14 @@ create an account and how roles and invitations work, see
 New-user creation is invite-only unless an email domain is allowlisted: a person gets in by
 redeeming an email invitation or by signing up with an address on `AUTH_ALLOWED_EMAIL_DOMAINS`. With
 neither, signup is refused.
+
+A remote (hosted) Node deployment has **no anonymous tier**: it fails to boot unless at least one
+provider is configured (GitHub OAuth, Google OAuth, or `AUTH_PASSWORD_ENABLED` with a strong
+`AUTH_SESSION_SECRET`). Users can also **sign in with their own GitHub or GitLab PAT**: they paste the
+token, the server resolves it to their account, and the same `AUTH_ALLOWED_LOGINS` /
+`AUTH_ALLOWED_ORGS` / `AUTH_ALLOWED_EMAIL_DOMAINS` allowlists decide who gets in (it fails closed when
+all three are empty). [Local mode](./local.md#signing-in) is the exception: it signs in with the
+deployment's configured PAT or a local password.
 
 ## LLM providers
 
@@ -78,7 +88,10 @@ key is safe across all of them.
 
 ::: warning Use one stable key
 A single `ENCRYPTION_KEY` backs all of these integrations. Use the same key value across restarts
-and replicas, or encrypted credentials become unreadable.
+and replicas, or encrypted credentials become unreadable. If a credential can't be decrypted (the key
+was rotated or regenerated), the error names the key and the affected credential and tells you to
+restore the original key or re-enter that credential; one broken credential is isolated, so unrelated
+providers keep working rather than the whole config failing.
 :::
 
 ## Infrastructure
@@ -104,8 +117,10 @@ Deployment settings), not through environment variables, and each account picks 
 | `r2` | Cloudflare | The Worker's R2 binding. The default and only backend on Cloudflare (the AWS SDK is kept out of the Worker bundle; for S3, run Node/local). |
 
 The default is `fs` on local, `r2` on Cloudflare, and **off** on Node until an account configures one.
-With no store wired, the Visual Confirmation gate passes through. Switching an account's backend
-orphans artifacts stored under the previous one.
+A pipeline that includes an agent needing binary storage (the **UI Tester**, which uploads its
+screenshots) is refused at start when the account has no store configured, with a message that names
+the fix, rather than failing mid-run. Pipelines that don't use such an agent are unaffected. Switching
+an account's backend orphans artifacts stored under the previous one.
 
 ## Node container execution
 
@@ -146,22 +161,21 @@ Inline search only takes effect on providers with a hosted search tool (Anthropi
 
 ## Document & task sources
 
-Document sources (Confluence, Notion, GitHub repo docs, the upcoming Figma design-context source, and
-the experimental Linear Docs) and the Jira task source are **always on**: they ship enabled and each
-workspace connects its own site
-through the UI, with credentials stored encrypted under `ENCRYPTION_KEY`. There is no per-integration
-enable flag. The integrations fail loudly at boot if `ENCRYPTION_KEY` is missing rather than silently
-returning errors later.
+Document sources (Confluence, Notion, GitHub repo docs, the Figma and Zeplin design-context sources,
+and Linear Docs) and the Jira task source are **always on**: they ship enabled and each workspace
+connects its own site through the UI, with credentials stored encrypted under `ENCRYPTION_KEY`. There
+is no per-integration enable flag. The integrations fail loudly at boot if `ENCRYPTION_KEY` is missing
+rather than silently returning errors later.
 
 | Variable | Purpose |
 | --- | --- |
-| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to `confluence,notion,github,figma,linear`. `figma` is an upcoming design-context source and `linear` is experimental. The provisional `claude-design` source is off unless you add it explicitly. |
+| `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to `confluence,notion,github,figma,zeplin,linear` (every known source). `figma` and `zeplin` are design-context sources, each connected per workspace with a personal access token. |
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
 
-Task sources (Jira, GitHub Issues, and the experimental Linear) are configured per workspace. Each
+Task sources (Jira, GitHub Issues, and Linear) are configured per workspace. Each
 workspace turns its sources on or off in the UI (**Workspace settings → Issue tracker**); they work
 on every runtime, GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the
-PAT) with no env, and Linear uses a per-workspace personal API key. See
+PAT) with no env, and Linear connects per workspace via OAuth or a personal API key. See
 [Issue & Document Sources](../guide/issue-sources.md). The tech-debt
 [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the workspace's chosen
 filing tracker.
