@@ -28,6 +28,14 @@ compact telemetry; the full prompt and response load on demand when you expand a
 ride the workspace realtime stream (the Cloudflare deployment today); every runtime still records the
 same calls, so the panel is accurate on open everywhere.
 
+Subscription-harness calls are metered too. The **Claude Code** and **Codex** harnesses talk directly
+to the vendor and bypass the LLM proxy, so their per-call metrics are lifted off each CLI's event
+stream and recorded into the same store: they appear in Model activity alongside proxy-metered calls,
+on failed runs as well as successful ones. Claude Code reports full request/response bodies and
+per-turn tokens; Codex reports assistant text and per-turn tokens but no request transcript (a CLI
+limitation), and neither CLI exposes per-HTTP timing. Captured bodies are credential-scrubbed and
+honour `LLM_RECORD_PROMPTS`.
+
 ## The telemetry store
 
 Telemetry is append-heavy, high-volume, and short-retention, a very different write profile from the
@@ -109,6 +117,11 @@ so a slow or broken step is diagnosable without reading logs:
 - **Spin-up failures**: a container or environment that never comes up is reported on the step as a
   provisioning failure with the verbatim provider error, rather than a generic run failure. The same
   attempts are in the [provisioning event log](#the-provisioning-event-log).
+- **Infrastructure attempts, live**: while a run is active, the **Infrastructure attempts** drawer
+  live-tracks each container spin-up and tear-down as it happens, re-polling quietly in the background
+  so attempts appear with their timestamps and no refresh spinner flickers. Auto-polling stops once the
+  run is terminal (with one final poll to catch the last tear-down), and a manual refresh stays
+  available to refetch a row that landed late.
 - **Tester stand-up**: when the Tester stands its dependencies up with docker-compose, the test report
   shows whether `docker compose up --wait` succeeded, the compose file, how long it took, and the
   captured (redacted) logs. A readiness banner announces when all infrastructure is up and testing can

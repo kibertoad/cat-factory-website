@@ -28,7 +28,7 @@ create an account and how roles and invitations work, see
 | `AUTH_ALLOWED_ORGS` | Comma-separated orgs whose members may sign in with a PAT. |
 | `GITHUB_APP_ID` | Identifies the GitHub App used for repository operations. |
 | `GITHUB_APP_PRIVATE_KEY` | PKCS#8 private key that signs App requests and mints installation tokens. |
-| `GITHUB_WEBHOOK_SECRET` | Verifies inbound webhook payloads. |
+| `GITHUB_WEBHOOK_SECRET` | Verifies inbound webhook payloads. Verification fails closed on an empty secret, so set a non-empty value on any deployment that receives GitHub webhooks. |
 | `GITHUB_APP_SLUG` | The App's URL slug, used to build installation links. |
 | `GITHUB_API_BASE` | GitHub API base. Defaults to `https://api.github.com`; override for GitHub Enterprise. |
 | `GITHUB_OAUTH_BASE` | OAuth host. Defaults to `https://github.com`; override for GitHub Enterprise. |
@@ -158,13 +158,40 @@ fail loudly instead of faking success:
 | `AUTH_SESSION_SECRET` | Session secret (also required for real auth). |
 | `ENCRYPTION_KEY` | Encrypts the runner-pool credentials stored at rest (the shared master key above). |
 
+## Private package registries
+
+Agent containers resolve private npm dependencies from registries you connect **per workspace** in
+the UI (**Integrations → Private package registries**), not through environment variables. The
+feature is available whenever `ENCRYPTION_KEY` is set (it seals the tokens at rest); with no key the
+panel and its API return a "not configured" state.
+
+Each entry names an ecosystem (**npm** today), a vendor, the npm scopes it covers, and a token:
+
+| Vendor | Registry host | Notes |
+| --- | --- | --- |
+| **npm (npmjs.com)** | `registry.npmjs.org` | Private packages under your npm org. |
+| **GitHub Packages** | `npm.pkg.github.com` | Uses an explicit token you paste, not the GitHub App installation. |
+
+You pick the vendor rather than typing a URL: the host is fixed per vendor. Scopes are npm `@org`
+names the token can install. Tokens are write-only, shown afterward only as a `…tail` of the last
+four characters; to change one, remove the entry and re-add it. One entry per vendor per workspace.
+Before any agent runs, the harness renders these into a locked-down `~/.npmrc` scoped to the two
+allowed hosts, read by npm, pnpm, and yarn v1. Tokens are registered for output redaction.
+
 ## Service configuration
 
 | Variable | Purpose |
 | --- | --- |
 | `NUXT_PUBLIC_API_BASE` | Frontend → backend URL. Build-time for the SPA. |
+| `CORS_ALLOWED_ORIGINS` | Comma-separated browser origins allowed to call the API. A lone `*` reflects any origin. |
+| `ENVIRONMENT` | The deployment stage. Recognized development values (`development`, `dev`, `test`, `testing`, `local`, `e2e`) relax CORS when `CORS_ALLOWED_ORIGINS` is unset; see below. |
 | Workspace / account identity providers | Identity resolution settings. |
 | Organization membership resolution | Determines workspace access. |
+
+CORS fails safe in production. When `CORS_ALLOWED_ORIGINS` is unset, the API reflects any origin
+**only** when `ENVIRONMENT` is one of the recognized development values above. An unset, unknown, or
+production `ENVIRONMENT` with no `CORS_ALLOWED_ORIGINS` denies cross-origin browser calls rather than
+silently allowing them, so set `CORS_ALLOWED_ORIGINS` explicitly on any shared deployment.
 
 ## Web search
 
@@ -275,7 +302,7 @@ Optional integrations enabled by their own flag:
 | Variable | Purpose |
 | --- | --- |
 | `ENVIRONMENTS_ENABLED` | Set to `true` for ephemeral preview environments (also requires `ENCRYPTION_KEY`). See [Environments](./environments.md). |
-| `PROMPT_LIBRARY_ENABLED` | Set to `true` to source [prompt fragments](../guide/prompt-fragments.md) from a Git library repository. |
+| `PROMPT_LIBRARY_ENABLED` | The [prompt-fragment library](../guide/prompt-fragments.md) is **on by default** (it needs no secrets and its tables ship in the base migrations). Set to `false` to turn it off. `PROMPT_LIBRARY_SELECTOR=llm` ranks fragments per run; anything else keeps the deterministic default. |
 | `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
 | `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
 | `SANDBOX_DB` | Cloudflare only. Optional D1 binding that turns on the [Sandbox](../guide/sandbox.md) for prompt and model testing. The Sandbox is off until it is bound. On Node and local it is a `sandbox` schema in `DATABASE_URL`. |

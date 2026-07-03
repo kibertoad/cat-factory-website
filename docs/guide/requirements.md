@@ -90,8 +90,11 @@ this order:
 Recommendations run **in the background**, like every other review action. The request returns at
 once: the review shows an **N / M ready** counter with a per-finding "Generating a grounded
 suggestion…" placeholder while the Writer fills each one, and the task card shows a **Recommending…**
-badge. Both are server-driven, so they survive closing the window, and you get a notification when the
-batch is ready. You can close the window and come back.
+badge. The review's stats rail keeps a persistent **Recommendations** summary (how many are generating
+and how many are ready to review), visible even while you read the incorporated document, so you can
+see what's still awaited. Both are server-driven, so they survive closing the window, and you get a
+notification when the batch is ready. You can request recommendations whenever the review is editable,
+including a merged review you are reworking. You can close the window and come back.
 
 Recommendations are not AI-reviewed: you decide. For each ready suggestion you can **Accept** it (it
 becomes the finding's answer, folded into the next incorporation), **Reject** it (the finding reopens

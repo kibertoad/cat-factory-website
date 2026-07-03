@@ -64,6 +64,7 @@ export default defineUserConfig({
             text: 'Repos & Sources',
             children: [
               '/guide/repositories.md',
+              '/guide/frontend-preview.md',
               '/guide/issue-sources.md',
             ],
           },
@@ -130,6 +131,7 @@ export default defineUserConfig({
             '/guide/recurring-pipelines.md',
             '/guide/pull-requests.md',
             '/guide/repositories.md',
+            '/guide/frontend-preview.md',
             '/guide/issue-sources.md',
             '/guide/model-providers.md',
             '/guide/budgets.md',
@@ -153,6 +155,7 @@ export default defineUserConfig({
             '/deploy/notifications.md',
             '/deploy/runner-pools.md',
             '/deploy/environments.md',
+            '/deploy/kubernetes.md',
             '/deploy/custom-providers.md',
             '/deploy/custom-agents.md',
           ],

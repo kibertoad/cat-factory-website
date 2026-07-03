@@ -89,6 +89,21 @@ grouping without deleting the tasks. Importing a Jira epic or a GitHub parent is
 epic and all its child tasks at once, seeding dependency edges from the issues' "blocked by" links
 (see [Issue & Document Sources](./issue-sources.md)).
 
+## Service connections
+
+A service frame can declare the other services it **uses**, for example a service that sends its
+email through another. Open a service frame's **Service connections** panel and add a connection to
+another service, with a short description of how it uses it ("sends emails via it"). Each connection
+draws an emerald dashed edge on the board from the user to the service it depends on, and the reverse
+side shows a **Used by** list. A service can't connect to itself, and duplicate targets are rejected.
+
+On a task, the **Involved services** selector (task inspector) marks which connected services are
+directly involved in that task, beyond the task's own service. The task's own service is always
+implied. When a connected service is involved, its connection description is folded into the coding
+agent's context so the agent understands the relationship. The selector offers the connection
+neighbours of the task's frame; a service no longer connected is dropped on the next change rather
+than failing the run.
+
 ## Linking a repository
 
 A service frame typically maps to one Git repository. You have three options:
