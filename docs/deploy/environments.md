@@ -32,6 +32,17 @@ In [local mode](./local.md), an un-pinned Tester task defaults to the **local** 
 [Delegating infrastructure off the host](./local.md#delegating-infrastructure-off-the-host)) to make
 the local-mode default ephemeral instead; per-service and per-task pins still override it.
 
+## What the Tester receives
+
+When a Tester (or `playwright`) step runs against an ephemeral environment, its prompt carries the
+environment's coordinates so the agent can reach it: the live **URL**, and the **host**, **port**, and
+**scheme** parsed from it. If the environment exposes an access handle, that is passed too, in one of
+three forms: a bearer token, HTTP Basic username/password, or a custom header name and value.
+
+These are the credentials that reach the endpoint (an ingress token or basic-auth pair), treated as
+non-sensitive test-environment data and rendered directly into the prompt. They are not application
+login accounts, and you should not wire real or production secrets through them.
+
 ## Choosing a backend
 
 The **Test environments** tab in the top-level **Infrastructure** window offers several backend kinds.

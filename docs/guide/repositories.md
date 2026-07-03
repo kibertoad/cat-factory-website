@@ -68,7 +68,7 @@ which pipelines and infrastructure apply to it:
 | Type | For | Behaviour |
 | --- | --- | --- |
 | **Service** | A backend service (the default). | Full pipelines, ephemeral environments, and the Tester's infra. |
-| **Frontend** | A UI app. | Backend links and a UI-test flow (see below). |
+| **Frontend** | A UI app. | Backend links and a UI-test flow. See [Frontend Previews & UI Testing](./frontend-preview.md). |
 | **Library** | A published package. | Build, test, and merge, with no deploy step, no ephemeral environment, and no Tester infra. |
 | **Document** | A docs repo. | Only `spike` and `document` tasks, and the document pipelines. Non-doc tasks are refused, and a task dragged into a doc frame is re-typed. |
 
@@ -76,7 +76,8 @@ The type is stamped on the service frame when it is created. A **frontend** fram
 serve, and test config, plus **backend bindings**: you map a frontend env var (e.g.
 `VITE_BACKEND_URL`) to a backend service's live preview URL or a WireMock stub. A binding to another
 service draws a **board link** (a cyan edge) between the two frames, so the board shows which backend
-a frontend is wired to.
+a frontend is wired to. Configuring a frontend frame, the browser-based UI test, and the local
+browsable preview are covered in [Frontend Previews & UI Testing](./frontend-preview.md).
 
 ## Service blueprints & reconciliation
 

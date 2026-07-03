@@ -58,7 +58,11 @@ It asks for a project name, lets you pick the source-control provider (GitHub or
 server needs (`AUTH_SESSION_SECRET` as hex, `ENCRYPTION_KEY` as base64), mints a PAT by opening the
 provider's token page with the right scopes pre-selected and reading the token you paste back, and
 writes the populated, git-ignored `.env` files. Drive it non-interactively with flags (`--yes`,
-`--provider`, `--token`, `--db-url`, `--container-runtime`, …) for scripts or CI. The generated
+`--provider`, `--token`, `--db-url`, `--container-runtime`, …) for scripts or CI. To scaffold for
+[native agents](#native-agents-run-on-the-host), pass `--execution-mode native` and
+`--native-harnesses claude-code,codex` (and optionally `--harness-entry <path>`); the `.env` is
+written with `LOCAL_NATIVE_AGENTS` set and `LOCAL_HARNESS_ENTRY` left commented so it falls back to
+the bundled harness. The generated
 `README.md` lists the remaining steps (pull the executor image, configure a model provider) with your
 chosen values. See [`@cat-factory/cli`](../reference/packages.md).
 
@@ -103,6 +107,8 @@ container.
 | `DATABASE_URL` | yes | PostgreSQL connection string (the docker-compose service). |
 | `LOCAL_HARNESS_IMAGE` | no | The executor-harness image run per agent job. Optional: unset, it defaults to the version-matched image the backend recommends, which is pulled at boot (see [The executor-harness image](#the-executor-harness-image)). Set it to pin a specific tag or digest, or to a bare local tag you build yourself. |
 | `LOCAL_HARNESS_IMAGE_REFRESH` | no | Set to `off` (or `false`/`0`/`no`/`none`/`disabled`) to skip the boot-time image pull. Any other value keeps the default refresh on. |
+| `LOCAL_NATIVE_AGENTS` | no | Comma-separated harnesses to run on the host instead of in containers, e.g. `claude-code,codex`. Turns on [native agents](#native-agents-run-on-the-host). Unset means every agent job runs as a container. |
+| `LOCAL_HARNESS_ENTRY` | no | Path to the executor-harness server entry for native mode. Optional: unset, it defaults to the bundled `@cat-factory/executor-harness`, so native mode works with no build. Set it to point at a source-checkout build. |
 | `ENCRYPTION_KEY` | yes | Base64 key (≥ 32 bytes decoded) sealing UI-connected credentials (provider keys, subscriptions, local runners) at rest. Required and must stay stable: a fresh key each boot orphans every credential sealed under the previous one, and boot fails loudly when it is unset. Generate it with `pnpm secrets`. |
 | `AUTH_SESSION_SECRET` | yes | Signs the session token. Required and must stay stable: a fresh value each boot invalidates your session and forces a re-login. Generate it with `pnpm secrets`. |
 | `GITHUB_PAT` | one of | Personal access token agent containers use to clone, push branches, and open PRs, and the credential you [sign in](#signing-in) with. |
@@ -138,6 +144,40 @@ pull:
 
 Set `LOCAL_HARNESS_IMAGE_REFRESH=off` to skip the boot pull. The refresh is skipped on the Apple
 `container` runtime (its CLI differs); refresh that image out of band.
+
+## Native agents (run on the host)
+
+By default every agent job runs in a container. On a developer machine you can instead run the
+harnesses **as host subprocesses** driven by CLIs you already have installed, which skips the
+container round-trip. Set `LOCAL_NATIVE_AGENTS` to the harnesses you want native, for example:
+
+```bash
+LOCAL_NATIVE_AGENTS=claude-code,codex
+```
+
+With native agents on, both repo-operating agent steps and **inline LLM steps** (the requirements
+review, clarity review, brainstorm, and task-estimator steps that run in-process without a container)
+resolve through the ambient `claude` / `codex` CLI. This matters for model presets pinned to a
+subscription-only model such as Claude or Codex: an inline step can't use a container-only
+subscription token, so without a native CLI it has nothing to run on. The native CLI is that path.
+`LOCAL_HARNESS_ENTRY` is optional; unset, native mode uses the bundled harness.
+
+Only the ambient-CLI vendors qualify: `claude-code` (the `claude` CLI) and `codex`. A `claude-code`
+model that points at its own base URL (GLM, Kimi, DeepSeek) is not an ambient CLI and still needs a
+provider-backed path.
+
+### The preset satisfiability gate
+
+Cat Factory checks each pipeline step's model at **start time** and refuses a run whose preset can't
+actually be served, with a clear message instead of a mid-run failure against an unconfigured
+provider:
+
+- If a step's model has no usable provider at all, the run is refused (reason: providers unconfigured).
+- If a step's model works for a container step but an **inline** step can't drive it (a
+  subscription-only model with no inline harness on this deployment), the run is refused with "model
+  preset can't run this pipeline". The fix is to pick a preset whose inline steps resolve to a
+  provider-backed model (a direct API key, OpenRouter, or Cloudflare AI), or to run local mode with
+  the ambient Claude Code / Codex CLI enabled.
 
 ## Choosing a container runtime
 

@@ -16,8 +16,11 @@ higher ones:
 | **Workspace** | A single board | Per-project customization. |
 
 You can also source fragments from a repository so they live under version control alongside
-your code. On Node and local that library source is opt-in: set
-[`PROMPT_LIBRARY_ENABLED`](../deploy/configuration.md#feature-toggles).
+your code. The library is **on by default** on every runtime, with no secrets to set: fragments
+aren't secrets and their tables ship in the base migrations, so a stock deployment can curate and
+link fragments out of the box. Turn it off with
+[`PROMPT_LIBRARY_ENABLED=false`](../deploy/configuration.md#feature-toggles). When it is off, the
+fragment screens show a plain "not enabled for this deployment" notice instead of forms that error.
 
 Manage **workspace** fragments from a board's fragment library, and **account** fragments (authored,
 document-backed, and repo-sourced alike) from **[Account settings](./team-and-access.md#opening-account-settings)**,
@@ -44,9 +47,23 @@ is re-read from the source whenever an agent run uses it. Edit the upstream doc 
 follows the new version.
 
 To set one up, open the fragment library and pick the **Documents** tab. Choose a connected source,
-enter the **Page id or URL** (a Confluence or Notion page, or a GitHub file URL), add optional tags,
-and click **Link as living fragment**. The fragment then shows a **Live** badge with its source and a
-"last resolved" timestamp. Document-backed fragments are available at the account and workspace tiers.
+enter the **Page id or URL** (a Confluence or Notion page), add optional tags, and click **Link as
+living fragment**. For a GitHub source you don't type an owner/repo/path: pick the repo from a
+search box and browse its tree to the file. The fragment then shows a **Live** badge with its source
+and a "last resolved" timestamp. Document-backed fragments are available at the account and workspace
+tiers.
+
+## Sync a whole directory of guidelines from a repo
+
+To pull a folder of Markdown guidelines rather than a single file, open the **Repo sources** tab.
+Search for the repo, browse to the directory of Markdown guidelines (or pick the repository root to
+link the whole repo), and click **Link & sync**. Each Markdown file becomes a fragment, kept in sync
+with the source.
+
+A repo source tracks the directory's head commit. When new commits touch that directory, the source
+shows a **Changes available** badge (otherwise **Up to date**); resync to pull the new versions. The
+check reads only the current head commit of the source, so it is cheap, and fragment bodies are
+cached locally, so a run never re-fetches from GitHub.
 
 The body is cached as a last-resolved snapshot and refreshed on a short TTL (5 minutes by default). If
 the source is unreachable at run time, the run falls back to the cached body, so resolution never

@@ -132,8 +132,11 @@ runs in manual mode: a person uploads the reference designs and the screenshots 
 :::
 
 This UI-focused pipeline runs Coder → Reviewer → Mock Builder → **UI Tester** → **Visual
-Confirmation** → the standard Conflicts → CI → Merger tail. The UI Tester drives a browser through the
-new screens and captures a screenshot of each distinct view; the Visual Confirmation gate pairs those
+Confirmation** → the standard Conflicts → CI → Merger tail. A visual pipeline like this runs only on a
+**frontend** frame (or a frame a frontend binds to); the UI Tester builds that frontend, wires it to
+the backend under test and mocks other upstreams, and drives it in a real browser. See
+[Frontend Previews & UI Testing](./frontend-preview.md) for the frontend configuration this uses. The
+UI Tester captures a screenshot of each distinct view; the Visual Confirmation gate pairs those
 screenshots with the uploaded reference designs by view and **parks** for a person to compare actual
 against reference. From the gate you can:
 
@@ -214,8 +217,8 @@ clarified, it scores the task on three 0–100% axes (**complexity**, **risk**, 
 shows them as a small estimate badge in the task inspector, with the model's rationale.
 
 That estimate lets you **gate** expensive companion steps so they run only when the work warrants it.
-On a companion (the Coder's Reviewer, the Architect's or Spec Writer's reviewer), open its gate
-controls and set minimum thresholds on any of the axes. The companion then runs only when the
+On a companion (the Coder's Reviewer, the Architect's or Spec Writer's reviewer, or the Tester's
+quality companion), open its gate controls and set minimum thresholds on any of the axes. The companion then runs only when the
 estimate meets a threshold and is skipped otherwise, so light tasks bypass a full quality review
 while risky ones still get one. A gated companion needs a **Task Estimator** earlier in the same
 pipeline to have an estimate to consult, and must set at least one threshold (otherwise it would
@@ -303,6 +306,26 @@ that lays out the scenarios it exercised, the per-area outcomes, any concerns it
 greenlight verdict, plus the state of any **Fixer** attempt. When the tests fail, the Fixer
 companion runs inside the Tester gate to fix them and is skipped when they pass.
 
+The Tester records a discrete **outcome for every area it lists as tested** (passed, failed, or
+skipped, each with a concrete detail), so a report can't claim a broad set of scenarios and then show
+only one happy-path result. A failed outcome forces a non-greenlight; a scenario the Tester chose not
+to run is recorded as `skipped` with a reason rather than dropped.
+
+### The test quality companion
+
+A **test quality companion** audits the Tester's report for coverage before the greenlight, the way
+the Reviewer audits the Coder's change. After the Tester reports, the companion checks that every
+tested area has a real outcome, that edge cases aren't skipped, and that acceptance scenarios are
+reflected. If it finds gaps and budget remains, it **loops the Tester** for a focused additional pass
+with the gaps folded in; if the report is adequate it passes straight through. It reviews only reports
+that would otherwise conclude the step, never ones already headed to the Fixer, and it never spends
+the Fixer's budget.
+
+Its verdicts render in a **Coverage review** section of the test-report window: each pass shows
+"Coverage adequate" or "Coverage gaps found" with the gaps to close, the model, and a re-run counter.
+The companion is **on per Tester step** and can be disabled for a step in the pipeline builder. Its
+re-run cap is the per-task **`maxTesterQualityIterations`** merge-preset knob (default **3**).
+
 ## Responding to decision prompts
 
 When a step needs human input it moves to **Needs decision** and shows a **decision prompt**.
@@ -363,6 +386,11 @@ can see *why* a gate is looping rather than a bare prose panel: the verdict, the
 helper's remaining attempt budget, and (for CI) exactly which checks failed. Each gate's helper
 (the **CI Fixer** / **Conflict Resolver**) renders as a sub-node that reads possible / running /
 completed / skipped, the same as the Tester's Fixer.
+
+Each helper attempt shows both sides of the round: **Handed to the fixer** (the fixing instructions it
+was given, and for CI the failing checks snapshotted at dispatch) and the **Fixer report** it returned,
+alongside the outcome and timestamp. The conflicts gate hands no textual instructions (GitHub reports
+mergeability as a single bit), so it shows the outcome without an instructions block.
 
 ::: tip Web research
 When [web search is configured](../deploy/configuration.md#web-search) on the deployment, container
