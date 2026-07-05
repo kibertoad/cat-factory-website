@@ -4,6 +4,8 @@ Prompt fragments are reusable, version-controlled guidelines that agents pull in
 prompts at run time. Encode your team's standards once - coding conventions, review
 checklists, security rules - and apply them everywhere.
 
+![The prompt-fragment library's Resolved catalog listing built-in fragments such as backend acceptance tests, acceptance scenarios, and design context, with This board, Documents, and Repo sources tabs](/images/app/context-fragments.png)
+
 ## The three scopes
 
 Fragments are organized in a tenant-scoped library with three tiers. Lower tiers layer on top of

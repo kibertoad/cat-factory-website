@@ -85,6 +85,10 @@ instance. This skill runs that end to end: boot → capture → embed → build.
 | `bootstrap-repo` | Bootstrap a repository dialog | `docs/guide/repositories.md` |
 | `integrations` | Integrations panel | `docs/deploy/configuration.md` |
 | `infrastructure` | Agent containers / warm pool | `docs/deploy/local.md` |
+| `pipeline-builder` | Pipeline builder: agent palette + built-in pipeline library | `docs/guide/running-pipelines.md` (Editing pipelines) |
+| `context-fragments` | Prompt-fragment library | `docs/guide/prompt-fragments.md` |
+| `account-team` | Account settings → Team & access | `docs/guide/team-and-access.md` |
+| `sandbox` | Sandbox: prompt/model testing bench | `docs/guide/sandbox.md` |
 
 ## Gotchas (all handled by the scripts — know them if something breaks)
 
@@ -103,3 +107,9 @@ instance. This skill runs that end to end: boot → capture → embed → build.
 - **Selectors.** Click sidebar entries by their exact button role name, not `getByText` — the uppercase
   section headers ("INTEGRATIONS", "INFRASTRUCTURE") otherwise match first. Force-click past transient
   toast overlays.
+- **Toast band steals the topmost button.** A full-width toast container (`absolute inset-x-0 top-0
+  z-50`) sits over the top of the sidebar, so the highest nav button — **Build a pipeline** — receives
+  the click on the toast instead, even with `force: true` (force skips actionability checks but the
+  event still lands on the topmost element at those coordinates). The script dispatches that one click
+  straight to the DOM node (`button.click()` in `page.evaluate`) and waits for "Agent palette" to
+  render. Reach for the same trick for any other button that lives under the toast band.

@@ -110,6 +110,13 @@ const panels = [
   { name: 'integrations', text: 'Integrations' },
   { name: 'infrastructure', text: 'Infrastructure' },
   { name: 'workspace-settings', text: 'Workspace settings' },
+  // The workspace-wide prompt/context fragment library.
+  { name: 'context-fragments', text: 'Context fragments' },
+  // Account & team: members, roles, invitations. Shown once accounts are enabled.
+  { name: 'account-team', text: 'Account settings' },
+  // The Sandbox (prompt/model bench). Renders a disabled empty state unless a sandbox
+  // DB is wired, so review the shot before using it.
+  { name: 'sandbox', text: 'Sandbox' },
 ]
 
 for (const p of panels) {
@@ -132,6 +139,31 @@ try {
   }
 } catch (e) {
   console.log('skip command-palette:', e.message)
+}
+
+// 5. Pipeline builder (the left slideover): the categorized agent palette + the
+// library of built-in pipelines. It can't go through openButton() like the others:
+// the "Build a pipeline" nav button sits highest in the sidebar, under the full-width
+// top toast band, so a click (even force) lands on the toast. Dispatch it straight to
+// the DOM node, then wait for the palette to render before shooting.
+try {
+  await closeOverlays()
+  const clicked = await page.evaluate(() => {
+    const btn = [...document.querySelectorAll('button')].find(
+      (b) => b.textContent?.trim() === 'Build a pipeline',
+    )
+    if (!btn) return false
+    btn.click()
+    return true
+  })
+  if (clicked) {
+    await page.getByText('Agent palette').first().waitFor({ state: 'visible', timeout: 15000 })
+    await shot('pipeline-builder')
+  } else {
+    console.log('skip pipeline-builder: nav button not found')
+  }
+} catch (e) {
+  console.log('skip pipeline-builder:', e.message)
 }
 
 await browser.close()

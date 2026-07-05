@@ -24,6 +24,8 @@ provisions the database to turn it on.
 
 The window has three tabs: Experiments, Prompts, and Fixtures.
 
+![The Sandbox window on its Experiments tab: an agent kind, prompt versions, graded fixtures, and a judge model on the left, past experiments on the right](/images/app/sandbox.png)
+
 ## Experiments: run a matrix and read the grid
 
 An experiment is one agent kind tested across a matrix of prompt versions, models, and fixtures.
