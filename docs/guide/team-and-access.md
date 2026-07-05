@@ -64,7 +64,7 @@ account**: switch accounts while it is open and it reloads for the one you switc
 **personal** account the membership controls prompt you to create an organization first (members,
 roles, and invitations are org-scoped); the email sender is available on a personal account too.
 
-![The Account settings panel on its Team & access tab: invite teammates and manage roles, the email sender, and account-scoped provider API keys](/images/app/account-team.png)
+![The Account settings panel on its Team & access tab: invite teammates and manage roles, the email sender, and account-scoped provider API keys](/images/app/account-team.webp)
 
 ::: tip What roles control
 Roles describe what someone may do in the account. A product owner

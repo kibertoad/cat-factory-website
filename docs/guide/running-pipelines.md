@@ -188,7 +188,7 @@ a step in the pipeline builder.
 
 ## Editing pipelines
 
-![The pipeline builder: a categorized agent palette on the left, the pipeline draft in the middle, and the library of built-in pipelines (Full build, Simple, Triage & fix bug, and more) with their step counts and default badges on the right](/images/app/pipeline-builder.png)
+![The pipeline builder: a categorized agent palette on the left, the pipeline draft in the middle, and the library of built-in pipelines (Full build, Simple, Triage & fix bug, and more) with their step counts and default badges on the right](/images/app/pipeline-builder.webp)
 
 The built-in pipelines are read-only templates, but you can shape your own:
 

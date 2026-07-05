@@ -29,7 +29,7 @@ The left rail is a navbar grouped into Create, Repositories, Integrations, Works
 or pipelines from a palette. Instead, a command bar (open with `⌘K` / `Ctrl-K`) is the launcher
 for creating blocks and building pipelines.
 
-![The command bar opened over the board, listing create, repository, and integration actions](/images/app/command-palette.png)
+![The command bar opened over the board, listing create, repository, and integration actions](/images/app/command-palette.webp)
 
 The board toolbar adds an **Add service** menu to [mount a shared service](./shared-services.md)
 from your org, and a service frame offers **Add task** and **Add recurring pipeline**.
@@ -42,7 +42,7 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 - **Workspace settings**: the running-task limit and the waiting-decision escalation threshold
   (see [Workspace settings](#workspace-settings)).
 
-![The Workspace settings panel with its Workspace, Budget, Merge thresholds, Issue tracker, and Service best practices tabs](/images/app/workspace-settings.png)
+![The Workspace settings panel with its Workspace, Budget, Merge thresholds, Issue tracker, and Service best practices tabs](/images/app/workspace-settings.webp)
 
 ## The three levels
 

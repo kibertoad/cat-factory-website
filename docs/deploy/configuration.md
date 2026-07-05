@@ -219,7 +219,7 @@ rather than silently returning errors later.
 Each workspace connects its own sites from the **Integrations** panel (sidebar → Integrations),
 which lists model providers alongside the document and task-tracker sources:
 
-![The Integrations panel listing OpenRouter, provider keys, and document sources such as Confluence, Notion, Figma, Zeplin, and Linear](/images/app/integrations.png)
+![The Integrations panel listing OpenRouter, provider keys, and document sources such as Confluence, Notion, Figma, Zeplin, and Linear](/images/app/integrations.webp)
 
 | Variable | Purpose |
 | --- | --- |

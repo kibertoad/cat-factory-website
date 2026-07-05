@@ -46,7 +46,7 @@ setting the service up without a second trip to the inspector.
 Cat Factory populates a repository with a reference architecture; it does not, by default, create
 the repository itself.
 
-![The Bootstrap a repository dialog: start from a reference architecture or from scratch, name the target repo, and describe what to build](/images/app/bootstrap-repo.png)
+![The Bootstrap a repository dialog: start from a reference architecture or from scratch, name the target repo, and describe what to build](/images/app/bootstrap-repo.webp)
 
 The standard flow:
 
