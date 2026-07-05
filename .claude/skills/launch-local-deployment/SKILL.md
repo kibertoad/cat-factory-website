@@ -8,7 +8,7 @@ description: Boot cat-factory locally in no-auth dev mode, drive the running UI 
 This repo (`cat-factory-website`) is the documentation site. It carries a purpose-built, throwaway
 local deployment of the **cat-factory** product under [`local-deploy/`](../../../local-deploy) that
 boots the real UI in **no-auth dev mode**, so screenshots for the docs can be captured from a live
-instance. This skill runs that end to end: boot → capture → embed → build.
+instance. This skill runs that end to end: boot → capture → optimize → embed → build.
 
 ## Repositories and paths
 
@@ -60,15 +60,25 @@ instance. This skill runs that end to end: boot → capture → embed → build.
    runs log in), then captures a fixed set (see the map below). Review each image before using it:
    drop any that just show the board because the target needed a repo/model first.
 
-4. **Embed into the docs.** Reference images as `/images/app/<name>.png` (VuePress `base` is `/`, and
+4. **Optimize the captures.** From the repo root, convert the new PNGs to WebP:
+   ```bash
+   pnpm docs:images        # -> resizes each to <=1920px, writes <name>.webp, removes the PNG
+   ```
+   Screenshots are captured at 2x Retina (2880px) but never display wider than ~960px, so this
+   shrinks each ~80% with no visible loss (text stays crisp). It's idempotent — only new/changed
+   sources are processed. Run it **after** dropping unwanted captures: it deletes the PNG source, so
+   review first (pass `--keep` if you need to retain a PNG). WebP is the committed asset — there are
+   no PNGs in the repo.
+
+5. **Embed into the docs.** Reference images as `/images/app/<name>.webp` (VuePress `base` is `/`, and
    `public/` is served from the root). Give each a descriptive alt and a one-line lead-in that matches
    the surrounding doc's voice (present tense, no changelog framing — same rules as `sync-docs`). Place
    an image next to the prose it illustrates, not in a gallery.
 
-5. **Build to verify.** `pnpm docs:build` from the repo root. It should render all pages with exit 0.
+6. **Build to verify.** `pnpm docs:build` from the repo root. It should render all pages with exit 0.
    (Pre-existing rolldown/vueuse "pure annotation" warnings are unrelated noise.)
 
-6. **Stop / clean up when done.** `Ctrl+C` (or kill the background task) stops backend + frontend.
+7. **Stop / clean up when done.** `Ctrl+C` (or kill the background task) stops backend + frontend.
    `node local-deploy/scripts/stop.mjs` stops Postgres (`--volumes` wipes the DB). If you opened a PR,
    follow this repo's conventions (branch, `docs:` commit, `gh pr create`).
 
