@@ -20,11 +20,22 @@ Repositories are tracked per workspace, with credentials isolated to that worksp
 
 You can optionally connect your own GitHub personal access token under **Integrations → Source
 control → My GitHub token** (a classic `ghp_…` token with `repo` and `workflow` scopes). Cat Factory
-validates it against GitHub and shows who it authenticated as. Once set, **runs you initiate prefer
-your token** over the deployment's GitHub App for pushing the work branch and reading the CI and
-merge state, so the resulting commits and PR are attributed to you. The token is stored per-user and
-write-only (never shown again); leave it unset and runs fall back to the workspace's GitHub App as
-before.
+validates it against GitHub and shows who it authenticated as. The token is stored per-user and
+write-only (never shown again). It does two things:
+
+- **Attributes your runs to you.** Runs you initiate prefer your token over the deployment's GitHub
+  App for pushing the work branch and reading the CI and merge state, so the resulting commits and PR
+  are attributed to you. Leave it unset and runs fall back to the workspace's GitHub App.
+- **Widens the repo picker.** On every deployment (not just local mode), **Add from existing repo**
+  also lists repositories your token can reach beyond what the workspace's GitHub App is installed on,
+  tagged **· personal (your token)**. Linking one creates a **personal service**: runs against it use
+  your token for push, PR author, and CI actor. It is public github.com only (a GitHub Enterprise host
+  isn't offered for a personal token).
+
+A service backed by another member's personal token is hidden from members who can't reach that repo:
+its frame shows a **Permission denied** placeholder and its tasks are dropped from their board view,
+failing closed rather than leaking a repo they lack access to. If your token expires or is revoked, the
+picker quietly falls back to App-reachable repos.
 
 ## Linking an existing repository
 

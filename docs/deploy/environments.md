@@ -91,6 +91,17 @@ Build contexts, host bind mounts, relative `env_file`s, and privileged services 
 compose stack is meant for preview, not to mirror production. It needs a host Docker daemon, so it is
 local-mode only.
 
+### Building from source
+
+Some repos build their own images from Dockerfiles rather than pulling published ones. Set the
+compose backend's **Image source** field to **Build from source (clone the PR head)** for those. In
+build mode the provider clones the PR head, runs `docker compose build` before `up`, and relaxes the
+three restrictions a checkout makes safe: `build:` contexts, in-checkout relative bind mounts, and
+relative `env_file`s. Host-escaping binds and `privileged` services are still rejected. A separate
+**Build timeout** (default 15 minutes) bounds the build, apart from the health-wait budget. Building a
+private base image still needs `docker login` on the host; the provider doesn't manage registry auth.
+Like the rest of Compose, build mode needs a host Docker daemon and is local-mode only.
+
 ## How it works
 
 The generic HTTP manifest provider spins environments up by calling your management API. During a run:

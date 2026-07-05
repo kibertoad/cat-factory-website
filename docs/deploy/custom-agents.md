@@ -1,7 +1,8 @@
 # Custom Agents & Gates (Code Adapters)
 
 Cat Factory ships a full set of built-in agent kinds (Architect, Coder, Reviewer, Tester, and the
-rest) and a set of built-in polling gates (CI, merge-conflicts, post-release health). Your team may
+rest) and a set of built-in gates (CI, merge-conflicts, post-release health, and the
+[document-quality gate](#the-document-quality-gate)). Your team may
 want ones of its own: a compliance auditor, a security scanner, an internal migration agent, a
 bespoke reviewer that knows your house rules, a license-header gate that blocks a merge until every
 file carries the company SPDX line. You can add agent kinds AND gates **from your own
@@ -505,6 +506,29 @@ The built-in gates wire the same way. `@cat-factory/gates` exports `wireCiStatus
 `wireMergeabilityProvider`, `wireReleaseHealthProvider`, and `wireIncidentEnrichment` (plus
 `applyGateProviders` for wiring a bag at once); the facade builds the GitHub-backed impls and hands
 them in. See [`@cat-factory/gates`](../reference/packages.md).
+
+### The document-quality gate
+
+The built-in **document-quality gate** (`doc-quality`) is a worked example of this seam that ships in
+`@cat-factory/gates`. It runs a deterministic, checkout-free structural check on a
+[document task's](../guide/documents.md) drafted file, missing required sections, leftover
+placeholders, heading-hierarchy problems, and broken in-repo links, and on a failure escalates to the
+`doc-fixer` helper (up to two attempts) to correct the draft in place. Like every gate it is a
+pass-through until its provider is wired; both shipped runtimes wire it:
+
+```ts
+import { wireDocQualityProvider } from '@cat-factory/gates'
+import { GitHubDocQualityProvider } from '@cat-factory/server'
+
+wireDocQualityProvider(new GitHubDocQualityProvider({ githubClient, resolveRepoTarget, blockRepository, documentRepository }))
+```
+
+The gate checks against the same template the writer used. To supply your own house structure for a
+document kind, either link a template document per workspace in the app (see
+[Document Tasks → Templates](../guide/documents.md#templates-and-examples)) or register one at startup
+with `registerDocTemplate` (from `@cat-factory/agents`), an import side effect that mirrors
+`registerAgentKind`. Passing the `documentRepository` above is what lets a workspace-linked template
+reach the gate; without it the gate falls back to the kind's built-in skeleton.
 
 ### Boot-time validation
 
