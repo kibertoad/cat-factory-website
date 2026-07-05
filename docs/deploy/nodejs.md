@@ -73,6 +73,22 @@ run in. Container execution turns on once the deployment has the GitHub App cred
 URL, a session secret, and a runner-pool encryption key configured. Until then, container kinds
 fail loudly rather than faking success. See [Configuration](./configuration.md#node-container-execution).
 
+## Running multiple instances
+
+A single Node instance needs nothing extra: live board updates and the internal caches are in-process.
+When you run **more than one** Node replica behind a load balancer, point them all at a Redis instance
+with `REDIS_URL`. Redis then carries two cross-node signals so a browser connected to any replica sees
+live updates and every replica drops stale cache entries after a write on another node:
+
+- Real-time event propagation between replicas.
+- Cache invalidation between replicas.
+
+Redis is only ever a message bus here, never a data store; a replica always repopulates its own
+in-memory state. `ioredis` is an optional dependency, so install it when you set `REDIS_URL` (boot
+fails with a clear message if it's missing). See
+[Configuration → Multi-node coordination](./configuration.md#multi-node-coordination-redis). The
+Cloudflare Worker needs none of this: its event hub and storage are globally addressed.
+
 ## Node.js topology
 
 ```

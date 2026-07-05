@@ -67,7 +67,7 @@ if (withFrontend && !existsSync(frontendDir)) fail(`frontend dir missing: ${fron
 const envPath = resolve(deployDir, '.env')
 const envExamplePath = resolve(deployDir, '.env.example')
 if (!existsSync(envPath)) {
-  log('start', '.env not found — generating from .env.example with fresh dev secrets')
+  log('start', '.env not found, generating from .env.example with fresh dev secrets')
   let contents = readFileSync(envExamplePath, 'utf8')
   contents = contents
     .replace(/^AUTH_SESSION_SECRET=.*$/m, `AUTH_SESSION_SECRET=${randomBytes(32).toString('hex')}`)
@@ -78,7 +78,7 @@ if (!existsSync(envPath)) {
 // --- resolve ports ---------------------------------------------------------------
 // Backend port comes from .env (PORT=). Frontend port is FRONTEND_PORT or 3000. Both
 // can be moved off the cat-factory defaults (8787/3000) to run alongside another local
-// deployment — the frontend is told the backend's URL via NUXT_PUBLIC_API_BASE.
+// deployment. The frontend is told the backend's URL via NUXT_PUBLIC_API_BASE.
 const envText = readFileSync(envPath, 'utf8')
 const backendPort = Number((envText.match(/^PORT=(\d+)/m) || [])[1] || 8787)
 const frontendPort = Number(process.env.FRONTEND_PORT || 3000)
@@ -182,7 +182,7 @@ if (withFrontend) {
   if (withFrontend) {
     await waitForPort(frontendPort, 'frontend')
     log('start', `frontend ready at http://localhost:${frontendPort}`)
-    log('start', `Board UI: http://localhost:${frontendPort}  —  auth gate is dev-open`)
+    log('start', `Board UI: http://localhost:${frontendPort}  (auth gate is dev-open)`)
   }
 })()
 

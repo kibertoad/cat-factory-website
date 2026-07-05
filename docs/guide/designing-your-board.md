@@ -62,7 +62,8 @@ feels like it spans several PRs, split it into sibling leaves.
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
   controls, at the level you need. When you add a task, pick its **type** (**Feature**, **Bug**,
   **Document**, or **Spike**), which adjusts the form (a Bug collects severity and steps to
-  reproduce, a Spike a time-box, a Document its kind) and lets the workspace cap concurrency per type.
+  reproduce, a Spike a time-box, a [Document](./documents.md) its kind and target path) and lets the
+  workspace cap concurrency per type.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, merge-policy preset,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
@@ -71,7 +72,10 @@ feels like it spans several PRs, split it into sibling leaves.
 - **Delete** a block to remove it. Deletion is **optimistic** (the block disappears at once and
   only reappears, with an error toast, if the backend rejects it) and **idempotent**, so deleting a
   block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
-  to children, so deleting a service removes its modules and tasks too.
+  to children, so deleting a service removes its modules and tasks too, and a service or module
+  delete confirmation names how many items it will remove. A delete shows a **Deleted X**
+  toast with an **Undo** button that restores the whole subtree (edges included), and a drag-reparent
+  shows a **Moved X** toast with the same **Undo**, so a slip is recoverable.
 
 ## Epics and dependency edges
 
@@ -103,10 +107,26 @@ side shows a **Used by** list. A service can't connect to itself, and duplicate 
 
 On a task, the **Involved services** selector (task inspector) marks which connected services are
 directly involved in that task, beyond the task's own service. The task's own service is always
-implied. When a connected service is involved, its connection description is folded into the coding
-agent's context so the agent understands the relationship. The selector offers the connection
-neighbours of the task's frame; a service no longer connected is dropped on the next change rather
-than failing the run.
+implied. The selector offers the connection neighbours of the task's frame; a service no longer
+connected is dropped on the next change rather than failing the run.
+
+Marking a service involved changes how the task runs:
+
+- **Context.** The connection description and the involved service's live environment URL are folded
+  into the coding agent's prompt, so the agent understands the relationship.
+- **Environments.** Each involved service is provisioned as its own ephemeral environment alongside
+  the task's own service, providers first, so a dependent service's provisioning can template in a
+  ready peer's URL. The tester reaches all of them.
+- **Repositories.** The coding agent (and CI fixer) works across the repositories of the task's own
+  service and each involved service in one checkout, with sibling working directories. It commits on
+  the same work branch in every repo and opens **one PR per repository that actually changed**;
+  untouched repos get no PR. Two services in the same repo share one checkout and one PR.
+- **Merge.** CI aggregates across all the PRs, and the merger merges them provider-before-consumer.
+  Cross-repo merge is not atomic: if a merge fails partway, the task is left blocked with a
+  notification listing which PRs merged and which didn't, for you to finish by hand.
+
+You only set the connection (and its description) on the frame and the involved-services checkboxes on
+the task; the sibling layout, per-repo PRs, and merge order are automatic.
 
 ## Linking a repository
 

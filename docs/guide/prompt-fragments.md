@@ -37,9 +37,12 @@ also links straight to the board's fragment library and to account fragments, so
 edit a fragment without leaving the assignment step. To avoid setting the same list on each new
 service, set **workspace defaults** that new services inherit.
 
-Fragments only fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
-and architect). A code-style or review-checklist fragment reaches those steps automatically; steps
-that never touch code are left untouched.
+Fragments fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
+and architect) and into the **document-authoring** kinds (see [Document Tasks](./documents.md)). A
+code-style or review-checklist fragment reaches the coding steps automatically; a writing-style
+fragment reaches the document steps. Steps that touch neither code nor prose are left untouched. Two
+built-in **writing-style** fragments (*Avoid LLM tells* and *Concise and actionable*) are attached to
+every new document task by default.
 
 ## Link an external document as a living fragment
 

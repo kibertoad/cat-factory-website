@@ -79,6 +79,29 @@ Pick the **URL source** that matches how your cluster exposes services:
 Each source takes an optional scheme (`http`, `https`, or left at the default, which is inferred from
 the resource).
 
+## Amazon EKS
+
+If your cluster is Amazon EKS, select the **EKS** backend instead of **Kubernetes** on either tab. It
+is the same native Kubernetes backend, per-run pods on the **Agent containers** tab and per-PR
+namespaces on the **Test environments** tab, with one difference: instead of a static ServiceAccount
+token, it authenticates to the apiserver with a short-lived IAM token (a SigV4-presigned STS token,
+the same kind `aws eks get-token` mints), so you don't manage a long-lived bearer token.
+
+The connect form takes the usual Kubernetes fields (apiserver URL, namespace, image, sizing) plus:
+
+| Field | Purpose |
+| --- | --- |
+| **Region** | The AWS region, e.g. `us-east-1`. Sets the STS endpoint and signing scope. |
+| **Cluster name** | The EKS cluster name, signed into the token. |
+| **STS host** | Optional. Override the STS endpoint for VPC, FIPS, or GovCloud. |
+| **AWS access key ID** / **secret access key** | The IAM credentials, stored encrypted (write-only). |
+| **AWS session token** | Optional. For STS or assume-role credentials. |
+
+The EKS backend is opt-in per workspace: connect it and pick it, nothing else changes. It carries no
+AWS SDK, so a deployment that never connects EKS pays nothing for it. A real EKS apiserver presents a
+private CA, so the **runner** backend runs on the Node and local runtimes (which can pin a custom CA);
+the Cloudflare Worker rejects an EKS connection at registration rather than failing mid-run.
+
 ## Per-service provision types
 
 A preview needs two decisions: **what** to stand up (the service's manifests) and **where/how** to

@@ -39,7 +39,7 @@ original PNG/JPG. Pass `--keep` to retain originals, `--dry` to preview, or
 > **Note on repo size / Git LFS:** images are kept in regular Git. At ~70KB each this is fine for
 > hundreds of screenshots. Revisit [Git LFS](https://git-lfs.com/) only if image history approaches
 > ~100–250MB or you start committing heavy assets (video, animated GIFs). If you do adopt LFS, add
-> `lfs: true` to the `actions/checkout` step in `deploy.yml` — otherwise the build bundles pointer
+> `lfs: true` to the `actions/checkout` step in `deploy.yml`, otherwise the build bundles pointer
 > files and the live site ships broken images.
 
 ## Project structure

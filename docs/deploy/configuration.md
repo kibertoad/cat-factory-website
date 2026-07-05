@@ -158,6 +158,22 @@ fail loudly instead of faking success:
 | `AUTH_SESSION_SECRET` | Session secret (also required for real auth). |
 | `ENCRYPTION_KEY` | Encrypts the runner-pool credentials stored at rest (the shared master key above). |
 
+## Multi-node coordination (Redis)
+
+A Node.js deployment running **more than one instance** uses Redis to keep replicas in sync: live
+board events reach browsers on every node, and each node drops stale in-memory cache entries after a
+write on another node. A single instance and local mode need none of this; the Cloudflare Worker
+coordinates through its own globally-addressed primitives.
+
+| Variable | Purpose |
+| --- | --- |
+| `REDIS_URL` | Enables cross-node coordination (real-time event propagation and cache invalidation). Unset means single-node, in-process, no dependency. `ioredis` is an optional package: install it when you set this, or boot fails with a clear message. |
+| `REDIS_REALTIME_CHANNEL` | Optional. The pub/sub channel carrying real-time events. Defaults to `cat-factory:realtime`. |
+| `REALTIME_NODE_ID` | Optional. A readable prefix for this node's id (used to ignore a node's own echoes). Defaults to a random id; a per-process suffix is always appended, so setting the same value on every replica is safe. |
+
+Redis is only ever a message bus for these signals, never a data tier: a node always repopulates its
+own in-memory state on a miss, and only keys travel on the wire, never values.
+
 ## Private package registries
 
 Agent containers resolve private npm dependencies from registries you connect **per workspace** in

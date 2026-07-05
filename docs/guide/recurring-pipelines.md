@@ -21,6 +21,7 @@ When you add a recurring pipeline you pick a template:
 | --- | --- |
 | **Dependency updates** | A plain implement → review → merge pass for routine bumps. |
 | **Tech debt** | Audits the repo, files a tracker ticket, then implements the top item. |
+| **Bug triage** | Pulls one open issue from your tracker each run, reproduces it, fixes it, and merges. See [below](#the-bug-triage-pipeline). |
 | **Custom** | Attach any pipeline you've defined on whatever cadence you choose. |
 
 ### The tech-debt pipeline
@@ -33,6 +34,40 @@ The tech-debt template adds two steps ahead of the usual implement → review �
 - **tracker** - a non-LLM step that files the top item from the analysis as a GitHub issue or
   Jira ticket before implementation begins, so the work is tracked even before a PR exists.
 
+### The bug-triage pipeline
+
+The **Bug triage** template works your bug backlog on its own. Each fire pulls **one** matching open
+issue from your tracker, claims it, and drives it end to end: understand the bug, write a failing
+reproduction test, fix it, then review → test → merge. On merge, the tracker writeback closes the
+issue. Bug triage is recurring-only, so it doesn't appear in the one-off Add-task picker.
+
+The run's stages:
+
+- **intake** - a non-LLM step that scans your tracker (oldest open first) for an issue matching the
+  predicates you set, imports it, retitles the recurring block from the issue, and marks it in
+  progress with a "taken by cat-factory" comment. If nothing matches, the run ends quietly.
+- **investigation** - a read-only container agent that clones the repo (and any
+  [involved services](./designing-your-board.md#service-connections)) and reports the root-cause
+  hypotheses and whether the issue is clear enough to fix.
+- **clarity review** - a human gate that only stops when the investigator needs clarification; a clear
+  bug passes straight through. When it parks, it echoes its questions onto the tracker issue.
+- **reproduction test** - a coding agent that commits a failing test proving the bug (it does not fix
+  it). It may concede that a bug isn't reproducible without failing the run.
+- **fix, review, test, and merge** - the coder adds the fix in the same PR as the repro test, then the
+  standard review → ephemeral-env test → conflicts → CI → merge tail.
+
+When you pick the Bug triage template, an **Issue intake** section appears. Connect a task source
+first, then set:
+
+- **Source**: GitHub Issues, Jira, or Linear (only connected sources are offered).
+- The board to pull from: a **Repository** (`owner/name`), a **Jira project key**, or a **Linear team
+  id**, depending on the source.
+- Predicates that narrow which issue is taken: **Title contains**, **Labels**, **Issue type**
+  (default `bug`), and, for GitHub, an **In-progress label** (default `in-progress`).
+
+Intake config is per schedule, so two bug-triage schedules can pull from different boards. It reuses
+the workspace's existing tracker connection; there is nothing extra to store.
+
 ## Setting the cadence
 
 The schedule runs on a fixed interval (the **Run every** setting, in hours), optionally constrained
@@ -44,6 +79,20 @@ to an **allowed window**:
 
 If a computed next-run lands outside the window, the engine rolls it forward to the next eligible
 instant.
+
+### On-demand schedules
+
+Turn on **On-demand (manual only)** and the schedule has no cadence at all: it never fires on its own
+and runs only when you click **Run now**. The cadence editor disappears, and the schedule shows an
+**On-demand** badge.
+
+On-demand matters for models that run on an **individual-usage subscription** (a personal Claude,
+Codex, or GLM subscription that you authorize with a personal password per run). A normal cadence
+schedule fires with no one present, so it **cannot** use an individual-usage model: if the block
+resolves to one, the fire is refused and recorded as a failed run telling you to make it on-demand or
+pick an API-key or coding-plan model. An on-demand schedule can, because you are present each time you
+trigger it, so the run uses your own subscription and the app prompts you for the password if it needs
+it.
 
 ## Managing schedules
 
