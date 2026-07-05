@@ -63,7 +63,7 @@ async function run() {
 
   const sources = await walk(DIR);
   if (sources.length === 0) {
-    console.log(`No PNG/JPG sources under ${path.relative(ROOT, DIR)} — nothing to do.`);
+    console.log(`No PNG/JPG sources under ${path.relative(ROOT, DIR)}, nothing to do.`);
     return;
   }
 

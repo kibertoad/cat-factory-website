@@ -87,7 +87,7 @@ and runs only when you click **Run now**. The cadence editor disappears, and the
 **On-demand** badge.
 
 On-demand matters for models that run on an **individual-usage subscription** (a personal Claude,
-Codex, or GLM subscription that you unlock with a personal password per run). A normal cadence
+Codex, or GLM subscription that you authorize with a personal password per run). A normal cadence
 schedule fires with no one present, so it **cannot** use an individual-usage model: if the block
 resolves to one, the fire is refused and recorded as a failed run telling you to make it on-demand or
 pick an API-key or coding-plan model. An on-demand schedule can, because you are present each time you

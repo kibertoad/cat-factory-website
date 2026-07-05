@@ -4,7 +4,7 @@
 # listens on host port 5433 (not 5432) and uses its own named volume, so you can run
 # this doc-screenshot deployment alongside a "real" local checkout without a port or
 # data clash. The orchestrator (backend) and the per-job agent containers are NOT
-# defined here — the backend runs as a plain Node process on the host (see
+# defined here. The backend runs as a plain Node process on the host (see
 # scripts/start.mjs) and agent jobs are launched on demand by the container runtime.
 #
 #   docker compose -p catfactory-docs up -d postgres

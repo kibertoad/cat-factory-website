@@ -23,11 +23,11 @@ instance. This skill runs that end to end: boot → capture → optimize → emb
 - Node 24+, pnpm, and **Docker running** (only Postgres runs in a container; backend and frontend are
   host processes).
 - A Playwright browser. Two ways to drive the UI, in order of preference:
-  1. **Playwright MCP** — already configured in `.mcp.json` (`@playwright/mcp`). Its tools
+  1. **Playwright MCP**: already configured in `.mcp.json` (`@playwright/mcp`). Its tools
      (`browser_navigate`, `browser_click`, `browser_snapshot`, `browser_take_screenshot`, …) let you
      see the page and click intelligently. It only becomes available after the MCP server is approved
      / the session reconnects; if the tools aren't loaded, use the script path below.
-  2. **The capture script** — `local-deploy/scripts/screenshots.mjs` drives Playwright directly and
+  2. **The capture script**: `local-deploy/scripts/screenshots.mjs` drives Playwright directly and
      needs no MCP. Install it once: `cd local-deploy && pnpm install --ignore-workspace && pnpm run screenshots:install`.
 
 ## Steps
@@ -42,8 +42,8 @@ instance. This skill runs that end to end: boot → capture → optimize → emb
 
    - If another local cat-factory is already on `:8787`/`:3000` (check `netstat`), isolate this one:
      set `PORT=8788` in `local-deploy/.env` and boot with `FRONTEND_PORT=3001`. The launcher passes
-     the frontend the matching `NUXT_PUBLIC_API_BASE`. **Do not kill the user's other processes** —
-     only the ports this deployment owns.
+     the frontend the matching `NUXT_PUBLIC_API_BASE`. **Do not kill the user's other processes**;
+     touch only the ports this deployment owns.
 
 2. **Verify it's healthy.**
    ```bash
@@ -56,7 +56,7 @@ instance. This skill runs that end to end: boot → capture → optimize → emb
    cd local-deploy && node scripts/screenshots.mjs           # -> docs/.vuepress/public/images/app/
    # BASE=http://localhost:3001 if you moved the frontend port
    ```
-   It signs in (creating `docs@example.com` on first run — the account persists in Postgres, so later
+   It signs in (creating `docs@example.com` on first run; the account persists in Postgres, so later
    runs log in), then captures a fixed set (see the map below). Review each image before using it:
    drop any that just show the board because the target needed a repo/model first.
 
@@ -65,14 +65,14 @@ instance. This skill runs that end to end: boot → capture → optimize → emb
    pnpm docs:images        # -> resizes each to <=1920px, writes <name>.webp, removes the PNG
    ```
    Screenshots are captured at 2x Retina (2880px) but never display wider than ~960px, so this
-   shrinks each ~80% with no visible loss (text stays crisp). It's idempotent — only new/changed
+   shrinks each ~80% with no visible loss (text stays crisp). It's idempotent: only new/changed
    sources are processed. Run it **after** dropping unwanted captures: it deletes the PNG source, so
-   review first (pass `--keep` if you need to retain a PNG). WebP is the committed asset — there are
+   review first (pass `--keep` if you need to retain a PNG). WebP is the committed asset; there are
    no PNGs in the repo.
 
 5. **Embed into the docs.** Reference images as `/images/app/<name>.webp` (VuePress `base` is `/`, and
    `public/` is served from the root). Give each a descriptive alt and a one-line lead-in that matches
-   the surrounding doc's voice (present tense, no changelog framing — same rules as `sync-docs`). Place
+   the surrounding doc's voice (present tense, no changelog framing, same rules as `sync-docs`). Place
    an image next to the prose it illustrates, not in a gallery.
 
 6. **Build to verify.** `pnpm docs:build` from the repo root. It should render all pages with exit 0.
@@ -100,25 +100,25 @@ instance. This skill runs that end to end: boot → capture → optimize → emb
 | `account-team` | Account settings → Team & access | `docs/guide/team-and-access.md` |
 | `sandbox` | Sandbox: prompt/model testing bench | `docs/guide/sandbox.md` |
 
-## Gotchas (all handled by the scripts — know them if something breaks)
+## Gotchas (all handled by the scripts; know them if something breaks)
 
 - **Stale workspace dist.** If the SPA 500s with *"does not provide an export named …"*, the
   cat-factory `@cat-factory/*` packages need rebuilding: `pnpm build:all` in the checkout (or boot with
-  `node scripts/start.mjs --build`). `pnpm build` alone matched no packages here — use `build:all`.
+  `node scripts/start.mjs --build`). `pnpm build` alone matched no packages here; use `build:all`.
 - **DB host.** Use `127.0.0.1`, not `localhost`, in `DATABASE_URL`: on Windows `localhost` can resolve
   to IPv6 first and stall the Postgres connection.
 - **CORS.** The API default-denies cross-origin unless `ENVIRONMENT` is a dev value. `.env` sets
   `ENVIRONMENT=local`, which reflects any origin (so the frontend works on whatever port).
 - **Windows spawn.** pnpm/npx are `.cmd` shims; Node can't `spawn` them without `shell: true`.
-- **Nuxt binds IPv6.** The dev server listens on `::1`, Postgres on `127.0.0.1` — readiness checks try
-  both loopback families.
+- **Nuxt binds IPv6.** The dev server listens on `::1`, Postgres on `127.0.0.1`, so readiness checks
+  try both loopback families.
 - **Auth.** No PAT is set, so there's no one-click PAT sign-in; use email/password signup (open signup
   is on). After the account exists, log in instead of signing up.
-- **Selectors.** Click sidebar entries by their exact button role name, not `getByText` — the uppercase
+- **Selectors.** Click sidebar entries by their exact button role name, not `getByText`: the uppercase
   section headers ("INTEGRATIONS", "INFRASTRUCTURE") otherwise match first. Force-click past transient
   toast overlays.
 - **Toast band steals the topmost button.** A full-width toast container (`absolute inset-x-0 top-0
-  z-50`) sits over the top of the sidebar, so the highest nav button — **Build a pipeline** — receives
+  z-50`) sits over the top of the sidebar, so the highest nav button (**Build a pipeline**) receives
   the click on the toast instead, even with `force: true` (force skips actionability checks but the
   event still lands on the topmost element at those coordinates). The script dispatches that one click
   straight to the DOM node (`button.click()` in `page.evaluate`) and waits for "Agent palette" to

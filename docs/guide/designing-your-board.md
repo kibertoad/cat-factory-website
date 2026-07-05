@@ -73,9 +73,9 @@ feels like it spans several PRs, split it into sibling leaves.
   only reappears, with an error toast, if the backend rejects it) and **idempotent**, so deleting a
   block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
   to children, so deleting a service removes its modules and tasks too, and a service or module
-  delete confirmation names how many items it will remove. A delete shows a **Deleted X — Undo**
-  toast that restores the whole subtree (edges included), and a drag-reparent shows a **Moved X —
-  Undo** toast, so a slip is recoverable.
+  delete confirmation names how many items it will remove. A delete shows a **Deleted X**
+  toast with an **Undo** button that restores the whole subtree (edges included), and a drag-reparent
+  shows a **Moved X** toast with the same **Undo**, so a slip is recoverable.
 
 ## Epics and dependency edges
 

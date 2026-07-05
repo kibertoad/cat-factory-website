@@ -26,7 +26,7 @@ write-only (never shown again). It does two things:
 - **Attributes your runs to you.** Runs you initiate prefer your token over the deployment's GitHub
   App for pushing the work branch and reading the CI and merge state, so the resulting commits and PR
   are attributed to you. Leave it unset and runs fall back to the workspace's GitHub App.
-- **Widens the repo picker.** On every deployment (not just local mode), **Add from existing repo**
+- **Widens the repo picker.** On every deployment (local mode included), **Add from existing repo**
   also lists repositories your token can reach beyond what the workspace's GitHub App is installed on,
   tagged **· personal (your token)**. Linking one creates a **personal service**: runs against it use
   your token for push, PR author, and CI actor. It is public github.com only (a GitHub Enterprise host

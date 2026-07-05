@@ -30,13 +30,13 @@ in-repo directory, and, for several kinds, extra fields tailored to it:
 | **prd** | `docs/prd` | Target users, Success metrics |
 | **rfc** | `docs/rfc` | Alternatives considered, Rollout concerns |
 | **adr** | `docs/adr` | Decision drivers, Considered options |
-| **design** | `docs/design` | — |
-| **technical** | `docs/technical` | — |
+| **design** | `docs/design` | None |
+| **technical** | `docs/technical` | None |
 | **api** | `docs/api` | API surface |
 | **runbook** | `docs/runbooks` | When to use, Escalation path |
 | **research** | `docs/research` | Research question, Options to compare |
-| **reference** | `docs/reference` | — |
-| **other** | `docs` | — |
+| **reference** | `docs/reference` | None |
+| **other** | `docs` | None |
 
 The kind-specific fields you fill are folded into the author's prompt as required content for the
 matching sections, so a PRD's "Success metrics" or an ADR's "Considered options" get written from what

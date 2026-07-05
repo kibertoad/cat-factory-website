@@ -89,7 +89,7 @@ jobs:
       # GitHub's managed Pages publish is intermittently flaky: it returns a hard
       # "Deployment failed, try again later." with no detail (a transient GitHub-side
       # infra error during publish). The action does not retry a hard failure itself,
-      # so re-running the job is the standard remedy — we automate that here with up to
+      # so re-running the job is the standard remedy; we automate that here with up to
       # three attempts and a backoff. continue-on-error keeps the job alive until the
       # last attempt, which is the one that decides success/failure.
       - name: Deploy to GitHub Pages (attempt 1)

@@ -1,8 +1,8 @@
-# local-deploy — run cat-factory locally to capture docs screenshots
+# local-deploy: run cat-factory locally to capture docs screenshots
 
 This directory is a purpose-built, throwaway deployment of **cat-factory** used to produce the UI
 screenshots that appear across this documentation site. It boots the real product in **no-auth dev
-mode** (auth gate open, no GitHub/model credentials) — enough to render every screen the docs show —
+mode** (auth gate open, no GitHub/model credentials), enough to render every screen the docs show,
 and drives it with Playwright to capture images into `docs/.vuepress/public/images/app/`.
 
 It is **not** a template for a real install. For that, see cat-factory's own `deploy/local` and the
@@ -23,7 +23,7 @@ It is **not** a template for a real install. For that, see cat-factory's own `de
 - **Node.js 24+** and **pnpm**.
 - **Docker** running (only Postgres runs in a container here; the backend and frontend are host
   processes).
-- A local **cat-factory** checkout — it holds the `@cat-factory/*` workspace packages this deployment
+- A local **cat-factory** checkout. It holds the `@cat-factory/*` workspace packages this deployment
   consumes. It defaults to `../cat-factory` next to this repo; override with `CAT_FACTORY_DIR`.
 
 ## Boot it
@@ -37,11 +37,11 @@ CAT_FACTORY_DIR=/path/to/cat-factory node scripts/start.mjs
 
 On first run it writes `.env` (with generated `AUTH_SESSION_SECRET` + `ENCRYPTION_KEY`), starts
 Postgres, then boots the backend and frontend. When it prints `Board UI: http://localhost:3000`,
-open that URL — the auth gate is dev-open, so sign up a throwaway email/password account and you are
+open that URL. The auth gate is dev-open, so sign up a throwaway email/password account and you are
 on the board. `Ctrl+C` stops the backend and frontend; Postgres keeps running (`node scripts/stop.mjs`
 to stop it, add `--volumes` to wipe the data).
 
-Flags: `--no-frontend` (API only), `--build` (rebuild the cat-factory workspace first — needed when
+Flags: `--no-frontend` (API only), `--build` (rebuild the cat-factory workspace first, needed when
 its `@cat-factory/*` dist is stale and the SPA fails to boot with "does not provide an export named …").
 
 ### Running alongside another local checkout
