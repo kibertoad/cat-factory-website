@@ -26,6 +26,12 @@ Open your Cat Factory frontend and sign in with GitHub. You land in a **workspac
 container for your boards, repositories, and budget. Create a new workspace or join an existing
 one if your organization already has them.
 
+![An empty Cat Factory board with the left navbar and first-run setup banners](/images/app/board-empty.png)
+
+A fresh workspace opens on an empty board. The left navbar groups everything you do (Create,
+Repositories, Integrations, Infrastructure, Configuration), and setup banners point you at the
+few things a first run needs.
+
 ## 2. Create your board structure
 
 On the canvas:

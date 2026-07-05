@@ -23,6 +23,8 @@ runner. If your default [preset](#model-presets) points at a model none of your 
 serve, the task inspector flags the mismatch so a run never silently falls back.
 :::
 
+![The Set up an AI model provider prompt offering provider keys, the OpenRouter gateway, and local runners](/images/app/model-provider-setup.png)
+
 ## Connecting a direct provider key
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
@@ -211,6 +213,8 @@ Whichever source serves a model, you assign models with **presets** under
 stronger model while everything else stays on the base). Exactly one preset is the workspace
 **default**. Every new workspace seeds two built-ins, **Kimi K2.7** (the default) and **GLM-5.2**,
 and you can add your own.
+
+![The Model Configuration panel listing the Kimi K2.7 and GLM-5.2 presets with their base models](/images/app/model-configuration.png)
 
 A task picks its preset in the new-task form or the inspector; changing it affects only the steps
 that haven't started yet. Reserve stronger models for architecturally significant kinds and keep

@@ -206,6 +206,11 @@ a baked-in key. If that alias doesn't route on your machine, override it with `P
 
 ## Delegating infrastructure off the host
 
+The **Infrastructure** panel (sidebar → Infrastructure) is where local mode's execution is tuned:
+where agents run, the warm container pool, and per-repo checkout reuse.
+
+![The Infrastructure panel's Agent containers tab: where agents run, warm container pool, and checkout reuse](/images/app/infrastructure.png)
+
 By default local mode does everything on the host container runtime: agent jobs run as local
 containers and the Tester stands up its dependencies with Docker-in-Docker. A workspace can opt out
 of either, **independently**, and hand that work to an external service instead. Both toggles live on
@@ -263,8 +268,11 @@ dismissible banner over the board. Create the token, set the variable, and resta
 ## Signing in
 
 Local mode requires sign-in. Per-user features (personal subscriptions, your own provider keys) need
-a real identity to attach to, so the SPA shows a login screen rather than running anonymous. You sign
-in one of two ways:
+a real identity to attach to, so the SPA shows a login screen rather than running anonymous.
+
+![The local-mode login screen showing the no-token notice and the email/password form](/images/app/sign-in.png)
+
+You sign in one of two ways:
 
 - **With the configured PAT** (recommended). When `GITHUB_PAT` or `GITLAB_PAT` is set, the login
   screen shows a one-click "Sign in with configured GitHub/GitLab PAT" button, and the token's account

@@ -216,6 +216,11 @@ connects its own site through the UI, with credentials stored encrypted under `E
 is no per-integration enable flag. The integrations fail loudly at boot if `ENCRYPTION_KEY` is missing
 rather than silently returning errors later.
 
+Each workspace connects its own sites from the **Integrations** panel (sidebar → Integrations),
+which lists model providers alongside the document and task-tracker sources:
+
+![The Integrations panel listing OpenRouter, provider keys, and document sources such as Confluence, Notion, Figma, Zeplin, and Linear](/images/app/integrations.png)
+
 | Variable | Purpose |
 | --- | --- |
 | `DOCUMENT_SOURCES` | Comma-separated allow-list of document sources to expose. Defaults to `confluence,notion,github,figma,zeplin,linear` (every known source). `figma` and `zeplin` are design-context sources, each connected per workspace with a personal access token. |

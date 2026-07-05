@@ -1,0 +1,5 @@
+# Filled with per-machine dev secrets by scripts/start.mjs — never commit.
+.env
+
+# Local tooling install for the screenshot capture.
+node_modules/

@@ -11,8 +11,8 @@ line with what the code actually does right now.
 
 ## Repositories
 
-- Docs (this repo): `C:\sources\node-new\cat-factory-website`. Markdown under `docs/`.
-- Code (read-only here): `C:\sources\node-new\cat-factory2`. Inspect commits and current source.
+- Docs (this repo): `C:\sources\cat-factory-website`. Markdown under `docs/`.
+- Code (read-only here): `C:\sources\cat-factory`. Inspect commits and current source.
   If that path is missing, ask the user for the local cat-factory checkout path before continuing.
 
 Never edit the code repo. Only read it.
@@ -53,11 +53,11 @@ Match the voice and structure of the surrounding doc you are editing.
 
 1. **Pick the window.** Default to commits from the last two days. The user may give a different
    window. To avoid redoing covered work, check this repo's recent history for the last sync:
-   `git -C C:\sources\node-new\cat-factory-website log --oneline -15`. The previous sync's commit
+   `git -C C:\sources\cat-factory-website log --oneline -15`. The previous sync's commit
    message lists what it already covered.
 
 2. **List candidate commits.** In the code repo:
-   `git -C C:\sources\node-new\cat-factory2 log --since="2 days ago" --pretty=format:"%h %ad %s" --date=short`.
+   `git -C C:\sources\cat-factory log --since="2 days ago" --pretty=format:"%h %ad %s" --date=short`.
    Drop `chore: release packages`, `bumps`, merge commits, and anything matching the skip list in
    the Audience section. Keep `feat:`/`fix:` and titled feature commits that touch product
    behavior.
@@ -122,17 +122,17 @@ closest page, or note it as out of scope.
 
 ```bash
 # What the last sync covered
-git -C C:\sources\node-new\cat-factory-website log --oneline -15
+git -C C:\sources\cat-factory-website log --oneline -15
 
 # Candidate code commits in the window
-git -C C:\sources\node-new\cat-factory2 log --since="2 days ago" \
+git -C C:\sources\cat-factory log --since="2 days ago" \
   --pretty=format:"%h %ad %s" --date=short | grep -viE "release packages|^[a-f0-9]+ .* bumps$"
 
 # Inspect one commit's diff
-git -C C:\sources\node-new\cat-factory2 show <hash>
+git -C C:\sources\cat-factory show <hash>
 
 # Read current behavior of a feature area
-git -C C:\sources\node-new\cat-factory2 log --oneline -- backend/packages/gates
+git -C C:\sources\cat-factory log --oneline -- backend/packages/gates
 
 # Build the site
 npm run docs:build

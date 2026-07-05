@@ -1,0 +1,18 @@
+{
+  "name": "cat-factory-docs-local-deploy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Throwaway no-auth local deployment of cat-factory used to capture UI screenshots for the docs site.",
+  "scripts": {
+    "start": "node scripts/start.mjs",
+    "start:api": "node scripts/start.mjs --no-frontend",
+    "db:up": "docker compose -p catfactory-docs up -d postgres",
+    "stop": "node scripts/stop.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "screenshots:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.50.0"
+  }
+}

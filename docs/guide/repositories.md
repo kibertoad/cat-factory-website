@@ -44,7 +44,11 @@ setting the service up without a second trip to the inspector.
 ## Bootstrapping a new repository
 
 Cat Factory populates a repository with a reference architecture; it does not, by default, create
-the repository itself. The standard flow:
+the repository itself.
+
+![The Bootstrap a repository dialog: start from a reference architecture or from scratch, name the target repo, and describe what to build](/images/app/bootstrap-repo.png)
+
+The standard flow:
 
 1. Select a reference architecture or scaffold template.
 2. Create the target repository, **empty**, on GitHub. The bootstrap dialog links to GitHub's
