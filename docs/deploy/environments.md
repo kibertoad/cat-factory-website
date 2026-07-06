@@ -8,29 +8,28 @@ preview environments on demand and tear them down when the run finishes.
 Tests that need a live instance, such as integration tests, Playwright end-to-end runs, and
 acceptance checks, get an isolated environment spun up just for that run, then cleaned up automatically.
 
-## Local vs ephemeral, per service and per task
+## One provisioner: the Deployer
 
-The Tester stands the system under test up one of two ways:
+A preview needs two decisions: **what** to stand up and **how/where** to run it. A service owns the
+first by declaring a **provision type** (`docker-compose`, `kubernetes`, `custom`, or `infraless`).
+The workspace owns the second by mapping each type to a **handler** on the **Test environments** tab.
+There is no per-task `local` vs `ephemeral` toggle: a service declares a type and the workspace says
+how that type is handled.
 
-- **local**: the dependencies run alongside the job via the service's docker-compose file (or the
-  task declares no infra).
-- **ephemeral**: the job runs against a provisioned ephemeral environment, as described below.
+A single **Deployer** step provisions the environment. Every step that runs *against* a live system,
+the API and UI Testers, the `playwright` acceptance runner, and the human-test gate, consumes what
+the Deployer stood up: it reads the environment's coordinates and never provisions its own. So a
+pipeline that reaches one of those steps on a `docker-compose`/`kubernetes`/`custom` service must
+place a Deployer before it. Cat Factory checks this at start:
 
-A service frame carries a default test environment that the tasks under it inherit. Set it in the
-service's **Test infrastructure** panel; the task inspector shows the inherited value. A task can
-override the inherited default through its Tester agent config (`tester.environment`). At run time
-the engine resolves the effective environment in this order: the task's own pin, then the service
-default, then ephemeral. Cloud provider and instance size are ephemeral-provisioning hints and only
-apply when the resolved environment is ephemeral.
+- A pipeline that reaches a Tester or human-test step on a provisioned service with no earlier
+  Deployer is refused (`deployer_required_before_tester`).
+- A `docker-compose`/`kubernetes`/`custom` service whose type has no resolvable workspace handler is
+  refused, with a deep link to configure one (an `infraless` service always passes).
+- A Deployer whose service config is incomplete for its type is refused up front, naming the missing
+  fields and linking to the service's environment config, rather than failing mid-provision.
 
-Local infrastructure needs Docker-in-Docker on the runtime. A [local-mode runtime without
-it](./local.md#choosing-a-container-runtime) (Apple `container`) refuses a local-infra Tester run at
-start and steers it to an ephemeral environment or a no-infra service.
-
-In [local mode](./local.md), an un-pinned Tester task defaults to the **local** environment. Turn on
-**Delegate the test environment to a provider** (see
-[Delegating infrastructure off the host](./local.md#delegating-infrastructure-off-the-host)) to make
-the local-mode default ephemeral instead; per-service and per-task pins still override it.
+An `infraless` service (or a task that declares no infra) stands nothing up and runs directly.
 
 ## What the Tester receives
 
@@ -101,6 +100,82 @@ relative `env_file`s. Host-escaping binds and `privileged` services are still re
 **Build timeout** (default 15 minutes) bounds the build, apart from the health-wait budget. Building a
 private base image still needs `docker login` on the host; the provider doesn't manage registry auth.
 Like the rest of Compose, build mode needs a host Docker daemon and is local-mode only.
+
+## The environment setup wizard
+
+For anything past a single compose file with published images, configure the compose handler through
+the **environment setup wizard** rather than the raw form. Reach it from the sidebar
+(**Environment setup**) or the nudge on a docker-compose service's inspector. It walks a service
+frame through: **detect** (read the repo and prefill a recipe), an optional **deep analysis** pass,
+**preflight** checks, **save** (registers the workspace's `docker-compose` handler and writes the
+recipe onto the frame), and an optional **trial provision** you watch live. Nothing detected or
+drafted is applied until you save it, so the wizard only ever proposes.
+
+## Stack recipes
+
+A plain `composePath` handles a simple repo. A **stack recipe** describes a more involved bring-up
+declaratively, so a repo that needs layered compose files, profiles, materialized env files, or seed
+steps still provisions without bespoke code. A recipe extends a `docker-compose` service's config
+with any of:
+
+| Field | What it does |
+| --- | --- |
+| **Compose files** | An ordered list of `-f` layers (base plus overrides), replacing a single `composePath`. |
+| **Compose profiles** | `COMPOSE_PROFILES` to activate for the project. |
+| **Env files** | Committed templates (for example `.env.dev.local-dist`) materialized into git-ignored targets inside the checkout before `up`. |
+| **External networks** | Networks the project expects to already exist. |
+| **Shared stack refs** | Ids of [shared stacks](#shared-stacks) that must be up first. |
+| **Setup steps** | Ordered post-`up` steps: `compose-exec` (optionally piping a `.sql` seed on stdin), `copy-file`, `wait-http`, `wait-file`, `host-command`, each with an optional timeout. |
+| **Health gate** | The terminal readiness check: compose health (the default), an HTTP probe, or a `compose-exec` command. |
+| **Prerequisites** | [Preflight checks](#preflight-checks) re-run at provision start. |
+
+Detection reads the repo checkout-free (no clone, no host daemon) and produces a **non-binding**
+recommendation: it layers `*.override.yml`, points `external: true` networks at a shared-stack nudge,
+turns `*-dist`/`.example` templates into env-file entries, and flags `*.sql` seed dumps and a
+`Makefile`/`bin/*console*` CLI hint. It can only ever suggest more; you accept, change, or drop each
+candidate. A deployment can extend detection with house conventions through
+`ENVIRONMENTS_DETECTION_CONVENTIONS` (a JSON env var).
+
+Recipe execution is bound to the local-mode compose facade (it needs a host Docker daemon), like the
+rest of Compose. Each step's outcome streams to the [provisioning log](./observability.md#the-provisioning-event-log);
+a failing step tears the half-up stack down and surfaces its tail as the environment's error.
+
+### Drafting a recipe with the analyst
+
+Detection is deterministic and never parses shell, so it can't see a bring-up that lives in a
+`Makefile` or a `bin/` script. The wizard's **deep analysis** step runs an **environment analyst**
+agent that clones the repo read-only, reads the README, Makefile, and setup scripts, and returns a
+**draft recipe**, setup steps, prerequisites, and a health gate, each grounded in a source citation.
+It is opt-in (the deterministic detector is the only thing that runs unprompted) and needs the frame
+to have a linked repo. The draft is merged **detector-wins**: where both produce a field, the
+deterministic reading of the compose files wins; the analyst fills the gaps, and each field is
+tagged with where it came from so you can review provenance before saving.
+
+## Shared stacks
+
+A **shared stack** is long-lived infrastructure that runs once and that per-PR previews attach to,
+the compose analogue of shared cluster infra: a database, a message broker, an auth service that is
+wasteful to stand up fresh per run. You define one in the **Shared stacks** panel of the
+Infrastructure window (an **Autodetect** button prefills its compose files, managed networks, and
+profiles from the repo). It uses the same recipe vocabulary and runs its committed compose files as
+authored, with host ports kept, since it is trusted operator infra rather than an isolated preview.
+
+Bring-up (`ensure up`) is idempotent and coalesces concurrent callers; teardown is explicit and never
+swept with a run or reaped on a timer, and its managed networks outlive it so attached consumers keep
+working. A per-PR compose recipe references shared stacks by id in its **shared stack refs**: at
+provision the Deployer brings each referenced stack up first (in order), then attaches the per-PR
+project to the union of the recipe's external networks and the stacks' managed networks. Like the
+compose provider, shared stacks are local-mode only.
+
+## Preflight checks
+
+A recipe or shared stack can declare **prerequisites**, mechanical checks that run first, at the top
+of provisioning and live in the wizard. Built-in checks cover the Docker daemon, disk space, memory,
+registry auth, TCP/HTTP reachability, a local mkcert CA, `/etc/hosts` entries, and an env-secrets
+marker. Each carries operator-authored remediation text. A failing **required** check fails the
+provision fast with its remediation instead of a stuck attempt; a non-required one degrades to a
+warning. A recipe that declares prerequisites on a deployment with no host-probe runtime fails
+loudly rather than skipping them silently.
 
 ## How it works
 

@@ -1,16 +1,41 @@
 # Budgets & Spend
 
-Running agents costs money. Cat Factory keeps that cost visible and bounded with per-workspace
-metering, a monthly budget, and automatic pausing at the cap.
+Running agents costs money. Cat Factory keeps that cost visible and bounded with metering across
+three budget tiers, a monthly limit on each, and automatic pausing when any tier a run belongs to is
+exhausted.
 
 ## How metering works
 
-Every LLM call an agent makes is metered and added to the workspace's running spend total. This
-includes calls across all steps of all runs in the workspace, regardless of which provider served
-them. Each call's token usage is priced into the workspace's budget currency and recorded in a
-persistent ledger. Spend is segregated by workspace, so each workspace's budget is independent.
+Every LLM call an agent makes is metered and priced into the budget currency, recorded in a
+persistent ledger, and rolled up against three independent tiers:
+
+- **Workspace**: every call across all runs in one workspace (board).
+- **Account**: every call across all workspaces in the account.
+- **User**: every call across every run a given user starts, in any workspace.
 
 A spend gauge in the dashboard shows current utilization against the budget at any time.
+
+## The three tiers
+
+The tiers are independent ceilings, not a shared or additive pool. Before every agent step the
+engine checks each tier the run belongs to, and a run is over budget when **any** applicable tier is
+exhausted. So a run can be paused by the workspace budget, the account-wide budget, or the initiating
+user's personal budget, whichever fills first.
+
+You set all three from **Workspace settings -> Budget** ("Monthly spend budget"):
+
+| Section | What it caps | Who can set it |
+| --- | --- | --- |
+| **This workspace** | Spend across this one board. Also carries the **Currency**. | Any workspace member. |
+| **Account (all workspaces)** | A ceiling across every workspace in the account. | Account admins only; others see it read-only. |
+| **You (all your runs)** | A ceiling across every run you start, in any workspace. | Each member, for their own limit. |
+
+Leave a field blank for no limit on that tier. Values are saved as encrypted configuration in the
+database, so you tune them without a redeploy.
+
+An operator can also impose a hard ceiling the UI cannot exceed, through
+[`BUDGET_MAX_MONTHLY_PER_ACCOUNT` / `BUDGET_MAX_MONTHLY_PER_USER`](../deploy/configuration.md#spend-caps-operator-ceilings).
+When one is set, that tier's field is clamped to the cap and shows "Operator limit: {amount}".
 
 ## Prompt caching
 
@@ -33,18 +58,13 @@ You do not set per-token prices yourself. The catalog handles pricing; you contr
 the monthly limit, the currency, and your choice of models (see below). The prices are deliberately
 approximate: a budget only needs them in the right ballpark to act as a safeguard.
 
-## Setting a monthly budget
+## The limit and currency fields
 
-A budget is configured per workspace in the UI, under **Workspace settings -> Budget**, and saved
-as encrypted configuration in the database. There are no environment variables for the budget, so
-you can tune it without a redeploy.
-
-Two fields:
-
-- Monthly limit: the spend cap for one billing period (a calendar month, UTC). Leave it blank to
-  inherit the built-in default of roughly 100 EUR per month.
-- Currency: a 3-letter ISO 4217 code (for example `EUR`, `USD`). Leave it blank to inherit the
-  default (`EUR`). The currency applies to both the limit and the catalog prices.
+Each tier's **Monthly limit** is the spend cap for one billing period (a calendar month, UTC). Leave
+the workspace limit blank to inherit the built-in default of roughly 100 EUR per month. The
+workspace section also carries the **Currency**: a 3-letter ISO 4217 code (for example `EUR`,
+`USD`), blank to inherit `EUR`. The currency applies to the workspace limit and the catalog prices;
+the account and user rollups meter in the base pricing currency.
 
 A change takes effect within a short window (resolved pricing is cached briefly for the spend
 gate), so a new budget applies to subsequent steps shortly after you save.
@@ -66,7 +86,8 @@ money, so a `0` budget also blocks paid web searches.
 
 ## What happens at the cap
 
-When metered spend reaches the budget, runs on metered models stop incurring cost:
+When metered spend reaches any tier a run belongs to (workspace, account, or user), runs on metered
+models stop incurring cost:
 
 1. Starting or retrying a run whose pipeline has at least one metered step is refused up front with
    a clear error naming the spend and the limit, instead of starting and pausing silently. A task
@@ -80,8 +101,9 @@ from the gate, so it keeps running even while metered runs are paused.
 
 You have two ways forward:
 
-- Raise the budget under **Workspace settings -> Budget**. An admin can then resume the paused runs
-  in the workspace, which re-drives them against the refreshed budget.
+- Raise the exhausted tier's limit under **Workspace settings -> Budget** (the account tier needs an
+  account admin). An admin can then resume the paused runs, which re-drive against the refreshed
+  budget.
 - Wait for the billing period to roll over at the start of the next calendar month, at which point
   the period's spend resets and resumed runs proceed against the fresh budget.
 

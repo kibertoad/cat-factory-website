@@ -4,6 +4,20 @@ This page is the reference for every environment variable and toggle you'll set 
 Cat Factory. Secrets are grouped by concern: authentication, model providers, infrastructure,
 service wiring, and feature toggles.
 
+## When a required value is missing
+
+A mandatory variable that is missing or invalid does not crash-loop the container. The backend
+starts anyway and serves a minimal fallback: the health check returns `200` with status
+`misconfigured` (so the orchestrator keeps the container alive instead of restarting it in a loop
+that hides the problem), and the SPA branches to a full-screen **Backend not configured** screen
+listing each problem with the variable name, what it is for, and how to fix it. Only variable names
+and remedies are shown, never any secret value, so the screen and the matching boot log are safe to
+share. The same structured problem list is returned as a `503` to non-browser callers.
+
+The values validated this way include `DATABASE_URL`, `ENCRYPTION_KEY`, `AUTH_SESSION_SECRET`,
+`HARNESS_SHARED_SECRET`, `TELEMETRY_DB` (on the Worker), a login provider on a remote deployment,
+the container-executor wiring, and malformed `AGENT_MODELS` JSON. Fix the listed values and reload.
+
 ## Authentication
 
 A deployment can offer three sign-in providers in any combination: GitHub OAuth, Google OAuth, and
@@ -110,13 +124,28 @@ restore the original key or re-enter that credential; one broken credential is i
 providers keep working rather than the whole config failing.
 :::
 
+## Spend caps (operator ceilings)
+
+Workspace, account, and per-user monthly budgets are set in the UI (see
+[Budgets & Spend](../guide/budgets.md)). Two optional env vars let an operator impose a hard ceiling
+that a user cannot exceed from the UI:
+
+| Variable | Purpose |
+| --- | --- |
+| `BUDGET_MAX_MONTHLY_PER_ACCOUNT` | Caps the per-account monthly limit. It clamps whatever the account budget UI submits, and stands in as the account ceiling when no account limit is set. |
+| `BUDGET_MAX_MONTHLY_PER_USER` | The same for the per-user monthly limit. |
+
+Each applies only when set to a finite number `>= 0`; unset means no operator ceiling for that tier.
+The caps are in the base pricing currency and are surfaced read-only in the budget UI, where the
+matching field is clamped to the cap and Save is refused above it.
+
 ## Infrastructure
 
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string (Node.js deployment only). |
 | Container image registry + pull credentials | Source of the executor-harness image. |
-| `HARNESS_SHARED_SECRET` | Optional inbound-auth secret for the executor harness. When set, the backend injects it into each per-run container's env and sends it as the `x-harness-secret` header, so the harness rejects any call that doesn't carry it. Leave it unset and the harness stays open, relying on internal-only addressing. A self-hosted runner pool configures its own secret pool-side. |
+| `HARNESS_SHARED_SECRET` | Inbound-auth secret for the executor harness (≥ 16 chars, stable). The backend injects it into each per-run container's env and sends it as the `x-harness-secret` header, so the harness rejects any call that doesn't carry it. A deployment that dispatches container jobs validates it at boot and fails with a config error when it is unset; keep the value stable so a container re-attach after a restart still authenticates. A self-hosted runner pool configures its own secret pool-side. |
 | `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |
 | Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
 
@@ -322,11 +351,16 @@ Optional integrations enabled by their own flag:
 
 | Variable | Purpose |
 | --- | --- |
-| `ENVIRONMENTS_ENABLED` | Set to `true` for ephemeral preview environments (also requires `ENCRYPTION_KEY`). See [Environments](./environments.md). |
 | `PROMPT_LIBRARY_ENABLED` | The [prompt-fragment library](../guide/prompt-fragments.md) is **on by default** (it needs no secrets and its tables ship in the base migrations). Set to `false` to turn it off. `PROMPT_LIBRARY_SELECTOR=llm` ranks fragments per run; anything else keeps the deterministic default. |
 | `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
 | `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
 | `SANDBOX_DB` | Cloudflare only. Optional D1 binding that turns on the [Sandbox](../guide/sandbox.md) for prompt and model testing. The Sandbox is off until it is bound. On Node and local it is a `sandbox` schema in `DATABASE_URL`. |
+
+[Ephemeral environments](./environments.md) have no enable flag. The module assembles wherever
+`ENCRYPTION_KEY` is set (it seals environment-provider credentials under that key), the same
+always-on-where-the-key-is-present model as the document and task sources. It stays inert until a
+workspace registers an infrastructure handler and a pipeline includes a `deployer`/`tester` step, so
+there is nothing to turn on at the deployment level.
 
 ::: warning Treat secrets as secrets
 Provider keys, subscription tokens, the GitHub App private key, `ENCRYPTION_KEY`, the Langfuse

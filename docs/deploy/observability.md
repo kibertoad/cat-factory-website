@@ -36,6 +36,18 @@ per-turn tokens; Codex reports assistant text and per-turn tokens but no request
 limitation), and neither CLI exposes per-HTTP timing. Captured bodies are credential-scrubbed and
 honour `LLM_RECORD_PROMPTS`.
 
+### Web search queries
+
+When a run's agents use [web search](./configuration.md#web-search), the observability panel's **Web
+search** tab shows what they searched: a header saying whether search was available to the run's
+containers and which provider served it (Brave or SearXNG), then each query with the agent kind that
+issued it, the provider, and the result count. Queries land in a dedicated `agent_search_queries`
+telemetry table and are pruned on the same window as agent-context snapshots.
+
+Recording the query text is gated the same way as agent context: both the deployment-wide
+`LLM_RECORD_PROMPTS` (on by default) and the per-workspace **Store full agent context** setting must
+be on. With either off, the availability header still shows but no queries are stored.
+
 ## The telemetry store
 
 Telemetry is append-heavy, high-volume, and short-retention, a very different write profile from the
