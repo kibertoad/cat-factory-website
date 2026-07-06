@@ -175,6 +175,7 @@ export default defineUserConfig({
             '/reference/agent-isolation.md',
             '/reference/manifests.md',
             '/reference/packages.md',
+            '/reference/public-api.md',
           ],
         },
       ],

@@ -31,9 +31,9 @@ developer machine instead of a server:
   GitHub, a fine-grained token scoped to those repos with **contents: write** and
   **pull-requests: write** is recommended; for GitLab, a token with the **api** scope. The same token
   is how you [sign in](#signing-in).
-- Stable `ENCRYPTION_KEY` and `AUTH_SESSION_SECRET` values. Local mode requires both and fails to boot
-  without them; generate the pair with `pnpm secrets` (run in `deploy/local`). See
-  [Configuration](#configuration).
+- Stable `ENCRYPTION_KEY`, `AUTH_SESSION_SECRET`, and `HARNESS_SHARED_SECRET` values. Local mode
+  requires all three and fails to boot without them; generate the set with `pnpm secrets` (run in
+  `deploy/local`), which now emits all three. See [Configuration](#configuration).
 - The executor-harness image. Leave `LOCAL_HARNESS_IMAGE` unset and the version-matched image is
   pulled at boot automatically; see [The executor-harness image](#the-executor-harness-image). It is
   published to both [GHCR](https://github.com/kibertoad/cat-factory/pkgs/container/cat-factory-executor)
@@ -78,8 +78,8 @@ cd ../frontend && npm install && npm run dev                    # SPA on :3000
 To run from a clone of the `deploy/local` example directory instead:
 
 ```bash
-# 1. Start PostgreSQL
-docker compose up -d
+# 1. Start PostgreSQL (and the bundled SearXNG for web search)
+pnpm up          # Postgres + SearXNG; use `pnpm db:up` for Postgres only
 
 # 2. Build the executor-harness image locally...
 docker build -t cat-factory-executor:local backend/internal/executor-harness
@@ -89,7 +89,7 @@ docker build -t cat-factory-executor:local backend/internal/executor-harness
 
 # 3. Configure
 cp .env.example .env
-pnpm secrets   # prints ENCRYPTION_KEY + AUTH_SESSION_SECRET to paste in
+pnpm secrets   # prints ENCRYPTION_KEY + AUTH_SESSION_SECRET + HARNESS_SHARED_SECRET to paste in
 # Set GITHUB_PAT (or GITLAB_PAT) and LOCAL_HARNESS_IMAGE; add a model key if you want a specific provider
 
 # 4. Run
@@ -107,10 +107,15 @@ container.
 | `DATABASE_URL` | yes | PostgreSQL connection string (the docker-compose service). |
 | `LOCAL_HARNESS_IMAGE` | no | The executor-harness image run per agent job. Optional: unset, it defaults to the version-matched image the backend recommends, which is pulled at boot (see [The executor-harness image](#the-executor-harness-image)). Set it to pin a specific tag or digest, or to a bare local tag you build yourself. |
 | `LOCAL_HARNESS_IMAGE_REFRESH` | no | Set to `off` (or `false`/`0`/`no`/`none`/`disabled`) to skip the boot-time image pull. Any other value keeps the default refresh on. |
-| `LOCAL_NATIVE_AGENTS` | no | Comma-separated harnesses to run on the host instead of in containers, e.g. `claude-code,codex`. Turns on [native agents](#native-agents-run-on-the-host). Unset means every agent job runs as a container. |
+| `LOCAL_NATIVE_AGENTS` | no | Comma-separated harnesses to run whole container agents on the host instead of in containers, e.g. `claude-code,codex`. Turns on [native agents](#native-agents-run-on-the-host). Off by default; unset means every container agent job runs sandboxed. |
+| `LOCAL_NATIVE_INLINE` | no | Which harnesses may serve **inline** LLM steps (requirements review, brainstorm, task-estimator, inline document kinds) on a subscription model. On by default (both `claude-code,codex`); set `off` to disable, or a subset to restrict vendors. See [Inline steps on subscription models](#inline-steps-on-subscription-models). |
+| `LLM_SUBSCRIPTION_MAX_CONCURRENCY` | no | Cap on in-flight inline subscription-model prompts per vendor. Defaults to `3`; override one vendor with `LLM_SUBSCRIPTION_MAX_CONCURRENCY_<VENDOR>` (e.g. `_KIMI`); any value `<= 0` uncaps. |
+| `LOCAL_WEB_SEARCH` | no | Self-hosted [SearXNG web search](#web-search-searxng) is on by default. Set `off` to skip wiring it. |
+| `WEB_SEARCH_SEARXNG_URL` | no | SearXNG endpoint. Defaults to `http://localhost:8080` (the bundled compose service). Set it to point at your own instance, or set `WEB_SEARCH_BRAVE_API_KEY` to use hosted Brave Search instead. |
 | `LOCAL_HARNESS_ENTRY` | no | Path to the executor-harness server entry for native mode. Optional: unset, it defaults to the bundled `@cat-factory/executor-harness`, so native mode works with no build. Set it to point at a source-checkout build. |
 | `ENCRYPTION_KEY` | yes | Base64 key (≥ 32 bytes decoded) sealing UI-connected credentials (provider keys, subscriptions, local runners) at rest. Required and must stay stable: a fresh key each boot orphans every credential sealed under the previous one, and boot fails loudly when it is unset. Generate it with `pnpm secrets`. |
 | `AUTH_SESSION_SECRET` | yes | Signs the session token. Required and must stay stable: a fresh value each boot invalidates your session and forces a re-login. Generate it with `pnpm secrets`. |
+| `HARNESS_SHARED_SECRET` | yes | Inbound-auth secret (≥ 16 chars) the backend sends to each agent container. Required and must stay stable: a per-process random value would break re-attaching to a still-running container after a restart. Generate it with `pnpm secrets`. |
 | `GITHUB_PAT` | one of | Personal access token agent containers use to clone, push branches, and open PRs, and the credential you [sign in](#signing-in) with. |
 | `GITLAB_PAT` | one of | GitLab personal access token (scope `api`). Drives clone/push, the CI gate, merge-request creation and merge, and GitLab sign-in. Set at least one of `GITHUB_PAT` / `GITLAB_PAT`. |
 | `GITLAB_API_BASE` | no | GitLab REST v4 base for a self-managed instance, e.g. `https://gitlab.example.com/api/v4`. |
@@ -145,26 +150,42 @@ pull:
 Set `LOCAL_HARNESS_IMAGE_REFRESH=off` to skip the boot pull. The refresh is skipped on the Apple
 `container` runtime (its CLI differs); refresh that image out of band.
 
+## Inline steps on subscription models
+
+Inline LLM steps (the requirements review, clarity review, brainstorm, task-estimator, and inline
+document kinds: one-shot text calls with no repo and no container) run on a **subscription model by
+default** in local mode. That means a preset pinned to a subscription-only model such as Claude Opus
+or a Codex GPT model, which the seeded local default already is, just runs, instead of being refused
+because an inline step had no way to reach a container-only subscription token.
+
+`LOCAL_NATIVE_INLINE` controls it and is on by default (`claude-code,codex`). Set it to `off` to turn
+inline subscription serving off, or to a subset to restrict vendors. Each inline step resolves one of
+two ways:
+
+- **Host CLI** (preferred): if your `claude` / `codex` binary is on `PATH`, the step runs on your
+  ambient login, unmetered and with no lease. Only the two ambient-CLI vendors qualify here.
+- **Prewarmed container** otherwise: the step runs a one-shot job in a leased warm-pool container on a
+  leased subscription credential. This is what lets non-ambient subscription vendors (GLM, Kimi,
+  DeepSeek) serve inline steps too.
+
+`LLM_SUBSCRIPTION_MAX_CONCURRENCY` (default `3` per vendor) bounds how many inline subscription
+prompts run at once; override a single vendor with `LLM_SUBSCRIPTION_MAX_CONCURRENCY_<VENDOR>`.
+
 ## Native agents (run on the host)
 
-By default every agent job runs in a container. On a developer machine you can instead run the
-harnesses **as host subprocesses** driven by CLIs you already have installed, which skips the
-container round-trip. Set `LOCAL_NATIVE_AGENTS` to the harnesses you want native, for example:
+`LOCAL_NATIVE_INLINE` covers inline steps only. Whole **container agents** (the repo-operating Coder,
+CI Fixer, Tester, and the rest) run sandboxed in a container by default. On a developer machine you
+can instead run them **as host subprocesses** driven by CLIs you already have installed, which skips
+the container round-trip. This is opt-in and off by default. Set `LOCAL_NATIVE_AGENTS` to the
+harnesses you want native, for example:
 
 ```bash
 LOCAL_NATIVE_AGENTS=claude-code,codex
 ```
 
-With native agents on, both repo-operating agent steps and **inline LLM steps** (the requirements
-review, clarity review, brainstorm, and task-estimator steps that run in-process without a container)
-resolve through the ambient `claude` / `codex` CLI. This matters for model presets pinned to a
-subscription-only model such as Claude or Codex: an inline step can't use a container-only
-subscription token, so without a native CLI it has nothing to run on. The native CLI is that path.
-`LOCAL_HARNESS_ENTRY` is optional; unset, native mode uses the bundled harness.
-
 Only the ambient-CLI vendors qualify: `claude-code` (the `claude` CLI) and `codex`. A `claude-code`
 model that points at its own base URL (GLM, Kimi, DeepSeek) is not an ambient CLI and still needs a
-provider-backed path.
+provider-backed path. `LOCAL_HARNESS_ENTRY` is optional; unset, native mode uses the bundled harness.
 
 ### The preset satisfiability gate
 
@@ -175,9 +196,9 @@ provider:
 - If a step's model has no usable provider at all, the run is refused (reason: providers unconfigured).
 - If a step's model works for a container step but an **inline** step can't drive it (a
   subscription-only model with no inline harness on this deployment), the run is refused with "model
-  preset can't run this pipeline". The fix is to pick a preset whose inline steps resolve to a
-  provider-backed model (a direct API key, OpenRouter, or Cloudflare AI), or to run local mode with
-  the ambient Claude Code / Codex CLI enabled.
+  preset can't run this pipeline". In local mode the default-on inline subscription serving above
+  normally satisfies this; the fix elsewhere is to pick a preset whose inline steps resolve to a
+  provider-backed model (a direct API key, OpenRouter, or Cloudflare AI).
 
 ## Choosing a container runtime
 
@@ -227,9 +248,10 @@ registered:
 
 Both default off. A single wrapper package can implement the `EnvironmentProvider` and
 `RunnerPoolProvider` ports together (Kargo, for example) to serve both concerns; see
-[Custom Providers](./custom-providers.md). Ephemeral environments are enabled by default in local
-mode (`ENVIRONMENTS_ENABLED=true`), and an un-pinned Tester task defaults to the local environment
-until you delegate.
+[Custom Providers](./custom-providers.md). Ephemeral environments carry no enable flag: the module
+assembles wherever `ENCRYPTION_KEY` is set (always, in local mode), and stays inert until a service
+declares a provision type and a workspace handler is registered. See
+[Ephemeral Environments](./environments.md).
 
 To run agents and previews on a local Kubernetes cluster instead, use the native **Kubernetes**
 backends. The `cat-factory k3s` command provisions a local k3d/kind/k3s cluster, wires least-privilege
@@ -264,6 +286,18 @@ fail at runtime. If you boot without one, Cat Factory does not leave you guessin
 with a click-through token-creation link (scopes pre-selected) and shows the same one-click link as a
 dismissible banner over the board. Create the token, set the variable, and restart.
 :::
+
+## Web search (SearXNG)
+
+Local mode ships web search on by default so agents can research without any per-account key. The
+`deploy/local` compose file includes a **SearXNG** service (behind a `web-search` profile), and
+`applyLocalDefaults` points `WEB_SEARCH_SEARXNG_URL` at it (`http://localhost:8080`). Start it with
+`pnpm up` (which brings up Postgres and SearXNG); `pnpm db:up` brings up Postgres only.
+
+Only the host orchestrator queries SearXNG; agent containers reach search through the backend proxy,
+so no search endpoint is baked into a job. To turn it off, set `LOCAL_WEB_SEARCH=off` (the
+`web_search` tool is then not advertised). To use hosted Brave Search instead, set
+`WEB_SEARCH_BRAVE_API_KEY`. See [Configuration → Web search](./configuration.md#web-search).
 
 ## Signing in
 

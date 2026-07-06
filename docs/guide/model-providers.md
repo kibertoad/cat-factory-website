@@ -211,15 +211,53 @@ Whichever source serves a model, you assign models with **presets** under
 **Configuration → Model Configuration**. A preset names a single
 **base model** for every agent kind, plus optional **per-kind overrides** (point the Architect at a
 stronger model while everything else stays on the base). Exactly one preset is the workspace
-**default**. Every new workspace seeds two built-ins, **Kimi K2.7** (the default) and **GLM-5.2**,
-and you can add your own.
+**default**. Every new workspace seeds three built-ins, **Kimi K2.7**, **GLM-5.2**, and **Claude
+Opus 4.8**, and you can add your own.
 
-![The Model Configuration panel listing the Kimi K2.7 and GLM-5.2 presets with their base models](/images/app/model-configuration.webp)
+Which one is the seeded default depends on the deployment: **Kimi K2.7** (Cloudflare-served, no key)
+on Cloudflare and Node, and **Claude Opus 4.8** on local mode, where a connected Claude subscription
+is the natural fit. The default is applied only when a workspace is first seeded, so your own choice
+of default is always preserved afterward. A deployment wrapper can override the seeded default at
+boot (`defaultModelPresetId` on `start`/`startLocal`/`createApp`).
+
+![The Model Configuration panel listing the built-in model presets with their base models](/images/app/model-configuration.webp)
 
 A task picks its preset in the new-task form or the inspector; changing it affects only the steps
 that haven't started yet. Reserve stronger models for architecturally significant kinds and keep
 cheaper ones on routine steps. See [Choosing models](./running-pipelines.md#choosing-models) and
 [Budgets & Spend](./budgets.md).
+
+### Keeping built-in presets current
+
+The built-in presets carry a version. When a Cat Factory upgrade ships a newer version of a built-in
+(or adds a new one), the board shows a once-per-session **model preset updates** advisory. Adopting
+it reseeds that preset: it takes the refreshed built-in, repairs drift, or materializes a
+newly-added built-in. It is opt-in and never silently rewrites a preset you have edited, so a
+customized preset stays as you left it until you choose to reseed.
+
+## Restricting model families
+
+An account admin can restrict which **model families** the account may use, so residency or vendor
+policy is enforced centrally rather than per workspace. The setting is **Model access policy** under
+**Account / Team settings** (admins only; it is hidden in plain local mode).
+
+A model family is a coarse group of the built-in catalog: `claude`, `openai`, `gemini`, `llama`,
+`qwen`, `kimi`, `deepseek`, `glm`. Choose a **Policy mode**:
+
+- **No restriction** (the default).
+- **Block listed families**: the listed families are refused.
+- **Allow only listed families**: everything outside the list is refused.
+
+Because residency risk is a property of the serving route rather than the weights, the policy
+evaluates the family together with the provider that would actually serve it. You can mark
+**trusted (residency-guaranteed) routes** (AWS Bedrock today): a blocked family stays usable when it
+is served over a trusted route. An "Operating region" selector offers one-click preset templates
+(for example "Block China-hosted families" or "residency-guaranteed routes only") that fill the
+policy in for you to adjust.
+
+When a pipeline pins a model from a blocked family, the run is refused at start with a clear error
+naming the blocked models, rather than silently rerouting: pick a model from an allowed family or a
+trusted route, or ask an admin to adjust the policy.
 
 ---
 

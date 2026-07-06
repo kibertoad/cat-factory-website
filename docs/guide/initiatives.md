@@ -17,8 +17,36 @@ set on normal work.
 
 On a service frame, click **Create initiative**. The dialog takes a **Title** (for example, "Migrate
 the API to the new auth model") and an optional **Goal** describing the goal, constraints, and rough
-scope. Creating the initiative adds the block and an empty tracker. Nothing runs yet: you plan it
-next.
+scope. When more than one preset is available it also shows a **preset picker** (see below), and the
+chosen preset may add a few fields of its own. Creating the initiative adds the block and an empty
+tracker. Nothing runs yet: you plan it next.
+
+## Presets
+
+A preset tailors an initiative to a recurring kind of work. It seeds the create-time form, whether
+the planning interview runs, and how the plan is shaped, while everything else, the tracker,
+execution loop, and follow-ups, stays exactly as described on this page. Pick one in the create
+dialog:
+
+- **Custom initiative** (the default): the open-ended flow described here. Empty form, full planning
+  interview, human approval on.
+- **Documentation refresh**: audit a service's documentation against its code and drive it to a full,
+  current set, mostly unattended.
+
+### Documentation refresh
+
+The **Documentation refresh** preset turns the initiative into a documentation sweep. Its create form
+asks what to refresh (README files, architecture and flow diagrams, in-source code comments, business
+rules and domain constraints), where docs live (a single root tree or per-service in a monorepo), the
+docs root and per-type directories, an optional scope note, and the writing-style guidance to apply.
+It **autodetects** the repo's docs layout to prefill those paths; your edits win.
+
+It skips the planning interview (the form is the interview) and plans a phase per documentation type
+you selected, each running a lean documentation pipeline: README and diagram work through the quick
+document pipeline, in-source comments through a dedicated **code-commenter** agent, business rules
+through the business-documenter. Documentation PRs auto-merge on green CI. Turn on **Review each
+documentation change before it merges** and each spawned task instead pauses for your approval at its
+merge step.
 
 ## Planning: interview, analyze, approve
 
