@@ -10,7 +10,7 @@ it goes.
 An initiative is a block on the board, a structural child of a service frame, alongside its modules.
 The initiative owns the plan; the tasks it spawns are ordinary tasks parented under the same service
 frame, linked back to the initiative. Each spawned task runs a standard pipeline with its own
-requirement review, human gates, and merge preset, so an initiative never bypasses the controls you
+requirement review, human gates, and risk policy, so an initiative never bypasses the controls you
 set on normal work.
 
 ## Creating one
@@ -32,6 +32,18 @@ dialog:
   interview, human approval on.
 - **Documentation refresh**: audit a service's documentation against its code and drive it to a full,
   current set, mostly unattended.
+- **Technological migration**: swap a load-bearing technology (a database engine, a framework major,
+  a runtime, or a load-bearing library) behind a behaviour-preservation safety net.
+
+A preset can also fold **standing per-kind guidance** into the prompts of the tasks it spawns (a
+coding convention for every coder it launches, a validation methodology for its testers), so its
+discipline reaches the spawned runs, not just the planning run.
+
+Beyond the three built-ins, a deployment can **register its own initiative presets** in code, the same
+way it registers custom agent kinds and gates. A custom preset carries its own create-time form,
+planning binding, mandated plan shape, prompt steering, and per-item spawn decoration; see
+[Custom Agents & Gates](../deploy/custom-agents.md). There is no UI or config path for defining one,
+because a preset can run repo-reading and agent-steering code and so is trusted like a custom kind.
 
 ### Documentation refresh
 
@@ -48,10 +60,23 @@ through the business-documenter. Documentation PRs auto-merge on green CI. Turn 
 documentation change before it merges** and each spawned task instead pauses for your approval at its
 merge step.
 
+### Technological migration
+
+The **Technological migration** preset encodes the discipline a high-risk migration needs, so the
+plan shape is mandated rather than left to the planner. Its form asks **which migration** (database
+engine, framework major, runtime, load-bearing library, or other), the **From** and **To**
+technologies, and optional scope, compatibility-posture, and coverage details. It runs the full
+planning interview with human approval on, and plans a fixed **five-phase** methodology: map the blast
+zone, pin behaviour with coverage, design the transition, deliver, then decommission the old path. The
+whole-codebase impact sweep is the agent's job; a gated **confidence case** document parks for you to
+challenge and approve its evidence before the swap proceeds.
+
 ## Planning: interview, analyze, approve
 
-From the initiative's inspector, click **Run planning** to start the **Plan initiative** pipeline. It
-runs in three stages before it asks for your approval:
+Start planning from the initiative's **inspector** or directly from its **board card**, which carries
+a **Run planning** button and, once the interview parks for answers, an **Answer planning questions**
+button (the card pulses while it waits). Both open the same **Plan initiative** pipeline, which runs
+in three stages before it asks for your approval:
 
 1. **Interview.** The planner parks the run and opens a **planning window** with clarifying questions
    about scope, constraints, and priorities. Answer them, then either **Continue** (it may ask a
@@ -84,6 +109,22 @@ execution loop:
 An item that gets stuck halts its phase and raises the initiative card for you to act on.
 
 Control the run from the inspector: **Pause**, **Resume**, or **Cancel initiative**.
+
+## Phase checkpoints
+
+A plan can mark a phase as a **checkpoint**. When every item in a checkpoint phase reaches a terminal
+state, the initiative **pauses before the next phase spawns** and waits for your review, rather than
+rolling straight on. A preset (or a planner following one) declares which phases are checkpoints; the
+**Technological migration** preset, for example, checkpoints after its confidence-case and
+transition-design work.
+
+You review a checkpoint from the **Initiative tracker**. A checkpoint phase shows a badge that reads
+**Checkpoint** while it is upcoming, **Awaiting review** while the initiative is paused at it, and
+**Reviewed** once cleared. When it pauses, an amber **Paused for review** banner names the completed
+phase with inline **Resume** and **Cancel** buttons: read the phase's merged PRs and committed
+artifacts, then **Resume** to let the next phase spawn or **Cancel** to stop. A checkpoint fires once
+and never re-pauses after you clear it, and a checkpoint phase with no items never pauses at all. You
+also get a notification when the initiative parks at a checkpoint.
 
 ## The tracker
 

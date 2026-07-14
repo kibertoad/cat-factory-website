@@ -110,6 +110,10 @@ per-user mode rather than a workspace pool:
 - Each **user** connects their own credential, and only that user's runs can use it. Connecting (or
   disconnecting) one refreshes the model catalog, so the **"No AI model configured"** banner clears
   the moment the subscription makes a model usable, and a default-preset mismatch surfaces right away.
+  The **Connect** button stays disabled until the form is ready, and tells you why: it shows "Sign in
+  to connect a personal subscription" when you're signed out, "Enter your token to continue" with an
+  empty token, or "Enter a personal password of at least 6 characters" until the password is long
+  enough. The reason clears as soon as you satisfy it.
 - These vendors are never poolable on any workspace, personal or org. The restriction is on
   *sharing one subscription credential*: an organization that wants
   every member to use Claude or GPT models sets a direct provider API key (`ANTHROPIC_API_KEY`,
@@ -145,6 +149,11 @@ What the password actually buys is twofold:
 You are not re-prompted on every action. After you enter it once, the password is cached in your
 browser, so starting, retrying, and approving from your side runs ride along without asking
 again. The server never stores the password; it travels as a request header, never in a saved record.
+
+To keep a long pipeline from lapsing halfway through, the cache is checked against an **8-hour expiry
+buffer**: if a start, confirm, or retry finds less than eight hours of runway left on the cached
+password, it re-prompts you then, while you are present at the action, and refreshes the full window,
+rather than letting a nearly-expired credential fail on an asynchronous step while you are away.
 
 Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to
 that one run) so the asynchronous container steps can authenticate while you are away. That
@@ -201,9 +210,13 @@ the same network.
 ## Subscription-only models
 
 Connecting a subscription unlocks models that have no Cloudflare or API-key flavour, such as the
-Claude Opus and Sonnet coding-plan models and the Codex GPT models. Because they have no fallback,
-they only appear once the matching subscription is connected, and inline steps (such as the
-requirements reviewer) fall back to the deployment's default routing rather than using them.
+Claude Fable 5, Claude Opus 4.8, and Claude Sonnet coding-plan models and the Codex GPT models.
+Because they have no fallback, they only appear once the matching subscription is connected, and
+inline steps (such as the requirements reviewer) fall back to the deployment's default routing rather
+than using them. **Claude Fable 5** is the top-tier Claude option: it runs through the Claude Code
+harness on a connected subscription, or pay-as-you-go through OpenRouter (`anthropic/claude-fable-5`)
+when you connect an OpenRouter key. The built-in presets still target Claude Opus 4.8, so select Fable
+5 explicitly (or build a preset for it) when you want it.
 
 ## Model presets
 

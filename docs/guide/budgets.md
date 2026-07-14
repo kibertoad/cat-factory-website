@@ -69,6 +69,25 @@ the account and user rollups meter in the base pricing currency.
 A change takes effect within a short window (resolved pricing is cached briefly for the spend
 gate), so a new budget applies to subsequent steps shortly after you save.
 
+## Metered spend vs. subscription usage
+
+The ledger records **all** token usage, but tags each entry as either **metered** (direct provider
+API keys and Cloudflare Workers AI, billed per token) or **subscription** (the flat-rate Claude Code
+and Codex harnesses and the pooled Kimi/DeepSeek vendor credentials). **Only metered usage counts
+against a budget.** A flat-rate subscription call is recorded for reporting but never inflates spend
+or trips a cap, matching the [budget-of-0](#budget-of-0-local--or-subscription-only) rule.
+
+You see this split in the **Usage** tab under **Workspace settings**, which breaks the current billing
+period into two sections:
+
+- **Subscriptions**: per-model token totals (input, output, call count) for the flat-rate harnesses,
+  with a cost figure labelled illustrative, since these plans bill flat, not per token.
+- **Metered API**: per-`provider:model` token totals and the real cost in the budget currency, the
+  same numbers that drive the spend gauge.
+
+The Usage report meters **finished runs only**; a failed run's tokens show in the observability
+dashboard's per-call metrics rather than here.
+
 ## Budget of 0: local- or subscription-only
 
 Setting the monthly limit to `0` is a valid, intentional choice. It means "no paid spend": runs on

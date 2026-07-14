@@ -73,6 +73,30 @@ cd <dir>/local && npm install && npm run db:up && npm start     # backend on :87
 cd ../frontend && npm install && npm run dev                    # SPA on :3000
 ```
 
+### Generating just the `.env`
+
+If you already have a deployment directory (a scaffolded project, or a `deploy/local` clone) and only
+need a populated env file, run the `env` subcommand instead of the full scaffolder:
+
+```bash
+npx @cat-factory/cli env      # writes a ready-to-run .env into the current directory
+```
+
+It generates all three required crypto secrets (`AUTH_SESSION_SECRET`, `ENCRYPTION_KEY`,
+`HARNESS_SHARED_SECRET`) in the formats the server expects, fills in the local defaults
+(`DATABASE_URL`, `PORT`, `CORS_ALLOWED_ORIGINS`, `LOCAL_CONTAINER_RUNTIME`), optionally mints or
+accepts a source-control PAT, and leaves `LOCAL_HARNESS_IMAGE` commented out so the version-matched
+image is used. It writes the file into the current directory (or `--dir <path>`), refuses to
+overwrite an existing `.env` unless you pass `--force`, and adds the file to a `.gitignore` so it is
+never committed. Drive it non-interactively with the same flags as the scaffolder (`--yes`,
+`--provider`, `--token`, `--db-url`, `--port`, `--container-runtime`, `--execution-mode`,
+`--native-harnesses`, …). Unlike `init`, it scaffolds nothing else, so run it inside a directory that
+already provides the `db:up` / `start` scripts, then `npm run db:up && npm start`.
+
+If you boot local mode with those secrets or `DATABASE_URL` missing, the misconfiguration screen and
+the boot log now point you straight at this command (`npx @cat-factory/cli env`) as the one-step fix,
+above the per-variable remedies.
+
 ## Quick start (from the repo)
 
 To run from a clone of the `deploy/local` example directory instead:
@@ -149,6 +173,18 @@ pull:
 
 Set `LOCAL_HARNESS_IMAGE_REFRESH=off` to skip the boot pull. The refresh is skipped on the Apple
 `container` runtime (its CLI differs); refresh that image out of band.
+
+### Version-matched harness check
+
+The backend and the executor-harness image are released as a matched pair, and the backend verifies
+the running harness reports the expected version once it becomes healthy. On a stock local
+deployment (`LOCAL_HARNESS_IMAGE` left unset, so the version-matched image is used) a mismatch, or a
+harness too old to report a version at all, **fails the first dispatch loudly** with a message that
+names the expected and running versions and tells you to re-pull the image (`docker pull …`) or unset
+`LOCAL_HARNESS_IMAGE`, then restart. When you have deliberately pinned a custom `LOCAL_HARNESS_IMAGE`
+(or a native `LOCAL_HARNESS_ENTRY`), the same mismatch is downgraded to a boot warning rather than a
+hard stop, since pinning is an explicit choice to manage compatibility yourself. This is why pinning a
+mutable tag like `:latest` is discouraged: it can pull an image newer than the backend supports.
 
 ## Inline steps on subscription models
 

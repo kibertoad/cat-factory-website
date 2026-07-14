@@ -44,6 +44,22 @@ work; the service stays in the org catalog and on every other board that mounts 
 service *frame* (rather than unmounting) drops the account-owned service and every workspace's
 mount of it.
 
+## Archiving a service with open work
+
+A service that still has **unfinished tasks** can't be destructively deleted. The delete action routes
+to **Archive service** instead, so you never hit a dead end mid-flight. Archiving hides the service
+and its whole subtree from the board while preserving every row; it is restorable at any time, with no
+expiry, from the toolbar's **Archived services** list. An archived shared service is hidden on every
+board that mounts it and can be restored from any of them.
+
+## Re-adding and deleting boards
+
+Because a service is account-owned, importing a repo that already backs one **mounts** the existing
+shared service onto your board rather than failing with "already linked", and re-adding a repo already
+on the board is a no-op. Deleting a board reclaims the services it homes and their environments so the
+repo is immediately re-addable elsewhere; a service another board still mounts is **re-homed to a
+surviving board** (kept alive with its blocks and run history) rather than destroyed.
+
 ## Live updates across boards
 
 A change to a shared service, such as run progress, a bootstrap, or a notification, is fanned out to

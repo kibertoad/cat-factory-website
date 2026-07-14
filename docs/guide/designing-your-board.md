@@ -37,12 +37,14 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 **Configuration** holds workspace-wide settings panels:
 
 - **Model Configuration**: manage the [model presets](#assigning-models) tasks run on.
-- **Merge thresholds**: manage the merge-threshold presets the **Merger** step uses to decide
-  auto-merge vs. raising a review.
+- **Risk policies**: manage the named risk policies a task chooses. After CI passes, the **Merger**
+  step scores the PR on complexity, risk, and impact and auto-merges only within the policy's
+  ceilings; the same policy also carries the CI-fixer, requirement/tester iteration, fork-decision,
+  and release-health knobs.
 - **Workspace settings**: the running-task limit and the waiting-decision escalation threshold
   (see [Workspace settings](#workspace-settings)).
 
-![The Workspace settings panel with its Workspace, Budget, Merge thresholds, Issue tracker, and Service best practices tabs](/images/app/workspace-settings.webp)
+![The Workspace settings panel with its Workspace, Budget, Risk policies, Issue tracker, and Service best practices tabs](/images/app/workspace-settings.webp)
 
 ## The three levels
 
@@ -64,7 +66,7 @@ feels like it spans several PRs, split it into sibling leaves.
   **Document**, or **Spike**), which adjusts the form (a Bug collects severity and steps to
   reproduce, a Spike a time-box, a [Document](./documents.md) its kind and target path) and lets the
   workspace cap concurrency per type.
-- **Edit** its title, description, status, chosen pipeline, prompt fragments, merge-policy preset,
+- **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
 - **Reparent** by dragging a block onto a new parent, which is useful as your design evolves. Moving
@@ -121,9 +123,13 @@ Marking a service involved changes how the task runs:
   service and each involved service in one checkout, with sibling working directories. It commits on
   the same work branch in every repo and opens **one PR per repository that actually changed**;
   untouched repos get no PR. Two services in the same repo share one checkout and one PR.
-- **Merge.** CI aggregates across all the PRs, and the merger merges them provider-before-consumer.
-  Cross-repo merge is not atomic: if a merge fails partway, the task is left blocked with a
-  notification listing which PRs merged and which didn't, for you to finish by hand.
+- **Conflicts.** A merge conflict on **any** involved repo's PR (not just the task's own) is
+  auto-resolved by the conflict resolver, pointed at that repo. When it still can't after its attempt
+  budget, the block error names which repo's PR needs a manual resolve.
+- **Merge.** CI aggregates across all the PRs, the merger scores the **combined cross-repo change** as
+  one assessment rather than only the primary repo's diff, and it merges the PRs
+  provider-before-consumer. Cross-repo merge is not atomic: if a merge fails partway, the task is left
+  blocked with a notification listing which PRs merged and which didn't, for you to finish by hand.
 
 You only set the connection (and its description) on the frame and the involved-services checkboxes on
 the task; the sibling layout, per-repo PRs, and merge order are automatic.

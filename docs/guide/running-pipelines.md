@@ -9,7 +9,7 @@ The default **Full build** pipeline runs these steps in order:
 
 ```
 Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Researcher → Coder
-  → Reviewer → Blueprinter → Mock Builder → Tester → Conflicts Gate → CI Gate → Merger
+  → Reviewer → Code Commenter → Blueprinter → Mock Builder → Tester → Conflicts Gate → CI Gate → Merger
 ```
 
 | Step | What it does |
@@ -21,6 +21,7 @@ Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Resear
 | **Researcher** | Investigates prior art, libraries, and constraints. |
 | **Coder** | Clones the repo and writes the implementation. |
 | **Reviewer** | The Coder's companion. Rates the change and loops it back for rework below threshold, **immediately after the Coder**, so review happens on fresh code before the map/test tail. |
+| **Code Commenter** | Comment-only pass that keeps in-source comments accurate: adds why-not-what comments, fixes ones that have drifted from the code, and removes noise, with no behaviour change. Amends the Coder's open PR in place. |
 | **Blueprinter** | Refreshes the service → modules → features map in-repo from the new code. |
 | **Mock Builder** | Stands up WireMock mocks for external services and the compose wiring so the suite runs locally. |
 | **Tester** | Runs the software against the mocks and the spec's acceptance scenarios and reports what it observed. |
@@ -53,6 +54,7 @@ Other built-in pipelines each new workspace seeds:
 | **Complex fullstack feature** | The fullest pipeline: adds a Researcher, the Playwright e2e author, and business/feature documenters around the Full-build core. |
 | **Map service** | Blueprint only. Run after bootstrapping to reconcile a repo onto the board. |
 | **Write spec** | Spec Writer only. Regenerate a service's in-repo spec on its own. |
+| **Improve code comments** | Code Commenter only, then the merge tail. Run standalone to refresh a repo's in-source comments; here it opens its own PR. |
 | **Integrate & ship** | Integrator → Mock Builder → Tester → Documenter, for wiring an existing change through. |
 | **Dependency updates** / **Tech debt** | The recurring presets (see [Recurring Pipelines](./recurring-pipelines.md)). |
 
@@ -119,7 +121,7 @@ When a run reaches it, the gate watches the task's pull request on GitHub:
   **human-review** notification while it waits.
 - From the gate window a person can request a freeform fix at any time, dispatched immediately.
 
-The grace window is the per-task **human-review grace** merge-preset knob. The gate is opt-in (it
+The grace window is the per-task **human-review grace** risk-policy knob. The gate is opt-in (it
 needs a real reviewer and a wired PR-review provider) and passes through when unwired, which is why
 it isn't in the always-on default pipelines.
 
@@ -185,6 +187,54 @@ For each item you can:
 Once everything is decided, the Coder loops once more for any sent-back follow-ups and answered
 questions, then the pipeline advances. The companion is **on per Coder step** and can be disabled for
 a step in the pipeline builder.
+
+### Choosing an implementation approach
+
+Some tasks can be built in materially different ways (patch the call site versus refactor the seam,
+migrate the schema versus adapt the mapper), and that choice is often a judgement call worth making
+before any code is written. The Coder step can run an **implementation-fork decision** phase for
+exactly this: a read-only proposer surfaces the distinct approaches first, the run **parks**, and your
+choice is folded into the Coder's prompt as a binding directive.
+
+At the park, a **Choose an implementation approach** window shows a card per approach, each with its
+summary, concrete plan, tradeoffs, and risk notes, one marked **Recommended**. You can:
+
+- **Pick** a proposed approach (optionally with a steering note),
+- **Enter your own** free-text approach, or
+- **Ask about these approaches** in a grounded Q&A thread before deciding (bounded to a set number
+  of questions).
+
+Click **Use this approach** and the Coder runs with it. On the pipeline the Coder step shows
+"Proposing approaches…" while the proposer runs and a **Choose an approach** button when it parks, and
+a **fork-decision-pending** notification (in-app and Slack) is raised.
+
+Control it per task in the inspector's **Agent configuration** panel: `coder.forkDecision` is **Auto**
+(the default), **Always propose**, or **Off**. In **Auto** it triggers only when the task's estimate
+clears the fork-decision thresholds on the workspace [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
+(disabled by default), so light tasks skip it. If the proposer finds only one sensible approach it
+doesn't park. The setting is editable until the Coder step starts, then frozen. Today it is scoped to
+single-repo (primary-repo) tasks.
+
+## Handing a task existing branches
+
+By default a run starts from the repo's default branch and works in a branch it mints for the task.
+You can instead point a run at branches that already exist, from the **Existing branches** picker in
+the task inspector's **Run settings** (it needs the workspace's GitHub App connected). Add a branch
+and pick its mode:
+
+- **Reference**: read-only context. The agents may read its history and diff to learn from a spike or
+  prototype, but never commit to it. A task can attach several; a missing one is dropped with a
+  warning.
+- **Working**: the branch the run builds **inside**. The run starts from it and keeps committing to
+  it instead of a minted branch, and the PR, CI gate, and merger all ride it. At most one per task,
+  and the branch must already exist (the run fails loudly if it's missing, since it's the starting
+  point).
+
+Promoting a branch to Working demotes any existing Working branch back to Reference. The controls
+enforce the rest as they go: the Working branch is locked once a PR exists, Working mode is
+unavailable on a task that spans more than one service, the base branch can't be a Working branch, and
+a protected Working branch shows a warning that pushes may be rejected. A merged Working branch is
+never auto-deleted, so reusing it on a new task **resumes** it.
 
 ## Editing pipelines
 
@@ -255,7 +305,8 @@ From a selected block, start a run:
 
 If your workspace caps [running tasks per service](./designing-your-board.md#workspace-settings) and
 the service is already at its limit, starting another task there is refused with a clear message
-until a running task finishes.
+until a running task finishes. If a task's **Run** control is disabled because it still has unfinished
+dependencies, an amber hint names them, so you can see what has to land first.
 
 Each agent runs on its kind's default model; see [Choosing models](#choosing-models) below.
 
@@ -273,9 +324,9 @@ Models are assigned through **presets**, managed in **Configuration → Model Co
 
 - A **preset** sets one **base model** for every agent kind, plus optional **per-kind overrides** to
   point a single kind (say, the **Architect**) at a stronger model.
-- One preset is the workspace **default**; every workspace seeds two built-ins, **Kimi K2.7** and
-  **GLM-5.2**. A task selects which preset it runs on (in the new-task form or its inspector), and
-  changing the preset only affects steps that haven't started yet.
+- One preset is the workspace **default**; every workspace seeds three built-ins, **Kimi K2.7**,
+  **GLM-5.2**, and **Claude Opus 4.8**. A task selects which preset it runs on (in the new-task form
+  or its inspector), and changing the preset only affects steps that haven't started yet.
 
 The picker shows each model's list price next to its provider and context window (quota-based
 subscription models show their quota burn rate instead), so you can weigh cost as you assign kinds.
@@ -287,6 +338,9 @@ routine steps to manage [spend](./budgets.md).
 Runs stream over WebSockets, so there's no polling. As the run executes you'll see:
 
 - Each step transition (**Pending → Working → Done**).
+- A live **elapsed clock** on the running step (both in the pipeline view and the inspector), so a
+  step that hasn't emitted subtasks yet reads as working rather than hung; a finished step shows its
+  frozen total.
 - **Subtask** updates within a step.
 - **Decision prompts** when an agent needs you.
 - **Failures**, with the captured error for diagnosis.
@@ -326,7 +380,7 @@ the Fixer's budget.
 Its verdicts render in a **Coverage review** section of the test-report window: each pass shows
 "Coverage adequate" or "Coverage gaps found" with the gaps to close, the model, and a re-run counter.
 The companion is **on per Tester step** and can be disabled for a step in the pipeline builder. Its
-re-run cap is the per-task **`maxTesterQualityIterations`** merge-preset knob (default **3**).
+re-run cap is the per-task **`maxTesterQualityIterations`** risk-policy knob (default **3**).
 
 ## Responding to decision prompts
 
@@ -374,10 +428,12 @@ You have four distinct controls over a run:
   the restarted step as context; the chosen step and every later step have their iteration counters
   (companion attempts, gate/test attempts) reset. Use it to re-run work that already completed. The
   control appears on the step-detail overlay, on each step in the zoomed-in pipeline timeline, and in
-  the dedicated result windows (test report, CI/Conflicts gate, requirements review). As with start
-  and retry, restarting a step that uses a personal subscription prompts for your password.
+  the dedicated result windows (test report, CI/Conflicts gate, requirements review), and is
+  keyboard- and touch-reachable, not hover-only. As with start and retry, restarting a step that uses
+  a personal subscription prompts for your password.
 - **Stop** halts the run but **keeps it**: the run stays readable and retryable and the block goes
-  *blocked*. Nothing is discarded.
+  *blocked*. Stopping asks you to confirm first (from the board card or the inspector), since it kills
+  the running container; nothing is discarded and the run can be retried.
 - **Reset** is the explicit destructive action: it discards the run and returns the task to
   *planned*.
 

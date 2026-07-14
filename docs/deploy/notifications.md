@@ -46,7 +46,9 @@ Slack messages can @-mention by audience so the right people see the right event
 - CI failures and merge reviews mention the engineering audience.
 - The task's creator is always mentioned.
 
-Map your members to those audiences in the workspace's Slack settings.
+Map your members to those audiences in the workspace's Slack settings. Each mapping row needs both a
+user id and a Slack member id: a half-filled row blocks the save with a warning rather than being
+silently dropped, so remove the row or complete it before saving.
 
 ---
 

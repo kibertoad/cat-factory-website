@@ -42,6 +42,35 @@ These are the credentials that reach the endpoint (an ingress token or basic-aut
 non-sensitive test-environment data and rendered directly into the prompt. They are not application
 login accounts, and you should not wire real or production secrets through them.
 
+## Sealed test credentials
+
+For the real secrets a test genuinely needs (an API key a suite calls out with, a seeded login), use
+the **Test credentials (sensitive)** panel on a **service frame's inspector** rather than the
+environment-access handles above. It is a per-service, write-only editor: add named entries of a
+**variable name**, a **description**, and a **value**, then **Save credentials**. Values are
+encrypted at rest under [`ENCRYPTION_KEY`](./configuration.md#credential-encryption) and never read
+back (only the name and description return), so the panel hides itself entirely on a deployment with
+no encryption key set.
+
+The point is that these secrets reach the Tester **out of band**: at dispatch they are decrypted and
+injected into the Tester container as **environment variables** (the agent reads `$YOUR_VAR`), while
+the agent's prompt and the run's telemetry only ever see the variable **name and description**, never
+the value. Entries resolve up the frame chain to the service frame, and reserved toolchain names
+(`PATH`, `NODE_OPTIONS`, `npm_config_*`, …) are refused. Saving **replaces the whole set** for the
+service, and Save stays disabled until every row has a value, so an existing secret can't be blanked
+by accident. Only wire secrets you can rotate; the warning banner says as much.
+
+## Testing provisioning before a real run
+
+To confirm a service's ephemeral-environment config actually works before a pipeline depends on it,
+open the service's inspector and click **Test environment creation** in the environment-provisioning
+section. It runs the whole lifecycle against a throwaway branch, streaming each stage live
+(**creating branch → provisioning environment → tearing down environment → deleting branch → done**),
+and the button turns into **Stop** while it runs. It reports **Test passed** in green when the
+environment came up and tore down cleanly and the branch was deleted, or **Test failed** in red
+naming the failing stage. The button is disabled on an `infraless` service (there is nothing to
+provision) with a hint to configure a provision type first.
+
 ## Choosing a backend
 
 The **Test environments** tab in the top-level **Infrastructure** window offers several backend kinds.

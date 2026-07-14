@@ -70,6 +70,10 @@ shows a **Changes available** badge (otherwise **Up to date**); resync to pull t
 check reads only the current head commit of the source, so it is cheap, and fragment bodies are
 cached locally, so a run never re-fetches from GitHub.
 
+Unlinking a source is a confirmed action: it asks you to confirm, naming the repo and warning that the
+guideline fragments it synced will be removed (you can re-link it later), so a synced source isn't
+dropped by a stray click.
+
 The body is cached as a last-resolved snapshot and refreshed on a short TTL (5 minutes by default). If
 the source is unreachable at run time, the run falls back to the cached body, so resolution never
 blocks a run. To pull the latest immediately rather than waiting out the TTL, use the fragment's
