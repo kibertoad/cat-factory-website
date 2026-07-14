@@ -10,13 +10,60 @@ A mandatory variable that is missing or invalid does not crash-loop the containe
 starts anyway and serves a minimal fallback: the health check returns `200` with status
 `misconfigured` (so the orchestrator keeps the container alive instead of restarting it in a loop
 that hides the problem), and the SPA branches to a full-screen **Backend not configured** screen
-listing each problem with the variable name, what it is for, and how to fix it. Only variable names
-and remedies are shown, never any secret value, so the screen and the matching boot log are safe to
-share. The same structured problem list is returned as a `503` to non-browser callers.
+listing each problem with the variable name, what it is for, how to fix it, and a **link to the
+matching documentation**. Only variable names and remedies are shown, never any secret value, so the
+screen and the matching boot log are safe to share. The same structured problem list is returned as a
+`503` to non-browser callers.
 
-The values validated this way include `DATABASE_URL`, `ENCRYPTION_KEY`, `AUTH_SESSION_SECRET`,
-`HARNESS_SHARED_SECRET`, `TELEMETRY_DB` (on the Worker), a login provider on a remote deployment,
-the container-executor wiring, and malformed `AGENT_MODELS` JSON. Fix the listed values and reload.
+The values validated this way include `DATABASE_URL`, `ENCRYPTION_KEY` (present, valid base64,
+decodes to ≥ 32 bytes), `AUTH_SESSION_SECRET`, `HARNESS_SHARED_SECRET`, `TELEMETRY_DB` (on the
+Worker), the primary `DB` binding (on the Worker), a login provider on a remote deployment, the
+container-executor wiring, a `DB_SCHEMA` that isn't a valid Postgres identifier, and malformed
+`AGENT_MODELS` JSON. `GITHUB_APP_PRIVATE_KEY` (and the privileged App key) must be a **PKCS#8** PEM;
+a GitHub-issued PKCS#1 `BEGIN RSA PRIVATE KEY` is rejected with the exact `openssl pkcs8 -topk8`
+conversion to run. Setting `REDIS_URL` without the optional `ioredis` package installed is also fatal,
+with the `pnpm add ioredis` fix. Fix the listed values and reload.
+
+### Warnings that don't block boot
+
+Some misconfigurations are logged as a single structured warning (with a doc link) and boot
+continues on the built-in default rather than stopping:
+
+- A **numeric knob** set to a non-numeric value (for example `AGENT_MAX_OUTPUT_TOKENS`,
+  `CONTAINER_MAX_AGE_MINUTES`, or any of the retention-day vars) logs `NAME is set to "…", which is
+  not a number — ignoring it and using the built-in default` and falls back.
+- Only one half of `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` being set names the missing half.
+- `REDIS_URL` set but unreachable: a boot probe logs the credential-free `host:port` and a
+  `redis-cli -u <REDIS_URL> ping` check to run, then continues (cross-node coordination stays off
+  until Redis answers).
+- In **local mode**, a `GITHUB_PAT` that fails a quick `GET /user` probe (revoked, forbidden, or
+  missing the `repo`/`workflow` scopes) logs a warning with a pre-scoped token-creation link.
+
+One boot check is deliberately fatal-then-recoverable: when the database refuses the connection on a
+**loopback** host (a `localhost` that resolves to IPv6 `::1` on Windows or Docker Desktop, a common
+footgun), the misconfigured screen names `DATABASE_URL` and the `127.0.0.1` fix, rather than
+crash-looping. A refused connection to a **remote** database still crashes and retries, so a transient
+outage isn't frozen behind the screen.
+
+### Elaborated failure messages
+
+Runtime failures an operator has to act on now carry a structured cause, a fix, and a doc link while
+preserving the original error text: rejected GitHub/GitLab API calls (per HTTP status), GitHub App
+installation-token mint failures, webhook signature rejections (logged operator-side with the env var
+to compare, while the caller still gets a terse `401`), credential-decryption failures (which name
+whether the `ENCRYPTION_KEY` was rotated or a stored secret is corrupted), unsupported model or
+Bedrock models, and container/runner dispatch failures (a `404` names a stale executor-harness image).
+These surface in the boot log and, where they belong to a run, on the run's step (see
+[Observability → Run and step diagnostics](./observability.md#run-and-step-diagnostics)).
+
+### Health vs. readiness
+
+The Node backend exposes two public endpoints. `GET /health` is a static liveness signal (`200`
+`{status:"ok"}`, or `misconfigured` above) that your orchestrator restarts on. `GET /ready` is a
+readiness signal a load balancer drains on: it round-trips the Postgres pool with a bounded
+`SELECT 1` and checks the pg-boss worker, returning `200 {status:"ready"}` or `503`
+`{status:"not_ready"}` with a per-check breakdown, and flips to not-ready the moment graceful
+shutdown begins. The Cloudflare Worker has no long-lived process and no readiness endpoint.
 
 ## Authentication
 
@@ -144,6 +191,9 @@ matching field is clamped to the cap and Save is refused above it.
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | PostgreSQL connection string (Node.js deployment only). |
+| `DB_SCHEMA` | Postgres schema the app's unqualified tables live in. Defaults to `public`; set it to share one database with another service. Must be a valid lowercase identifier or boot fails. |
+| `DB_MIGRATIONS_SCHEMA` | Schema holding the migration ledger. Defaults to `drizzle`; relocate it so it can't collide with another tool's migration table on a shared database. |
+| `DB_PGBOSS_SCHEMA` | Schema pg-boss uses for its job queues. Defaults to `pgboss`. |
 | Container image registry + pull credentials | Source of the executor-harness image. |
 | `HARNESS_SHARED_SECRET` | Inbound-auth secret for the executor harness (≥ 16 chars, stable). The backend injects it into each per-run container's env and sends it as the `x-harness-secret` header, so the harness rejects any call that doesn't carry it. A deployment that dispatches container jobs validates it at boot and fails with a config error when it is unset; keep the value stable so a container re-attach after a restart still authenticates. A self-hosted runner pool configures its own secret pool-side. |
 | `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |

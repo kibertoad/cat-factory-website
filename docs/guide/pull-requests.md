@@ -28,17 +28,17 @@ The Full build pipeline finishes with three engine steps that prepare the PR for
   merge the base in and resolve any conflicts on the same branch.
 - **CI Gate**: gates the up-to-date PR on green CI, looping a **CI Fixer** agent on failure.
 - **Merger**: scores the PR on complexity, risk, and impact, then either auto-merges when the
-  scores fall within the task's [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
-  or raises a review notification for a human. When you pick a preset in the add-task modal or task
+  scores fall within the task's [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
+  or raises a review notification for a human. When you pick a policy in the add-task modal or task
   inspector, the dropdown labels each option with its actual auto-merge ceilings (complexity, risk,
   impact) and CI-fix budget, and the default option shows the resolved workspace default's
-  thresholds, so you can compare presets without opening the settings panel. It only auto-merges a PR
+  thresholds, so you can compare policies without opening the settings panel. It only auto-merges a PR
   it could actually examine:
   if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
   review rather than merging on a hollow score.
 
-Presets live in a per-workspace library, and each task picks one (tasks with no explicit choice use
-the workspace default). Two ship built in:
+Risk policies live in a per-workspace library, and each task picks one (tasks with no explicit choice
+use the workspace default). Two ship built in:
 
 - **Balanced** (the default): auto-merges a PR when its complexity, risk, and impact scores fall
   within the thresholds, and routes anything above them to human review.
@@ -46,7 +46,7 @@ the workspace default). Two ship built in:
   notification for a person to merge. Reach for it on a board where a human always makes the final
   call.
 
-Edit these or add your own thresholds in the workspace's merge-preset panel.
+Edit these or add your own in the workspace's **Risk policies** panel.
 
 A pipeline can add a **Post-release-health** gate after the Merger that watches Datadog monitors and
 SLOs for a window after the merge and escalates to an on-call agent on a regression. It's optional

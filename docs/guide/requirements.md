@@ -75,26 +75,48 @@ Answering is low-friction: each answer **auto-saves** as you move off the field 
 button), so a half-finished review is never lost. Your typed answers are flushed before any other
 action and preserved across background work, so they are still there when you come back.
 
-### Recommend an answer
+Each finding carries an **Answer / Dismiss / Recommend** selector. **Answer** takes your typed
+response and marks the finding **You answered**. **Dismiss** drops it. **Recommend** asks the
+Requirement Writer to draft a grounded suggestion; anything you type alongside it is treated as
+**guidance that steers the recommendation**, shown on screen but not saved as the answer.
 
-When you're unsure how to answer a finding, click **Recommend something** on it (the label flips to
-**Marked for recommendation**), then click **Request N recommendation(s)** in the action rail. A
-**Requirement Writer** drafts a grounded suggestion for each marked finding. It grounds each one in
-this order:
+### Auto-recommended answers
+
+The reviewer sorts every finding into one of two buckets as it raises it:
+
+- **Answerable from best practice or context**: findings a confident, defensible answer follows from
+  universal engineering or product best practice, or that the provided context already settles. Cat
+  Factory drafts a grounded recommendation and **auto-accepts it as the finding's default answer**,
+  labelled **Recommended default — keep it, edit it, or dismiss the finding**. You stay in control:
+  edit it, leave it, or dismiss the finding. When a best-practice [prompt fragment](./prompt-fragments.md)
+  settles it, the answer carries a **Current standard: {title}** badge.
+- **Needs a business, product, or domain decision**: findings the engine will not guess at. These are
+  left blank and flagged **Needs your input**, so only the calls that are genuinely yours pause you.
+
+Auto-recommendation runs on **every review round**, and because it pre-answers the mechanical
+findings, it suppresses the "recommendations to review" notification for those. It is **on by
+default**, controlled per pipeline as a toggle on the **requirements-review step** in the
+[pipeline builder](./running-pipelines.md#editing-pipelines): turn it off to answer every finding
+yourself.
+
+### Requesting a recommendation yourself
+
+For a finding left to you, choose **Recommend** to have the **Requirement Writer** draft a grounded
+suggestion. It grounds each one in this order:
 
 1. The service's **best-practice [prompt fragments](./prompt-fragments.md)** (your team/org standards),
    flagged as the current standard when one settles the finding.
 2. The **in-repo `spec/` and `tech-spec/`** documents.
 3. **Web search**, for what the project material leaves open.
 
-Recommendations run **in the background**, like every other review action. The request returns at
-once: the review shows an **N / M ready** counter with a per-finding "Generating a grounded
-suggestion…" placeholder while the Writer fills each one, and the task card shows a **Recommending…**
-badge. The review's stats rail keeps a persistent **Recommendations** summary (how many are generating
-and how many are ready to review), visible even while you read the incorporated document, so you can
-see what's still awaited. Both are server-driven, so they survive closing the window, and you get a
-notification when the batch is ready. You can request recommendations whenever the review is editable,
-including a merged review you are reworking. You can close the window and come back.
+Recommendations run **in the background**, like every other review action, and render **inline in the
+finding's own card**: a "Generating a grounded suggestion…" spinner while the Writer works, then the
+ready suggestion in place. Each finding in a batch can carry its own steering note. The task card
+shows a **Recommending…** badge and the review's stats rail keeps a persistent **Recommendations**
+summary (how many are generating, how many are ready), visible even while you read the incorporated
+document. All of it is server-driven, so it survives closing the window, and you get a notification
+when the batch is ready. You can request recommendations whenever the review is editable, including a
+merged review you are reworking.
 
 Recommendations are not AI-reviewed: you decide. For each ready suggestion you can **Accept** it (it
 becomes the finding's answer, folded into the next incorporation), **Reject** it (the finding reopens
@@ -107,7 +129,7 @@ comes back. You're summoned again only if the re-review raises fresh findings or
 cap; a converged round just advances the pipeline. (If you
 dismissed everything and left nothing to fold in, the round settles with no LLM call at all.)
 
-Two per-task knobs on the [merge-threshold preset](./designing-your-board.md#navigating-navbar-and-command-bar)
+Two per-task knobs on the [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
 tune the loop:
 
 - **`maxRequirementIterations`** (default **3**): how many reviewer passes run before the loop stops

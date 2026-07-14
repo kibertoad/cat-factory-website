@@ -433,7 +433,7 @@ lists.
 | `probe(...)` | Run the precheck and classify it as a `GateProbe`. Receives the live `GateStepState` so a time-windowed gate can read its `watchSince`. |
 | `onExhausted(args)` | Run when the attempt budget is spent (or there is no async executor to escalate to). May raise a notification; returns the message used to fail the run. |
 | `pollExhaustion?` | `fail` (default) or `pass`. A time-windowed watch gate (like post-release-health) uses `pass`: running out of polls with no regression seen is a healthy result, not a timeout failure. |
-| `attemptBudget?(preset)` | The helper-attempt budget, resolved from the task's merge preset. Defaults to `ciMaxAttempts`. |
+| `attemptBudget?(policy)` | The helper-attempt budget, resolved from the task's risk policy. Defaults to `ciMaxAttempts`. |
 | `helperPriorOutput?(summary)` | Extra context handed to the helper on escalation. |
 | `gatherHelperPriorOutputs?(...)` | Async builder for richer helper context gathered at dispatch time; takes precedence over `helperPriorOutput`. |
 | `resolveHelperCompletion?(args)` | See below: settle the gate from the helper's result instead of re-probing. |

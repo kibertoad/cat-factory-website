@@ -128,7 +128,12 @@ so a slow or broken step is diagnosable without reading logs:
   call"), the container id, and a clickable container URL when there is one.
 - **Spin-up failures**: a container or environment that never comes up is reported on the step as a
   provisioning failure with the verbatim provider error, rather than a generic run failure. The same
-  attempts are in the [provisioning event log](#the-provisioning-event-log).
+  attempts are in the [provisioning event log](#the-provisioning-event-log). Runner-backend,
+  runner-pool, and Datadog failures carry a **UI-first remedy** (which settings screen to re-test or
+  reconnect), and a dispatch `404` names a stale executor-harness image.
+- **Container eviction**: a container that dies mid-run is classified as a **crash** or a
+  **transient** eviction rather than a bare "evicted or crashed" string, so a retryable blip reads
+  differently from a real failure.
 - **Infrastructure attempts, live**: while a run is active, the **Infrastructure attempts** drawer
   live-tracks each container spin-up and tear-down as it happens, re-polling quietly in the background
   so attempts appear with their timestamps and no refresh spinner flickers. Auto-polling stops once the
@@ -253,7 +258,7 @@ release it watches the Datadog **monitors** and **SLOs** configured on that bloc
   healthy is also a pass.
 
 Tune the window and the number of on-call investigations per release through the task's
-[merge preset](../guide/designing-your-board.md#navigating-navbar-and-command-bar)
+[risk policy](../guide/designing-your-board.md#navigating-navbar-and-command-bar)
 (`releaseWatchWindowMinutes`, default 30; `releaseMaxAttempts`, default 1).
 
 ### Agent-On-Call
