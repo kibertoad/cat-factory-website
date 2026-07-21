@@ -51,6 +51,9 @@ Other built-in pipelines each new workspace seeds:
 | **Build & PR review** | Adds an opt-in **Human Review** gate before the merge: the run waits for a human code review on the PR and loops the Fixer to address feedback. See [Human review on the pull request](#human-review-on-the-pull-request). |
 | **Build & visual confirmation** | Experimental. A UI-focused build whose **UI Tester** screenshots each screen, then a **Visual Confirmation** gate parks for a person to compare them against the uploaded reference designs. See [Visual confirmation](#visual-confirmation). |
 | **Author a document** / **Quick document** | A forward-authoring track that produces an in-repo Markdown document (PRD, RFC, ADR, design, runbook, …) shipped as a pull request. See [Authoring a document](#authoring-a-document). |
+| **Ralph loop** | A single persistent coding step that retries against your validation command until it passes, then gates and ships the PR (`ralph → Conflicts → CI → Merger`). The default for a Ralph-loop task. See [The Ralph loop](#the-ralph-loop). |
+| **Run a spike** / **Run a spike (direct commit)** | A timeboxed read-only investigation that answers a research question and delivers a `docs/research/<slug>.md` findings document. The default variant ships it as a PR through the review/merge tail; the direct-commit variant writes it straight to the base branch with no PR. The default for a Spike task. |
+| **Review a pull request** | A read-only deep review of an open PR that returns prioritized findings; it writes no code and opens no PR. The default for a [Review task](./pull-requests.md#deep-reviewing-an-existing-pull-request). |
 | **Complex fullstack feature** | The fullest pipeline: adds a Researcher, the Playwright e2e author, and business/feature documenters around the Full-build core. |
 | **Map service** | Blueprint only. Run after bootstrapping to reconcile a repo onto the board. |
 | **Write spec** | Spec Writer only. Regenerate a service's in-repo spec on its own. |
@@ -60,8 +63,31 @@ Other built-in pipelines each new workspace seeds:
 
 Additional agent kinds include the **Fixer** (loops on failing tests inside the Tester gate),
 **Bug Investigator**, **Playwright** (runnable e2e tests from the spec's acceptance scenarios),
-**Documenter**, **Integrator**, and a tech-debt analysis step; a deployment can also
+**Documenter**, **Integrator**, a tech-debt analysis step, and a **Skill** step that runs a
+repo-sourced [Claude Skill](./skills.md) picked per step; a deployment can also
 [register its own agent kinds and pipelines](../deploy/custom-agents.md).
+
+### Pipeline purpose and task-type scoping
+
+Every pipeline carries a **purpose**: **Build**, **Documentation**, **Review**, **Research**, or
+**Planning**. The purpose narrows which pipelines a task can pick and which agents the builder offers:
+
+- A **Document** task is offered only Documentation pipelines, and a **Review** task only the
+  Review pipeline. Every other task type sees all pipelines. A pipeline with no purpose set is hidden
+  from Document and Review tasks and shown for the rest.
+- In the builder, a non-Build purpose hides the Implementation and Testing agent categories from the
+  palette, since those pipelines write no code and run no tests. Leaving implementation or testing
+  steps on such a pipeline raises a warning to remove them or switch the purpose back to Build.
+
+Set the purpose (and a description) on a cloned pipeline in the builder.
+
+### Previewing a pipeline before you pick it
+
+The pipeline picker in the add-task form and the inspector's Run settings is a master-detail list:
+hover a pipeline to see its description and its ordered steps as labeled chips, with a shield icon on
+any step that pauses for human approval, before you commit to it. Disabled-by-default steps are left
+out of the preview. A custom pipeline's description is editable in the builder ("shown when picking
+this pipeline"), so the pipelines you author explain themselves at selection time.
 
 ### Triaging and fixing a bug
 
@@ -79,6 +105,25 @@ The **Triage & fix bug** pipeline is built for a bug report rather than a featur
 
 Hover any step in the builder, the draft chain, or a board task card to see what that agent does:
 each kind's description shows as a tooltip.
+
+### The Ralph loop
+
+A **Ralph loop** task runs a single coding step that retries until a command you supply passes, for
+work whose "done" is a check rather than a review: get the suite green, make the typechecker pass,
+port a batch of call sites. Create a task of type **Ralph loop**, put the spec in the description, and
+set two knobs in the inspector's **Agent configuration** panel:
+
+- **Validation command**: the shell command run in the checkout after each iteration (for example
+  `pnpm test && pnpm typecheck`). Exit 0 means done.
+- **Max iterations**: the anti-runaway budget (default 10).
+
+Each iteration is a fresh-context container run that works the spec, commits, and pushes; the harness
+then runs the validation command. On exit 0 the step completes and the PR flows through the standard
+Conflicts, CI, and Merger tail. On a non-zero exit with budget left, a new iteration starts with the
+previous validation output threaded in as feedback. When the budget is spent without passing, the run
+raises a decision notification and hands off to you rather than looping forever. The loop keeps an
+append-only progress log and survives restarts, and it opens the PR on the first iteration and amends
+the same branch on later ones. Its `pl_ralph` pipeline is the default for a Ralph-loop task.
 
 ### Human-testing a change
 
@@ -109,6 +154,10 @@ environment actions are disabled.
 The **Human Review** gate puts a required human code review in the pipeline. It ships as the opt-in
 **Build & PR review** pipeline (Coder → Reviewer → Blueprinter → Mock Builder → Tester → Conflicts →
 CI → Human Review → Merger), and you can add the `human-review` step to any custom pipeline.
+
+This gate waits for a *person's* GitHub approval during a build. To turn Cat Factory's own agent loose
+on a pull request that already exists, use a
+[Review task](./pull-requests.md#deep-reviewing-an-existing-pull-request) instead.
 
 When a run reaches it, the gate watches the task's pull request on GitHub:
 

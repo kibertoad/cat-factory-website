@@ -183,6 +183,13 @@ The command:
 4. **Hands off** to the SPA: it prints the connection once to the terminal and opens a deep link that
    pre-fills the **Local k3s** connect form. The token is deliberately kept out of the URL, so you
    paste it from the terminal, then click **Test** and **Save**.
+5. **Enable the deploy runner.** The cluster connection says only *where* to deploy; a test
+   environment also needs a deploy runner to render and apply the manifests. The command prints this
+   step: set `LOCAL_DEPLOY_RUNTIME=container` in the local backend `.env` and restart (`container`
+   resolves the deploy-harness image automatically, nothing else to set), or use `native` with
+   `LOCAL_DEPLOY_HARNESS_ENTRY` to drive your own host `kubectl`/`kustomize`/`helm`. Without it a
+   Kubernetes provision fails to stand up with "no deploy runner wired". See
+   [Run Locally → Configuration](./local.md#configuration).
 
 k3s itself runs only on Linux. On Windows and macOS the command steers you to k3d (k3s inside
 Docker); a Windows walkthrough ships in the repo under `backend/docs`.

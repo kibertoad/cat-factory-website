@@ -63,9 +63,11 @@ feels like it spans several PRs, split it into sibling leaves.
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
   controls, at the level you need. When you add a task, pick its **type** (**Feature**, **Bug**,
-  **Document**, or **Spike**), which adjusts the form (a Bug collects severity and steps to
-  reproduce, a Spike a time-box, a [Document](./documents.md) its kind and target path) and lets the
-  workspace cap concurrency per type.
+  **Document**, **Spike**, **Review**, or **Ralph loop**), which adjusts the form (a Bug collects
+  severity and steps to reproduce, a Spike a time-box, a [Document](./documents.md) its kind and
+  target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to audit
+  and a review focus, a [Ralph loop](./running-pipelines.md#the-ralph-loop) its validation command and
+  iteration budget) and lets the workspace cap concurrency per type.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
@@ -150,7 +152,7 @@ All of this is covered in [Repositories](./repositories.md).
 
 Models are assigned through **presets** under **Configuration → Model Configuration**. A preset sets a **base model** for every agent kind plus optional **per-kind overrides**,
 so you can point the **Architect** at a stronger model while everything else stays on the base. One
-preset is the workspace **default** (every workspace seeds **Kimi K2.7** and **GLM-5.2** to start),
+preset is the workspace **default** (every workspace seeds **Kimi K2.7**, **GLM-5.2**, and **Claude Opus 4.8** to start),
 and a task picks the preset it runs on in its inspector. Use stronger models on architecturally
 significant kinds and cheaper ones on routine steps to manage [spend](./budgets.md). See
 [Choosing models](./running-pipelines.md#choosing-models).
@@ -161,7 +163,7 @@ significant kinds and cheaper ones on routine steps to manage [spend](./budgets.
 
 - **Running tasks per service**: cap how many tasks may run concurrently under one service frame.
   Choose **No limit**, a single **shared** cap across all task types, or a **per-type** cap (a
-  separate number for Feature, Bug, Document, and Spike). Starting a task that would exceed the cap is
+  separate number per task type). Starting a task that would exceed the cap is
   refused until a running task finishes, so a busy service doesn't fan out more agents than you want.
 - **Waiting for a human**: how many minutes a run may sit parked on a decision before its inbox
   notification escalates to red and is flagged **Overdue** (default 120). Parked runs are never

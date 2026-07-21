@@ -73,6 +73,46 @@ account/workspace pools. Conversely, granting `admin` is the only way to let som
 org's keys, email sender, and members.
 :::
 
+## Board access and workspace roles
+
+Account roles govern the whole tenant. Below them, each board carries its own **workspace roles** that
+scope what a person can do inside that one board. The two layers stack: account membership is the
+prerequisite, and the workspace role decides the rest.
+
+Three workspace roles form a strict ladder:
+
+| Role | Can |
+| --- | --- |
+| **Viewer** | Read-only. See the board, runs, spend, and metrics, but change nothing. |
+| **Member** | The working role. Everything a viewer can do, plus edit the board (blocks, dependencies, pipelines) and start and control agent runs. |
+| **Admin** | Everything, plus board settings, integrations, secrets and keys, and managing the board's own member list. |
+
+Every board has an **access mode**:
+
+- **Open to the account** (the default): every account member can see the board and acts as at least a
+  **Member**. Existing boards behave exactly as before, with no migration.
+- **Restricted**: only the people on the board's explicit member list can see it, each at their
+  assigned workspace role.
+
+An account **admin** is always a board admin, so a board can never lock everyone out. Leaving a board
+or demoting yourself is allowed.
+
+### Managing a board's members
+
+Open **Workspace settings → Members** (the tab shows only to a board admin). There you can:
+
+- Toggle **Restrict to members** to switch the board between open and restricted access.
+- **Add a member** from the owning account's existing people and pick their role (defaults to
+  **Member**). You add people the account already has: to bring in someone new, send an
+  [email invitation](#inviting-teammates) at the account level first, then scope them to boards.
+- Change a member's role inline, or remove them.
+
+The board's creator is enrolled as an admin automatically.
+
+A **Viewer** sees the board as read-only: editing gestures (drag, resize, delete) are disabled with a
+"Read-only access" note, run and review-window actions are disabled while the windows stay readable,
+and the board switcher badges such a board **Viewer** (a restricted board also shows a lock icon).
+
 ## The responsible product person
 
 A task can name a **responsible product person**: any account member who holds the **product**

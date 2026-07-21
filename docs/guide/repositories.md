@@ -118,8 +118,10 @@ counterpart, "what must be true", is the [spec](./requirements.md#the-unified-in
 ## Monorepos
 
 One repository can back several services. Flag the repository as a **monorepo**, then pin each
-service to a **subdirectory** of it. When you add a service from a monorepo, you browse the repo's
-tree and pick the directory that service owns.
+service to a **subdirectory** of it. When you add services from a monorepo, browse the repo's tree
+and select the directories of the services you want (from any folder), then add them all in one step:
+the modal shows a **Selected services** list and an **Add N services** button. Each service is pinned
+to its subdirectory.
 
 Agents that edit code run scoped to that subdirectory: the **coder**, **mocker**, and **CI fixer**
 work with the service's directory as their working directory, so they stay inside their part of the

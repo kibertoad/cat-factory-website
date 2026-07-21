@@ -36,17 +36,31 @@ other document. This pairs with the
 
 ## Finding and linking context
 
-When you create a task, the Add task popup includes a context picker. For any connected
-source you can:
+The same inline context picker appears on the Add task popup and in the task inspector, so you attach
+material the same way whether the task is new or already exists. For a non-repo source (Confluence,
+Notion, Jira) you can:
 
-1. Search the source's catalogue by title or content (Confluence via CQL, Notion search, Jira
-   via JQL, GitHub issues, and GitHub repo code/docs).
-2. Paste a page or issue URL directly.
+1. Search the source's catalogue by title or content (Confluence via CQL, Notion search, Jira via
+   JQL, GitHub issues).
+2. Paste a page or issue URL (or id) directly.
 3. Pick something already imported into the workspace.
 
-Chosen items are imported and linked to the new task as agent context on create, with no separate
-import step. Search is scoped to the workspace's own integration installation, so you only ever see
-your own org's content.
+For a **repo-backed source** (GitHub, and GitLab through the same adapter) attaching a doc is a
+two-step pick: search for a repository, then choose one or more files, either by filtering on path or
+by browsing the repository tree (multi-select). A repo reachable only through your personal token is
+badged, since it resolves through the workspace's GitHub App at run time and can fail to link on a
+hosted deployment.
+
+GitHub is available as a document source automatically once its App or PAT is installed, with no
+connect step. When no source is connected at all, the context section offers a **Connect a source**
+action that opens the connect flow over the task form and preserves what you've already typed, rather
+than a dead Attach button. Chosen items are imported and linked as agent context on create, with no
+separate import step. Search is scoped to the workspace's own integration installation, so you only
+ever see your own org's content.
+
+Each attached document row shows its full URL on hover and opens in a new tab. If a link fails, the
+error names the specific cause (no access, rate-limited, not found) with a **Copy details** action,
+instead of a generic "could not be linked" message.
 
 Imported content can also be expanded into structural components. A large epic, for example,
 can seed a module with several task leaves, each carrying its slice of context.

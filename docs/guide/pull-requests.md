@@ -72,6 +72,47 @@ Review** gate: the run waits for the PR to meet GitHub's required approvals with
 threads, and loops the Fixer to address review comments in between. See
 [Human review on the pull request](./running-pipelines.md#human-review-on-the-pull-request).
 
+## Deep-reviewing an existing pull request
+
+A **Review** task turns Cat Factory's own agent loose on a pull request that already exists, whether a
+person or an agent opened it. It is a read-only audit: no code is written and nothing merges. This is
+different from the [Human Review gate](./running-pipelines.md#human-review-on-the-pull-request), which
+pauses a *build* pipeline to wait for a human's GitHub approval.
+
+Create it from the add-task modal: pick type **Review**, and in **Pull request** enter the target as a
+full URL (`https://github.com/owner/repo/pull/123`) or a bare `#123` for a PR on the service's own
+repo. Add an optional **Review focus** (for example "focus on the auth changes and error handling") to
+steer the reviewer. A Review task takes no title or description (the title is derived from the PR) and
+no risk policy (it merges nothing). It runs the single-step **Review a pull request** pipeline, and any
+[prompt fragments](./prompt-fragments.md) you pin become review criteria.
+
+The **PR Reviewer** agent clones the repo, fetches the PR head, and for a large diff **slices it into
+cohesive chunks** (a refactor with its call sites and tests) and reviews one chunk at a time, so it
+scales to hundreds of files. It is **comment-aware**: it reads the PR's existing review threads and
+skips issues already raised. It returns **prioritized findings**, each with a severity (blocker, high,
+medium, low, or nit), a category (correctness, security, performance, maintainability, style, or test),
+the file and line, an explanation, and a suggested fix. The board card shows live progress ("Reviewing
+X/Y slices", then "Findings ready").
+
+When the review finishes, the run **parks on its findings**. Open the **PR review** window, multi-select
+the findings that matter (all are selected by default), and resolve:
+
+- **Finish review** records your curated selection and closes the task with no side effect. It works
+  with an empty selection.
+- **Post as comments** publishes the selected findings as individual inline PR comments plus the
+  summary as a general comment. Findings that don't land on a line still in the diff fold into the
+  summary, and a partial post reports "N of M comments posted" and can be retried.
+- **Fix selected** re-arms the step as a **Fixer** that commits fixes for the selected findings onto
+  the PR branch.
+
+On any single finding you can **Dismiss** it (drop it from the set) or **Challenge** it: a second
+read-only investigator re-examines that finding and returns a verdict (Upheld, Strengthened, or
+Retracted, the last auto-deselected). Add an optional note about what seems wrong before it investigates.
+
+Posting and fixing require the PR to live on the service's own repo (fork and cross-repo PRs aren't
+supported yet) and are GitHub-only; on GitLab those two resolutions report as unsupported, while the
+review itself still runs.
+
 ## Merging closes the loop
 
 When you **merge** the pull request:

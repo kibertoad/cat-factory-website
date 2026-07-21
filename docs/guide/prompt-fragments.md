@@ -4,6 +4,9 @@ Prompt fragments are reusable, version-controlled guidelines that agents pull in
 prompts at run time. Encode your team's standards once - coding conventions, review
 checklists, security rules - and apply them everywhere.
 
+For a procedural playbook that runs as its own pipeline step rather than passive guidance folded into
+every agent, see [Claude Skills](./skills.md).
+
 ![The prompt-fragment library's Resolved catalog listing built-in fragments such as backend acceptance tests, acceptance scenarios, and design context, with This board, Documents, and Repo sources tabs](/images/app/context-fragments.webp)
 
 ## The three scopes
@@ -31,18 +34,35 @@ jump between an account standard and the board that layers on top of it.
 
 ## How agents use them
 
-Fragments are assigned **per service**. You choose which fragments a
-service uses in its inspector, and from then on every run on that service applies them. The picker
-also links straight to the board's fragment library and to account fragments, so you can author or
-edit a fragment without leaving the assignment step. To avoid setting the same list on each new
-service, set **workspace defaults** that new services inherit.
+Fragments are assigned on a **service** and pinned per **task**. On a service inspector's **Service
+best practices** you pick the standards for the whole service, and every run on it applies them. A new
+task is seeded from its service's list, but from then the **task owns its selection**: pin an extra
+fragment or drop an inherited one just for that task, and its agents follow exactly the task's own
+list. Removing a fragment on a task really drops it for that task, and later changes to the service's
+list don't rewrite tasks that already exist. Only a service-level run folds in the service's own
+standards.
+
+The picker is the same everywhere: the add-task form, the task inspector (**Best practices** under
+Structure), and the service inspector. Click the **+** to open it, click fragment rows to toggle them
+(the panel stays open so you can add or remove several at once), then click **Done**. Selected
+fragments show below as chips you can remove. The picker also links straight to the board's fragment
+library and to account fragments, so you can author or edit one without leaving the step.
 
 Fragments fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
 and architect) and into the **document-authoring** kinds (see [Document Tasks](./documents.md)). A
 code-style or review-checklist fragment reaches the coding steps automatically; a writing-style
-fragment reaches the document steps. Steps that touch neither code nor prose are left untouched. Two
-built-in **writing-style** fragments (*Avoid LLM tells* and *Concise and actionable*) are attached to
-every new document task by default.
+fragment reaches the document steps. Steps that touch neither code nor prose are left untouched.
+
+### Per-task-type defaults
+
+A new task of a given type can start with a default set of fragments already pinned. The only built-in
+default is for **document** tasks: two **writing-style** fragments (*Avoid LLM tells* and *Concise and
+actionable*) are pinned on every new document task. A deployment can register its own custom fragments
+as the default for any task type (feature, bug, review, and so on) at startup with
+`registerPromptFragments(...)` and `registerTaskTypeDefaultFragments(taskType, ids)`; registered ids
+augment the built-in document defaults rather than replacing them. This seeding is server-side, so it
+applies even to tasks created through the [public API](../reference/public-api.md), which has no
+picker. It is a deployment-level seam, not a UI setting.
 
 ## Link an external document as a living fragment
 

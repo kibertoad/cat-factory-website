@@ -94,8 +94,12 @@ The workspace owns the second by mapping each provision type to a **handler** (a
 connection) on the **Test environments** tab. A `kubernetes` service routes to Local k3s or Remote
 Kubernetes, a `docker-compose` service to Local Docker, a `custom` service to its remote-custom
 handler. When you add a service from a repo, Cat Factory auto-detects a recommended provisioning
-config (manifest roots, overlays, monorepo slices) and offers candidates to accept or change. The
-full model, including custom manifest types and the generate/fix repair agent, is on the
+config (manifest roots, overlays, monorepo slices) and offers candidates to accept or change. In a
+monorepo it finds the service's own manifest slice inside a `base`/`overlays`/per-service layout and
+no longer offers the service's source directory (one carrying a Backstage `catalog-info.yaml`, say)
+as a bogus deploy target. Point it at non-standard house layouts through the `manifestDirs` and
+`serviceManifestPaths` keys of `ENVIRONMENTS_DETECTION_CONVENTIONS`. The full model, including custom
+manifest types and the generate/fix repair agent, is on the
 [Kubernetes](./kubernetes.md#per-service-provision-types) page.
 
 ## Docker Compose environments
