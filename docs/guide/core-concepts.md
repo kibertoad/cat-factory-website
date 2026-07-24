@@ -17,9 +17,12 @@ Each block has a title, description, and status, and can carry a chosen pipeline
 [prompt fragments](./prompt-fragments.md), and, once an agent opens one, its pull request. Blocks
 can be **reparented** by dragging them to a new parent. Deleting a block cascades to its children.
 
-A task also has a **type** (**Feature**, **Bug**, **Document**, or **Spike**) chosen when you
-create it. The type tailors the task form (a Bug captures severity and repro steps, a Spike a
-time-box) and lets a workspace cap how many tasks of each type run at once under a service.
+A task also has a **type** chosen when you create it: **Feature**, **Bug**, **Document**, **Spike**,
+**Review**, or **Ralph loop**. The type tailors the task form (a Bug captures severity and repro
+steps, a Spike a time-box, a Review the pull request to audit, a Ralph loop its validation command)
+and lets a workspace cap how many tasks of each type run at once under a service. A **Review** task
+[deep-reviews an existing open pull request](./pull-requests.md#deep-reviewing-an-existing-pull-request);
+a **Ralph loop** task runs a [persistent retry-until-done coding loop](./running-pipelines.md#the-ralph-loop).
 
 A task moves through these statuses:
 
@@ -105,7 +108,10 @@ into the block's description and the run continues.
   and an admin brings teammates in by email invitation. See
   [Members, Roles & Invitations](./team-and-access.md).
 - A **workspace** is a per-team, per-project container with **membership controls** that determine
-  who can see and act on its boards. Boards carry a name and description.
+  who can see and act on its boards. Each board can be open to the whole account or restricted to an
+  explicit member list, and each member holds a **Viewer**, **Member**, or **Admin** workspace role.
+  See [Board access and workspace roles](./team-and-access.md#board-access-and-workspace-roles).
+  Boards carry a name and description.
 - Repositories and credentials are isolated **per workspace**; the LLM **budget** is metered
   account-wide (across all workspaces in the organization).
 
@@ -114,7 +120,7 @@ into the block's description and the run continues.
 You assign models with **presets** under **Configuration → Model Configuration**. A preset names one
 **base model** for every agent kind plus optional **per-kind overrides** (for example, a strong model
 for the **Architect** and a cheaper one for the **Tester**). One preset is the workspace **default**;
-every workspace seeds two built-ins (**Kimi K2.7** and **GLM-5.2**). A task picks its preset, and
+every workspace seeds three built-ins (**Kimi K2.7**, **GLM-5.2**, and **Claude Opus 4.8**). A task picks its preset, and
 changing it only affects steps that haven't started. See
 [Running Pipelines](./running-pipelines.md#choosing-models).
 

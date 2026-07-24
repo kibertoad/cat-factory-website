@@ -88,10 +88,14 @@ default) AND a per-workspace **store agent context** setting (on by default). Wi
 off, nothing is captured.
 
 The snapshot is a redacted allow-list projection: it never copies a token or a credential-bearing
-URL. Any `user:pass@` userinfo embedded in an injected document URL or in a tester's ephemeral
-environment URL is stripped before the snapshot is stored. Each snapshot is also size-bounded
-(a shared 4 MiB budget, consumed prompts-first) so a dispatch that injects many large files cannot
-produce an oversized row.
+URL. Every stored body (both composed prompts, each fragment body, each injected file's content, and
+the free-text decisions and revision-feedback bag) is run through the secret scrubber before the size
+budget is applied, so truncation can never split a secret across the cap. It strips `user:pass@`
+userinfo from any URL and matches PEM-armored private keys plus the usual token shapes, and it drops
+the whole body of a context file whose name marks it a raw credential store (`.env`, `*.pem`, SSH
+keys, `.npmrc`), since a bare key dump has no scaffolding for the shape rules. Each snapshot is also
+size-bounded (a shared 4 MiB budget, consumed prompts-first) so a dispatch that injects many large
+files cannot produce an oversized row.
 
 ## The provisioning event log
 
@@ -145,6 +149,10 @@ so a slow or broken step is diagnosable without reading logs:
   start.
 - **Stalled runs**: if a run's durable driver is lost (an orchestrator crash or restart) and recovery
   can't resume it, the board marks it **stalled**, distinct from a plain failure, and offers a retry.
+- **Liveness heartbeat**: a step in a long output-less phase (a PR reviewer reading hundreds of
+  files, say) shows "active Ns ago" separately from the elapsed clock, so a live-but-quiet step reads
+  as working rather than wedged. The same heartbeat keeps the stalled-run sweeper from mis-marking it.
+  It is automatic, with nothing to configure.
 
 ## Retention cron
 
@@ -210,6 +218,95 @@ and the rest as plain vars. On Node and local, put them in your `.env` or secret
 
 Traces are sent per call rather than batched, bounded by a short timeout, so a slow or unreachable
 Langfuse never blocks a run.
+
+## OpenTelemetry (OTLP) export
+
+For teams that centralize telemetry in an OpenTelemetry backend (Grafana/Mimir, Datadog, an OTel
+Collector, anything that speaks OTLP), Cat Factory can export its LLM telemetry and, optionally,
+deployment-level run metrics over OTLP/HTTP. It is off by default and turns on only when
+`OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT` is set; half-configured, it does nothing.
+
+```bash
+OTEL_ENABLED=true
+OTEL_EXPORTER_OTLP_ENDPOINT=http://collector:4318
+# OTEL_EXPORTER_OTLP_HEADERS=x-api-key=abc,x-tenant=42   # optional, merged onto every request
+```
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `OTEL_ENABLED` | Master switch; must be `true` to export anything. | off |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP/HTTP base URL. `/v1/traces` and `/v1/metrics` are appended. | none (required to enable) |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Comma-separated `key=value` pairs merged onto every request (auth token, tenant id). | none |
+| `OTEL_SERVICE_NAME` | The OTLP resource `service.name`. | `cat-factory` |
+| `OTEL_PLATFORM_METRICS` | Also export the deployment-level run gauges below (needs `OTEL_ENABLED=true`). | off |
+| `OTEL_PLATFORM_METRICS_INTERVAL_MS` | Node sweep cadence for the platform gauges (Cloudflare is cron-driven). | `60000` |
+| `OTEL_PLATFORM_METRICS_WINDOW` | Trailing window for the platform gauges: `1h`, `24h`, or `7d`. | `1h` |
+
+Export is OTLP/HTTP with JSON encoding and DELTA metric temporality. It is best-effort: each send has
+a 10-second timeout and a non-2xx response or transport error is logged, never thrown, so a slow or
+unreachable backend never blocks a run.
+
+Every LLM call is exported as a span and metrics under the OpenTelemetry GenAI semantic conventions:
+the span name is the agent kind, with `gen_ai.system` (provider), `gen_ai.request.model`, token counts,
+and finish reason; the metrics are `gen_ai.client.token.usage` (a counter split by `input`/`output`)
+and `gen_ai.client.operation.duration` (a histogram in seconds). Calls in one run share a trace id and
+tool spans nest under it. Prompt and completion bodies ride as span events only when
+`LLM_RECORD_PROMPTS` is on.
+
+With `OTEL_PLATFORM_METRICS=true`, a periodic sweep also exports per-account deployment gauges:
+`cat_factory.platform.runs` (split by run status), `run_success_rate`, `run_failures` (split by
+failure kind), `live_runs` (a current snapshot split by state), and `run_duration` (split by
+`avg`/`min`/`max`/`p50`/`p90`/`p99`). Use them to alert on failure rate and latency in your own stack.
+
+::: tip Where to set these
+On Cloudflare, set `OTEL_EXPORTER_OTLP_HEADERS` as a Worker secret (`wrangler secret put …`) if it
+carries a token, and the rest as plain vars. On Node and local, put them in your `.env` or secret
+manager.
+:::
+
+## Operator dashboard
+
+The **Platform observability** dashboard gives an operator a live read of the whole deployment's run
+health without any telemetry backend. It is admin-only, account-scoped, and needs no configuration
+(it reads the platform's own data, separate from the OTLP push above). Open it from the sidebar and
+pick a window: **Last hour**, **Last 24 hours**, or **Last 7 days**.
+
+It shows:
+
+- **Run outcomes**: Total runs, Completed, Failed, and Success rate.
+- **Outcome trend**: a stacked sparkline of completed / failed / other over the window.
+- **Failure breakdown**: a bar per failure kind (Preflight, Dispatch, Environment, Evicted, Timeout,
+  Agent, Job failed, Rejected, Companion rejected, Stalled, Cancelled, Unknown).
+- **Live now**: current Running / Blocked / Paused / Pending counts.
+- **Run duration**: Average, Min, Max, and the **p50, p90, and p99** percentiles (nearest-rank over
+  the terminal runs in the window).
+
+## Platform-health alerting
+
+Beyond the read-only dashboard, Cat Factory can watch the same run health and raise a notification when
+it degrades. It is opt-in through `PLATFORM_ALERTS=true` and independent of the OTLP exporter.
+
+```bash
+PLATFORM_ALERTS=true
+```
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `PLATFORM_ALERTS` | Master switch; `true` to enable. | off |
+| `PLATFORM_ALERTS_WINDOW` | Evaluation window: `1h`, `24h`, or `7d`. | `1h` |
+| `PLATFORM_ALERTS_INTERVAL_MS` | Node sweep cadence (floored at 10s). | `300000` |
+| `PLATFORM_ALERTS_MIN_RUNS` | Minimum terminal runs before a failure-rate alert can fire. | `5` |
+| `PLATFORM_ALERTS_MAX_FAILURE_RATE` | Failure rate (0–1) at or above which an alert fires. | `0.5` |
+| `PLATFORM_ALERTS_MAX_P99_MINUTES` | p99 run duration (minutes) at or above which an alert fires. | `60` |
+| `PLATFORM_ALERTS_MAX_BACKLOG` | Live backlog depth (running + blocked + paused + pending) at or above which an alert fires. | `50` |
+
+A periodic sweep evaluates each account against the thresholds and raises a **Platform health alert**
+card in the [notifications inbox](./notifications.md) naming the crossed conditions: elevated failure
+rate, slow p99, or a growing backlog. The card de-dupes on the set of crossed conditions, so a
+persistently-unhealthy deployment re-notifies only when that set changes, and it clears automatically
+when the account recovers. The failure-rate check is gated by `PLATFORM_ALERTS_MIN_RUNS`, so a single
+failure on a quiet deployment stays quiet. From the inbox the alert routes on through your normal
+[notification channels](./notifications.md) (Slack, and the rest).
 
 ## Post-run grading (Kaizen)
 
