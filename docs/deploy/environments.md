@@ -71,6 +71,47 @@ environment came up and tore down cleanly and the branch was deleted, or **Test 
 naming the failing stage. The button is disabled on an `infraless` service (there is nothing to
 provision) with a hint to configure a provision type first.
 
+The test proves the environment actually stood up, not merely that the create call returned:
+
+- Before it creates anything, it runs the resolved provider's **connection probe**. A connection-level
+  problem (a rejected token, a wrong project or endpoint id) is reported up front, carrying the
+  provider's own message, with no throwaway branch created and nothing to tear back down. Providers
+  that expose no connection test skip this step.
+- For a provider whose `provision()` returns before the environment is up, the test **polls its status
+  until it reaches ready** and only then tears down. A terminal not-ready status fails the test with
+  the provider's reported reason rather than a generic "provisioning failed".
+- A service whose provision type resolves to no workspace handler fails with a specific remedy
+  (nothing configured, versus an ambiguous match) and a **Configure infrastructure** button that opens
+  **Infrastructure → Test environments**.
+- A dispatch failure is attributed to the provisioning stage rather than mislabelled as branch
+  creation, and is logged server-side with the workspace, run, stage, and the underlying error, so a
+  provider throw leaves a trace beyond the run record.
+
+## Seeding handlers from the deployment
+
+A deployment that knows its own infrastructure can declare environment handlers in code, so a
+service's provision type resolves without an operator visiting **Infrastructure → Test environments**
+first. Pass `seedEnvironmentHandlers` to `start()` or `startLocal()`:
+
+```ts
+start({
+  buildContainer: buildNodeContainer,
+  seedEnvironmentHandlers: [
+    {
+      provisionType: 'kubernetes',
+      config: { /* the handler's engine + connection config */ },
+      secrets: { kubeconfig: process.env.PREVIEW_KUBECONFIG! },
+    },
+  ],
+})
+```
+
+Each entry takes a `provisionType`, its `config` and write-only `secrets`, an optional `manifestId`
+(for a `custom` type keyed to a specific manifest), and an optional `backendKind` to pin a specific
+backend that rides a shared engine. Seeding is idempotent by `(provisionType, manifestId)`: the server
+ensures each handler exists for every existing workspace at boot and for each newly-created workspace,
+and one failing seed never blocks the others. An operator can still edit a seeded handler in the UI.
+
 ## Choosing a backend
 
 The **Test environments** tab in the top-level **Infrastructure** window offers several backend kinds.

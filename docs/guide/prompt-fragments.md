@@ -32,6 +32,10 @@ document-backed, and repo-sourced alike) from **[Account settings](./team-and-ac
 which works for both personal and organization accounts. The two libraries cross-link, so you can
 jump between an account standard and the board that layers on top of it.
 
+You author a fragment by pasting its content and giving it a title. Titles matter (agents cite
+standards by them), so the editor has a **Generate** button beside the title field that suggests one
+from the content with an inline model call. Existing fragments edit in place in the same list.
+
 ## How agents use them
 
 Fragments are assigned on a **service** and pinned per **task**. On a service inspector's **Service
@@ -52,6 +56,18 @@ Fragments fold into **code-aware** agent kinds (such as the coder, CI fixer, fix
 and architect) and into the **document-authoring** kinds (see [Document Tasks](./documents.md)). A
 code-style or review-checklist fragment reaches the coding steps automatically; a writing-style
 fragment reaches the document steps. Steps that touch neither code nor prose are left untouched.
+
+Each fragment reaches the agent as its own delimited, title-labelled block rather than one merged wall
+of text, so an agent can cite a standard by name. Give your fragments titles that read well as
+citations ("No raw SQL in controllers" beats "Rules 3").
+
+### Adherence reports
+
+Because the standards arrive labelled, the code reviewer and the PR reviewer score the change against
+each one. Their result windows carry a **Best-practice adherence** section: per standard, a score out
+of ten and the findings related to it, or an explicit "none reachable" when a standard could not be
+judged from the diff. It tells you which of your standards the change actually honoured, instead of a
+single overall verdict.
 
 ### Per-task-type defaults
 

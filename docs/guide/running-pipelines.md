@@ -103,6 +103,22 @@ The **Triage & fix bug** pipeline is built for a bug report rather than a featur
   reviewer](./requirements.md#the-review-loop), and the converged, clarified report becomes the task
   description the Coder builds from.
 
+A bug pipeline that places a **repro-test** step also gets a machine-checked **reproduction proof**.
+That step declares the command that runs the reproduction, an optional setup command, and the test
+files that make it up. Between the coding agent settling and the pull request opening, the harness
+runs that command twice, in two fresh worktrees of the same clone: once against the pre-fix tree with
+the declared test files applied on top, and once against the final tree. Only red-then-green counts as
+**reproduced**; both phases use the same setup command and the byte-identical test files, so an
+environment problem that fails both can never pass as proof.
+
+Anything else is recorded honestly as **inconclusive**, with both captured outputs and a one-line
+note. A failed verification is a repair rather than a run failure: the output goes back to the agent
+(which is told not to weaken the reproduction) while its budget holds, then degrades to inconclusive
+with the pull request still opening. A step that concedes the defect could not be reproduced records
+that declaration structurally, with the reason and the alternative verification it performed, so
+"could not be reproduced" is never indistinguishable from "nobody tried". A run whose repro-test step
+declared no runnable command behaves exactly as it did before.
+
 Hover any step in the builder, the draft chain, or a board task card to see what that agent does:
 each kind's description shows as a tooltip.
 
@@ -162,10 +178,16 @@ on a pull request that already exists, use a
 When a run reaches it, the gate watches the task's pull request on GitHub:
 
 - It advances once the PR meets GitHub's required approvals (read from branch protection) with no
-  unresolved review threads.
+  unresolved review threads and no standing **Changes requested**. A reviewer who has requested
+  changes holds the gate even when other reviewers make up the required approval count, matching
+  GitHub's own merge rule.
 - On outstanding review threads it dispatches the **Fixer** to address the feedback (immediately once
   the PR is approved; after a per-task grace window otherwise) and resolves each handled thread so the
   next check sees it cleared. A reviewer re-opening a thread re-triggers the Fixer.
+- Feedback typed into the review box with no inline line comments counts too. A "Request changes" or
+  "Comment" review's summary body is read and folded into the outstanding feedback the Fixer works
+  through, so leaving prose without a single line comment moves the run forward instead of leaving it
+  waiting for an approval that isn't coming.
 - It waits indefinitely for the human, re-arming rather than auto-failing, and raises a
   **human-review** notification while it waits.
 - From the gate window a person can request a freeform fix at any time, dispatched immediately.
@@ -374,7 +396,7 @@ Models are assigned through **presets**, managed in **Configuration → Model Co
 - A **preset** sets one **base model** for every agent kind, plus optional **per-kind overrides** to
   point a single kind (say, the **Architect**) at a stronger model.
 - One preset is the workspace **default**; every workspace seeds three built-ins, **Kimi K2.7**,
-  **GLM-5.2**, and **Claude Opus 4.8**. A task selects which preset it runs on (in the new-task form
+  **GLM-5.2**, and **Claude Opus 5**. A task selects which preset it runs on (in the new-task form
   or its inspector), and changing the preset only affects steps that haven't started yet.
 
 The picker shows each model's list price next to its provider and context window (quota-based
@@ -401,6 +423,18 @@ open.
 **Companion steps** (the Spec Reviewer, the Architect's reviewer, the Coder's Reviewer, and the
 Tester's Fixer) render as distinct sub-nodes on their parent step, so you can see a companion rate,
 rework, or skip rather than wondering why a step looped.
+
+### The agent's effort report
+
+Every container agent reports on its own run: a **difficulty** score out of ten, what reduced its
+effectiveness, and the concrete obstacles it hit. It shows as a collapsible **Agent effort** footer at
+the bottom of every result window, a one-line row (the difficulty chip plus what held the agent back)
+that expands to the full report. It is there whatever kind of window you opened, the merger, the
+tester, a gate, the PR review, or a plain prose panel.
+
+Read it when a step took longer than it should have or produced thin work. "Missing test fixtures",
+"the spec did not say which API to use", or "the build was already broken" are the kind of thing it
+surfaces, and they usually point at something to fix in the task or the repo rather than in the agent.
 
 ## Reading the test report
 

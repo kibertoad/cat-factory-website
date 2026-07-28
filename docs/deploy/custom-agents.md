@@ -13,8 +13,9 @@ A custom agent becomes a first-class citizen: a palette block in the pipeline bu
 chain into pipelines, a live result window, all from registering it once at startup. A custom gate
 plugs into the same engine state machine the built-in gates use: a deterministic precheck that only
 escalates to a helper agent on a negative verdict, looping until the precheck passes or an attempt
-budget is spent. This page shows the model, the seams, worked examples, how to package and wire them,
-and the gotchas.
+budget is spent. A [custom judge](#custom-judges) is the third shape: a rubric-scored assessment that
+can advance, park, or send the work back. This page shows the model, the seams, worked examples, how
+to package and wire them, and the gotchas.
 
 ::: tip This is a code extension
 Unlike a [provider manifest](../reference/manifests.md), an agent or gate is code you write and ship
@@ -529,6 +530,62 @@ document kind, either link a template document per workspace in the app (see
 with `registerDocTemplate` (from `@cat-factory/agents`), an import side effect that mirrors
 `registerAgentKind`. Passing the `documentRepository` above is what lets a workspace-linked template
 reach the gate; without it the gate falls back to the kind's built-in skeleton.
+
+## Custom judges
+
+A **judge** is the third extension shape, for grading rather than gating. Where a gate runs a cheap
+deterministic precheck and escalates a container helper, a judge always costs one model call, scores
+the run's work against a **rubric**, and disposes on that score: advance, park for a human, send the
+work back to the step that produced it, or fail the run. Reach for it when neither of the other seams
+fits: a step-completion resolver can reshape output but cannot park or loop a run, and a gate has no
+score.
+
+Unlike agent kinds and gates, judges register **by reference** on an app-owned registry rather than
+through an import side effect. Build one with `defaultJudgeRegistry()` (from `@cat-factory/kernel`),
+register your judges on it, and pass it as `judgeRegistry` when you build the container:
+
+```ts
+import { defaultJudgeRegistry } from '@cat-factory/kernel'
+import { start, buildNodeContainer } from '@cat-factory/node-server'
+
+const judgeRegistry = defaultJudgeRegistry()
+judgeRegistry.register('scope-adherence', scopeAdherenceJudgeFactory)
+
+start({ buildContainer: (opts) => buildNodeContainer({ ...opts, judgeRegistry }) })
+```
+
+The factory is `(ctx: JudgeContext) => JudgeDefinition`, invoked once when the engine builds its judge
+map, so a judge's hooks can close over the engine seams (`clock`, `getBlock`, `runInitiatorScope`,
+`raiseNotification`, and the provider registry) and over your own provider. Registering the same kind
+twice replaces the earlier entry.
+
+The registry is empty by default, so a stock deployment has no judges. The engine owns the whole state
+machine: rubric resolution, persistence, the threshold comparison, the disposition, the bounce budget,
+and emission. Your `JudgeDefinition` describes only what differs:
+
+| Field | Purpose |
+| --- | --- |
+| `kind` | The step `agentKind` this judge runs as. |
+| `rubric` | `{ id, name, body, fragmentId? }`. `body` is the default; naming a `fragmentId` lets a workspace override the rubric by authoring that [prompt fragment](../guide/prompt-fragments.md). |
+| `onFail` | What a below-threshold verdict does: `park` (ask a human), `bounce` (re-arm the producing step with the findings as rework feedback), or `fail`. |
+| `bounceTargets?` | The agent kinds this judge grades, searched backward from the judge step to find what a bounce re-arms. Omitted ⇒ the immediately preceding step. |
+| `parseVerdict?` | Parse the raw assessment. Defaults to the built-in verdict schema; pass your own parser for a richer rubric shape. Whatever it returns must expose a `score`. |
+| `threshold?` / `attemptBudget?` | Resolve the minimum score and the bounce budget from the task's risk policy. Default to the policy's `judgeMinScore` and `judgeMaxBounces`. |
+| `wired?` / `unwiredOutput` | Pass-through when the judge needs its own provider and it isn't configured. |
+| `presentation?` | Makes the kind a palette block and opens the shared **judge** result window. |
+
+Two knobs on the workspace's [risk policies](../guide/pull-requests.md#conflicts-ci-and-the-merger)
+make the strictness per-task: the minimum score a verdict must reach, and how many bounce rounds a
+judge may spend before it must stop and ask a human. A spent budget parks rather than advancing, so a
+rubric can never green a run silently. A bounce with nothing to send the work back to degrades to a
+park and records why.
+
+The assessment itself runs through the engine's inline model call, built from the model-provider
+dependencies every runtime already wires, so a judge needs no per-facade wiring. An unparseable
+assessment is recorded as a failing verdict rather than crashing the run. Judge verdicts appear in the
+run's judge window, in a `judge_review` notification when one parks, in the pull request's
+[verification report](../guide/pull-requests.md#the-verification-report-on-the-pull-request), and over
+`/api/v1/runs/{runId}/decisions` for a headless caller.
 
 ### Boot-time validation
 

@@ -119,7 +119,7 @@ merges through a real merge request, and users can sign in with a GitLab PAT. Se
 
 | Variable | Purpose |
 | --- | --- |
-| `GITLAB_TOKEN` | Enables GitLab on Cloudflare and Node (single-token model, one connection per deployment). In [local mode](./local.md) the equivalent is `GITLAB_PAT`. Needs the `api` scope. |
+| `GITLAB_TOKEN` | Enables GitLab on Cloudflare and Node. In [local mode](./local.md) the equivalent is `GITLAB_PAT`. Needs the `api` scope. With [`ENCRYPTION_KEY`](#credential-encryption) also set, workspaces can connect their own GitLab accounts with a personal access token. |
 | `GITLAB_API_BASE` | Optional. GitLab REST v4 base for a self-managed instance, e.g. `https://gitlab.example.com/api/v4`. Defaults to the public GitLab API. |
 | `GITLAB_WEBHOOK_SECRET` | Optional. Verifies inbound GitLab webhook payloads (merge request, issue, push, pipeline). |
 | `GITLAB_CONNECTION_ID` | Optional. Logical id for the GitLab connection. Defaults to `gitlab`. |
@@ -368,18 +368,20 @@ observability provider (Datadog today) after a merge. They are opt-in and covere
 | `PAGERDUTY_API_TOKEN` + `PAGERDUTY_FROM_EMAIL` | Optional. Post the on-call investigation as an annotation onto an open PagerDuty incident. |
 | `INCIDENTIO_API_KEY` | Optional. The same enrichment for incident.io. |
 
-## Notifications (Slack)
+## Notifications (Slack and webhooks)
 
 Board notifications (merge reviews, pipeline completions, CI failures, requirement reviews) land in
-the in-app inbox by default. Slack is an optional extra transport. It is opt-in, each workspace
-connects its own Slack from the UI, and the bot token is encrypted under `ENCRYPTION_KEY`. Full
-setup is in [Notifications](./notifications.md).
+the in-app inbox by default. Slack and a per-workspace outbound webhook are optional extra transports.
+Both are opt-in and configured per workspace, and their secrets are encrypted under `ENCRYPTION_KEY`.
+Full setup is in [Notifications](./notifications.md).
 
 | Variable | Purpose |
 | --- | --- |
 | `SLACK_ENABLED` | Set to `true` to make Slack available. Requires `ENCRYPTION_KEY`. |
 | `SLACK_CLIENT_ID` / `SLACK_CLIENT_SECRET` | Optional. Enable the OAuth "Add to Slack" flow; without them, operators paste a bot token by hand. |
 | `SLACK_REDIRECT_URL` | Optional OAuth callback, e.g. `https://your-host/slack/oauth/callback`. |
+| `NOTIFICATION_WEBHOOK_ALLOW_URL_HOSTS` | Optional. Comma-separated hostnames a webhook endpoint may use despite the private/internal-host block. Same matching rules as the environment and runner-pool allow-lists, and scoped independently of them. |
+| `NOTIFICATION_WEBHOOK_ALLOW_HTTP_URLS` | Optional. Set to `true` to also permit plain `http` webhook endpoints (a local-development affordance). |
 
 ## Email (invitations)
 

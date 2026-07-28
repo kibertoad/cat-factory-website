@@ -98,6 +98,7 @@ export default defineUserConfig({
           '/deploy/kubernetes.md',
           '/deploy/custom-providers.md',
           '/deploy/custom-agents.md',
+          '/deploy/frontend-extensions.md',
         ],
       },
       {
@@ -165,6 +166,7 @@ export default defineUserConfig({
             '/deploy/kubernetes.md',
             '/deploy/custom-providers.md',
             '/deploy/custom-agents.md',
+            '/deploy/frontend-extensions.md',
           ],
         },
       ],
