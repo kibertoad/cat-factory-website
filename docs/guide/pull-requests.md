@@ -20,6 +20,29 @@ over.
 
 The **Tester** step then validates the change before the closing automation runs.
 
+## Pre-PR validation
+
+A service can declare shell commands that must pass **before** its pull request opens, so a broken
+lint or test run never becomes public PR churn. Open a service frame's inspector and use the
+**Pre-PR validation** section:
+
+| Field | What it is |
+| --- | --- |
+| **Name** | A label for the check (`lint`, `test`, `build`). Falls back to the command when blank. |
+| **Command** | The shell command, run with `sh -c` in this service's checkout, in the order listed. |
+| **Attempts** | How many rounds of fixing the agent gets before the step fails. Defaults to 3. |
+
+After the coding agent settles, the harness runs each command against the checkout. While a command
+fails and attempts remain, the captured output goes back to the agent as its next instruction, and it
+tries again. Only a green checkout opens a pull request; an exhausted budget **fails the step** with
+the last captured output and opens nothing. The agent is explicitly told to fix the code rather than
+weaken the checks.
+
+Checks resolve up the frame chain, so a task inherits its service frame's set. The output (bounded and
+scrubbed of secrets) streams onto the step while the loop runs and stays on the finished step, so the
+run records real command output rather than the agent's assertion that it verified its work. A service
+with no checks configured opens its pull request exactly as before.
+
 ## Conflicts, CI, and the merger
 
 The Full build pipeline finishes with three engine steps that prepare the PR for merge:
@@ -48,10 +71,73 @@ use the workspace default). Two ship built in:
 
 Edit these or add your own in the workspace's **Risk policies** panel.
 
+### Rules per change class
+
+Score ceilings are the merger's judgement about a diff. A **change class** is a fact about it. Every
+pull request is classified deterministically from the paths it touched, with no model involved:
+
+| Class | What it covers |
+| --- | --- |
+| **Docs & copy** | Documentation and user-facing text. |
+| **Tests** | Test files only. |
+| **Dependency bump** | Third-party package version changes. |
+| **Config & CI** | Configuration and CI definitions. |
+| **Source code** | Program source. |
+| **Schema & migrations** | Database schema and migration files. |
+| **Unclassified** | The diff could not be read. Never matches a rule. |
+
+Classes are risk-ranked in that order, and a mixed diff takes the highest-ranked class present, so a
+rule can only fire on a diff containing nothing riskier than its class. In a risk policy's **Rules per
+change class** section, give each class one of three rules:
+
+- **Use score ceilings** (the default): fall back to the complexity/risk/impact thresholds above.
+- **Always auto-merge**: merge without consulting the scores.
+- **Always require review**: raise a merge-review notification whatever the scores say.
+
+A class rule can never override a policy whose auto-merge is off; that master switch wins first, and
+the panel says so.
+
+### Recording how much review a merge actually needed
+
+Every merge decision writes one row to the workspace's merge track record: the change class, the
+merger's scores, the outcome, and, when you supply it, how much review effort the pull request really
+took. Tag it as **No comments**, **Minor notes**, or **Real rework** when you act on a merge-review
+card, from the task inspector's merge control, or from the dismissible nudge that appears when you
+merge a pull request directly on GitHub or GitLab.
+
+The rollup shows up next to each class in the **Rules per change class** panel: how many pull requests
+in that class merged, what share merged automatically, and what share needed no comments. That is the
+evidence for widening a class to **Always auto-merge** or tightening it, instead of guessing at score
+ceilings. Tagging is always optional; an untagged merge is recorded as untagged, never as "no
+comments".
+
 A pipeline can add a **Post-release-health** gate after the Merger that watches Datadog monitors and
 SLOs for a window after the merge and escalates to an on-call agent on a regression. It's optional
 and needs a connected Datadog deployment; see
 [Observability → Post-release health](../deploy/observability.md#post-release-health-and-agent-on-call).
+
+## The verification report on the pull request
+
+The engine maintains a **Verification report** section in the pull request's own description, made of
+facts the platform captured rather than claims the agent wrote. It sits between HTML markers
+(`<!-- cat-factory:verification-report:start -->` … `:end`), so the agent's own prose above it is
+preserved and a retry or re-run rewrites the region in place instead of appending a second copy.
+
+The report carries:
+
+- **Run**: the task, the linked tracker issues, the repo and provider, the pipeline, and each step's
+  agent kind with the model that actually ran it, plus a deep link into the run's observability panel.
+- **Continuous integration**: the CI gate's aggregated verdict, per-check-run names and conclusions,
+  and how many times the CI fixer tried.
+- **Test verification**: the Tester step's structured report.
+- **Ephemeral environment**: the Deployer's per-frame provisioning outcomes and teardown state.
+- **Rubric reviews**: each judge step's verdict, when the pipeline places any.
+- **Merge assessment**: the merger's scores and the engine's resolved merge decision.
+
+A section whose producing step never ran says so explicitly rather than vanishing, because a missing
+section reads like a clean one. Below the prose, a collapsed block holds the same report as JSON for
+external tooling to ingest without scraping. Publishing is provider-neutral, so a GitLab deployment
+gets the report on its merge-request description too.
 
 ## Reviewing the PR
 

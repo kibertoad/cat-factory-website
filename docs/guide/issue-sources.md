@@ -114,16 +114,27 @@ tell a missing GitHub App install from a bad Jira credential without starting a 
 ## Writing back to the tracker
 
 Cat Factory can keep the upstream issue updated as work progresses, so the tracker reflects reality
-without manual status-shuffling. Two workspace toggles under **Issue tracker → Writeback** control it:
+without manual status-shuffling. Three workspace toggles under **Issue tracker → Writeback** control
+it:
 
 - **Comment when a PR opens**: posts a comment on the linked issue when the task's pull request opens.
 - **Close as resolved when a PR merges**: closes the issue when the PR merges (GitHub closes it
   natively; Jira transitions it to its first "Done" status; Linear transitions it to a completed
   workflow state).
+- **Post open questions on a parked headless run**: when a run started through the
+  [public API](../reference/public-api.md) pauses to clarify requirements, posts its open questions on
+  the linked issue, each with the id an answer names.
 
-Both default off and can be overridden per task in the task inspector (**Inherit workspace**, **On**,
-or **Off**), so a one-off task can opt out of (or into) writeback without changing the workspace
-default.
+All three default off and can be overridden per task in the task inspector (**Inherit workspace**,
+**On**, or **Off**), so a one-off task can opt out of (or into) writeback without changing the
+workspace default.
+
+The questions toggle exists because a headless caller has no in-app inbox to watch: the clarification
+reaches whoever filed the issue, and they can answer it over the API against the ids in the comment.
+It fires only for runs whose origin is the public API. A task started in the app is unaffected, and its
+clarification surface stays the in-app review window. The post is claimed once per review iteration
+and issue before it is attempted, so a retried or replayed run never double-posts onto an issue
+somebody is reading, and a tracker outage leaves the post retryable rather than lost.
 
 ## Using sources as agent context
 

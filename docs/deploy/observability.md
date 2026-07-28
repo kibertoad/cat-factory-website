@@ -137,7 +137,13 @@ so a slow or broken step is diagnosable without reading logs:
   reconnect), and a dispatch `404` names a stale executor-harness image.
 - **Container eviction**: a container that dies mid-run is classified as a **crash** or a
   **transient** eviction rather than a bare "evicted or crashed" string, so a retryable blip reads
-  differently from a real failure.
+  differently from a real failure. It also leaves a post-mortem on the step: the container's exit
+  state (an OOM kill is named as one) plus a tail of its own logs, so you can tell "the machine ran out
+  of memory" from "the agent errored" without reconstructing it from the runtime.
+- **Live call telemetry**: per-model-call metrics stream onto the step as the agent's CLI yields them,
+  including subagent calls, rather than arriving only with the terminal result. A run that dies 18
+  minutes in still reports the calls and tokens it actually spent instead of zero. Re-recording a call
+  is a no-op, so the live stream and the terminal list never double-count.
 - **Infrastructure attempts, live**: while a run is active, the **Infrastructure attempts** drawer
   live-tracks each container spin-up and tear-down as it happens, re-polling quietly in the background
   so attempts appear with their timestamps and no refresh spinner flickers. Auto-polling stops once the

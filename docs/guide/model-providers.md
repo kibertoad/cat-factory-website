@@ -99,6 +99,19 @@ permit organizational use under their terms, so a workspace connects one credent
 across the team. Connect it once and every member's runs use it; add more than one and Cat Factory
 rotates across them.
 
+Each credential in a pool carries two lifecycle controls, on its row in the **LLM Vendors** panel:
+
+- **Enable / disable**: a disabled credential stays in the pool, listed and re-enablable, but is never
+  leased and no longer makes its vendor or provider count as configured. Reach for it to park a
+  credential that is rate-limited or under investigation without deleting it and having to re-paste
+  the token later.
+- **Set as default**: pins one credential per group as the preferred one, leased ahead of rotation. At
+  most one default per group, and a disabled default is ignored (leasing falls back to rotating among
+  the enabled credentials).
+
+The same two controls apply to the direct-provider API-key pool, at every scope (account, workspace,
+and user).
+
 ### Personal (individual-usage) subscriptions
 
 Claude, GLM, and ChatGPT/Codex are licensed for **individual use only**. Anthropic's consumer
@@ -210,13 +223,20 @@ the same network.
 ## Subscription-only models
 
 Connecting a subscription unlocks models that have no Cloudflare or API-key flavour, such as the
-Claude Fable 5, Claude Opus 4.8, and Claude Sonnet coding-plan models and the Codex GPT models.
+Claude Fable 5, Claude Opus 5, and Claude Sonnet coding-plan models and the Codex GPT models.
 Because they have no fallback, they only appear once the matching subscription is connected, and
 inline steps (such as the requirements reviewer) fall back to the deployment's default routing rather
 than using them. **Claude Fable 5** is the top-tier Claude option: it runs through the Claude Code
 harness on a connected subscription, or pay-as-you-go through OpenRouter (`anthropic/claude-fable-5`)
-when you connect an OpenRouter key. The built-in presets still target Claude Opus 4.8, so select Fable
-5 explicitly (or build a preset for it) when you want it.
+when you connect an OpenRouter key. The built-in presets target Claude Opus 5, so select Fable 5
+explicitly (or build a preset for it) when you want it.
+
+The curated `claude-opus` catalog entry always tracks Anthropic's current Opus, which is **Claude Opus
+5**: a 1M-context agentic coding model at the same price as Opus 4.8, served through the Claude Code
+harness on a connected subscription or pay-as-you-go through OpenRouter
+(`anthropic/claude-opus-5`). A task pinned to `claude-opus` picks up the new model with no migration.
+Earlier Opus versions are no longer curated entries; reach a specific one through the per-workspace
+OpenRouter catalog.
 
 ## Model presets
 
@@ -225,10 +245,10 @@ Whichever source serves a model, you assign models with **presets** under
 **base model** for every agent kind, plus optional **per-kind overrides** (point the Architect at a
 stronger model while everything else stays on the base). Exactly one preset is the workspace
 **default**. Every new workspace seeds three built-ins, **Kimi K2.7**, **GLM-5.2**, and **Claude
-Opus 4.8**, and you can add your own.
+Opus 5**, and you can add your own.
 
 Which one is the seeded default depends on the deployment: **Kimi K2.7** (Cloudflare-served, no key)
-on Cloudflare and Node, and **Claude Opus 4.8** on local mode, where a connected Claude subscription
+on Cloudflare and Node, and **Claude Opus 5** on local mode, where a connected Claude subscription
 is the natural fit. The default is applied only when a workspace is first seeded, so your own choice
 of default is always preserved afterward. A deployment wrapper can override the seeded default at
 boot (`defaultModelPresetId` on `start`/`startLocal`/`createApp`).

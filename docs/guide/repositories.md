@@ -155,11 +155,26 @@ Enable it with a single token per deployment: `GITLAB_TOKEN` on Cloudflare and N
 [local mode](../deploy/local.md#gitlab-in-local-mode). The provider is picked per repo from the
 clone-URL host, so a deployment can drive both GitHub and GitLab.
 
+### Connecting a workspace to GitLab
+
+Beyond the deployment token, a workspace connects its own GitLab account with a **personal access
+token**. Open **Source control** (or the connect gate you see on a workspace with nothing connected
+yet), paste a token with the `api` scope, and connect. The token is validated against your GitLab
+identity before it is stored, and a rejected token reports GitLab's own error inline. Stored tokens are
+sealed with the deployment's [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption), so
+the flow needs a deployment with `GITLAB_TOKEN` and an encryption key set.
+
+Once connected, the workspace browses, links, and syncs GitLab projects through exactly the same
+screens a GitHub-App workspace uses. Which connect surfaces the panel offers comes from what the
+deployment actually wired: a GitHub App installation picker, a GitLab token field, both, or a notice
+that no source-control connection is configured. So a GitLab-only deployment never shows an App picker
+it cannot serve, and one deployment can serve GitHub-App and GitLab-PAT workspaces side by side.
+Disconnecting routes through the connected provider, so a GitLab connection is never torn down by the
+GitHub path.
+
 ::: warning Accepted GitLab gaps
-GitLab uses a single-token model (one `GITLAB_TOKEN`/`GITLAB_PAT` per deployment); a per-workspace
-OAuth connect flow with many GitLab connections is future work. GitLab is a source-control backend
-only, not an issue source, and code search and issue sub-hierarchies are unavailable (GitLab's basic
-API doesn't provide them).
+GitLab is a source-control backend only, not an issue source, and code search and issue
+sub-hierarchies are unavailable (GitLab's basic API doesn't provide them).
 :::
 
 ---

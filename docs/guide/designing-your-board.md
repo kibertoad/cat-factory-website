@@ -41,8 +41,8 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
   step scores the PR on complexity, risk, and impact and auto-merges only within the policy's
   ceilings; the same policy also carries the CI-fixer, requirement/tester iteration, fork-decision,
   and release-health knobs.
-- **Workspace settings**: the running-task limit and the waiting-decision escalation threshold
-  (see [Workspace settings](#workspace-settings)).
+- **Workspace settings**: the running-task limit, the waiting-decision escalation threshold, and
+  review-debt friction (see [Workspace settings](#workspace-settings)).
 
 ![The Workspace settings panel with its Workspace, Budget, Risk policies, Issue tracker, and Service best practices tabs](/images/app/workspace-settings.webp)
 
@@ -67,7 +67,9 @@ feels like it spans several PRs, split it into sibling leaves.
   severity and steps to reproduce, a Spike a time-box, a [Document](./documents.md) its kind and
   target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to audit
   and a review focus, a [Ralph loop](./running-pipelines.md#the-ralph-loop) its validation command and
-  iteration budget) and lets the workspace cap concurrency per type.
+  iteration budget) and lets the workspace cap concurrency per type. A deployment can
+  [add task types of its own](../deploy/frontend-extensions.md#custom-task-types), an "incident" or a
+  "compliance-audit", which then appear in the picker and as a badge on the card like any built-in.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
@@ -152,14 +154,14 @@ All of this is covered in [Repositories](./repositories.md).
 
 Models are assigned through **presets** under **Configuration → Model Configuration**. A preset sets a **base model** for every agent kind plus optional **per-kind overrides**,
 so you can point the **Architect** at a stronger model while everything else stays on the base. One
-preset is the workspace **default** (every workspace seeds **Kimi K2.7**, **GLM-5.2**, and **Claude Opus 4.8** to start),
+preset is the workspace **default** (every workspace seeds **Kimi K2.7**, **GLM-5.2**, and **Claude Opus 5** to start),
 and a task picks the preset it runs on in its inspector. Use stronger models on architecturally
 significant kinds and cheaper ones on routine steps to manage [spend](./budgets.md). See
 [Choosing models](./running-pipelines.md#choosing-models).
 
 ## Workspace settings
 
-**Configuration → Workspace settings** holds two team-wide controls:
+**Configuration → Workspace settings** holds the team-wide controls:
 
 - **Running tasks per service**: cap how many tasks may run concurrently under one service frame.
   Choose **No limit**, a single **shared** cap across all task types, or a **per-type** cap (a
@@ -168,6 +170,25 @@ significant kinds and cheaper ones on routine steps to manage [spend](./budgets.
 - **Waiting for a human**: how many minutes a run may sit parked on a decision before its inbox
   notification escalates to red and is flagged **Overdue** (default 120). Parked runs are never
   cancelled; the escalation just makes a neglected decision more visible.
+- **Review-debt friction**: discourage authoring new tasks while finished work sits waiting on a
+  human. See below.
+
+### Review-debt friction
+
+Agents finish work faster than people review it, and a board can quietly accumulate a queue of
+completed tasks nobody has looked at. The **Review-debt friction** group in workspace settings adds
+back-pressure at the point where the debt grows: task creation. It is **off by default** and has three
+modes:
+
+- **Off**: no effect.
+- **Warn (confirm to proceed)**: past **Warn at (tasks in review)** (default 3), creating a task opens
+  a dialog listing the waiting tasks, each deep-linkable, with **Create anyway** and **Go review**.
+- **Enforce (hard block)**: warns as above, and past a hard trigger refuses the create outright. The
+  dialog then offers only **Go review**. Enforce needs at least one hard trigger enabled: **Block at
+  (tasks in review)**, **Block after (minutes waiting)**, or both.
+
+The add-task affordance itself carries a badge counting the tasks currently waiting on review, so the
+number is visible before you start authoring rather than only when you are stopped.
 
 ## A suggested workflow
 

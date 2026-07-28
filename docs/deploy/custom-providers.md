@@ -348,6 +348,62 @@ The environments module still needs to be enabled (`ENVIRONMENTS_ENABLED=true` +
 and each workspace registers a **connection**. That connection is what holds the sealed token and
 the `providerConfig`. That requirement is intentional.
 
+### Teaching the detector to recognise your repos
+
+When someone adds a service from a repo, Cat Factory auto-detects a recommended provisioning config.
+Out of the box it knows Kubernetes and Docker Compose layouts; your provider can teach it its own
+shape. Add a `detect()` hook to the custom manifest type you register on the
+`CustomManifestTypeRegistry`:
+
+```ts
+import { joinRepoPath, matchManifestSignature, readYamlDoc } from '@cat-factory/kernel'
+import type { CustomManifestDetection, CustomManifestDetectionContext } from '@cat-factory/kernel'
+
+registry.register({
+  manifestId: 'stack-deploy',
+  label: 'Stack deploy',
+  defaultManifestPath: 'deploy/stack.yml',
+  async detect(ctx: CustomManifestDetectionContext): Promise<CustomManifestDetection | null> {
+    // A multi-file signature is what makes a match trustworthy: one common filename isn't enough.
+    const signature = await matchManifestSignature(
+      ctx.scanner,
+      {
+        required: ['deploy/stack.yml', 'deploy/up.sh', 'deploy/compose.yml'],
+        optional: ['deploy/ingress.conf'],   // corroborating; raises confidence, never required
+      },
+      ctx.directory ? { root: ctx.directory } : {},
+    )
+    if (!signature.matched) return null      // not my provider; arbitration skips me
+
+    const manifestPath = joinRepoPath(ctx.directory, 'deploy/stack.yml')
+    const manifest = await readYamlDoc<StackManifest>(ctx.scanner, manifestPath)
+
+    return {
+      matched: true,
+      confidence: signature.confidence,
+      manifestPath,
+      secondaryPaths: signature.matchedPaths,
+      // Prefill the confirm form from what you just read.
+      configSeed: [{ key: 'healthPort', value: String(manifest?.deploy?.health?.port ?? '') }],
+      notes: [{ field: 'provisionType', confidence: signature.confidence, message: 'Detected a stack-deploy repo.' }],
+    }
+  },
+})
+```
+
+The hook receives a **budget-bounded, checkout-free scanner**: no clone, no host daemon, and a shared
+read budget across every provider in the sweep. Compose the probe primitives from `@cat-factory/kernel`
+against it, `matchManifestSignature`, `firstPresent`, `readYamlDoc`, and `listFiles`, so a provider
+package can author detection with nothing but `@cat-factory/kernel` and the registry type.
+
+Returning `null` (or `matched: false`) means "not my provider". When several providers match, the
+detector arbitrates on confidence and takes the best. The sweep runs last, after the built-in
+Kubernetes and Compose detection, so a repo those already recognise is untouched. What you return
+becomes a **non-binding recommendation**: `manifestPath` prefills the service's manifest path,
+`configSeed` prefills the form, `secondaryPaths` and `notes` explain the match. Someone still accepts
+or changes it. A provider with no `detect()` falls back to resolving `defaultManifestPath` by path
+alone, exactly as before.
+
 ## Example: a custom runner pool
 
 The runner port is the same idea for *where coding jobs run*. The platform dispatches a job, polls
