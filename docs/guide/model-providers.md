@@ -28,9 +28,9 @@ serve, the task inspector flags the mismatch so a run never silently falls back.
 ## Connecting a direct provider key
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
-self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. The **Vendors & keys**
-screen (under the sidebar's **Configuration** group) splits them into horizontal tabs so the kind of
-credential is clear at a glance:
+self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. Open **Model providers**
+from the sidebar's **Models** group. It splits credentials into horizontal tabs so the kind is clear
+at a glance:
 
 - **Workspace pool**: pooled coding-plan subscriptions and commercial keys a team shares (Kimi,
   DeepSeek).
@@ -70,7 +70,7 @@ rate per run. See [Budgets → Prompt caching](./budgets.md#prompt-caching).
 Two of the direct providers are OpenAI-compatible gateways that front many upstream models:
 
 - **OpenRouter** reaches hundreds of models through one key (`sk-or-…`), and is a first-class entry
-  in the **Models & providers** group of the Integrations hub. Connect the key inline there, then
+  in the **Models** section. Connect the key inline there, then
   **Refresh catalog** to browse OpenRouter's live model list, filter it, and tick the subset you want
   to enable (or hit **Enable recommended** for a curated starter set). Enabled models surface in the
   picker as `openrouter:<slug>` with their live context window and per-million price, metered against
@@ -82,6 +82,22 @@ Two of the direct providers are OpenAI-compatible gateways that front many upstr
   ([`LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)). A pipeline that pins a LiteLLM
   model is blocked at start until then, rather than failing mid-run. Rename the catalog's generic
   entry and tune its pricing to match your gateway's actual routing.
+
+### AWS Bedrock
+
+Bedrock is an operator-configured route rather than a key you connect in the app. When the deployment
+sets `BEDROCK_REGION`, AWS credentials, and `BEDROCK_MODELS`
+([Configuration](../deploy/configuration.md#llm-providers)), each catalog model the allow-list carries
+gains a selectable **Bedrock** route beside its other flavours.
+
+The allow-list is both the resolver's boundary and the picker's enablement, parsed once from the same
+place, so the picker can never advertise an id the resolver would refuse. The catalog declares the
+unprefixed base model id and the platform matches your Region-correct entry onto it, so one catalog is
+correct in every Region.
+
+Bedrock is the trusted, residency-guaranteed route the
+[model access policy](#restricting-model-families) recognises, which is what lets an otherwise blocked
+family through on it.
 
 ## Connecting a subscription
 
@@ -211,13 +227,20 @@ disable is caught at the pipeline-start guard rather than failing mid-run.
 
 ::: warning Local runners must be reachable from the backend
 The base URL is called **server-side** (both the test probe and the run-time proxy), so it is
-constrained to a loopback/LAN allow-list: `localhost`, `*.local`, and private
-(RFC1918 / IPv6 ULA) addresses are accepted; public hosts and the cloud-metadata address
-(`169.254.169.254`) are rejected. Redirects are followed one hop at a time and every hop is
-re-checked against the same allow-list, and URLs that embed credentials are refused, so a runner
-can't bounce the backend to a public host or the metadata endpoint. On a cloud deployment the backend can't reach a runner on your
-laptop; local runners are intended for [local mode](../deploy/local.md) or a self-hosted backend on
-the same network.
+constrained to an allow-list. **Loopback only by default**: `localhost` and the loopback addresses are
+always accepted, and public hosts and the cloud-metadata address (`169.254.169.254`) are always
+rejected.
+
+Private-LAN reach (RFC1918, IPv6 ULA, and mDNS `.local`) is an operator opt-in,
+[`LOCAL_MODELS_ALLOW_LAN=true`](../deploy/configuration.md#llm-providers). It is off by default
+because the endpoint is fetched server-side, so on a shared deployment LAN reach is an
+internal-network SSRF grant. [Local mode](../deploy/local.md) turns it on, being single-tenant.
+
+Redirects are followed one hop at a time and every hop is re-checked against the same policy, and URLs
+that embed credentials, a query string, or a fragment are refused, so a runner cannot bounce the
+backend to a public host or the metadata endpoint. On a cloud deployment the backend cannot reach a
+runner on your laptop; local runners are intended for local mode or a self-hosted backend on the same
+network.
 :::
 
 ## Subscription-only models
@@ -259,6 +282,18 @@ A task picks its preset in the new-task form or the inspector; changing it affec
 that haven't started yet. Reserve stronger models for architecturally significant kinds and keep
 cheaper ones on routine steps. See [Choosing models](./running-pipelines.md#choosing-models) and
 [Budgets & Spend](./budgets.md).
+
+### Route order per preset
+
+A model can be reachable more than one way at once: a flat-rate subscription, a direct vendor key, an
+aggregator gateway, a residency-guaranteed route, Cloudflare. Which one a run takes is a **route
+order** you set on the preset row, so one workspace can hold a compliance preset pinned to a
+residency-guaranteed route and an everyday preset riding a subscription.
+
+A preference **reorders**, it never filters. Any route you do not name is appended in the default
+order, so naming three routes cannot make a model whose only route is the fourth unresolvable. The
+order the block's preset declares is what both the start guard and every dispatch resolve against, so
+an inline call and a container step cannot disagree about which route a step took.
 
 ### Keeping built-in presets current
 

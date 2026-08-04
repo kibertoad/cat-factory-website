@@ -87,6 +87,17 @@ The test proves the environment actually stood up, not merely that the create ca
   creation, and is logged server-side with the workspace, run, stage, and the underlying error, so a
   provider throw leaves a trace beyond the run record.
 
+## Configured but dead
+
+Asking whether a connection row exists cannot tell a healthy provider from one that was set up and has
+since died, which is how an outage sits unnoticed for a day while every testing agent fails and the
+board reports a perfectly healthy setup.
+
+A periodic reachability sweep probes each configured provider and reports **unreachable** as its own
+status, distinct from never-configured. The infrastructure banner and the board pick it up live, so a
+dead runner pool or environment provider announces itself instead of waiting for the next run to
+discover it.
+
 ## Seeding handlers from the deployment
 
 A deployment that knows its own infrastructure can declare environment handlers in code, so a
@@ -126,6 +137,21 @@ Pick the one that matches how your previews run:
 
 Which backend a given service uses is decided by its [provision type](#per-service-provision-types),
 so one workspace can preview a Kubernetes service and a Compose service side by side.
+
+### A default for new services
+
+A workspace records a **default test environment**: a provision type and, for a custom provider, its
+manifest id. Every newly created service frame is stamped with it, so a new service arrives already
+routed instead of arriving unconfigured.
+
+Until an operator chooses one, a banner offers a link to the **Test environments** tab to set it.
+Choosing **infraless** is a real answer and silences the banner; leaving it unset is not. The section
+preselects the first registered custom provider when the deployment ships one and nothing is stored
+yet.
+
+The default is applied at creation only, so changing it never retroactively rewrites an existing
+service. A `custom` default with no manifest id is refused, and switching away from `custom` clears
+the stale id.
 
 ## Per-service provision types
 
@@ -240,6 +266,27 @@ working. A per-PR compose recipe references shared stacks by id in its **shared 
 provision the Deployer brings each referenced stack up first (in order), then attaches the per-PR
 project to the union of the recipe's external networks and the stacks' managed networks. Like the
 compose provider, shared stacks are local-mode only.
+
+### Where a compose layer comes from
+
+A compose layer, on a stack recipe or a shared stack, is one of three things:
+
+- A **path in the repository being provisioned**. This is the shorthand the autodetector emits and the
+  panel authors.
+- An **inline document**, written out at provision time. The layer names where it is materialized, and
+  that path is confined to the checkout.
+- A **file in another repository**, resolved once per foreign repo.
+
+The last two are what let a stack that does not live in the repo being provisioned still compose. A
+stack with no repository of its own materializes an empty working tree rather than cloning anything.
+
+### Declaring stacks from the deployment
+
+A deployment can declare its infrastructure dependencies in code instead of in a form, with
+`seedSharedStacks` on `start()` or `startLocal()`, alongside
+[`seedEnvironmentHandlers`](#seeding-handlers-from-the-deployment). Both run over the same workspace
+enumeration at boot and again for each newly-created workspace. See
+[Your Deployment Repository](./deployment-repository.md#_5-register-your-platform-data-in-code).
 
 ## Preflight checks
 

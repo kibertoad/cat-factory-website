@@ -35,10 +35,9 @@ subject the [reviewer](#the-reviewer-agent) then clarifies, so brainstorming fee
 review loop.
 
 There is a matching **Architecture brainstorm** for exploring approaches before the Architect (see
-[Running Pipelines](./running-pipelines.md#anatomy-of-a-pipeline)). Both steps ship in the **Full
-build** and **Complex fullstack feature** pipelines but are **disabled by default**: toggle the one
-you want on for a [cloned pipeline](./running-pipelines.md#editing-pipelines). Each is a human gate,
-so it only runs when you opt in and are present to steer it.
+[Running Pipelines](./running-pipelines.md#anatomy-of-a-pipeline)). Neither ships in a build preset:
+add the one you want to a [cloned pipeline](./running-pipelines.md#editing-pipelines). Each is a human
+gate, so it only runs when you opt in and are present to steer it.
 
 ## The reviewer agent
 
@@ -53,11 +52,22 @@ raises **findings**, each tagged with a category and a severity (low, medium, or
 | **risk** | Aspects that could go wrong or have outsized impact. |
 | **question** | Open questions for a product owner to answer directly. |
 
-The reviewer **runs automatically** as the first gate step when a task's pipeline starts. It opens a
-dedicated **review window**, and the findings are persisted so you can work through them over several
-sittings. If the task names a [responsible product
+The reviewer runs as the first gate step when a task's pipeline includes it. It opens a dedicated
+**review window**, and the findings are persisted so you can work through them over several sittings.
+If the task names a [responsible product
 person](./team-and-access.md#the-responsible-product-person), they get the "findings raised"
 notification flagged to them directly; otherwise it goes to the task's creator.
+
+### The review stays on the product layer
+
+The reviewer, the incorporation editor, and the Requirement Writer are all confined to the product and
+business layer. A technical design question is dropped outright rather than raised at a low severity,
+because it asks a product owner something they cannot answer, buries the questions only they can, and
+pre-empts the Architect and Researcher, which settle the technical layer later with the repository and
+the in-repo spec in hand.
+
+For purely technical work the expected outcome is **no findings at all**. An empty review is the
+reviewer working, not the reviewer failing.
 
 ## The review loop
 
@@ -70,6 +80,12 @@ Requirements review is **iterative**. Each round:
 
 The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
 merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
+
+Findings are grouped by whose court the ball is in: **needs a reaction** first, then **waiting on the
+Writer**, then **already handled**, with severity ordering within each group. On a long review you
+never scroll past answered cards to find what is still on you. The order is pinned while your cursor is
+inside a finding's text box, since an answer auto-saves on blur and re-sorting at that moment would
+slide the card out from under you.
 
 Answering is low-friction: each answer **auto-saves** as you move off the field (there is no Save
 button), so a half-finished review is never lost. Your typed answers are flushed before any other
@@ -147,10 +163,10 @@ the same clear definition, which means fewer wasted runs and fewer surprise PRs.
 
 Where the reviewer clarifies one task at a time, the **Spec Writer** agent produces the durable,
 **prescriptive** spec for the whole service. It is the mirror image of a
-[blueprint](./repositories.md#service-blueprints--reconciliation): a blueprint is *descriptive*
+[blueprint](./repositories.md#service-blueprints-reconciliation): a blueprint is *descriptive*
 ("what the code is"), while the spec is *prescriptive* ("what must be true").
 
-The Spec Writer runs **before the Architect** in the Full build pipeline (and standalone via the
+The Spec Writer runs **before the Architect** when a pipeline carries it (and standalone via the
 **Write spec** pipeline). Every task gets a shared work branch created up front, so the spec lands
 on that branch first and the spec-aware Architect designs against it, rather than the spec being
 written only after the design is settled. The writer aggregates the clarified requirements of
@@ -171,8 +187,15 @@ and no `version.json`: change detection is per file, and re-runs reuse the close
 module/feature rather than spawning near-duplicates.
 
 Each requirement carries a MoSCoW priority (must, should, or could), a kind (functional,
-non-functional, or constraint), provenance back to the board task(s) it came from, and structured
-**Given/When/Then** acceptance criteria. Those criteria seed the Gherkin scenarios in a two-pass
+non-functional, or constraint), an **implementation state**, provenance back to the board task(s) it
+came from, and structured **Given/When/Then** acceptance criteria.
+
+The implementation state answers the one question a priority cannot: whether the service is actually
+known to honour the requirement. **Aspirational** means agreed but not yet observed; **established**
+means a tester observed it hold. An aspirational requirement's Gherkin scenarios carry an
+`@aspirational` tag, the build and test prompts read the state, and a pull request's
+[verification report](./pull-requests.md#the-verification-report-on-the-pull-request) maps requirements
+to the evidence for them. Those criteria seed the Gherkin scenarios in a two-pass
 flow: the **Spec Writer** seeds the `.feature` files, the **Acceptance Author** agent polishes them,
 and the **Acceptance Test Author** agent turns each scenario into a runnable test. Re-runs rewrite
 the canonical files but never clobber the polished features.
@@ -200,7 +223,9 @@ Technical to skip business-spec work, or mark a misclassified one Business to en
 
 Open **View Requirements** from a service's inspector to browse the committed spec in a structured
 window: modules, then feature groups, then each requirement with its Given/When/Then criteria, plus
-a toggle to read the rendered Gherkin scenarios. The window reads the spec from the repo's default
+a toggle to read the rendered Gherkin scenarios. Every requirement is badged with its implementation
+state, each group carries a rollup, the overview shows a service-wide rollup, and a three-way filter
+narrows the list to aspirational or established requirements. The window reads the spec from the repo's default
 branch, so it shows an empty state (rather than an error) on a service with no spec yet or no
 connected repository.
 

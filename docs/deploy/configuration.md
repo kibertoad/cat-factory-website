@@ -70,9 +70,10 @@ shutdown begins. The Cloudflare Worker has no long-lived process and no readines
 A deployment can offer three sign-in providers in any combination: GitHub OAuth, Google OAuth, and
 email/password. Auth turns on as soon as **any** provider is configured together with a strong
 `AUTH_SESSION_SECRET`; each provider stays off until its own credentials are present. Regardless of
-how people sign in, repository access comes from the [GitHub App](./github-app.md) installation, not
-a user's own GitHub token, so a Google- or password-only user works fully. For who is allowed to
-create an account and how roles and invitations work, see
+how people sign in, repository access comes from the [GitHub App](./github-app.md) installation
+unless a run's initiator has stored a personal token, so a Google- or password-only user works fully.
+See [Which credential a run pushes with](../reference/agent-isolation.md#which-credential-a-run-pushes-with).
+For who is allowed to create an account and how roles and invitations work, see
 [Members, Roles & Invitations](../guide/team-and-access.md).
 
 | Variable | Purpose |
@@ -84,6 +85,8 @@ create an account and how roles and invitations work, see
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret. |
 | `GOOGLE_OAUTH_REDIRECT_URL` | Optional. Explicit callback; defaults to `${origin}/auth/google/callback`. |
 | `AUTH_PASSWORD_ENABLED` | Set to `true` to offer email/password signup and login. |
+| `AUTH_TRUST_PROXY` | Let the password throttle read the client address from `x-forwarded-for` instead of the socket peer. Set it **only** when a proxy you control terminates every request: otherwise the header is attacker-supplied and a client-chosen address defeats the throttle. Node and local only; the Worker reads `cf-connecting-ip`, which its edge injects and overwrites. |
+| `AUTH_TRUST_PROXY_HOPS` | How many trusted proxies sit in front of this process, used to pick the client hop out of an `x-forwarded-for` chain (default `1`; a CDN plus a load balancer is `2`). A shorter chain is discarded in favour of the socket peer. |
 | `AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated domains allowed to self-sign-up without an invite (password/Google), and allowed to sign in with a PAT. Empty means invite-only. |
 | `AUTH_ALLOWED_LOGINS` | Comma-separated GitHub/GitLab logins allowed to sign in with a PAT. |
 | `AUTH_ALLOWED_ORGS` | Comma-separated orgs whose members may sign in with a PAT. |
@@ -99,6 +102,11 @@ create an account and how roles and invitations work, see
 New-user creation is invite-only unless an email domain is allowlisted: a person gets in by
 redeeming an email invitation or by signing up with an address on `AUTH_ALLOWED_EMAIL_DOMAINS`. With
 neither, signup is refused.
+
+Password sign-in is rate-limited on a durable, cross-replica ledger rather than per process, so the
+throttle holds on a multi-replica deployment. It applies a burst cap per IP and email pair plus an
+aggregate per IP against credential stuffing. An in-process counter remains as the backstop for when
+the ledger itself is unreachable.
 
 A remote (hosted) Node deployment has **no anonymous tier**: it fails to boot unless at least one
 provider is configured (GitHub OAuth, Google OAuth, or `AUTH_PASSWORD_ENABLED` with a strong
@@ -256,7 +264,8 @@ own in-memory state on a miss, and only keys travel on the wire, never values.
 ## Private package registries
 
 Agent containers resolve private npm dependencies from registries you connect **per workspace** in
-the UI (**Integrations â†’ Private package registries**), not through environment variables. The
+the UI (the **Infrastructure** window's **Private package registries** tab), not through environment
+variables. The
 feature is available whenever `ENCRYPTION_KEY` is set (it seals the tokens at rest); with no key the
 panel and its API return a "not configured" state.
 
@@ -272,6 +281,44 @@ names the token can install. Tokens are write-only, shown afterward only as a `â
 four characters; to change one, remove the entry and re-add it. One entry per vendor per workspace.
 Before any agent runs, the harness renders these into a locked-down `~/.npmrc` scoped to the two
 allowed hosts, read by npm, pnpm, and yarn v1. Tokens are registered for output redaction.
+
+## Capability credentials
+
+A deployment's [MCP tool servers](./custom-agents.md#skills-and-tool-servers) and
+[generative integrations](./custom-agents.md#generative-binary-integrations) declare the secrets they
+need **by name**. Fill those names in per workspace on the **Infrastructure** window's **Capability
+credentials** tab, which sits beside the package registries because what an agent's tools authenticate
+as belongs with where those agents run. The tab needs `secrets.manage`.
+
+The panel is a checklist projected from the deployment's own registrations, never a blank key-value
+form. Each row names the key, who asks for it (a tool server or a generative integration), whether it
+is required, and when it was last set. Values are write-only: a stored value is replaced by typing a
+new one and is never read back.
+
+An empty row means one of three things, kept apart because each needs a different reaction:
+
+- Nothing stored for this board, but the deployment also reads the key from its own environment, so
+  the capability may still be working.
+- Nothing stored and no environment fallback, so the capability cannot authenticate.
+- The deployment supplied its own credential chain, so whether the key is answered elsewhere cannot be
+  described here.
+
+Keys that are stored but that nothing registered asks for are listed separately as **Stored but not
+asked for**, which is what a retired integration or a renamed variable leaves behind. They stay sealed
+until you remove them. If the declaration list itself cannot be read, the panel says so and withholds
+the orphan list rather than reporting every credential as orphaned.
+
+A multi-tenant deployment can drop the environment fallback entirely and make the per-workspace store
+the only source, so one process serving many workspaces never answers every tenant with one variable.
+
+::: warning Reserved variable names
+A capability credential may not name a variable the platform itself reads. A definition names both the
+key it wants and the endpoint that key is sent to, so an unreserved name would let a registration
+inject the deployment's own secrets into a prompt-injectable agent process. The floor is enforced at
+declaration and again at dispatch, and it binds a deployment's own resolver too. For a `stdio` tool
+server whose client reads a documented variable inside a reserved prefix, declare the lookup key and
+the injected name separately.
+:::
 
 ## Service configuration
 

@@ -55,6 +55,8 @@ Two things bite here and are worth getting right the first time:
 | `nav` | `{ id, labelKey, icon, surfaces, gate?, run, … }` | Sidebar, command palette, and toolbar |
 | `inspectorPanels` | `{ id, component, when(block), order }` | The inspector body |
 | `appOverlays` | `{ id: '<ns>:<name>', component }` | A full-screen overlay you open from anywhere |
+| `externalTools` | `{ id, title, icon, url, requiredMetadata?, order?, gate? }` | An "External tools" sidebar section and the command palette |
+| `workspaceMetadataFields` | `{ key, label, type?, options?, description?, order? }` | A **Metadata** tab on workspace settings |
 
 Locale strings ride along separately: ship them under your own namespace in your deployment's
 `i18n/locales/*.json` and the layer deep-merges them, so `t('acme.securityReport.title')` resolves
@@ -122,6 +124,58 @@ It is pick-one: opening a second overlay replaces the first. Compose `ResultWind
 your overlay inherits focus-trap, scroll-lock, and shared Escape handling. Opening an id nothing
 registers degrades to nothing with a dev warning, never a crash. Duplicate ids across modules throw at
 boot, like every other slot.
+
+### External tools and workspace metadata
+
+These two slots are data only (no components) and only mean anything together. `externalTools` lists
+your deployment's own web applications in their own sidebar section; clicking one opens it in a
+separate browser page. `workspaceMetadataFields` declares the per-workspace values those tools resolve
+against.
+
+The point is the context that rides on the link. A tool declares a resolver from the invocation
+context to a URL, not a static link, so a click lands on the right state rather than the tool's front
+door:
+
+```ts
+externalTools: [
+  {
+    id: 'acme:map-editor',
+    title: 'Map Editor',
+    description: 'Edit this board\'s game world',
+    icon: 'i-lucide-map',
+    requiredMetadata: ['gameId'],
+    url: (ctx) => {
+      const url = new URL('https://maps.acme.dev/edit')
+      url.searchParams.set('game', ctx.metadata.gameId)
+      url.searchParams.set('as', ctx.userEmail ?? '')
+      return url.toString()
+    },
+  },
+],
+workspaceMetadataFields: [
+  { key: 'gameId', label: 'Game id', placeholder: 'zork', order: 10 },
+],
+```
+
+The resolver receives `{ userId, userEmail, workspaceId, workspaceName, metadata }`. Returning `null`
+means "not resolvable right now": the tool stays listed and explains itself on click instead of
+opening something wrong. Four refusals are distinguished, because different people fix them: a
+declared `requiredMetadata` key nobody filled in, a resolver that returned nothing, a result that is
+not an `http(s)` URL, and a resolver that threw. A throwing resolver never blanks the nav; it is
+caught and reported like any other refusal.
+
+::: warning Metadata values are untrusted input
+A workspace admin types them in, so treat a value as operator-supplied text. Interpolate it into a
+query parameter or an `encodeURIComponent`'d path segment. Never build the **origin** from one:
+`` `https://${ctx.metadata.region}.acme.dev` `` with `region` set to `evil.com/x?a=` resolves to a URL
+on someone else's host, and the `http(s)` allow-list cannot tell that apart from the link you meant.
+:::
+
+Field definitions are code-shipped, so adding, renaming, or retiring one needs no migration. Only the
+values are stored, in a per-workspace JSON column that both the Postgres and Cloudflare runtimes
+mirror. A key must be identifier-shaped (`^[A-Za-z][A-Za-z0-9_.-]{0,63}$`); the backend validates the
+shape of the bag and never the field list. The **External tools** section disappears entirely on a
+deployment that registers none.
 
 ## Compose the shared building blocks
 

@@ -49,6 +49,7 @@ export default defineUserConfig({
               '/guide/designing-your-board.md',
               '/guide/team-and-access.md',
               '/guide/shared-services.md',
+              '/guide/foundational-services.md',
             ],
           },
           {
@@ -131,6 +132,7 @@ export default defineUserConfig({
             '/guide/designing-your-board.md',
             '/guide/team-and-access.md',
             '/guide/shared-services.md',
+            '/guide/foundational-services.md',
             '/guide/requirements.md',
             '/guide/running-pipelines.md',
             '/guide/recurring-pipelines.md',

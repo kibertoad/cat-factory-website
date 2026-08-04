@@ -64,31 +64,77 @@ Manage it on the workspace's `notification-webhook` endpoint (session-authentica
 | Method & path | What it does |
 | --- | --- |
 | `GET /workspaces/:workspaceId/notification-webhook` | Return the registered webhook, or `null`. Never returns the secret. |
-| `PUT /workspaces/:workspaceId/notification-webhook` | Register or update it. Body `{ url, types?, enabled?, secret? }`. |
+| `PUT /workspaces/:workspaceId/notification-webhook` | Register or update it. Body `{ url, types?, runEvents?, enabled?, secret? }`. |
 | `DELETE /workspaces/:workspaceId/notification-webhook` | Remove it (deliveries stop). Idempotent. |
 
 `url` must be `https://`. `secret` is write-only: omit it to keep the stored one, pass a new value to
-rotate it. Omitting `types` delivers the defaults, the cards a headless overseer must react to:
-`requirement_review`, `clarity_review`, `decision_required`, `fork_decision_pending`, `merge_review`,
-`pipeline_complete`, `ci_failed`, and `test_failed`. Operator-only cards such as `platform_health` and
-`budget_paused` are excluded by default so the endpoint isn't a firehose; list them explicitly if you
-want them.
+rotate it.
 
-Each delivery POSTs `{ deliveryId, sentAt, workspaceId, runId, taskId, notification }`. `runId` and
-`taskId` are lifted out of the card so a receiver can route without unpacking it, and `deliveryId` is
-stable across retries so you can dedupe on it. Two headers carry the authenticity proof:
+### The two delivery families
+
+One endpoint receives both families, told apart by the body's shape. Their filters have deliberately
+opposite empty semantics.
+
+**Notification cards** (`types`). Omitting `types`, or passing `[]`, delivers the defaults, the cards
+a headless overseer must react to: `requirement_review`, `clarity_review`, `decision_required`,
+`fork_decision_pending`, `merge_review`, `pipeline_complete`, `ci_failed`, and `test_failed`.
+Operator-only cards such as `platform_health`, `budget_paused`, and `key_drift` are excluded by
+default so the endpoint isn't a firehose; list them explicitly if you want them. A card is pushed
+when it is raised and again when it is resolved.
+
+**Run-lifecycle events** (`runEvents`). `run.started`, `run.completed`, and `run.failed`, one
+delivery per transition. These cover the case no card does: a run that succeeds end-to-end raises no
+notification at all. Omitting `runEvents`, or passing `[]`, delivers none of them, so a receiver
+registered for parked decisions does not silently start hearing about every run. Subscribe per event:
+
+```bash
+curl -X PUT -H "Authorization: Bearer <session token>" -H 'content-type: application/json' \
+  -d '{
+    "url": "https://hooks.example.com/cat-factory",
+    "secret": "<16-200 chars, used to sign deliveries>",
+    "types": [],
+    "runEvents": ["run.started", "run.completed", "run.failed"],
+    "enabled": true
+  }' \
+  "$BASE/workspaces/$WORKSPACE_ID/notification-webhook"
+```
+
+A card delivery POSTs `{ deliveryId, sentAt, workspaceId, runId, taskId, notification }`. `runId` and
+`taskId` are lifted out of the card so a receiver can route without unpacking it. `deliveryId` is
+`<notificationId>-<status>`.
+
+A lifecycle delivery POSTs `{ deliveryId, sentAt, workspaceId, event, run }`, where `run` carries
+`runId`, `taskId`, `taskTitle`, `pipelineId`, `pipelineName`, `startedAt`, `occurredAt`,
+`pullRequestUrl`, and (on `run.failed`) `failure`. `deliveryId` is `<runId>:<event>`.
+
+Dedupe on `deliveryId`, never on the body. `run.started` is exactly-once per run by construction, but
+the terminal events are at-least-once: a durable replay can re-emit a settled run, and a replay
+re-stamps `sentAt` and `occurredAt`, so two deliveries of one transition are not byte-identical. One
+id comparison collapses them. A retry or restart mints a fresh run id and announces it as a new
+`run.started`. Headless [public-API](../reference/public-api.md#headless-jobs) jobs emit no lifecycle
+events.
+
+Two headers carry the authenticity proof:
 
 | Header | Value |
 | --- | --- |
 | `x-cat-factory-timestamp` | Epoch milliseconds the delivery was produced. |
 | `x-cat-factory-signature` | `v1=<hex HMAC-SHA256>` over `<timestamp>.<body>`, keyed by your secret. |
 
-Delivery is best-effort and bounded: a few attempts inside a short wall-clock budget, giving up on a
-4xx. The budget is deliberately tight because raising a notification is what parks a run, so a dead
-receiver can never add seconds of latency to the park itself.
+Verify the signature against the raw request bytes, before any JSON parsing. The timestamp is bound
+into the MAC, so you can trust it for replay rejection.
 
-By default the endpoint must be a public host: private, internal, and cloud-metadata addresses are
-blocked. Widen it with `NOTIFICATION_WEBHOOK_ALLOW_URL_HOSTS` and `NOTIFICATION_WEBHOOK_ALLOW_HTTP_URLS`
+Delivery is best-effort and bounded: three attempts with exponential backoff, five seconds per
+attempt and a six-second total budget, giving up on a 4xx. The budget is deliberately tight because
+raising a notification is what parks a run, so a dead receiver can never add seconds of latency to
+the park itself. That also means missed deliveries are possible: treat the webhook as a trigger and
+the API as the source of truth, answer with a 2xx fast, and process asynchronously.
+
+By default the endpoint must be a public host: loopback, RFC 1918, link-local, `.internal`/`.local`
+hosts, embedded credentials, and cloud-metadata addresses are refused at registration and re-checked
+on every delivery hop. Redirects are followed at most five times, each hop re-validated, and a
+cross-origin hop drops the body and auth headers.
+Widen it with `NOTIFICATION_WEBHOOK_ALLOW_URL_HOSTS` and `NOTIFICATION_WEBHOOK_ALLOW_HTTP_URLS`
 (see [Configuration → Notifications](./configuration.md#notifications-slack-and-webhooks)). That guard
 is scoped to webhooks alone: widening it does not widen the runner-pool or environment guards.
 

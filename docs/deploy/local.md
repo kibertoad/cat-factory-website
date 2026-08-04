@@ -97,6 +97,41 @@ If you boot local mode with those secrets or `DATABASE_URL` missing, the misconf
 the boot log now point you straight at this command (`npx @cat-factory/cli env`) as the one-step fix,
 above the per-variable remedies.
 
+### Keeping the stack up: `cat-factory supervise`
+
+`node --watch` parks on crash. It restarts the entry only on a file change, never on a process exit.
+So when a laptop sleeps and the resume takes the PostgreSQL connection with it, the server dies, the
+watcher settles at "Waiting for file changes before restarting", and nothing is left bound to the
+port. The wrapper process is still alive and the ready banner scrolled past long ago, so the stack
+looks healthy while the SPA reports only "can't reach backend", indefinitely.
+
+Wrap your dev command in the supervisor instead:
+
+```bash
+cat-factory supervise --compose-service postgres -- npm run start
+```
+
+It probes the signal that actually distinguishes those states every ten seconds: the port is listening
+**and** `/health` answers 200. A parked watcher leaves nothing bound; a server that booted and lost its
+database pool still holds the socket and fails only the HTTP check.
+
+| Flag | What it does |
+| --- | --- |
+| `--compose-service <name>` | Bring the compose service back up and wait for it to report healthy before relaunching, since relaunching against a still-initialising database just crashes again in the migration. |
+| `--k3s-cluster <name>` | Start a merely-stopped k3d or kind cluster and wait for its apiserver, so a slept laptop does not leave the [Local k3s environment handler](#delegating-infrastructure-off-the-host) pointing at a dead control plane. |
+| `--compose-dir <path>` | Where the `docker-compose.yml` lives. Defaults to `--dir`, itself the current directory. Compose resolves its project file relative to the working directory, so supervising from anywhere else needs this. |
+
+It also detects a resume from suspend (a tick arriving several intervals late means time jumped) and
+repairs immediately rather than waiting out the normal failure threshold, since a resume is exactly
+when the stack is most likely already dead. It treats a dead child-process handle as authoritative, and
+it reaps the port when a package-manager wrapper is killed without its subtree and leaves the real
+`node` orphaned on the socket. Every kill it makes names the process id and the command behind it.
+
+One failure it deliberately reports once instead of retrying: a cluster wedged by a stale cgroup, which
+a suspend can leave behind. Clearing that needs the container engine restarted, which would kill the
+database the supervisor depends on, so retrying would reproduce the restart loop this command exists to
+end.
+
 ## Quick start (from the repo)
 
 To run from a clone of the `deploy/local` example directory instead:

@@ -54,6 +54,16 @@ then a fallback price for anything uncatalogued. For OpenRouter, each enabled mo
 its real upstream rate from the live catalog rather than the generic fallback, so dynamic models
 meter as accurately as the curated ones.
 
+Input tokens are priced in three classes, because they do not cost the same: **fresh** input, a
+**cache read**, and a **cache write**. A catalog entry that names no cache rates derives them from
+its base input rate. The same classed pricing drives both the spend ledger and the per-run cost
+figures, so a cache-heavy run is costed at what it actually spent rather than at the fresh rate for
+every token.
+
+Cost is reported on the run surfaces alongside tokens, rolled up per agent kind and run phase. A
+slice whose model the catalog cannot price reports no cost rather than zero, and a total containing
+one propagates that instead of passing a partial sum off as complete.
+
 You do not set per-token prices yourself. The catalog handles pricing; you control spend through
 the monthly limit, the currency, and your choice of models (see below). The prices are deliberately
 approximate: a budget only needs them in the right ballpark to act as a safeguard.
@@ -87,6 +97,22 @@ period into two sections:
 
 The Usage report meters **finished runs only**; a failed run's tokens show in the observability
 dashboard's per-call metrics rather than here.
+
+## Reports
+
+**Reports** is an account-scoped analytics view, open to account admins on the
+[advanced interface tier](./core-concepts.md#interface-tiers). Where the operator dashboard answers
+"is the platform healthy", this answers where the spend and the work actually go:
+
+- Spend per model and per agent kind.
+- Spend and run activity per board, per service, and per task type.
+- A spend trend over a 24-hour, 7-day, 30-day, or 90-day window.
+- An optional single-board filter that narrows every breakdown at once.
+
+Real metered cost and the illustrative equivalent-API cost of flat-rate subscription usage are
+separate columns throughout and are never summed. A call whose run, service, or task type cannot be
+resolved lands in its own **unattributed** slice rather than being dropped, so a breakdown's total
+always matches the ledger.
 
 ## Budget of 0: local- or subscription-only
 

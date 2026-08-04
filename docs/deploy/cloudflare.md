@@ -73,7 +73,7 @@ The Worker is wired up through bindings in `wrangler.toml`:
 | **Secrets** | Auth, GitHub App credentials, model provider keys, and optional web-search / tracker keys. |
 
 For the full list of secrets and environment variables, including the opt-in
-[web search](./configuration.md#web-search) and [tracker](./configuration.md#issue-tracker--task-sources)
+[web search](./configuration.md#web-search) and [tracker](./configuration.md#document-task-sources)
 settings, see [Configuration](./configuration.md).
 
 ## Production topology

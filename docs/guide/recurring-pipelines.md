@@ -19,7 +19,6 @@ When you add a recurring pipeline you pick a template:
 
 | Template | What it does |
 | --- | --- |
-| **Dependency updates** | A plain implement → review → merge pass for routine bumps. |
 | **Tech debt** | Audits the repo, files a tracker ticket, then implements the top item. |
 | **Bug triage** | Pulls one open issue from your tracker each run, reproduces it, fixes it, and merges. See [below](#the-bug-triage-pipeline). |
 | **Custom** | Attach any pipeline you've defined on whatever cadence you choose. |
@@ -113,7 +112,7 @@ one per workspace:
 - **Jira** - files into a configured project key, using the workspace's own connected Jira
   credentials.
 
-See [Configuration](../deploy/configuration.md#issue-tracker--task-sources) for enabling the Jira
+See [Configuration](../deploy/configuration.md#document-task-sources) for enabling the Jira
 task-source integration on a deployment.
 
 ::: tip Shared services fire once per org

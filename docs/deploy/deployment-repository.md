@@ -146,7 +146,91 @@ The full set of variables is documented in [Configuration](./configuration.md). 
 **fails closed**: set real OAuth/session secrets for a shared deployment, or `AUTH_DEV_OPEN=true`
 (non-production only) while developing.
 
-## 5. The local development loop
+## 5. Register your platform data in code
+
+Beyond [custom agents and gates](./custom-agents.md), a deployment declares parts of its own estate
+programmatically, so a fresh workspace is useful from its first request with no manual setup step.
+Each of these follows the same shape: build a registry, register on it, pass it to the start
+function.
+
+```ts
+// deploy/backend/src/main.ts
+import {
+  start,
+  defaultFoundationalServiceRegistry,
+  defaultTaskTypeRegistry,
+  defaultPipelineRegistry,
+  defaultInitiativePresetRegistry,
+  defaultBinaryGeneratorRegistry,
+} from '@cat-factory/node-server'
+
+const foundationalServiceRegistry = defaultFoundationalServiceRegistry()
+foundationalServiceRegistry.register({
+  id: 'file-storage',
+  name: 'File Storage',
+  summary: 'Durable object storage with signed read URLs',
+  description: 'Use for user uploads and generated assets. Does NOT do image transforms.',
+  capabilities: ['asset-storage'],
+  contracts: [
+    { contractId: 'openapi', format: 'openapi', title: 'HTTP API', body: fileStorageOpenApi },
+  ],
+})
+
+await start({ foundationalServiceRegistry })
+```
+
+| Registry | What it declares |
+| --- | --- |
+| `defaultAgentKindRegistry()` | [Custom agent kinds](./custom-agents.md), their traits, bundled skills, and MCP tool servers. |
+| `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](./custom-agents.md#custom-gates). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
+| `defaultPipelineRegistry()` | Predefined pipelines. |
+| `defaultTaskTypeRegistry()` | Namespaced [custom task types](./frontend-extensions.md#custom-task-types). |
+| `defaultInitiativePresetRegistry()` | [Initiative presets](../guide/initiatives.md). |
+| `defaultFoundationalServiceRegistry()` | [Foundational services](../guide/foundational-services.md), resolved as the `builtin` tier of every workspace's catalog. |
+| `defaultBinaryGeneratorRegistry()` | [Generative binary integrations](../guide/running-pipelines.md#binary-output-steps) a `binary-output` step can select. |
+
+::: warning Registration is validated at boot
+A malformed contract document, an unknown `helperKind`, or a `defaultPipelineId` that resolves to
+nothing fails the deployment at startup rather than a dispatch months later. That guarantee is the
+reason to register in code.
+:::
+
+Two options seed **stored** rows rather than adding a tier, because they describe infrastructure a
+workspace then owns and edits:
+
+```ts
+await start({
+  // A service's provision type resolves an infra handler with no manual
+  // Infrastructure → Test environments step.
+  seedEnvironmentHandlers: [{ provisionType: 'k8s', manifestId: 'acme-eks' }],
+  // The stacks a provisioned environment composes on top of.
+  seedSharedStacks: [{ name: 'shared-postgres', layers: [{ source: { kind: 'inline', body: composeYaml } }] }],
+})
+```
+
+Both are idempotent and fault-tolerant per seed: they run at boot across every existing workspace as
+a best-effort backfill, and again whenever a workspace is created. A compose layer is a bare in-repo
+path, an inline document, or a file in another repository, so a stack that lives outside the repo
+being provisioned still composes.
+
+::: tip Extending the Cloudflare Worker
+The Worker entry has the same seam. Export `createWorker(options)` from your entry module instead of
+re-exporting the default handler, and pass the same registries. The default handler is built lazily,
+so a deployment that exports its own never pays to build a second app.
+
+```ts
+// deploy/backend/src/index.ts
+import { createWorker, defaultFoundationalServiceRegistry } from '@cat-factory/worker'
+
+export default createWorker({ overrides: { foundationalServiceRegistry } })
+export {
+  ExecutionWorkflow, GitHubBackfillWorkflow, BootstrapWorkflow, EnvConfigRepairWorkflow,
+  EnvironmentTestWorkflow, ExecutionContainer, DeployContainer, WorkspaceEventsHub,
+} from '@cat-factory/worker'
+```
+:::
+
+## 6. The local development loop
 
 For day-to-day work, run the `local` package. It's the same backend wired for one machine (agent
 jobs as local containers, GitHub via a PAT). See [Run Locally](./local.md) for the full setup.
@@ -174,7 +258,7 @@ Wire that into a `prestart` script so it's automatic:
 }
 ```
 
-## 6. Containerize for production
+## 7. Containerize for production
 
 The `backend` package is a normal Node service. A minimal image installs the workspace, builds any
 local packages, prunes to production dependencies, and runs the entry directly:
