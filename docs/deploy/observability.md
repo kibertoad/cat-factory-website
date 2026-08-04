@@ -10,15 +10,35 @@ trace sink for teams that already centralize LLM observability.
 Every LLM call is metered, with no configuration required. Beyond the spend total (see
 [Budgets & Spend](../guide/budgets.md)), the observability dashboard records per run:
 
-- Prompt and completion tokens, and the finish reason for each call.
-- Cached prompt tokens and the actual **cache-hit rate**, so you can confirm
+- Input tokens in three classes, completion tokens, and the finish reason for each call.
+- The actual **cache-hit rate**, so you can confirm
   [prompt caching](../guide/budgets.md#prompt-caching) is working.
 - The effective request token ceiling per call.
+- Cost, priced from the three input classes and rolled up per agent kind and run phase.
 - The model's **reasoning trace**, when a reasoning model emits one on a separate channel. Some
   models spend their whole output budget reasoning and return an empty response; capturing the
   reasoning text separately makes that diagnosable instead of a silent empty result. Expand a call
   in the observability panel to see its **Reasoning** section (shown only when the model emitted
   one). No configuration is needed; it's recorded automatically.
+
+### The three input classes
+
+Input tokens are recorded as three separate numbers, and total input is their sum:
+
+| Class | What it counts |
+| --- | --- |
+| Fresh | Uncached input, billed at the model's base input rate. |
+| Cache read | Input served from a prompt cache, typically around a tenth of the base rate. |
+| Cache write | Input written into the cache, typically 1.25 to 2 times the base rate. |
+
+A run that keeps invalidating and re-writing its prefix and a run riding a warm cache spend very
+differently, and a single lumped "cached tokens" number cannot tell them apart. The split lets the
+ledger price a cache-heavy run at what it actually cost, and it makes a runaway prefix visible as a
+burn rather than as ordinary volume.
+
+Every call is also attributed to the **run phase** that spent it, so a run's model spend rolls up by
+phase rather than arriving as one undifferentiated total. Inline calls a local-mode host CLI serves are
+recorded and attributed the same way, per call and live, including the spend of a run that was killed.
 
 The **Model activity** panel streams calls live: each call appears the moment the proxy records it,
 pushed over the workspace event stream rather than fetched once when the panel opens. Because the
@@ -160,12 +180,34 @@ so a slow or broken step is diagnosable without reading logs:
   as working rather than wedged. The same heartbeat keeps the stalled-run sweeper from mis-marking it.
   It is automatic, with nothing to configure.
 
+### Debugging a run from outside the browser
+
+Everything above is reachable over HTTP as well, under `/api/v1/debug/*` with an ordinary `read`-scope
+[public API key](../reference/public-api.md#run-debugging). It exists for a caller with a fixed
+context budget rather than a scrollbar, so an agent asked "why did this run fail" can use it.
+
+It is a two-level drill-down: a keyset-paginated run index, a per-run overview built purely from SQL
+aggregates (steps, per-sink availability and counts, LLM rollups, and precomputed diagnostic signals),
+then bounded pages over the run's model calls, agent-context dispatches, performed searches, and
+provisioning events.
+
+Size discipline is enforced in the query rather than in the response: fan-out lists carry sizes rather
+than bodies, bodies are opt-in and byte-budgeted, slicing and filtering happen in SQL so an
+un-previewed page reads no body bytes at all, and every truncation reports what it left out.
+
+::: warning A read key reaches prompts
+These endpoints serve prompt and response bodies that the app gates behind workspace roles. Treat a
+key that can call them as sensitive even though it is only `read` scope.
+:::
+
 ## Retention cron
 
 Neither the telemetry store nor the provisioning log self-limits, so a cron prunes each table to its
 configured age window. On Cloudflare this runs on the scheduled handler alongside the run sweeper; the
 deletes are indexed range-scans and usually reclaim nothing, so they are cheap. A non-positive window
-disables that table's pass.
+disables that table's pass. Pruning is isolated per table and reports which tables failed, so one
+table's problem does not silently stop the rest. The same sweep materializes the daily run rollup the
+dashboard's 30- and 90-day windows read.
 
 | Variable | Prunes | Default |
 | --- | --- | --- |
@@ -252,17 +294,44 @@ Export is OTLP/HTTP with JSON encoding and DELTA metric temporality. It is best-
 a 10-second timeout and a non-2xx response or transport error is logged, never thrown, so a slow or
 unreachable backend never blocks a run.
 
-Every LLM call is exported as a span and metrics under the OpenTelemetry GenAI semantic conventions:
-the span name is the agent kind, with `gen_ai.system` (provider), `gen_ai.request.model`, token counts,
-and finish reason; the metrics are `gen_ai.client.token.usage` (a counter split by `input`/`output`)
-and `gen_ai.client.operation.duration` (a histogram in seconds). Calls in one run share a trace id and
-tool spans nest under it. Prompt and completion bodies ride as span events only when
-`LLM_RECORD_PROMPTS` is on.
+Every LLM call is exported as a span and metrics under the OpenTelemetry GenAI semantic conventions,
+with `gen_ai.system` (provider), `gen_ai.request.model`, token counts, and finish reason; the metrics
+are `gen_ai.client.token.usage` (a counter split by `input`/`output`) and
+`gen_ai.client.operation.duration` (a histogram in seconds). Prompt and completion bodies ride as span
+events only when `LLM_RECORD_PROMPTS` is on.
+
+Spans form a **tree** rather than a flat list, so a backend renders a run with its own duration and
+status:
+
+```
+run  →  agent kind  →  generations + tool calls
+```
+
+Every parent id is derived from the run id, so a stateless per-call emission can name a parent it has
+never seen and a durable replay re-derives the identical tree instead of a duplicate one. The parent
+spans are emitted once, when the run settles. The middle level's grain is the **agent kind** rather
+than the step index, because that is the finest thing a generation event can name; a slice that folds
+two steps of one kind reports its step count instead of passing them off as one.
 
 With `OTEL_PLATFORM_METRICS=true`, a periodic sweep also exports per-account deployment gauges:
 `cat_factory.platform.runs` (split by run status), `run_success_rate`, `run_failures` (split by
 failure kind), `live_runs` (a current snapshot split by state), and `run_duration` (split by
 `avg`/`min`/`max`/`p50`/`p90`/`p99`). Use them to alert on failure rate and latency in your own stack.
+
+### Operational counters
+
+Aggregating runs answers "how are the runs doing". It structurally cannot answer what an operator asks
+during an incident: how often dispatch is failing, whether the sweeper is re-driving more than it was,
+whether a queue is draining. Those are events, not rows.
+
+The platform counts them at the sweepers, the container dispatch seam, the trace sink, the outbound
+notification webhook, and every application-cache read, and exports them over OTLP as delta sums. A
+run's re-drive history is persisted on the run itself, so it outlives the process that did the
+re-driving. Every job queue is created with a dead-letter sibling, swept hourly for reporting.
+
+The readiness endpoint round-trips the job queue's own connection rather than reading a process-local
+boolean, and the Cloudflare Worker probes its bindings, so `/ready` reflects the deployment rather
+than the process's memory of itself.
 
 ::: tip Where to set these
 On Cloudflare, set `OTEL_EXPORTER_OTLP_HEADERS` as a Worker secret (`wrangler secret put …`) if it
@@ -273,9 +342,10 @@ manager.
 ## Operator dashboard
 
 The **Platform observability** dashboard gives an operator a live read of the whole deployment's run
-health without any telemetry backend. It is admin-only, account-scoped, and needs no configuration
-(it reads the platform's own data, separate from the OTLP push above). Open it from the sidebar and
-pick a window: **Last hour**, **Last 24 hours**, or **Last 7 days**.
+health without any telemetry backend. It is admin-only, account-scoped, needs no configuration (it
+reads the platform's own data, separate from the OTLP push above), and lives on the
+[advanced interface tier](../guide/core-concepts.md#interface-tiers). Open it from the sidebar and pick
+a window: **Last hour**, **Last 24 hours**, **Last 7 days**, **Last 30 days**, or **Last 90 days**.
 
 It shows:
 
@@ -286,6 +356,13 @@ It shows:
 - **Live now**: current Running / Blocked / Paused / Pending counts.
 - **Run duration**: Average, Min, Max, and the **p50, p90, and p99** percentiles (nearest-rank over
   the terminal runs in the window).
+- **Gate statistics**: per gate kind, how many reached each terminal verdict and how many helper
+  attempts (a CI Fixer loop, a conflict resolver) it took to get there.
+
+The 30- and 90-day windows read a daily rollup the retention sweep materializes rather than scanning
+raw runs. The projection reports how far back the rollup actually reaches, because an
+un-materialized rollup and a genuinely idle quarter both produce an empty series and are opposite
+facts.
 
 ## Platform-health alerting
 
@@ -308,11 +385,16 @@ PLATFORM_ALERTS=true
 
 A periodic sweep evaluates each account against the thresholds and raises a **Platform health alert**
 card in the [notifications inbox](./notifications.md) naming the crossed conditions: elevated failure
-rate, slow p99, or a growing backlog. The card de-dupes on the set of crossed conditions, so a
-persistently-unhealthy deployment re-notifies only when that set changes, and it clears automatically
-when the account recovers. The failure-rate check is gated by `PLATFORM_ALERTS_MIN_RUNS`, so a single
-failure on a quiet deployment stays quiet. From the inbox the alert routes on through your normal
-[notification channels](./notifications.md) (Slack, and the rest).
+rate, slow p99, a growing backlog, stalled throughput, one failure kind dominating, or a degraded
+sweep. The card de-dupes on the set of crossed conditions, so a persistently-unhealthy deployment
+re-notifies only when that set changes, and it clears automatically when the account recovers. The
+failure-rate check is gated by `PLATFORM_ALERTS_MIN_RUNS`, so a single failure on a quiet deployment
+stays quiet. The card deep-links to the failing runs it aggregated. From the inbox the alert routes on
+through your normal [notification channels](./notifications.md) (Slack, and the rest).
+
+The environment variables above are the deployment's defaults. An account can layer its own
+thresholds over them from its account settings; an unset value inherits the default rather than
+meaning zero.
 
 ## Post-run grading (Kaizen)
 

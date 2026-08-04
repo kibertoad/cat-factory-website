@@ -40,12 +40,43 @@ weaken the checks.
 
 Checks resolve up the frame chain, so a task inherits its service frame's set. The output (bounded and
 scrubbed of secrets) streams onto the step while the loop runs and stays on the finished step, so the
-run records real command output rather than the agent's assertion that it verified its work. A service
-with no checks configured opens its pull request exactly as before.
+run records real command output rather than the agent's assertion that it verified its work. It also
+lands on the pull request itself, in the
+[verification report](#the-verification-report-on-the-pull-request). A service with no checks
+configured opens its pull request exactly as before.
+
+Rather than typing the commands, hit **Detect**. It inspects the repository root and suggests check
+commands from what the repo itself declares, one detector per ecosystem. Suggestions land as unsaved
+rows in the panel for you to keep, edit, or drop; nothing is persisted until you save.
+
+## Installing dependencies before the agent starts
+
+A service frame also declares one **install command**, in the same inspector section. The harness runs
+it against the checkout before the agent's first turn.
+
+A fresh shallow clone gives an agent manifests, not dependencies: it can read that a library is
+depended upon but not what the library exposes, so it guesses at APIs, re-derives type shapes that are
+sitting on disk, or declines work it could have done. Installing first removes that whole class of
+guessing.
+
+The install and the pre-PR checks are threaded onto a job under different rules: the checks ride only
+a dispatch that will open a pull request, while the install rides every dispatch that gets a
+checkout, including a read-only exploration.
+
+## The repository's pull-request template
+
+A repository that ships `.github/PULL_REQUEST_TEMPLATE.md`, or GitLab's
+`.gitlab/merge_request_templates/`, states the shape every pull request against it must take. Neither
+host applies a template to a pull request created over its API, so a platform-opened PR would otherwise
+be the only one on the repo missing that structure.
+
+The harness discovers the template from the checkout it already has and folds it into the prompt of the
+agent that just did the work, which writes its reviewer briefing **as** the filled template. Nothing to
+configure. A directory holding several templates with no default is deliberately left alone.
 
 ## Conflicts, CI, and the merger
 
-The Full build pipeline finishes with three engine steps that prepare the PR for merge:
+Every build pipeline finishes with three engine steps that prepare the PR for merge:
 
 - **Conflicts Gate**: keeps the PR mergeable with its base, looping a **Conflict Resolver** agent to
   merge the base in and resolve any conflicts on the same branch.
@@ -97,6 +128,37 @@ change class** section, give each class one of three rules:
 A class rule can never override a policy whose auto-merge is off; that master switch wins first, and
 the panel says so.
 
+### Narrowing the rules by role
+
+A risk policy can narrow its class rules per
+[workspace role](./team-and-access.md#board-access-and-workspace-roles), so what auto-merges depends on
+who started the run. A policy's `classRulesByRole` maps a role to its own per-class rules.
+
+Narrowing is subtractive: a role entry can never grant what the base rules withhold, so each entry is
+reviewable on its own. A role that says nothing about a class, and a run with no role to pin at all,
+both fall through to the base rules rather than being read as a ceiling. The initiator's role is
+pinned when the run starts rather than looked up at merge time, since the merge settles on the durable
+path with no request context.
+
+When a role rule is what held a pull request back, the merger's result window says so, and says that a
+teammate on a higher tier can merge it as it stands.
+
+### Sandboxed runs
+
+A **dry run** executes the whole pipeline and opens its pull request, and merges nothing. The merge is
+blocked at both exits: the auto-merge, and the merge button on the review card the auto-merge would
+otherwise raise (which answers `dry_run_not_mergeable`). To get a mergeable pull request, start the
+task again as a live run.
+
+Two ways a run becomes a dry run:
+
+- A policy's `dryRunRoles` lists roles whose runs are always sandboxed, whatever the class rules would
+  allow.
+- The run asks for it at start (`mode: 'dry_run'`). The policy can force a sandbox regardless, so what
+  the run actually got is reported back on the run.
+
+Both settings default to empty, so an existing policy behaves exactly as it did.
+
 ### Recording how much review a merge actually needed
 
 Every merge decision writes one row to the workspace's merge track record: the change class, the
@@ -129,15 +191,30 @@ The report carries:
   agent kind with the model that actually ran it, plus a deep link into the run's observability panel.
 - **Continuous integration**: the CI gate's aggregated verdict, per-check-run names and conclusions,
   and how many times the CI fixer tried.
+- **Pre-PR validation**: each [check command](#pre-pr-validation) the harness ran against the exact
+  tree that opens the pull request, with its exit code, duration, and the log of whatever failed. This
+  is kept apart from the CI section on purpose: CI is the host's opinion of the pushed branch, later
+  and elsewhere, while this is the platform's own run on the exact tree and the one verdict it
+  enforced. A passing command's log is dropped, and the section says so rather than leaving an
+  ambiguous blank.
+- **Reproduction proof**: for a bug fix, the declared reproducing test run against the pre-fix tree and
+  against the finished one, so the pull request carries evidence that the defect ever manifested.
 - **Test verification**: the Tester step's structured report.
-- **Ephemeral environment**: the Deployer's per-frame provisioning outcomes and teardown state.
+- **Ephemeral environment**: a three-leg proof that the test environment did its job. It **came up**
+  at a recorded time (from the provisioning event log), evidence was **captured** from it while it was
+  live (from the Tester's own report and the screenshots it stored), and it was **torn down** again.
+  The verdict over the three legs names every missing or contradictory leg, and a deep link points at
+  the captured evidence. An unreadable provisioning log reports itself as un-evidenced rather than as
+  an environment nobody reclaimed, and a tester that ran locally is kept apart from one that did not
+  say where it ran.
 - **Rubric reviews**: each judge step's verdict, when the pipeline places any.
 - **Merge assessment**: the merger's scores and the engine's resolved merge decision.
 
 A section whose producing step never ran says so explicitly rather than vanishing, because a missing
-section reads like a clean one. Below the prose, a collapsed block holds the same report as JSON for
-external tooling to ingest without scraping. Publishing is provider-neutral, so a GitLab deployment
-gets the report on its merge-request description too.
+section reads like a clean one. Artifacts the run captured are linked rather than described. Below the
+prose, a collapsed block holds the same report as JSON for external tooling to ingest without scraping.
+Publishing is provider-neutral, so a GitLab deployment gets the report on its merge-request description
+too.
 
 ## Reviewing the PR
 
@@ -172,13 +249,28 @@ steer the reviewer. A Review task takes no title or description (the title is de
 no risk policy (it merges nothing). It runs the single-step **Review a pull request** pipeline, and any
 [prompt fragments](./prompt-fragments.md) you pin become review criteria.
 
+The reference is checked at creation, against precisely the repository the reviewer will read, so a
+typo'd number is refused there instead of surfacing later as a run that clones a repo and finds nothing
+to review. A link belonging to a different repository is refused too, since the reviewer fetches by
+number against the service's own repo. Only a positive "no such pull request" refuses: an outage, a
+revoked token, or a rate limit answers "unknown" and the task is created. The task inspector links
+through to the pull request it targets.
+
 The **PR Reviewer** agent clones the repo, fetches the PR head, and for a large diff **slices it into
-cohesive chunks** (a refactor with its call sites and tests) and reviews one chunk at a time, so it
-scales to hundreds of files. It is **comment-aware**: it reads the PR's existing review threads and
-skips issues already raised. It returns **prioritized findings**, each with a severity (blocker, high,
-medium, low, or nit), a category (correctness, security, performance, maintainability, style, or test),
-the file and line, an explanation, and a suggested fix. The board card shows live progress ("Reviewing
-X/Y slices", then "Findings ready").
+cohesive chunks** (a refactor with its call sites and tests) and reviews the chunks in parallel, up to
+five at a time, so it scales to hundreds of files without turning one pull request into dozens of
+concurrent conversations on one account. It is **comment-aware**: it reads the PR's existing review
+threads and skips issues already raised. It returns **prioritized findings**, each with a severity
+(blocker, high, medium, low, or nit), a category (correctness, security, performance, maintainability,
+style, or test), the file and line, an explanation, and a suggested fix.
+
+The board card shows live progress ("Reviewing X/Y slices", then "Findings ready"). The slice list is
+the reviewer's own plan, with live status folded onto it, so it only ever grows and a slice's status
+only advances; a queued slice never disappears and reappears.
+
+Each slice's findings are **persisted as it finishes**, not held until the whole review folds up. If a
+watchdog, an evicted container, or a wedged aggregation kills the review partway, the completed slices
+survive and the review can be **resumed** from where it stopped rather than re-run from zero.
 
 When the review finishes, the run **parks on its findings**. Open the **PR review** window, multi-select
 the findings that matter (all are selected by default), and resolve:

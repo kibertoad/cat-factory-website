@@ -68,29 +68,66 @@ run contains an ordered list of **steps**.
 ## Steps and pipelines
 
 A **pipeline** is a reusable, ordered chain of **steps**. Each step is handled by a specific kind
-of agent. The default **Full build** pipeline runs:
+of agent. The build presets are a three-rung ladder that varies how much design a task gets. The
+default, **Standard build**, runs:
 
 ```
-Requirements Reviewer → Spec Writer → Spec Reviewer → Architect → Researcher → Coder
-  → Reviewer → Blueprinter → Mock Builder → Tester → Conflicts Gate → CI Gate → Merger
+Architect → Architect Reviewer → Coder → Reviewer → Deployer → Tester
+  → Conflicts Gate → CI Gate → Merger
 ```
 
-The **Requirements Reviewer** and the **Architect** proposal pause for **human approval**; the rest
-run to completion. The **Spec Writer** runs before the Architect so the design is built against a
-written spec, and the spec is not human-gated: its **Spec Reviewer** companion rates it and loops the
-writer back instead. The closing steps are engine automation: the **Conflicts Gate** keeps the PR
-mergeable with its base, the **CI Gate** gates it on green CI (looping a fixer agent on failure), and
-the **Merger** scores the PR and either auto-merges within the task's thresholds or raises a review
-notification.
+**Simple build** is the same minus the design phase, for work whose approach is not in question.
+**Adaptive build** puts a **Task Estimator** first and switches the Architect, the Tester, and a
+human review on the PR on only when the estimate warrants them.
 
-Other agent kinds include the **Task Estimator** (scores a task's complexity, risk, and impact so
-later steps can be [gated](./running-pipelines.md#estimating-and-gating-expensive-steps) on it), the
-**Acceptance Author**, **Acceptance Test Author**, **Documenter**, **Integrator**, the **Fixer**, a
-tech-debt analysis step, and an issue/ticket tracker step. Agent kinds are an **open set**: a
-deployment can [register custom kinds](../deploy/custom-agents.md). You choose the pipeline (cloning a
+The closing steps are engine automation: the **Conflicts Gate** keeps the PR mergeable with its base,
+the **CI Gate** gates it on green CI (looping a fixer agent on failure), and the **Merger** scores the
+PR and either auto-merges within the task's thresholds or raises a review notification.
+
+Steps the presets leave out stay available in the builder, including the **Requirements Reviewer**
+(which pauses for human approval), the **Spec Writer** and its reviewer, the **Researcher**, the
+**Blueprinter**, the **Mock Builder**, and the documentation kinds. Other agent kinds include the
+**Acceptance Author**, **Acceptance Test Author**, **Documenter**, the **Fixer**, a tech-debt analysis
+step, and an issue/ticket tracker step. Agent kinds are an **open set**: a deployment can
+[register custom kinds](../deploy/custom-agents.md). You choose the pipeline (cloning a
 built-in to make an editable copy, then reordering or disabling steps), and assign models through a
 **model preset**. On deployments with it enabled, eligible steps can also run through
 [multi-model consensus](./running-pipelines.md#multi-model-consensus).
+
+## Interface tiers
+
+The app has two interface tiers. **Basic** is the everyday delivery surface: plan work, run it,
+review and merge it. **Advanced** keeps the full set of navigation destinations and per-run knobs.
+
+Switch tiers from the control at the top of the sidebar. The tier resolves as the deployment's
+`NUXT_PUBLIC_UI_MODE` setting, then your own browser-stored choice, then basic. While the deployment
+pins a tier, the switcher is a read-only indicator rather than a preference the resolver would
+silently ignore. Basic mode also starts the sidebar collapsed to an icon rail, with a per-session
+override.
+
+Hiding is bounded to overrides and to destinations outside the delivery loop, so what remains in
+basic mode is exactly the default the hidden field would have shown. Surfaces on the advanced tier
+include repository bootstrap, platform observability, [Reports](./budgets.md#reports), creating a
+[recurring pipeline](./recurring-pipelines.md) or an [initiative](./initiatives.md), post-release
+health, and [foundational services](./foundational-services.md). Nothing is removed from the board by
+the tier: a live schedule still badges its task card, and an initiative is still a block.
+
+## Tutorials
+
+Guided tours run inside the live app. A shared coach-mark overlay anchors each step to a real
+control, tells you what to click, and follows your actual clicks rather than simulating them.
+
+On first launch the app offers a tour and remembers your answer per browser: declining stops the
+prompt for good, and closing it without answering asks again next launch. Afterwards, open
+**Tutorials** from the sidebar's Help section or the command palette. The catalogue lists every tour
+the deployment ships, each startable, resumable, or repeatable, with progress across the catalog and a
+reset that restores the first-launch experience.
+
+A tour whose control your role, tier, or deployment does not show skips that step after a short wait,
+so one tour serves every deployment shape. A tour that cannot run at all states what it is waiting on,
+which is a different thing from having no applicable step. When you finish a tour, the card hands off
+to whichever walkthrough your last action just made available, and a contextual offer catches a tour
+whose requirements have just been met.
 
 ## Decision prompts
 

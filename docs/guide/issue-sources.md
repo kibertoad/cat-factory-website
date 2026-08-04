@@ -94,6 +94,19 @@ already-linked issue is refused, so one issue maps to one task rather than silen
 GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, and local); Linear is
 offered as a task source for import and linking too.
 
+A headless integration does the same thing by naming the ticket on
+[`POST /api/v1/services/{serviceId}/tasks`](../reference/public-api.md#filing-a-task-from-a-tracker-ticket),
+which imports the issue and attaches it rather than flattening it into the description.
+
+## Bug hunt
+
+**Bug hunt** is the interactive counterpart to the recurring bug-triage schedule: same board reading
+and same downstream pipeline, but you pick instead of the oldest match being claimed unattended.
+
+Choose a connected tracker and one of its boards, and the open, unassigned bugs come back rated on
+impact against implementation complexity. Confirm one candidate and it is adopted as a bug task
+running the standard [Triage & fix bug](./running-pipelines.md) pipeline.
+
 ## The issue-tracker panel
 
 A workspace's tracker is configured in one place: **Workspace settings → Issue tracker**. It has
@@ -110,6 +123,58 @@ three parts:
 Each source has a **Check setup** button that runs a live diagnostic and reports a concrete status,
 `ready`, `not_installed`, `not_connected`, `auth_failed`, `forbidden`, or `unreachable`, so you can
 tell a missing GitHub App install from a bad Jira credential without starting a run to find out.
+
+A context picker always shows which tracker it is searching, and offers to add one from there if the
+board has none.
+
+::: warning GitHub issue search is repository-scoped
+GitHub's issue search API carries no scope of its own, so an unqualified query returns whatever the
+credential can reach: under a personal token, that is every public repository on GitHub. Every issue
+search the platform makes therefore names its repository by construction, including the recurring
+bug-intake sweep, which imports its hit and starts a pipeline on it. Results are exactly the service's
+own issues. To link an issue from another repository, paste its URL; the by-reference row never rode
+the search path.
+:::
+
+## Push-driven intake
+
+A tracker can push instead of being polled. Point the tracker's webhook at
+`POST /webhooks/tasks/<source>/<workspaceId>` and a qualifying issue event fires the matching intake
+schedule immediately rather than waiting for its interval.
+
+The webhook removes the latency; it does not reorder the queue. Deduplication, the replace-link rule,
+and the pickup mark are the recurring schedule's, unchanged, and the schedule remains the sweep that
+catches missed deliveries. The HMAC signature is verified over the raw body before anything is parsed.
+
+The same transport carries **replies from the ticket**. When a run posts its open questions onto the
+linked issue, someone can answer in the issue's own comments using an explicit grammar, never
+natural-language guessing:
+
+| Comment | Effect |
+| --- | --- |
+| `@cat-factory answer <id> <text>` | Answer the finding with that id. |
+| `@cat-factory dismiss <id>` | Dismiss the finding as not applicable. |
+| `@cat-factory proceed` | Proceed with the requirements as they stand. |
+| `@cat-factory extra-round` | Run one more review round. |
+| `@cat-factory stop` | Stop the run. |
+
+Jira Cloud sends comment bodies as rich-text documents rather than plain strings; those are converted
+before the grammar reads them, so a formatted reply works like a plain one.
+
+### Registering a tracker from a deployment
+
+The built-in sources (`github`, `jira`, `linear`) are not the whole vocabulary. A deployment can
+register its own task source on the `TaskSourceRegistry` under a namespaced id, `<namespace>:<name>`,
+the same shape [custom task types](../deploy/frontend-extensions.md#custom-task-types) use. Built-in
+ids stay bare, so nothing stored has to change.
+
+A namespaced id is resolved against the registry at the boundary, so an unregistered one is refused by
+the thing that actually knows, while a bare non-built-in id still fails validation. That keeps a typo
+distinguishable from a registration. A registered source's board scope is carried as an opaque board
+id rather than being squeezed into one of the built-in vendors' fields.
+
+A registered source is usable everywhere the built-ins are, including the
+[public API's `ticket` input](../reference/public-api.md#filing-a-task-from-a-tracker-ticket).
 
 ## Writing back to the tracker
 
@@ -146,7 +211,12 @@ Once linked and imported, source content travels with the block:
 
 Container agents get the linked material in full: each step's prompt carries
 a short summary index, and the complete bodies are written into a git-excluded `.cat-context/`
-directory in the workspace for the agent to read on demand. Cat Factory also resolves references you
+directory in the workspace for the agent to read on demand.
+
+A document that cannot actually reach the agent **fails the run** rather than being dropped quietly.
+A reference that resolves to a page with an empty body, and a corpus that overflows the materialized
+context budget, both used to leave the run looking healthy while the agent worked from a spec nobody
+noticed it never read. Both now refuse in the same words, naming what could not be delivered. Cat Factory also resolves references you
 name in a description, Jira keys, `owner/repo#123`, and URLs, against the imported corpus, so a task
 that mentions a ticket picks up that ticket's content even without an explicit link.
 
@@ -156,7 +226,7 @@ Document and issue integrations ship enabled; each workspace connects its own si
 in the UI (Confluence and Notion API access, Jira, and the GitHub-backed sources, which ride the
 workspace's GitHub App installation). Which task sources a workspace actually offers is then the
 per-workspace toggle described above. See
-[Configuration → Document & task sources](../deploy/configuration.md#document--task-sources) for the
+[Configuration → Document & task sources](../deploy/configuration.md#document-task-sources) for the
 deployment-side knobs that remain.
 
 ::: tip Keep the source of truth where your team works

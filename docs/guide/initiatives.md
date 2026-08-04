@@ -15,11 +15,18 @@ set on normal work.
 
 ## Creating one
 
-On a service frame, click **Create initiative**. The dialog takes a **Title** (for example, "Migrate
-the API to the new auth model") and an optional **Goal** describing the goal, constraints, and rough
-scope. When more than one preset is available it also shows a **preset picker** (see below), and the
-chosen preset may add a few fields of its own. Creating the initiative adds the block and an empty
-tracker. Nothing runs yet: you plan it next.
+On a service frame, click **Create initiative** (it is on the
+[advanced interface tier](./core-concepts.md#interface-tiers)). The dialog takes a **Title** (for
+example, "Migrate the API to the new auth model") and an optional **Goal** describing the goal,
+constraints, and rough scope. When more than one preset is available it also shows a **preset picker**
+(see below), and the chosen preset may add a few fields of its own.
+
+The same staged context picker the add-task form uses is here too, so an initiative can carry linked
+requirements, RFCs, PRDs, and tracker issues from the start. All three planning agents read them. The
+attachments stay visible in the initiative's inspector afterwards, so you can see the link landed and
+reach the source.
+
+Creating the initiative adds the block and an empty tracker. Nothing runs yet: you plan it next.
 
 ## Presets
 
@@ -71,25 +78,41 @@ zone, pin behaviour with coverage, design the transition, deliver, then decommis
 whole-codebase impact sweep is the agent's job; a gated **confidence case** document parks for you to
 challenge and approve its evidence before the swap proceeds.
 
-## Planning: interview, analyze, approve
+## Planning: analyze, interview, approve
 
 Start planning from the initiative's **inspector** or directly from its **board card**, which carries
 a **Run planning** button and, once the interview parks for answers, an **Answer planning questions**
 button (the card pulses while it waits). Both open the same **Plan initiative** pipeline, which runs
 in three stages before it asks for your approval:
 
-1. **Interview.** The planner parks the run and opens a **planning window** with clarifying questions
-   about scope, constraints, and priorities. Answer them, then either **Continue** (it may ask a
-   follow-up round) or **Proceed to plan** to converge on what you have given it. Your answers are
-   stored on the initiative.
-2. **Analyze.** An analyst reads the repository and writes a short codebase analysis that grounds the
-   plan in how the code actually looks today.
+1. **Analyze.** An analyst reads the repository and writes a short codebase analysis that grounds
+   everything after it in how the code actually looks today. It closes its report with the open
+   questions only a person can answer.
+2. **Interview.** The interviewer parks the run and opens a **planning window** with clarifying
+   questions about scope, constraints, and priorities. It has already read the analysis and is barred
+   from re-asking anything the analysis settles, so its bounded rounds are spent on what only you
+   know rather than on asking you to describe your own codebase. Answer the questions, then either
+   **Continue** (it may ask a follow-up round) or **Proceed to plan** to converge on what you have
+   given it. Your answers are stored on the initiative.
 3. **Plan.** The planner emits a structured multi-phase plan: a goal, constraints, non-goals, and a
    set of phases, each holding ordered items with dependencies and an estimate
    (complexity, risk, impact).
 
-The plan then waits at a **human approval gate**. Review the phases and items in the tracker and
-approve to arm execution, or send it back for another planning round.
+From the second interview round on, the planning window lists **pending questions first**, in order
+within each group. The order is re-snapshotted per round, so answering one question does not reshuffle
+the list under you.
+
+The plan then waits at a **human approval gate**, presented as a document to read rather than a wall
+of sections, with the same layout the step reader uses. Approve to arm execution, or request changes
+to send it back for another planning round with your comments attached.
+
+The planning run is an ordinary run of ordinary agent steps, so an initiative block gets the surfaces
+a task does: the inspector's execution panel with its step list, live phases, and step-detail
+drill-down, plus **Stop** and **Discard run** and the Focus view. Only the way a run starts differs:
+an initiative keeps its single **Run planning** control instead of a pipeline picker.
+
+Run metadata is shown on the planning windows, and **Delete initiative** names its real cascade: the
+plan goes, and tasks it already spawned stay on the board with only their membership link detached.
 
 ## Execution
 

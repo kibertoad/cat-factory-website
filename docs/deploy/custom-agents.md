@@ -21,7 +21,7 @@ to package and wire them, and the gotchas.
 Unlike a [provider manifest](../reference/manifests.md), an agent or gate is code you write and ship
 in your deployment repo. It is the supported way to extend the agent and gate sets; you don't need to
 touch the core packages or the harness image. The built-in gate suite ships as one such package,
-[`@cat-factory/gates`](../reference/packages.md), authored through the exact same `registerGate` seam
+[`@cat-factory/gates`](../reference/packages.md), authored through the exact same gate-registry seam
 your deployment uses.
 :::
 
@@ -50,13 +50,34 @@ renders a committed report (`postOp`).
 
 ## The registration seam
 
-A deployment teaches Cat Factory a new kind by calling `registerAgentKind` (or `registerAgentKinds`)
-once at startup, an import side effect that mirrors the model-provider registry seam. Optionally
-register a pipeline that chains your kinds with `registerPipeline`:
+Every extension point is an app-owned registry the composition root builds once and the start
+function injects. Your deployment builds the registry, registers on it by reference, and passes it in.
+There are no module globals, so registration order and module identity never matter:
 
 ```ts
-import { defineStructuredOutput, registerAgentKind } from '@cat-factory/agents'
-import { registerPipeline } from '@cat-factory/kernel'
+import { start, defaultAgentKindRegistry, defaultPipelineRegistry } from '@cat-factory/node-server'
+import { defineStructuredOutput } from '@cat-factory/agents'
+import * as v from 'valibot'
+
+const agentKindRegistry = defaultAgentKindRegistry()
+const pipelineRegistry = defaultPipelineRegistry()
+
+// … register on them (below) …
+
+await start({ agentKindRegistry, pipelineRegistry })
+```
+
+`startLocal()` takes the same options, and the Cloudflare Worker takes them through
+`createWorker({ overrides: { … } })`. See
+[Register your platform data in code](./deployment-repository.md#_5-register-your-platform-data-in-code)
+for the full list of registries.
+
+Each registry exposes `register(definition)` and `registerAll(definitions)`, replacing by id, so
+registering twice is safe. `PipelineRegistry` also has `retire(id)` for dropping a built-in pipeline
+you do not want offered.
+
+```ts
+import { defineStructuredOutput } from '@cat-factory/agents'
 import * as v from 'valibot'
 
 // One valibot schema is the whole structured-output story (see "Structured output" below).
@@ -68,7 +89,7 @@ const securityAssessment = defineStructuredOutput(
   }),
 )
 
-registerAgentKind({
+agentKindRegistry.register({
   kind: 'security-auditor',
   systemPrompt:
     'You are a security auditor. Explore the repository (read-only) and assess the security ' +
@@ -94,7 +115,7 @@ registerAgentKind({
   },
 })
 
-registerPipeline({
+pipelineRegistry.register({
   id: 'pl_org_audit',
   name: 'Org compliance audit',
   agentKinds: ['org-reviewer', 'security-auditor'],
@@ -106,20 +127,166 @@ needs no schema change. The registry replaces by id, so registering twice is saf
 
 ### The agent-kind definition
 
-`registerAgentKind` takes an `AgentKindDefinition` (from `@cat-factory/agents`):
+`register` takes an `AgentKindDefinition` (from `@cat-factory/agents`):
 
 | Field | Purpose |
 | --- | --- |
 | `kind` | The agent-kind id used in pipelines and steps (e.g. `security-auditor`). |
 | `systemPrompt` | The role prompt: a string, or a `(kind) => string` to serve a family of kinds. |
 | `agent?` | The LLM step's spec (`surface`, `output`, `clone`, `infra`). Omit for a pure pre/post-op kind with no LLM. |
-| `structuredOutput?` | A `defineStructuredOutput(schema)` descriptor. When present and you didn't set `agent.output` by hand, `registerAgentKind` fills `agent.output` from it. See [Structured output](#structured-output-from-one-schema). |
+| `structuredOutput?` | A `defineStructuredOutput(schema)` descriptor. When present and you didn't set `agent.output` by hand, the registry fills `agent.output` from it. See [Structured output](#structured-output-from-one-schema). |
 | `preOps?` / `postOps?` | `RepoOp[]` deterministic backend hooks over `RepoFiles`. |
-| `presentation?` | Display metadata: `label`, `icon`, `color`, `description`, `category`, `resultView`. |
+| `presentation?` | Display metadata: `label`, `icon`, `color`, `description`, `category`, `tier`, `resultView`. |
 | `userPrompt?` | A custom user-prompt builder; omit for the generic block-context prompt. |
-| `traits?` | Capability traits: `code-aware` folds in the service's best-practice fragments, `spec-aware` appends the in-repo-spec reading guidance. |
+| `traits?` | [Capability traits](#traits) this kind carries. |
+| `skills?` | [Skills](#skills-and-tool-servers) the kind applies: a registered bundled id, an inline bundled skill, or a catalog reference. |
+| `toolServers?` | [MCP tool servers](#skills-and-tool-servers) the kind may call: a registered id or an inline definition. |
 | `configContributions?` | Task-level config fields this kind surfaces on the new-task form and inspector. |
+| `standardsDelivery?` | `prompt` (default) folds resolved best-practice standards into the system prompt; `context-files` leaves the kind's own preOp to write them as `.cat-context/` files. Use the second for a kind that delegates to subagents, where folding charges the delegating agent on every turn while the subagents never see them. |
+| `tuning?` | Per-kind progress-guard overrides folded into a container dispatch. Loosen-only: the harness clamps each override up to its base, so a custom kind can raise a limit but never tighten one. |
+| `gatable?` | Whether a pipeline may estimate-gate a step of this kind. |
+| `fanOutMultiRepo?` | For a container kind, resolve the block's connected involved-service repos as sibling checkouts. |
 | `webResearchHint?` | A one-clause nudge for when this kind should reach for web search. |
+
+#### Traits
+
+A trait is a capability the engine acts on when it assembles the prompt. Trait ids are free-form, so
+a deployment can define its own with `registry.registerTrait(definition)` and attach it to a built-in
+kind with `registry.assignTraits(kind, traits)`. The ones the platform reads:
+
+| Trait | Effect |
+| --- | --- |
+| `code-aware` | Folds the running service's selected best-practice fragments into the prompt. |
+| `doc-aware` | Folds the block's selected writing-style fragments in. |
+| `spec-aware` | Appends the in-repo-spec reading guidance. |
+| `brief-standards` | Delivers a condensed form of the standards, for implementer kinds. |
+| `foundational-catalog` | Hands the kind the [foundational-services catalog](../guide/foundational-services.md) and requires it to declare which services its design consumes. |
+| `foundational-contracts` | Hands the kind the full API contracts of the services a design declared. |
+| `binary-storage` | The kind uploads to the platform's binary-artifact store (run evidence such as screenshots). |
+| `binary-output` | The kind generates product binaries stored through a foundational service. See [Binary-output steps](../guide/running-pipelines.md#binary-output-steps). |
+| `interview-gate` | The kind conducts a clarification interview before proceeding. |
+
+#### Skills and tool servers
+
+A kind declares the procedural playbooks it applies and the MCP servers it may call. Both are
+references resolved per dispatch and wired into whichever agent CLI the run uses.
+
+A **skill** takes one of three forms. A **bundled** skill ships in your own package code, so a company
+agent carries its playbook with no skill library, no GitHub connection, and no repo sync:
+
+```ts
+agentKindRegistry.registerSkill({
+  id: 'acme-incident-playbook',
+  name: 'incident-playbook',
+  description: 'How Acme triages a production incident.',
+  instructions: '# Incident playbook\n\n1. …',
+  resources: [{ relPath: 'severity-matrix.md', content: '…' }],
+})
+
+agentKindRegistry.register({ kind: 'acme-on-call', skills: ['acme-incident-playbook'], /* … */ })
+```
+
+You can also pass the definition inline for a one-off, or reference an account-tier repo-synced
+[skill](../guide/skills.md) with `{ catalogSkillId: 'src:<sourceId>:<dirName>' }`. A catalog reference
+is required by default: if the library is unconfigured or the skill was removed, the dispatch fails
+rather than running work nobody asked for. Pass `optional: true` to skip it with a note instead.
+
+A **tool server** is an MCP server, `stdio` or HTTP:
+
+```ts
+agentKindRegistry.registerToolServer({
+  id: 'acme-tracker',
+  label: 'Acme Tracker',
+  guidance: 'Look up an incident\'s history before proposing a fix.',
+  transport: { kind: 'http', url: 'https://tracker.acme.dev/mcp' },
+  allowedTools: ['search_incidents', 'get_incident'],
+  secretKeys: [{ key: 'ACME_TRACKER_TOKEN', header: 'Authorization', headerTemplate: 'Bearer {value}' }],
+})
+```
+
+Credentials are declared by name and resolved at dispatch from the deployment environment; the value
+rides the job body only and never reaches a prompt. An HTTP server must be `https` or loopback,
+refused at registration and again at the harness job boundary, since its credential rides a header.
+`guidance` is what turns a wired server into a used one; without it an agent tends to ignore a tool it
+was handed.
+
+A `key` may not name a variable the platform's own configuration owns. For a `stdio` server whose
+client reads a documented variable name inside a reserved prefix, split the two:
+`{ key: 'ACME_GITHUB_TOKEN', envName: 'GITHUB_PERSONAL_ACCESS_TOKEN' }`. A secret that does not
+resolve drops the whole server, with a note in the prompt, unless you mark it `required: false`.
+
+`allowedTools` is scoping, not a security boundary. It is always stated in the prompt and passed to
+the claude-code CLI's `--allowedTools`, but the run's permission mode decides whether the CLI treats
+it as a gate, and some harnesses cannot express a per-tool restriction. A server whose other tools a
+kind must genuinely never reach should not be wired for that kind at all. A server the run's harness
+cannot serve is stated to the agent as unavailable rather than silently dropped.
+
+Attach either to a **built-in** kind without redefining its prompt, which is how a stock `coder` or
+`pr-reviewer` gets your house playbook or your tracker:
+
+```ts
+agentKindRegistry.assignSkills('coder', ['acme-house-style'])
+agentKindRegistry.assignToolServers('pr-reviewer', ['acme-tracker'])
+```
+
+Boot validation errors on an unresolved skill or tool-server id.
+
+#### Kind variants
+
+A variant is an alternate prompt for an existing kind, selected per step through
+`stepOptions.agentVariantId`. Register one with `agentKindRegistry.registerVariant(definition)`. A
+variant is not a kind: it never appears in the palette as its own entry, never answers a lookup by
+kind, and never changes a behavioural answer such as whether the step needs a container. Use it when
+the job is the same and only the instructions differ.
+
+#### Interface tier
+
+`presentation.tier` places the kind on the pipeline builder's palette ladder: `basic`,
+`intermediate`, or `advanced`. Tiers are cumulative, so selecting a level shows that tier and every
+tier below it, and a long catalog stays short for someone who only runs the delivery loop.
+
+A kind that declares no tier is treated as `intermediate`. That is deliberate: a deployment's custom
+kind is not part of the delivery loop everyone runs, so it stays out of the default view until the
+deployment says otherwise by declaring `tier: 'basic'`.
+
+#### Generative binary integrations
+
+A kind carrying the `binary-output` trait produces binary artifacts. What makes them is a separate
+registration: the image, music, video, or 3D APIs your deployment pays for, declared on the
+`BinaryGeneratorRegistry` so a pipeline step can select among them.
+
+```ts
+binaryGeneratorRegistry.register({
+  id: 'acme-image',
+  name: 'Acme Image API',
+  summary: 'Photoreal product shots and stylised concept art.',
+  description: 'Good at product photography on a plain background. Not for text-heavy layouts.',
+  modalities: ['image'],
+  mediaTypes: ['image/png', 'image/webp'],
+  endpoint: 'https://api.acme.dev/v1',
+  guidance: 'Submissions are async: POST /jobs, then poll /jobs/{id} until state is done.',
+  credential: { key: 'ACME_IMAGE_KEY' },
+  contracts: [{ contractId: 'openapi', format: 'openapi', title: 'HTTP API', body: acmeImageSpec }],
+})
+```
+
+| Field | Purpose |
+| --- | --- |
+| `modalities` | The content types it produces: `image`, `audio`, `video`, `3d-model`, `3d-scene`, `document`. At least one. This is what the admission coverage check compares a step's requirements against. |
+| `mediaTypes?` | The concrete formats it can emit. Absent means only the coarse modalities are known, and the brief says so rather than implying every format of that modality is available. |
+| `endpoint?` | The API's base URL, so the agent does not infer one from the contract. Must be `https` or loopback, since the credential rides the request. |
+| `guidance?` | Operating notes folded into the brief verbatim: polling an async job, whether a payload comes back base64 or as a signed URL, a rate limit worth respecting. This is where you put what would otherwise be rediscovered once per run. |
+| `credential?` | Declared by name (`key`), optionally delivered under a different variable (`envName`). The value never reaches a prompt. |
+| `contracts?` | API contract documents in the same formats the [foundational catalog](../guide/foundational-services.md) accepts, injected as `.cat-context/` files so the agent calls declared operations instead of inventing them. |
+
+`description` is the half a model needs to choose between two registered generators of the same
+modality: style, resolution or length limits, cost profile. The platform provides no discriminator
+field for that, because those axes do not partition the deliverable and a rule built on one would
+refuse correctly-configured steps.
+
+The pipeline builder's picker and the run-admission check read the same registration, so a step
+configured from the picker is never refused at start as an unknown integration, even on a split
+deployment whose processes are on different builds.
 
 A `container-*` surface implies a checkout automatically, so you don't also set `requiresContainer`.
 `presentation.resultView` is a typed picklist (`generic-structured`, `gate`, `tester`, and the rest
@@ -147,7 +314,7 @@ A `container-explore` or `inline` kind whose deliverable is JSON declares one va
 `defineStructuredOutput` (from `@cat-factory/agents`). That single schema produces both:
 
 - the `agent.output` spec, including the `shapeHint` the harness's one-shot repair call sees when the
-  first JSON parse fails (`registerAgentKind` fills `agent.output` from `structuredOutput` when you
+  first JSON parse fails (the registry fills `agent.output` from `structuredOutput` when you
   didn't set it by hand), and
 - a typed `parse` (strict, throws) and `safeParse` (lenient, returns `undefined` on a malformed
   reply) that your post-ops and step resolvers call on `ctx.result.custom`.
@@ -202,9 +369,7 @@ The smallest useful custom agent is a single inline call, no repo, no hooks. It 
 nothing but the import:
 
 ```ts
-import { registerAgentKind } from '@cat-factory/agents'
-
-registerAgentKind({
+agentKindRegistry.register({
   kind: 'org-reviewer',
   systemPrompt:
     'You are an organisation policy reviewer. Review the change description against the ' +
@@ -276,9 +441,7 @@ Two patterns make this production-grade and are worth copying into your own post
 ### The kind
 
 ```ts
-import { registerAgentKind } from '@cat-factory/agents'
-
-registerAgentKind({
+agentKindRegistry.register({
   kind: 'security-auditor',
   systemPrompt:
     'You are a security auditor. Explore the repository (read-only) and assess the security ' +
@@ -336,14 +499,14 @@ work is even needed: it runs a deterministic programmatic precheck against a dat
 and only escalates to a helper agent on a negative verdict, looping until the precheck passes or an
 attempt budget is spent. The built-in `ci`, `conflicts`, and `post-release-health` gates work this
 way, and they ship as [`@cat-factory/gates`](../reference/packages.md), a package authored through the
-same `registerGate` seam your deployment uses. So the engine owns the shared state machine (re-attach
+same gate-registry seam your deployment uses. So the engine owns the shared state machine (re-attach
 on replay, init and persist `step.gate`, dispatch the helper, count attempts, emit); your gate is the
 small `GateDefinition` describing what makes it different.
 
 ### The gate registration seam
 
-A deployment registers a gate by calling `registerGate(kind, factory)` (from `@cat-factory/kernel`)
-once at startup, an import side effect that mirrors `registerAgentKind`. The `kind` is the step
+A deployment registers a gate with `gateRegistry.register(kind, factory)` on the `GateRegistry`
+the start function injects, the same shape as every other registry. The `kind` is the step
 `agentKind` the gate gates; the factory is `(ctx: GateContext) => GateDefinition`, invoked once when
 the engine builds its gate registry. A registered gate replaces a built-in of the same kind, so you
 can both add new gates and customize the built-in catalog (last registration wins).
@@ -352,7 +515,6 @@ can both add new gates and customize the built-in catalog (last registration win
 import {
   defineProviderToken,
   isProviderWired,
-  registerGate,
   wireProvider,
   type GateProbe,
 } from '@cat-factory/kernel'
@@ -376,7 +538,7 @@ export function wireLicenseProvider(provider: LicenseProvider | undefined): void
 
 // 2. Register the gate. `license-fixer` is a registered container-coding agent kind (see above)
 //    that adds the missing headers and pushes, like the built-in ci-fixer relates to ci.
-registerGate('license-check', (ctx) => ({
+gateRegistry.register('license-check', (ctx) => ({
   kind: 'license-check',
   helperKind: 'license-fixer',
   // The canonical source of the gate's "is my data source configured" answer.
@@ -423,11 +585,11 @@ lists.
 
 ### The `GateDefinition` fields
 
-`registerGate`'s factory returns a `GateDefinition`:
+The factory returns a `GateDefinition`:
 
 | Field | Purpose |
 | --- | --- |
-| `kind` | The step `agentKind` this gate gates (matches the `registerGate` key). |
+| `kind` | The step `agentKind` this gate gates (matches the registration key). |
 | `helperKind` | The container agent kind dispatched on a failed precheck. Must be a built-in helper (`ci-fixer`, `conflict-resolver`, `on-call`) or a registered container-capable kind, or [boot validation](#boot-time-validation) fails. |
 | `wired()` | Whether the gate's provider is configured. When false the gate is a pass-through. Make this `isProviderWired(token)` so it shares its source with `requireProvider`. |
 | `unwiredOutput` | Step output recorded when the gate passes through unwired. |
@@ -467,13 +629,13 @@ raise a notification or enrich an incident and let the run complete for a human 
 
 A step-completion resolver is the related seam for deterministic backend work that must run after an
 agent step finishes, keyed by `agentKind` and driven from the agent's structured result, not from
-re-prompting. Register one with `registerStepResolver(kind, factory)` (from `@cat-factory/kernel`),
+re-prompting. Register one with `stepResolverRegistry.register(kind, factory)`,
 where the factory is `(ctx: ResolverContext) => StepCompletionResolver`. The engine runs the matching
 resolver in `recordStepResult` once the step's agent finishes, regardless of the step's position in
 the pipeline.
 
 ```ts
-import { registerStepResolver, type StepCompletionResolver } from '@cat-factory/kernel'
+import type { StepCompletionResolver } from '@cat-factory/kernel'
 
 const auditorSummaryResolver: StepCompletionResolver = {
   kind: 'security-auditor',
@@ -485,7 +647,7 @@ const auditorSummaryResolver: StepCompletionResolver = {
   },
 }
 
-registerStepResolver(auditorSummaryResolver.kind, () => auditorSummaryResolver)
+stepResolverRegistry.register(auditorSummaryResolver.kind, () => auditorSummaryResolver)
 ```
 
 A resolver returns a `StepResolution`: an optional replacement `output` (a human-readable summary the
@@ -527,8 +689,7 @@ wireDocQualityProvider(new GitHubDocQualityProvider({ githubClient, resolveRepoT
 The gate checks against the same template the writer used. To supply your own house structure for a
 document kind, either link a template document per workspace in the app (see
 [Document Tasks → Templates](../guide/documents.md#templates-and-examples)) or register one at startup
-with `registerDocTemplate` (from `@cat-factory/agents`), an import side effect that mirrors
-`registerAgentKind`. Passing the `documentRepository` above is what lets a workspace-linked template
+with `registerDocTemplate` (from `@cat-factory/agents`). Passing the `documentRepository` above lets a workspace-linked template
 reach the gate; without it the gate falls back to the kind's built-in skeleton.
 
 ## Custom judges
@@ -608,7 +769,8 @@ warnings without aborting.
 ## Packaging and wiring
 
 A custom agent (or gate) is a small package in your [deployment repository](./deployment-repository.md).
-It depends only on the public packages and registers on import:
+It depends only on the public packages, exports its definitions, and installs them onto the registries
+its caller passes in:
 
 ```jsonc
 // packages/org-agents/package.json
@@ -626,44 +788,73 @@ It depends only on the public packages and registers on import:
 
 ```ts
 // packages/org-agents/src/index.ts
-import { registerAgentKinds } from '@cat-factory/agents'
-import { registerGate, registerPipeline, registerStepResolver } from '@cat-factory/kernel'
+import type { AgentKindRegistry } from '@cat-factory/agents'
+import type { GateRegistry, PipelineRegistry, StepResolverRegistry } from '@cat-factory/kernel'
 // … kind definitions, post-ops, the license-check gate factory + resolver as above …
 
-registerAgentKinds([ORG_REVIEWER, SECURITY_AUDITOR, LICENSE_FIXER])
-registerGate('license-check', licenseCheckFactory)
-registerStepResolver('security-auditor', () => auditorSummaryResolver)
-registerPipeline({ id: 'pl_org_audit', name: 'Org compliance audit', agentKinds: ['org-reviewer', 'security-auditor'] })
+export function installOrgAgents(registries: {
+  agentKinds: AgentKindRegistry
+  gates: GateRegistry
+  pipelines: PipelineRegistry
+  stepResolvers: StepResolverRegistry
+}): void {
+  registries.agentKinds.registerAll([ORG_REVIEWER, SECURITY_AUDITOR, LICENSE_FIXER])
+  registries.gates.register('license-check', licenseCheckFactory)
+  registries.stepResolvers.register('security-auditor', () => auditorSummaryResolver)
+  registries.pipelines.register({
+    id: 'pl_org_audit',
+    name: 'Org compliance audit',
+    agentKinds: ['org-reviewer', 'security-auditor'],
+  })
+}
 ```
 
-Then import the package **once for its side effect** in your backend entry, before the server starts,
-and wire any gate's provider. Registration is a global in-process effect, so this is all the wiring
-there is, no `buildContainer` seam, no per-call injection:
+Your backend entry builds the registries, installs your package onto them, wires any gate's provider,
+and passes them to the start function. Nothing is a module-global side effect, so import order and
+module identity never matter, and a separately-published extension package cannot end up talking to a
+second copy of a registry:
 
 ```ts
 // deploy/backend/src/main.ts  (Node service)
-import '@your-org/org-agents'              // registers the kinds, gate, resolver, pipeline
-import { wireLicenseProvider } from '@your-org/org-agents'
-import { start, buildNodeContainer } from '@cat-factory/node-server'
+import { installOrgAgents, wireLicenseProvider } from '@your-org/org-agents'
+import {
+  start,
+  buildNodeContainer,
+  defaultAgentKindRegistry,
+  defaultPipelineRegistry,
+} from '@cat-factory/node-server'
+import { defaultGateRegistry, defaultStepResolverRegistry } from '@cat-factory/kernel'
+import { registerBuiltinGates } from '@cat-factory/gates'
 
+const agentKindRegistry = defaultAgentKindRegistry()
+const gateRegistry = defaultGateRegistry()
+const pipelineRegistry = defaultPipelineRegistry()
+const stepResolverRegistry = defaultStepResolverRegistry()
+
+registerBuiltinGates(gateRegistry)          // the ci / conflicts / health suite
+installOrgAgents({
+  agentKinds: agentKindRegistry,
+  gates: gateRegistry,
+  pipelines: pipelineRegistry,
+  stepResolvers: stepResolverRegistry,
+})
 wireLicenseProvider(new GitHubLicenseProvider(/* … */))   // arm the gate; unwired ⇒ pass-through
 
-start({ buildContainer: buildNodeContainer }).catch((err) => {
+start({
+  buildContainer: buildNodeContainer,
+  agentKindRegistry,
+  gateRegistry,
+  pipelineRegistry,
+  stepResolverRegistry,
+}).catch((err) => {
   console.error(err)
   process.exit(1)
 })
 ```
 
-```ts
-// deploy/local/src/main.ts  (local mode)
-import '@your-org/org-agents'
-import { startLocal } from '@cat-factory/local-server'
-
-startLocal().catch((err) => {
-  console.error(err)
-  process.exit(1)
-})
-```
+`startLocal()` takes the same options, and the Cloudflare Worker takes them through
+`createWorker({ overrides: { … } })`. See
+[Register your platform data in code](./deployment-repository.md#_5-register-your-platform-data-in-code).
 
 ::: tip No frontend rebuild
 The backend serialises every registered kind's `presentation` into the workspace snapshot, and the
@@ -753,11 +944,11 @@ it('passes on a clean change and fails on a dirty one', async () => {
   startup instead of mid-run.
 - **Custom agents and gates run alongside the built-ins.** This is the supported extension path and
   is covered by the cross-runtime conformance suite, so a kind or gate behaves identically on
-  Cloudflare, Node, and local. The built-in gate suite is authored through this exact `registerGate`
+  Cloudflare, Node, and local. The built-in gate suite is authored through this exact gate-registry
   seam and ships as [`@cat-factory/gates`](../reference/packages.md); the engine builds its gate
   registry from whatever is registered, with a registered kind replacing a built-in of the same id.
   Built-in agent kinds (architect, coder, and the rest) keep their prompts in the platform's own
-  prompt catalog rather than calling `registerAgentKind`, but a registered kind gets the same prompt
+  prompt catalog rather than being registered by a deployment, but a registered kind gets the same prompt
   guardrails and result-view wiring a built-in does, and a registered id that collides with a
   built-in track reuses that track's prompt.
 

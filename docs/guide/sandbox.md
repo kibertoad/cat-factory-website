@@ -11,9 +11,11 @@ inputs), grades the output, and shows you a results grid. Use it to iterate on a
 
 ## Opening the Sandbox
 
-The Sandbox is an on-demand window, not a board view. Open it from the **Sandbox** button in the
-sidebar, or from the command palette ("Open Sandbox"). It loads when you open it and closes back to
-your board when you are done.
+The Sandbox is an on-demand window, not a board view. Open it from **Sandbox** in the sidebar's
+**Models** group, or from the command palette ("Open Sandbox"). It sits there with the model providers
+and the per-agent model choice, rather than among the integrations, because it connects to nothing: it
+evaluates the model layer that section configures. **Kaizen** is beside it for the same reason. The
+Sandbox loads when you open it and closes back to your board when you are done.
 
 ::: tip The Sandbox is opt-in per deployment
 The Sandbox needs its own database, separate from the main one (a dedicated `SANDBOX_DB` on
