@@ -51,7 +51,7 @@ renders a committed report (`postOp`).
 ## The registration seam
 
 Every extension point is an app-owned registry the composition root builds once and the start
-function injects. Your deployment news the registry, registers on it by reference, and passes it in.
+function injects. Your deployment builds the registry, registers on it by reference, and passes it in.
 There are no module globals, so registration order and module identity never matter:
 
 ```ts
@@ -235,15 +235,15 @@ Boot validation errors on an unresolved skill or tool-server id.
 
 A variant is an alternate prompt for an existing kind, selected per step through
 `stepOptions.agentVariantId`. Register one with `agentKindRegistry.registerVariant(definition)`. A
-variant is deliberately not a kind: it never appears in the palette as its own entry, never answers a
-lookup by kind, and never changes a behavioural answer such as whether the step needs a container.
-Use it when the job is the same and only the instructions differ.
+variant is not a kind: it never appears in the palette as its own entry, never answers a lookup by
+kind, and never changes a behavioural answer such as whether the step needs a container. Use it when
+the job is the same and only the instructions differ.
 
 #### Interface tier
 
 `presentation.tier` places the kind on the pipeline builder's palette ladder: `basic`,
 `intermediate`, or `advanced`. Tiers are cumulative, so selecting a level shows that tier and every
-tier below it, and a long catalog stays navigable for someone who only runs the delivery loop.
+tier below it, and a long catalog stays short for someone who only runs the delivery loop.
 
 A kind that declares no tier is treated as `intermediate`. That is deliberate: a deployment's custom
 kind is not part of the delivery loop everyone runs, so it stays out of the default view until the
@@ -280,9 +280,9 @@ binaryGeneratorRegistry.register({
 | `contracts?` | API contract documents in the same formats the [foundational catalog](../guide/foundational-services.md) accepts, injected as `.cat-context/` files so the agent calls declared operations instead of inventing them. |
 
 `description` is the half a model needs to choose between two registered generators of the same
-modality: style, resolution or length limits, cost profile. The platform deliberately provides no
-discriminator field for that, because those axes do not partition the deliverable and a rule built on
-one would refuse correctly-configured steps.
+modality: style, resolution or length limits, cost profile. The platform provides no discriminator
+field for that, because those axes do not partition the deliverable and a rule built on one would
+refuse correctly-configured steps.
 
 The pipeline builder's picker and the run-admission check read the same registration, so a step
 configured from the picker is never refused at start as an unknown integration, even on a split
@@ -689,7 +689,7 @@ wireDocQualityProvider(new GitHubDocQualityProvider({ githubClient, resolveRepoT
 The gate checks against the same template the writer used. To supply your own house structure for a
 document kind, either link a template document per workspace in the app (see
 [Document Tasks → Templates](../guide/documents.md#templates-and-examples)) or register one at startup
-with `registerDocTemplate` (from `@cat-factory/agents`). Passing the `documentRepository` above is what lets a workspace-linked template
+with `registerDocTemplate` (from `@cat-factory/agents`). Passing the `documentRepository` above lets a workspace-linked template
 reach the gate; without it the gate falls back to the kind's built-in skeleton.
 
 ## Custom judges

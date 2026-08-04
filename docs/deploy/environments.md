@@ -142,7 +142,7 @@ so one workspace can preview a Kubernetes service and a Compose service side by 
 
 A workspace records a **default test environment**: a provision type and, for a custom provider, its
 manifest id. Every newly created service frame is stamped with it, so a new service arrives already
-routed instead of arriving unconfigured.
+routed.
 
 Until an operator chooses one, a banner offers a link to the **Test environments** tab to set it.
 Choosing **infraless** is a real answer and silences the banner; leaving it unset is not. The section
@@ -277,7 +277,7 @@ A compose layer, on a stack recipe or a shared stack, is one of three things:
   that path is confined to the checkout.
 - A **file in another repository**, resolved once per foreign repo.
 
-The last two are what let a stack that does not live in the repo being provisioned still compose. A
+The last two let a stack that does not live in the repo being provisioned still compose. A
 stack with no repository of its own materializes an empty working tree rather than cloning anything.
 
 ### Declaring stacks from the deployment

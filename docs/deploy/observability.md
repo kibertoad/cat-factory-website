@@ -32,9 +32,9 @@ Input tokens are recorded as three separate numbers, and total input is their su
 | Cache write | Input written into the cache, typically 1.25 to 2 times the base rate. |
 
 A run that keeps invalidating and re-writing its prefix and a run riding a warm cache spend very
-differently, and a single lumped "cached tokens" number cannot tell them apart. The split is what lets
-the ledger price a cache-heavy run at what it actually cost, and it is what makes a runaway prefix
-visible as a burn rather than as ordinary volume.
+differently, and a single lumped "cached tokens" number cannot tell them apart. The split lets the
+ledger price a cache-heavy run at what it actually cost, and it makes a runaway prefix visible as a
+burn rather than as ordinary volume.
 
 Every call is also attributed to the **run phase** that spent it, so a run's model spend rolls up by
 phase rather than arriving as one undifferentiated total. Inline calls a local-mode host CLI serves are
@@ -184,8 +184,7 @@ so a slow or broken step is diagnosable without reading logs:
 
 Everything above is reachable over HTTP as well, under `/api/v1/debug/*` with an ordinary `read`-scope
 [public API key](../reference/public-api.md#run-debugging). It exists for a caller with a fixed
-context budget rather than a scrollbar, which is what makes it usable by an agent asked "why did this
-run fail".
+context budget rather than a scrollbar, so an agent asked "why did this run fail" can use it.
 
 It is a two-level drill-down: a keyset-paginated run index, a per-run overview built purely from SQL
 aggregates (steps, per-sink availability and counts, LLM rollups, and precomputed diagnostic signals),

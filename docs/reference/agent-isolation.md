@@ -86,8 +86,8 @@ auth are backend-only. The agent never holds them and never calls those systems.
 
 ## Which credential a run pushes with
 
-This is the hard bound on a fully compromised run, so it is worth being precise. What the job carries
-depends on the deployment shape:
+This is the hard bound on a fully compromised run. What the job carries depends on the deployment
+shape:
 
 | Deployment shape | Credential | Scope | Lifetime |
 | --- | --- | --- | --- |
@@ -103,9 +103,9 @@ come from the person who started the run rather than from a bot.
 
 The security consequence is that the bound is then the PAT's scope, not the installation's, and a
 classic-scope personal PAT is broader than any installation, reaching repositories the platform was
-never installed on. So the blast radius of a compromised run is a property of who started it, not only
-of how the operator scoped the deployment. Treat "who may start runs" and "what tokens those members
-store" as one question.
+never installed on. So who started a run bounds its blast radius as much as how the operator scoped
+the deployment does. Treat "who may start runs" and "what tokens those members store" as one
+question.
 
 **Allow runs to use the initiator's PAT** is the enforced control, a per-workspace setting that is on
 by default. Turned off, every run authenticates as the App installation (or, in local mode, the

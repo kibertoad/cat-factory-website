@@ -29,8 +29,7 @@ serve, the task inspector flags the mismatch so a run never silently falls back.
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
 self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. Open **Model providers**
-from the sidebar's **Models** group. It splits credentials into horizontal tabs so the kind is clear
-at a glance:
+from the sidebar's **Models** group. It splits credentials into horizontal tabs, one per kind:
 
 - **Workspace pool**: pooled coding-plan subscriptions and commercial keys a team shares (Kimi,
   DeepSeek).
@@ -96,8 +95,8 @@ unprefixed base model id and the platform matches your Region-correct entry onto
 correct in every Region.
 
 Bedrock is the trusted, residency-guaranteed route the
-[model access policy](#restricting-model-families) recognises, which is what lets an otherwise blocked
-family through on it.
+[model access policy](#restricting-model-families) recognises, so it can let an otherwise blocked
+family through.
 
 ## Connecting a subscription
 

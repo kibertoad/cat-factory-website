@@ -100,7 +100,7 @@ curl -X PUT -H "Authorization: Bearer <session token>" -H 'content-type: applica
 ```
 
 A card delivery POSTs `{ deliveryId, sentAt, workspaceId, runId, taskId, notification }`. `runId` and
-`taskId` are lifted out of the card so a receiver can route without unpacking it. `deliveryId` is
+`taskId` are lifted out of the card so a receiver can route without reading into it. `deliveryId` is
 `<notificationId>-<status>`.
 
 A lifecycle delivery POSTs `{ deliveryId, sentAt, workspaceId, event, run }`, where `run` carries
@@ -125,10 +125,10 @@ Verify the signature against the raw request bytes, before any JSON parsing. The
 into the MAC, so you can trust it for replay rejection.
 
 Delivery is best-effort and bounded: three attempts with exponential backoff, five seconds per
-attempt and a six-second total budget, giving up on a 4xx. The budget is deliberately tight because
-raising a notification is what parks a run, so a dead receiver can never add seconds of latency to
-the park itself. That also means missed deliveries are possible: treat the webhook as a trigger and
-the API as the source of truth, answer with a 2xx fast, and process asynchronously.
+attempt and a six-second total budget, giving up on a 4xx. The budget is tight because raising a
+notification parks a run, so a dead receiver can never add seconds of latency to the park itself.
+That also means missed deliveries are possible: treat the webhook as a trigger and the API as the
+source of truth, answer with a 2xx fast, and process asynchronously.
 
 By default the endpoint must be a public host: loopback, RFC 1918, link-local, `.internal`/`.local`
 hosts, embedded credentials, and cloud-metadata addresses are refused at registration and re-checked

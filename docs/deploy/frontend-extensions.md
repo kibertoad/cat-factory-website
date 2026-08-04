@@ -132,9 +132,8 @@ your deployment's own web applications in their own sidebar section; clicking on
 separate browser page. `workspaceMetadataFields` declares the per-workspace values those tools resolve
 against.
 
-The point is the context that rides on the link. A tool declares a resolver from the invocation
-context to a URL, not a static link, so a click lands on the right state rather than the tool's front
-door:
+Context rides on the link. A tool declares a resolver from the invocation context to a URL, not a
+static link, so a click lands on the right state rather than the tool's front door:
 
 ```ts
 externalTools: [
@@ -159,7 +158,7 @@ workspaceMetadataFields: [
 
 The resolver receives `{ userId, userEmail, workspaceId, workspaceName, metadata }`. Returning `null`
 means "not resolvable right now": the tool stays listed and explains itself on click instead of
-opening something wrong. Four refusals are distinguished, because different people fix them: a
+opening something wrong. Four refusals are reported separately, since each has its own fix: a
 declared `requiredMetadata` key nobody filled in, a resolver that returned nothing, a result that is
 not an `http(s)` URL, and a resolver that threw. A throwing resolver never blanks the nav; it is
 caught and reported like any other refusal.

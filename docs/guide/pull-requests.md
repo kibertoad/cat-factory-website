@@ -59,9 +59,9 @@ depended upon but not what the library exposes, so it guesses at APIs, re-derive
 sitting on disk, or declines work it could have done. Installing first removes that whole class of
 guessing.
 
-The install and the pre-PR checks are threaded onto a job under deliberately different rules: the
-checks ride only a dispatch that will open a pull request, while the install rides every dispatch that
-gets a checkout, including a read-only exploration.
+The install and the pre-PR checks are threaded onto a job under different rules: the checks ride only
+a dispatch that will open a pull request, while the install rides every dispatch that gets a
+checkout, including a read-only exploration.
 
 ## The repository's pull-request template
 
