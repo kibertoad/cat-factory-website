@@ -1,9 +1,7 @@
 # Cookbook
 
-Task-indexed recipes for changing a flow you already run. The rest of the guide is organized by
-subject, which is right when you want to understand a mechanism and wrong when you have a concrete
-edit to make and half an afternoon to make it. Each recipe here is the short path: what to click,
-what it changes, and the one page to read if you need the full model.
+Task-indexed recipes for changing a flow you already run: what to click, what it changes, and the one
+page to read if you need the full model.
 
 Almost every recipe happens in the **pipeline builder**, so start with the loop it all hangs on.
 
@@ -56,10 +54,10 @@ beside it counts what the current tier is hiding.
 Decide first which of the two shapes you want, because they behave differently.
 
 **A companion loops its producer back automatically.** Hover the producer step in the draft and
-click **Add the &lt;companion&gt;**. It is inserted directly after the step it reviews, rates the
-work, and sends it back for rework below the quality bar without asking anyone. When it spends its
-rework budget it parks with a **Decide** prompt (one more round, proceed anyway, or stop and reset).
-The shipped pairs:
+click **Add the &lt;companion&gt;**; companions are toggles on their producer, not palette blocks, so
+that is the only place to add one. It rates the work and sends it back for rework below the quality
+bar without asking anyone. When it spends its rework budget it parks with a **Decide** prompt (one
+more round, proceed anyway, or stop and reset). The shipped pairs:
 
 | Producer | Companion |
 | --- | --- |
@@ -68,12 +66,8 @@ The shipped pairs:
 | Spec Writer | Spec Reviewer |
 | Doc Writer | Doc Reviewer |
 
-Companions are toggles on their producer, not palette blocks, because a companion has no meaning
-anywhere else in the chain.
-
 **A standalone review step reports and moves on.** Add **PR Reviewer** from the palette's **Review &
-triage** category for a deep, token-bounded review of the open pull request that returns prioritized
-findings you triage yourself. It writes no code.
+triage** category. It returns prioritized findings you triage yourself, and writes no code.
 
 Full model: [Running Pipelines](./running-pipelines.md#anatomy-of-a-pipeline) and
 [Pull Requests](./pull-requests.md#deep-reviewing-an-existing-pull-request).
@@ -87,9 +81,9 @@ Use this when a person must look before the run continues.
    optional **Named approvers**, and **Approvals required**, each from a different person.
 3. Save.
 
-The run reaches the step, finishes it, then moves to **Needs decision** and raises an inbox
-notification. It waits as long as it needs; nothing times out. The notification turns red and is
-flagged **Overdue** past the workspace's escalation threshold, set in
+The run finishes the step, then moves to **Needs decision** and raises an inbox notification. It
+waits indefinitely, so nothing is lost by leaving it; the notification is flagged **Overdue** past
+the workspace's escalation threshold, set in
 [Workspace settings](./designing-your-board.md#workspace-settings).
 
 A step may not carry both a human approval gate and an
@@ -98,12 +92,10 @@ so pick one.
 
 ### Add a gate
 
-A gate runs a cheap deterministic check and only spins an agent up when the check fails.
-
 - **Human Review Gate** and **Post-Release Health** are in the palette's **Gates & observability**
   category. Post-Release Health appears only once an observability integration is connected.
-- **Human test** and **Visual Confirmation** are in the **Testing** category. Human test stands up
-  an ephemeral environment and parks for you to validate against its live URL.
+- **Human test** and **Visual Confirmation** are in the **Testing** category. Human test parks for
+  you to validate against a live URL it stands up.
 - **CI Gate**, **Conflicts Gate**, and **Merger** are not palette blocks. They arrive with a cloned
   build pipeline, which is the reason to
   [clone rather than rebuild](#the-loop-every-recipe-fits-into).
@@ -156,9 +148,9 @@ a pipeline step.
    it amends the task's pull request when one is open, otherwise it branches off base and opens its
    own. A purely advisory skill that changes nothing is a clean no-op, not a failure.
 
-The step re-checks the source's head commit before each run and resyncs if it moved, so you rarely
-resync by hand. Renaming a skill's directory creates a new skill and retires the old one, and the
-builder flags a step pinned to the old name.
+You rarely need to resync by hand, since the step re-checks its source before each run. Renaming a
+skill's directory creates a new skill and retires the old one, so re-point any step pinned to the old
+name; the builder flags them.
 
 To make an existing kind (the Coder, say) always carry a playbook rather than adding a step,
 that is `assignSkills` in the deployment's code:
@@ -176,9 +168,9 @@ skill is an executable step.
    fragment or drop an inherited one per task.
 
 Fragments reach the code-aware kinds (Coder, CI Fixer, Fixer, Reviewer, Architect) and the
-document-authoring kinds. Each arrives as its own titled block, so name them the way you want them
-cited ("No raw SQL in controllers" beats "Rules 3"), and the reviewers score the change against each
-one in their **Best-practice adherence** section.
+document-authoring kinds, so a step that touches neither code nor prose is not the place to expect
+one. Name them the way you want them cited, since the reviewers score the change per standard: "No
+raw SQL in controllers" beats "Rules 3".
 
 ### Run a step only on big tasks
 
@@ -195,8 +187,8 @@ needs the estimator earlier in the same pipeline, it must set at least one thres
 would always skip), and it cannot also carry a human approval gate. A skipped producer takes its
 companion with it, so there is no second threshold to keep in sync.
 
-This is exactly how the **Adaptive build** preset switches its Architect, Tester, and Human Review on
-per task. Full model:
+Before you build this by hand, check the **Adaptive build** preset: it already gates its Architect,
+Tester, and Human Review this way, so cloning it may be all you need. Full model:
 [Estimating and gating expensive steps](./running-pipelines.md#estimating-and-gating-expensive-steps).
 
 ### Change which model a step runs on
@@ -210,8 +202,8 @@ click **Configure models** in the builder.
 3. Select the preset on the task (add-task form or the inspector). Changing it affects only steps
    that have not started yet.
 
-The picker shows each model's list price, provider, and context window as you assign, so keep
-stronger models for architecturally significant kinds. See
+The picker shows list price and context window as you assign, so weigh the cost there rather than
+after the run. See
 [Model Providers](./model-providers.md#model-presets) and [Budgets](./budgets.md).
 
 ### Cap what a step may write
@@ -239,9 +231,9 @@ kinds, Reviewer, Task Estimator, PR Reviewer, and the document, design, and spec
 as several models instead of one.
 
 Enable consensus on the step, then either pick reusable **consensus groups** the step may escalate
-to, or configure participants inline. Each group carries its own estimate bar, and the engine
-convenes the most demanding one the task clears, falling back to a single agent when it clears none.
-Strategies are specialist panel, debate (1 to 5 rounds), and ranked voting. Details:
+to, or configure participants inline. A group carries its own estimate bar, so name several and the
+panel scales with the task instead of costing several model calls on every run. Strategies are
+specialist panel, debate (1 to 5 rounds), and ranked voting. Details:
 [Multi-model consensus](./running-pipelines.md#multi-model-consensus).
 
 ### Undo a change
