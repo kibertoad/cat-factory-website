@@ -98,6 +98,7 @@ no spend.
 - **New here?** Start with the [Introduction](/guide/introduction.html) and [Core Concepts](/guide/core-concepts.html).
 - **Want it running?** Follow the [Quick Start](/guide/quick-start.html) or pick a deployment target under [Deploy & Operate](/deploy/cloudflare.html).
 - **Daily driver?** Jump into [Designing Your Board](/guide/designing-your-board.html) and [Running Pipelines](/guide/running-pipelines.html).
+- **Changing a flow you already run?** The [Cookbook](/guide/cookbook.html) has a short recipe per operation: add a review step, add a gate, change a step's prompt, attach a skill.
 - **Integrating your infra?** See [Integration Manifests](/reference/manifests.html) and the [Architecture](/reference/architecture.html) reference.
 
 ::: tip A note on scope
