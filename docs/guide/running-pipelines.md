@@ -329,6 +329,9 @@ never auto-deleted, so reusing it on a new task **resumes** it.
 
 ![The pipeline builder: a categorized agent palette on the left, the pipeline draft in the middle, and the library of built-in pipelines (Full build, Simple, Triage & fix bug, and more) with their step counts and default badges on the right](/images/app/pipeline-builder.webp)
 
+For the short version of the common edits (add a review step, add a gate, change a step's prompt,
+attach a skill), see the [Cookbook](./cookbook.md). This section is the model behind them.
+
 The built-in pipelines are read-only templates, but you can shape your own:
 
 - **Clone** any pipeline, built-in or custom, into a new editable copy. This is how a read-only

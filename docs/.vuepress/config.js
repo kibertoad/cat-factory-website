@@ -38,6 +38,7 @@ export default defineUserConfig({
           '/guide/introduction.md',
           '/guide/core-concepts.md',
           '/guide/quick-start.md',
+          '/guide/cookbook.md',
         ],
       },
       {
@@ -123,6 +124,7 @@ export default defineUserConfig({
             '/guide/introduction.md',
             '/guide/core-concepts.md',
             '/guide/quick-start.md',
+            '/guide/cookbook.md',
           ],
         },
         {
