@@ -1,14 +1,19 @@
+---
+redirectFrom:
+  - /deploy/custom-providers.html
+---
+
 # Custom Providers (Code Adapters)
 
 For most deployments you connect infrastructure you own (a preview-environment platform or a
-runner scheduler) with a declarative [manifest](../reference/manifests.md), and a single generic
+runner scheduler) with a declarative [manifest](./manifests.md), and a single generic
 adapter drives it over HTTP. No code.
 
 Sometimes the manifest isn't enough: your platform speaks a protocol that doesn't map cleanly onto
 request/response templates, needs multi-step orchestration per operation, talks gRPC or a vendor
 SDK, or derives values (a URL, a status) from a response shape too dynamic for dot-paths. For those
 cases the backend exposes the same ports the built-in adapters implement as **code seams**, so you
-can ship your own adapter inside your [deployment repository](./deployment-repository.md) without
+can ship your own adapter inside your [deployment repository](../deploy/deployment-repository.md) without
 forking the platform.
 
 This page shows how to implement and wire a custom **environment provider** and a custom **runner
@@ -16,16 +21,17 @@ pool**, with a realistic (vendor-neutral) example for each, and the gotchas that
 
 ::: tip Reach for the manifest first
 A code adapter is more to own and maintain. If your platform can be driven over plain HTTP, the
-[manifest path](../reference/manifests.md) is the supported default for almost every deployment.
+[manifest path](./manifests.md) is the supported default for almost every deployment.
 Use code when the manifest genuinely can't express the integration.
 :::
 
-## The two ports
+## The three ports
 
 | Port | Package | Methods | Backed by, by default |
 | --- | --- | --- | --- |
 | **`EnvironmentProvider`** | `@cat-factory/kernel` | `provision`, `status`, `teardown` | the manifest-driven HTTP environment adapter |
 | **`RunnerPoolProvider`** | `@cat-factory/kernel` | `dispatch`, `poll`, `release` | the manifest-driven HTTP runner adapter |
+| **`BinaryBlobBackend`** | `@cat-factory/kernel` | `put`, `get`, `delete` | one of the five shipped stores (`fs`, `db`, `s3`, `r2`, `memory`) |
 
 You implement the port as a class, then inject it when you build the container. Your implementation
 **replaces** the default adapter for that capability; everything else (the deployer/tester agents,
@@ -50,7 +56,7 @@ not bake in per-workspace settings. Two channels carry configuration:
 The manifest models the generic HTTP adapter (URL, templates, auth, response mapping). Anything a
 native adapter needs beyond that goes in `providerConfig`: validate and read it yourself; the HTTP
 adapter ignores it. This is what lets one deployment serve many workspaces with different projects
-or targets. See [Integration Manifests](../reference/manifests.md#per-workspace-config-for-code-adapters).
+or targets. See [Integration Manifests](./manifests.md#per-workspace-config-for-code-adapters).
 :::
 
 A small helper that overlays the manifest onto the env defaults keeps each method clean:
@@ -144,7 +150,7 @@ existing stored `providerConfig`, including nested values the flat form does not
 preserved.
 
 If you skip these methods, the provider falls back to the hand-authored manifest editor: the
-adapter still works, operators just configure it as a [manifest](../reference/manifests.md) by hand.
+adapter still works, operators just configure it as a [manifest](./manifests.md) by hand.
 
 ### The unconfigured-provider banner
 
@@ -311,7 +317,7 @@ anything you need to re-address the environment (its id, a region, a sub-resourc
 
 ### Wire it in
 
-In your [deployment repository](./deployment-repository.md), inject the provider when you build the
+In your [deployment repository](../deploy/deployment-repository.md), inject the provider when you build the
 container. Both runtimes take it through a one-line seam:
 
 ```ts
@@ -468,8 +474,50 @@ operations, and produces the branch the platform opens a PR from. The job `spec`
 A custom runner pool is wired through the Node runtime's runner-transport seam (the same one the
 manifest adapter uses), keyed per workspace from the registered connection. Because that plumbing is
 more involved than the environment seam, see `backend/docs/runner-pool-integration.md` in the source
-repo for the exact wiring, and prefer the [manifest path](./runner-pools.md#custom-adapters) unless
+repo for the exact wiring, and prefer the [manifest path](../operate/runner-pools.md#custom-adapters) unless
 your scheduler truly can't be driven over HTTP.
+
+## Example: a custom binary artifact store
+
+The platform's binary artifacts (the UI Tester's screenshots and the reference designs they are
+compared against) ship with five backends: local filesystem, the database, S3, R2, and an in-memory
+store for tests. Put the bytes anywhere else (Google Cloud Storage, Azure Blob, an internal object
+service) by registering a `BinaryBlobBackend` in your deployment repository.
+
+```ts
+import { defaultBinaryStoreRegistry, type BinaryBlobBackend } from '@cat-factory/node-server'
+
+const binaryStoreRegistry = defaultBinaryStoreRegistry()
+
+binaryStoreRegistry.register({
+  id: 'gcs',
+  name: 'Cloud Storage',
+  summary: 'The org bucket (europe-west1).',
+  create: ({ accountId }) => new GcsBlobBackend({ bucket: process.env.GCS_BUCKET, accountId }),
+})
+
+await start({ binaryStoreRegistry })
+```
+
+Import the seam from the facade you already depend on, and note four rules:
+
+- **A store holds only bytes.** Artifact metadata always stays in the runtime's own database, so it
+  is listed, joined, and pruned like any other row.
+- **Registering only offers the store.** An account selects it in the deployment settings panel,
+  where each registered store appears beside the built-in ones. An account pointed at a store this
+  build does not register resolves to no storage and says so in the settings panel, in the settings
+  summary, and in a warning log, rather than failing silently at the first screenshot.
+- **The registered id is stamped onto every artifact row**, so it has to stay stable across
+  releases: it is what says which store to ask for those bytes later.
+- **Implement `delete`.** The retention sweep, the re-import reclaim, and the workspace purge all
+  delete bytes before dropping metadata rows. A `delete` that throws keeps its metadata row so a
+  later sweep retries, rather than orphaning the bytes.
+
+`create` may return `null` for "this deployment cannot serve the store right now" (an unset
+credential, an un-provisioned bucket). The resolver then reads as storage-unavailable, the same as a
+backend a runtime does not support, and logs which store declined. The full contract, including how
+the per-process cache is keyed, is in
+[`backend/docs/custom-binary-stores.md`](https://github.com/kibertoad/cat-factory/blob/main/backend/docs/custom-binary-stores.md).
 
 ## Testing your adapter
 
@@ -538,5 +586,5 @@ These are the ones that actually bite when adapting a real platform:
 ---
 
 This is the deepest extension seam Cat Factory exposes. For the declarative alternative most
-deployments use, see [Runner Pools](./runner-pools.md) and [Ephemeral Environments](./environments.md);
-for where this code lives, see [Your Deployment Repository](./deployment-repository.md).
+deployments use, see [Runner Pools](../operate/runner-pools.md) and [Ephemeral Environments](../operate/environments.md);
+for where this code lives, see [Your Deployment Repository](../deploy/deployment-repository.md).

@@ -1,3 +1,8 @@
+---
+redirectFrom:
+  - /deploy/custom-agents.html
+---
+
 # Custom Agents & Gates (Code Adapters)
 
 Cat Factory ships a full set of built-in agent kinds (Architect, Coder, Reviewer, Tester, and the
@@ -6,7 +11,7 @@ rest) and a set of built-in gates (CI, merge-conflicts, post-release health, and
 want ones of its own: a compliance auditor, a security scanner, an internal migration agent, a
 bespoke reviewer that knows your house rules, a license-header gate that blocks a merge until every
 file carries the company SPDX line. You can add agent kinds AND gates **from your own
-[deployment repository](./deployment-repository.md)**, without forking the platform and without
+[deployment repository](../deploy/deployment-repository.md)**, without forking the platform and without
 rebuilding the executor-harness image.
 
 A custom agent becomes a first-class citizen: a palette block in the pipeline builder, a step you can
@@ -18,7 +23,7 @@ can advance, park, or send the work back. This page shows the model, the seams, 
 to package and wire them, and the gotchas.
 
 ::: tip This is a code extension
-Unlike a [provider manifest](../reference/manifests.md), an agent or gate is code you write and ship
+Unlike a [provider manifest](./manifests.md), an agent or gate is code you write and ship
 in your deployment repo. It is the supported way to extend the agent and gate sets; you don't need to
 touch the core packages or the harness image. The built-in gate suite ships as one such package,
 [`@cat-factory/gates`](../reference/packages.md), authored through the exact same gate-registry seam
@@ -69,7 +74,7 @@ await start({ agentKindRegistry, pipelineRegistry })
 
 `startLocal()` takes the same options, and the Cloudflare Worker takes them through
 `createWorker({ overrides: { … } })`. See
-[Register your platform data in code](./deployment-repository.md#_5-register-your-platform-data-in-code)
+[Register your platform data in code](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code)
 for the full list of registries.
 
 Each registry exposes `register(definition)` and `registerAll(definitions)`, replacing by id, so
@@ -768,7 +773,7 @@ warnings without aborting.
 
 ## Packaging and wiring
 
-A custom agent (or gate) is a small package in your [deployment repository](./deployment-repository.md).
+A custom agent (or gate) is a small package in your [deployment repository](../deploy/deployment-repository.md).
 It depends only on the public packages, exports its definitions, and installs them onto the registries
 its caller passes in:
 
@@ -854,7 +859,7 @@ start({
 
 `startLocal()` takes the same options, and the Cloudflare Worker takes them through
 `createWorker({ overrides: { … } })`. See
-[Register your platform data in code](./deployment-repository.md#_5-register-your-platform-data-in-code).
+[Register your platform data in code](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code).
 
 ::: tip No frontend rebuild
 The backend serialises every registered kind's `presentation` into the workspace snapshot, and the
@@ -955,7 +960,7 @@ it('passes on a clean change and fails on a dirty one', async () => {
 ---
 
 For where this code lives and how the deployment workspace is laid out, see
-[Your Deployment Repository](./deployment-repository.md). For the built-in gate suite this seam
+[Your Deployment Repository](../deploy/deployment-repository.md). For the built-in gate suite this seam
 authors, see [`@cat-factory/gates`](../reference/packages.md). For extending infrastructure
 (environments and runner pools) the same way, see
 [Custom Providers (Code Adapters)](./custom-providers.md).

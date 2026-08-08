@@ -61,7 +61,7 @@ The model picker tags each model with a **Prompt caching** or **No prompt cachin
 from the provider that would actually serve it. A model on the Workers AI fallback shows no caching;
 connect a direct key for that provider and the same model upgrades to its cache-capable direct
 flavour, which the badge reflects. The step metrics bar then breaks out cached input tokens, and the
-[observability dashboard](../deploy/observability.md#the-built-in-dashboard) reports the cache-hit
+[observability dashboard](../operate/observability.md#the-built-in-dashboard) reports the cache-hit
 rate per run. See [Budgets → Prompt caching](./budgets.md#prompt-caching).
 
 ### Aggregator gateways: OpenRouter and LiteLLM

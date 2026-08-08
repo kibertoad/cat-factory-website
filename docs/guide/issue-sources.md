@@ -95,7 +95,7 @@ GitHub Issues and Jira both work this way on every runtime (Cloudflare, Node, an
 offered as a task source for import and linking too.
 
 A headless integration does the same thing by naming the ticket on
-[`POST /api/v1/services/{serviceId}/tasks`](../reference/public-api.md#filing-a-task-from-a-tracker-ticket),
+[`POST /api/v1/services/{serviceId}/tasks`](../extend/public-api.md#filing-a-task-from-a-tracker-ticket),
 which imports the issue and attaches it rather than flattening it into the description.
 
 ## Bug hunt
@@ -165,7 +165,7 @@ before the grammar reads them, so a formatted reply works like a plain one.
 
 The built-in sources (`github`, `jira`, `linear`) are not the whole vocabulary. A deployment can
 register its own task source on the `TaskSourceRegistry` under a namespaced id, `<namespace>:<name>`,
-the same shape [custom task types](../deploy/frontend-extensions.md#custom-task-types) use. Built-in
+the same shape [custom task types](../extend/frontend-extensions.md#custom-task-types) use. Built-in
 ids stay bare, so nothing stored has to change.
 
 A namespaced id is resolved against the registry at the boundary, so an unregistered one is refused by
@@ -174,7 +174,7 @@ distinguishable from a registration. A registered source's board scope is carrie
 id rather than being squeezed into one of the built-in vendors' fields.
 
 A registered source is usable everywhere the built-ins are, including the
-[public API's `ticket` input](../reference/public-api.md#filing-a-task-from-a-tracker-ticket).
+[public API's `ticket` input](../extend/public-api.md#filing-a-task-from-a-tracker-ticket).
 
 ## Writing back to the tracker
 
@@ -187,7 +187,7 @@ it:
   natively; Jira transitions it to its first "Done" status; Linear transitions it to a completed
   workflow state).
 - **Post open questions on a parked headless run**: when a run started through the
-  [public API](../reference/public-api.md) pauses to clarify requirements, posts its open questions on
+  [public API](../extend/public-api.md) pauses to clarify requirements, posts its open questions on
   the linked issue, each with the id an answer names.
 
 All three default off and can be overridden per task in the task inspector (**Inherit workspace**,

@@ -147,7 +147,7 @@ and joins the organization with the role they were given.
 ## Sending invitation emails
 
 Email delivery is connected **per account in the UI**. Like the
-[Slack bot token](../deploy/notifications.md), an admin onboards it in settings and the credential is
+[Slack bot token](../operate/notifications.md), an admin onboards it in settings and the credential is
 stored sealed in the database under `ENCRYPTION_KEY`:
 
 1. Pick a provider, **SendGrid** or **Resend**.

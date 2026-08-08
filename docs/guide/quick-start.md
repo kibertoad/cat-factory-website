@@ -4,6 +4,10 @@ This walkthrough takes you from an empty board to a merged, agent-built pull req
 someone on your team) has a Cat Factory instance deployed. If not, deploy one first: see
 [Cloudflare](../deploy/cloudflare.md) or [Node.js](../deploy/nodejs.md).
 
+It is a map of the loop, with each stage linking to its own page. If you would rather be walked
+through one concrete run end to end, take
+[Your First Task to a Merged Pull Request](./first-task-tutorial.md) instead.
+
 ## Prerequisites
 
 Before you start, make sure you have:

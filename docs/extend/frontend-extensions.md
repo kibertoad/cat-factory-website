@@ -1,3 +1,8 @@
+---
+redirectFrom:
+  - /deploy/frontend-extensions.html
+---
+
 # Extending the App (Frontend Modules)
 
 [Custom agents, gates, and judges](./custom-agents.md) extend the backend. This page is the frontend
@@ -89,7 +94,7 @@ never components). Either way it folds into the same merged catalog:
 
 Required descriptor fields are enforced before the form will submit. The `taskType` contract accepts
 a namespaced id everywhere, including
-[`POST /api/v1/services/{serviceId}/tasks`](../reference/public-api.md#board-workloads), so a task
+[`POST /api/v1/services/{serviceId}/tasks`](./public-api.md#board-workloads), so a task
 created with it round-trips with no host edits.
 
 Prefer **backend registration** when you want the guardrail: a backend-registered task type is checked
@@ -222,4 +227,4 @@ Composables and `registerAppModule` are auto-imported across layers, so those ne
 ---
 
 For the backend half, see [Custom Agents & Gates](./custom-agents.md). For where this code lives in
-your deployment, see [Your Deployment Repository](./deployment-repository.md).
+your deployment, see [Your Deployment Repository](../deploy/deployment-repository.md).

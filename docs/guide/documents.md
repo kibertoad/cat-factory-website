@@ -116,7 +116,7 @@ two attempts) before raising the issue for you. The gate resolves the same templ
 the two never disagree.
 
 Deployers wire the gate's provider once at startup; until then it passes through. See
-[Custom Agents & Gates → the document-quality gate](../deploy/custom-agents.md#the-document-quality-gate).
+[Custom Agents & Gates → the document-quality gate](../extend/custom-agents.md#the-document-quality-gate).
 
 ---
 

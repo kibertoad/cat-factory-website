@@ -54,7 +54,7 @@ to compare, while the caller still gets a terse `401`), credential-decryption fa
 whether the `ENCRYPTION_KEY` was rotated or a stored secret is corrupted), unsupported model or
 Bedrock models, and container/runner dispatch failures (a `404` names a stale executor-harness image).
 These surface in the boot log and, where they belong to a run, on the run's step (see
-[Observability → Run and step diagnostics](./observability.md#run-and-step-diagnostics)).
+[Observability → Run and step diagnostics](../operate/observability.md#run-and-step-diagnostics)).
 
 ### Health vs. readiness
 
@@ -205,7 +205,7 @@ matching field is clamped to the cap and Save is refused above it.
 | Container image registry + pull credentials | Source of the executor-harness image. |
 | `HARNESS_SHARED_SECRET` | Inbound-auth secret for the executor harness (≥ 16 chars, stable). The backend injects it into each per-run container's env and sends it as the `x-harness-secret` header, so the harness rejects any call that doesn't carry it. A deployment that dispatches container jobs validates it at boot and fails with a config error when it is unset; keep the value stable so a container re-attach after a restart still authenticates. A self-hosted runner pool configures its own secret pool-side. |
 | `RUNNERS_ENABLED` | Set to `true` to turn on self-hosted runner pools (also requires `ENCRYPTION_KEY`). |
-| Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../reference/manifests.md)). |
+| Runner pool manifest | Declarative description of your self-hosted execution pool (see [Manifests](../extend/manifests.md)). |
 
 When a workspace is missing infrastructure a run needs, the app says so up front rather than failing
 mid-run. It raises a per-area setup banner, with a deep link to the right config screen, when
@@ -233,7 +233,7 @@ an account's backend orphans artifacts stored under the previous one.
 
 ## Node container execution
 
-On the Node.js runtime, repo-operating agent kinds run on a [runner pool](./runner-pools.md), and
+On the Node.js runtime, repo-operating agent kinds run on a [runner pool](../operate/runner-pools.md), and
 that path only activates once the deployment can mint per-run GitHub tokens and dispatch jobs
 securely. All of the following must be set; otherwise inline kinds still work and container kinds
 fail loudly instead of faking success:
@@ -284,8 +284,8 @@ allowed hosts, read by npm, pnpm, and yarn v1. Tokens are registered for output 
 
 ## Capability credentials
 
-A deployment's [MCP tool servers](./custom-agents.md#skills-and-tool-servers) and
-[generative integrations](./custom-agents.md#generative-binary-integrations) declare the secrets they
+A deployment's [MCP tool servers](../extend/custom-agents.md#skills-and-tool-servers) and
+[generative integrations](../extend/custom-agents.md#generative-binary-integrations) declare the secrets they
 need **by name**. Fill those names in per workspace on the **Infrastructure** window's **Capability
 credentials** tab, which sits beside the package registries because what an agent's tools authenticate
 as belongs with where those agents run. The tab needs `secrets.manage`.
@@ -380,7 +380,7 @@ filing tracker.
 
 Every model call is metered for the spend gauge and the in-app observability dashboard. Two
 optional settings tune what is recorded and where it is sent. Both are covered in depth in
-[Observability](./observability.md).
+[Observability](../operate/observability.md).
 
 | Variable | Purpose |
 | --- | --- |
@@ -396,18 +396,18 @@ Langfuse honours `LLM_RECORD_PROMPTS`: with prompts off, the traces carry only n
 Call metrics and full agent-context snapshots live in an isolated telemetry store, separate from the
 main application database. On Cloudflare it is a dedicated D1 database; on Node and local it is a
 `telemetry` schema inside the existing `DATABASE_URL` database. A retention cron prunes it on a
-schedule. See [Observability → The telemetry store](./observability.md#the-telemetry-store).
+schedule. See [Observability → The telemetry store](../operate/observability.md#the-telemetry-store).
 
 | Variable | Purpose |
 | --- | --- |
 | `TELEMETRY_DB` | Cloudflare only. D1 binding for the telemetry store. Required on the Worker: the build path and the retention cron fail fast if it is unbound. On Node and local the store is a `telemetry` schema in `DATABASE_URL`, with no separate binding. |
 | `PROVISIONING_DB` | Cloudflare only. Optional D1 binding for the ephemeral-environment and container-provisioning event log. The log is off when unbound. On Node and local it is a `provisioning` schema in `DATABASE_URL`. |
-| `LLM_CALL_METRICS_RETENTION_DAYS` | How long call metrics and agent-context snapshots are kept before the retention cron prunes them. Defaults to 3 days. |
+| `LLM_CALL_METRICS_RETENTION_DAYS` | How long call metrics and agent-context snapshots are kept before the retention cron prunes them. Defaults to 14 days. |
 | `PROVISIONING_LOG_RETENTION_DAYS` | How long provisioning events are kept. Defaults to 14 days. |
 
 The **post-release-health** gate and **Agent-On-Call** watch production through a pluggable
 observability provider (Datadog today) after a merge. They are opt-in and covered in
-[Observability → Post-release health](./observability.md#post-release-health-and-agent-on-call).
+[Observability → Post-release health](../operate/observability.md#post-release-health-and-agent-on-call).
 
 | Variable | Purpose |
 | --- | --- |
@@ -420,7 +420,7 @@ observability provider (Datadog today) after a merge. They are opt-in and covere
 Board notifications (merge reviews, pipeline completions, CI failures, requirement reviews) land in
 the in-app inbox by default. Slack and a per-workspace outbound webhook are optional extra transports.
 Both are opt-in and configured per workspace, and their secrets are encrypted under `ENCRYPTION_KEY`.
-Full setup is in [Notifications](./notifications.md).
+Full setup is in [Notifications](../operate/notifications.md).
 
 | Variable | Purpose |
 | --- | --- |
@@ -452,10 +452,10 @@ Optional integrations enabled by their own flag:
 | --- | --- |
 | `PROMPT_LIBRARY_ENABLED` | The [prompt-fragment library](../guide/prompt-fragments.md) is **on by default** (it needs no secrets and its tables ship in the base migrations). Set to `false` to turn it off. `PROMPT_LIBRARY_SELECTOR=llm` ranks fragments per run; anything else keeps the deterministic default. |
 | `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
-| `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](./observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
+| `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](../operate/observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
 | `SANDBOX_DB` | Cloudflare only. Optional D1 binding that turns on the [Sandbox](../guide/sandbox.md) for prompt and model testing. The Sandbox is off until it is bound. On Node and local it is a `sandbox` schema in `DATABASE_URL`. |
 
-[Ephemeral environments](./environments.md) have no enable flag. The module assembles wherever
+[Ephemeral environments](../operate/environments.md) have no enable flag. The module assembles wherever
 `ENCRYPTION_KEY` is set (it seals environment-provider credentials under that key), the same
 always-on-where-the-key-is-present model as the document and task sources. It stays inert until a
 workspace registers an infrastructure handler and a pipeline includes a `deployer`/`tester` step, so
@@ -470,5 +470,5 @@ manager and never commit them.
 
 ---
 
-Scaling execution? Continue to [Runner Pools](./runner-pools.md) and
-[Ephemeral Environments](./environments.md).
+Scaling execution? Continue to [Runner Pools](../operate/runner-pools.md) and
+[Ephemeral Environments](../operate/environments.md).

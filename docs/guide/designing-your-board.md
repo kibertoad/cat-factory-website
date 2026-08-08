@@ -68,7 +68,7 @@ feels like it spans several PRs, split it into sibling leaves.
   target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to audit
   and a review focus, a [Ralph loop](./running-pipelines.md#the-ralph-loop) its validation command and
   iteration budget) and lets the workspace cap concurrency per type. A deployment can
-  [add task types of its own](../deploy/frontend-extensions.md#custom-task-types), an "incident" or a
+  [add task types of its own](../extend/frontend-extensions.md#custom-task-types), an "incident" or a
   "compliance-audit", which then appear in the picker and as a badge on the card like any built-in.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)

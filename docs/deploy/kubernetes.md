@@ -4,9 +4,9 @@ Cat Factory runs on Kubernetes two ways, and they are independent. You can use e
 neither:
 
 - **Agent containers**: run each per-run coding job as a Kubernetes pod, instead of a manifest-driven
-  [runner pool](./runner-pools.md) or local Docker.
+  [runner pool](../operate/runner-pools.md) or local Docker.
 - **Ephemeral environments**: provision a per-PR preview by applying your repo's own manifests into a
-  namespace, instead of the generic [HTTP manifest provider](./environments.md).
+  namespace, instead of the generic [HTTP manifest provider](../operate/environments.md).
 
 Both are native backends: you fill in a form, not a manifest. You configure them in the top-level
 **Infrastructure** window, under the **Agent containers** and **Test environments** tabs. On a
@@ -35,7 +35,7 @@ pod per run, running the executor-harness image.
 | **Node selector / tolerations / labels / annotations** | Optional. Standard pod placement and metadata. |
 
 Use **Test connection** to probe the apiserver before you save. This is an alternative to a
-[runner pool](./runner-pools.md): a deployment reaches Kubernetes directly rather than dispatching to
+[runner pool](../operate/runner-pools.md): a deployment reaches Kubernetes directly rather than dispatching to
 a scheduler over HTTP.
 
 ## Ephemeral environments on Kubernetes
@@ -113,7 +113,7 @@ Each service declares a **provision type**, the shape it produces:
 | Provision type | Produces |
 | --- | --- |
 | `kubernetes` | A manifest source (colocated or separate) plus render inputs (images, Helm releases, secret injections). |
-| `docker-compose` | A path to a compose file in the repo. See [Docker Compose environments](./environments.md#docker-compose-environments). |
+| `docker-compose` | A path to a compose file in the repo. See [Docker Compose environments](../operate/environments.md#docker-compose-environments). |
 | `custom` | Whatever a [custom manifest type](#custom-manifest-types) accepts. |
 | `infraless` | Nothing; the service provisions no environment. |
 
@@ -201,5 +201,5 @@ cert.
 
 ---
 
-Next: give agents somewhere to test their work with [Ephemeral Environments](./environments.md), or
-bring your own scheduler with [Runner Pools](./runner-pools.md).
+Next: give agents somewhere to test their work with [Ephemeral Environments](../operate/environments.md), or
+bring your own scheduler with [Runner Pools](../operate/runner-pools.md).

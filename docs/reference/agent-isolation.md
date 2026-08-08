@@ -21,7 +21,7 @@ A per-run container holds two distinct programs, and the distinction is the whol
   to files in the checkout.
 
 Custom agent kinds do not change this. A custom kind's deterministic logic runs on the backend as
-`preOps`/`postOps` (see [Custom Agents](../deploy/custom-agents.md)), never as code inside the
+`preOps`/`postOps` (see [Custom Agents](../extend/custom-agents.md)), never as code inside the
 container. The container always runs the same generic harness over a checkout, so adding an agent
 kind never widens what runs in the sandbox.
 
@@ -181,7 +181,7 @@ To be precise about where the boundary actually sits:
 - The **harness image** is trusted. It is published publicly and built from source in the open repo,
   so you can verify it carries no secrets and does only what is described here.
 - The **infrastructure** is trusted: Cloudflare's container and data services, or, if you run your
-  own [runner pool](../deploy/runner-pools.md), the pool you operate. A self-hosted pool is the one
+  own [runner pool](../operate/runner-pools.md), the pool you operate. A self-hosted pool is the one
   place a leased subscription token leaves the backend to reach your runner.
 
 The model itself is treated as untrusted throughout, which is the point: even a fully compromised

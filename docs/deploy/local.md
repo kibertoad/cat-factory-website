@@ -16,7 +16,7 @@ developer machine instead of a server:
 
 | Concern | Node.js deployment | Local mode |
 | --- | --- | --- |
-| **Agent jobs** | Self-hosted [runner pool](./runner-pools.md) | Local containers (Docker, Podman, OrbStack, Colima, or Apple `container`) |
+| **Agent jobs** | Self-hosted [runner pool](../operate/runner-pools.md) | Local containers (Docker, Podman, OrbStack, Colima, or Apple `container`) |
 | **Source-control access** | GitHub App (per-installation tokens) | A personal access token (`GITHUB_PAT`, or `GITLAB_PAT` for GitLab) |
 | **Sign-in** | Real OAuth sessions | Sign in with the configured PAT, or email/password. See [Signing in](#signing-in). |
 | **Database** | Your PostgreSQL | A local PostgreSQL (docker-compose) |
@@ -172,7 +172,7 @@ container.
 | `LOCAL_WEB_SEARCH` | no | Self-hosted [SearXNG web search](#web-search-searxng) is on by default. Set `off` to skip wiring it. |
 | `WEB_SEARCH_SEARXNG_URL` | no | SearXNG endpoint. Defaults to `http://localhost:8080` (the bundled compose service). Set it to point at your own instance, or set `WEB_SEARCH_BRAVE_API_KEY` to use hosted Brave Search instead. |
 | `LOCAL_HARNESS_ENTRY` | no | Path to the executor-harness server entry for native mode. Optional: unset, it defaults to the bundled `@cat-factory/executor-harness`, so native mode works with no build. Set it to point at a source-checkout build. |
-| `LOCAL_DEPLOY_RUNTIME` | no | Enables the local Kubernetes deploy runner that renders and applies a service's manifests for [ephemeral Kubernetes test environments](./environments.md). No default: unset means no Kubernetes test environments (the deploy runner stays unwired, and a Kubernetes provision fails at start with "no deploy runner wired"). Set `container` to run the deploy-harness image one container per deploy job on your `LOCAL_CONTAINER_RUNTIME` (works out of the box; the image resolves automatically), or `native` to shell out to your own host `kubectl`/`kustomize`/`helm` (needs `LOCAL_DEPLOY_HARNESS_ENTRY`). An unrecognized value, or `native` with no entry, fails boot. |
+| `LOCAL_DEPLOY_RUNTIME` | no | Enables the local Kubernetes deploy runner that renders and applies a service's manifests for [ephemeral Kubernetes test environments](../operate/environments.md). No default: unset means no Kubernetes test environments (the deploy runner stays unwired, and a Kubernetes provision fails at start with "no deploy runner wired"). Set `container` to run the deploy-harness image one container per deploy job on your `LOCAL_CONTAINER_RUNTIME` (works out of the box; the image resolves automatically), or `native` to shell out to your own host `kubectl`/`kustomize`/`helm` (needs `LOCAL_DEPLOY_HARNESS_ENTRY`). An unrecognized value, or `native` with no entry, fails boot. |
 | `LOCAL_DEPLOY_HARNESS_ENTRY` | when `native` | The deploy-harness server entry path, run as `node <entry>` (a `.ts` entry runs via Node type-stripping). Required only when `LOCAL_DEPLOY_RUNTIME=native`; `kubectl`, `kustomize`, and `helm` must also be on the host. |
 | `LOCAL_DEPLOY_IMAGE` | no | Escape hatch for `container` mode: overrides the deploy-harness image, which otherwise resolves automatically to the version-matched image the backend recommends. Pin a custom or older build, or a private-registry mirror. |
 | `ENCRYPTION_KEY` | yes | Base64 key (≥ 32 bytes decoded) sealing UI-connected credentials (provider keys, subscriptions, local runners) at rest. Required and must stay stable: a fresh key each boot orphans every credential sealed under the previous one, and boot fails loudly when it is unset. Generate it with `pnpm secrets`. |
@@ -291,7 +291,7 @@ Docker-in-Docker is available, so you can confirm the choice took effect.
 
 ::: warning Apple `container` can't run the Tester's local infra
 The `apple` runtime has no Docker-in-Docker, so the **Tester** cannot stand up local docker-compose
-infrastructure. Tasks must either use an [ephemeral environment](./environments.md) or be marked as
+infrastructure. Tasks must either use an [ephemeral environment](../operate/environments.md) or be marked as
 having no infra dependencies; the boot log warns about this when the `apple` runtime is selected.
 :::
 
@@ -313,19 +313,19 @@ the **Ephemeral environments** screen (local mode only) and each lights up only 
 registered:
 
 - **Delegate agents to a runner pool**: container agent jobs dispatch to the registered
-  [runner pool](./runner-pools.md) instead of host Docker. With the toggle on and no pool registered,
+  [runner pool](../operate/runner-pools.md) instead of host Docker. With the toggle on and no pool registered,
   a run is refused at start with a clear message (register a pool first) rather than an opaque error.
 - **Delegate the test environment to a provider**: flips the local-mode **default** Tester
   environment from local (host DinD) to ephemeral, provisioned through your registered
-  [environment provider](./environments.md). Per-service and per-task choices still win over the
+  [environment provider](../operate/environments.md). Per-service and per-task choices still win over the
   default. An ephemeral run is refused at start if the toggle is on with no provider connected.
 
 Both default off. A single wrapper package can implement the `EnvironmentProvider` and
 `RunnerPoolProvider` ports together (Kargo, for example) to serve both concerns; see
-[Custom Providers](./custom-providers.md). Ephemeral environments carry no enable flag: the module
+[Custom Providers](../extend/custom-providers.md). Ephemeral environments carry no enable flag: the module
 assembles wherever `ENCRYPTION_KEY` is set (always, in local mode), and stays inert until a service
 declares a provision type and a workspace handler is registered. See
-[Ephemeral Environments](./environments.md).
+[Ephemeral Environments](../operate/environments.md).
 
 To run agents and previews on a local Kubernetes cluster instead, use the native **Kubernetes**
 backends. The `cat-factory k3s` command provisions a local k3d/kind/k3s cluster, wires least-privilege

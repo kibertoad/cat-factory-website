@@ -84,22 +84,33 @@ Match the voice and structure of the surrounding doc you are editing.
 
 ## Feature-area to doc-file map
 
+The site has six sections: `docs/guide/` (Start and Guides), `docs/deploy/`, `docs/operate/`,
+`docs/extend/`, and `docs/reference/`. Operating and extension pages moved out of `docs/deploy/`,
+so a path from an older sync may no longer exist.
+
 | Area in the code | Doc file(s) |
 | --- | --- |
-| Model providers, OpenRouter, proxies vs direct, model presets, model catalog | `docs/guide/model-providers.md`, `docs/deploy/custom-providers.md` |
-| Provider config defaults, per-user GitHub PAT, encrypted UI/DB config | `docs/deploy/configuration.md`, `docs/deploy/custom-providers.md` |
+| Model providers, OpenRouter, proxies vs direct, model presets, model catalog | `docs/guide/model-providers.md`, `docs/extend/custom-providers.md` |
+| Provider config defaults, per-user GitHub PAT, encrypted UI/DB config | `docs/deploy/configuration.md`, `docs/extend/custom-providers.md` |
 | Budgets, spend, price handling | `docs/guide/budgets.md`, `docs/deploy/configuration.md` |
 | Integration secrets moved out of env into encrypted config | `docs/deploy/configuration.md` |
-| Observability, telemetry store, ephemeral-env/container provisioning telemetry | `docs/deploy/observability.md`, `docs/deploy/configuration.md` |
-| Custom agents, manifest model, pre/agent/post-op, generic agent kind | `docs/deploy/custom-agents.md`, `docs/reference/manifests.md` |
-| Custom gates, `@cat-factory/gates`, externally extensible gates | `docs/deploy/custom-agents.md`, `docs/reference/packages.md` |
+| Observability, telemetry store, ephemeral-env/container provisioning telemetry | `docs/operate/observability.md`, `docs/deploy/configuration.md` |
+| Retention windows, upgrade and image-tag rollout | `docs/operate/upgrades-and-retention.md` |
+| A new failure mode an operator will meet | `docs/operate/troubleshooting.md` |
+| Custom agents, manifest model, pre/agent/post-op, generic agent kind | `docs/extend/custom-agents.md`, `docs/extend/manifests.md` |
+| Custom gates, `@cat-factory/gates`, externally extensible gates | `docs/extend/custom-agents.md`, `docs/reference/packages.md` |
+| Public API endpoints, scopes, webhooks | `docs/extend/public-api.md` |
+| SDK clients, the MCP server and its tools | `docs/extend/sdks.md`, `docs/extend/mcp-server.md` |
 | Published `@cat-factory/*` packages | `docs/reference/packages.md` |
+| Agent isolation, the write path, hardening | `docs/reference/agent-isolation.md`, `docs/reference/security-model.md` |
+| GitHub vs GitLab capability differences | `docs/reference/vcs-support-matrix.md` |
+| A new word the product uses in its UI | `docs/reference/glossary.md` |
 | Requirements review UX, spec writing, business-only specs, task labels | `docs/guide/requirements.md` |
 | Prompt fragments, linked best-practice docs (Confluence/Notion/GitHub), context delivery | `docs/guide/prompt-fragments.md` |
 | Issue sources, tracker settings, create-from-issue, writeback, per-workspace toggles | `docs/guide/issue-sources.md` |
-| Sandbox (prompt/model testing) | `docs/guide/` (its own page if needed) |
-| Environments, env adapters, default test environment | `docs/deploy/environments.md` |
-| Runner pools, provisioning template vars | `docs/deploy/runner-pools.md` |
+| Sandbox (prompt/model testing) | `docs/guide/sandbox.md` |
+| Environments, env adapters, default test environment | `docs/operate/environments.md` |
+| Runner pools, provisioning template vars | `docs/operate/runner-pools.md` |
 | Local mode, container runtimes (Docker/Podman/OrbStack/Colima/Apple container) | `docs/deploy/local.md` |
 | Pull requests, merge presets/thresholds | `docs/guide/pull-requests.md` |
 | Recurring pipelines, board design, shared services, team/access | matching `docs/guide/*.md` |
@@ -107,6 +118,31 @@ Match the voice and structure of the surrounding doc you are editing.
 
 When a commit does not fit any row, decide from its diff which audience it serves and pick the
 closest page, or note it as out of scope.
+
+## Two pages you never hand-edit
+
+- **`docs/reference/environment-variables.md` is generated** from the code repo's
+  `docs/environment-variables.md` by `node scripts/sync-env-vars.mjs`. A commit that adds or changes
+  an environment variable is synced by running that script (with `CAT_FACTORY_REPO` pointing at the
+  checkout) and committing the result, never by editing the page. Three modes back that up:
+  `pnpm run docs:env-vars` renders, `docs:env-vars:check` compares against the code repo, and
+  `docs:env-vars:verify` runs the offline checks that CI blocks on.
+- **The canonical variable list stays in the code repo** because a CI guard there reads it. If the
+  code repo's own list is missing a variable the commit added, say so in the PR rather than
+  documenting it only here: a variable documented only on this site is one the guard cannot see.
+  `--verify` enforces this: it fails when a variable appears in a `docs/deploy/configuration.md`
+  table but not in the generated page, unless it is recorded in
+  `scripts/env-vars-coverage-baseline.json`. Recording one with `--update-baseline` is the escape
+  hatch for variables genuinely outside the canonical list's scope (frontend build variables,
+  UI-entered credentials) — it is not the way to close a real gap. Fix those upstream.
+
+## Ownership: this site vs the code repo
+
+Ownership follows the reader. This site owns everything someone can act on without cloning the code
+repo. The code repo owns internal design, and its docs link here for the user-facing account rather
+than restating it. When a commit's change is genuinely internal (an engine seam, a port, a
+registry's wiring), the doc that describes it belongs there, and the right outcome here is often no
+edit at all.
 
 ## PR conventions
 
