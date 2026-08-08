@@ -123,10 +123,11 @@ function* markdownLines(content) {
 }
 
 function headings(content, depth = 6) {
+  const heading = new RegExp(`^#{1,${depth}}\\s+(.*?)\\s*$`)
   const found = []
   for (const line of markdownLines(content)) {
-    const m = new RegExp(`^(#{1,${depth}})\\s+(.*?)\\s*$`).exec(line)
-    if (m) found.push(m[2])
+    const m = heading.exec(line)
+    if (m) found.push(m[1])
   }
   return found
 }
