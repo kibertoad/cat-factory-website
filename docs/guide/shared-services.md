@@ -1,7 +1,8 @@
-# Shared Services
+# Share Services Across Workspaces
 
-A **service** - a service frame plus its modules, tasks, linked repository, runs, and sync - is
-owned by your **account (organization)**. A workspace is a curated
+For an organization where more than one team works on the same service. A **service** - a service
+frame plus its modules, tasks, linked repository, runs, and sync - is owned by your
+**account (organization)**. A workspace is a curated
 view that **mounts** the services it cares about. The same service can be mounted onto several
 teams' boards at once, where it is one shared subtree rather than a copy.
 
@@ -74,4 +75,4 @@ record, so it **fires once per org**, no matter how many boards mount it.
 
 ---
 
-Next: automate routine work with [Recurring Pipelines](./recurring-pipelines.md).
+Next: automate routine work with [Schedule Recurring Work](./recurring-pipelines.md).

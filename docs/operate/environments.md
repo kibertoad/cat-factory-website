@@ -3,10 +3,11 @@ redirectFrom:
   - /deploy/environments.html
 ---
 
-# Ephemeral Environments
+# Provision Ephemeral Environments
 
-To validate agent-built changes against a running system, Cat Factory can provision ephemeral
-preview environments on demand and tear them down when the run finishes.
+For the operator who has to give agents somewhere to test what they build. To validate agent-built
+changes against a running system, Cat Factory can provision ephemeral preview environments on demand
+and tear them down when the run finishes.
 
 ## What they're for
 
@@ -135,10 +136,10 @@ Pick the one that matches how your previews run:
 
 | Backend | Runtimes | What it does |
 | --- | --- | --- |
-| **Kubernetes** | all | Applies the repo's own manifests into a per-PR namespace. Native, form-driven. See [Kubernetes](../deploy/kubernetes.md#ephemeral-environments-on-kubernetes). |
+| **Kubernetes** | all | Applies the repo's own manifests into a per-PR namespace. Native, form-driven. See [Deploy on Kubernetes](../deploy/kubernetes.md#ephemeral-environments-on-kubernetes). |
 | **Docker Compose** | local | Stands the repo's compose file up on the host Docker daemon. See [below](#docker-compose-environments). |
 | **HTTP manifest** | all | Drives your own management API through request/response templates. See [below](#registering-an-http-manifest-provider). |
-| **Custom code adapter** | Node, local | Implements the `EnvironmentProvider` port when a manifest can't express your platform. See [Custom Providers](../extend/custom-providers.md). |
+| **Custom code adapter** | Node, local | Implements the `EnvironmentProvider` port when a manifest can't express your platform. See [Add a Custom Provider](../extend/custom-providers.md). |
 
 Which backend a given service uses is decided by its [provision type](#per-service-provision-types),
 so one workspace can preview a Kubernetes service and a Compose service side by side.
@@ -172,7 +173,7 @@ no longer offers the service's source directory (one carrying a Backstage `catal
 as a bogus deploy target. Point it at non-standard house layouts through the `manifestDirs` and
 `serviceManifestPaths` keys of `ENVIRONMENTS_DETECTION_CONVENTIONS`. The full model, including custom
 manifest types and the generate/fix repair agent, is on the
-[Kubernetes](../deploy/kubernetes.md#per-service-provision-types) page.
+[Deploy on Kubernetes](../deploy/kubernetes.md#per-service-provision-types) page.
 
 ## Docker Compose environments
 
@@ -291,7 +292,7 @@ A deployment can declare its infrastructure dependencies in code instead of in a
 `seedSharedStacks` on `start()` or `startLocal()`, alongside
 [`seedEnvironmentHandlers`](#seeding-handlers-from-the-deployment). Both run over the same workspace
 enumeration at boot and again for each newly-created workspace. See
-[Your Deployment Repository](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code).
+[Set Up Your Deployment Repository](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code).
 
 ## Preflight checks
 
@@ -370,7 +371,7 @@ reachable by the runner pool, and vice versa.
 If your platform's API can't be expressed as request/response templates (asynchronous provisioning,
 a live URL buried in a dynamic response shape, a status vocabulary of its own, or a non-HTTP
 protocol), implement the `EnvironmentProvider` port in code instead and inject it when you build the
-container. See [Custom Providers (Code Adapters)](../extend/custom-providers.md) for a worked example,
+container. See [Add a Custom Provider](../extend/custom-providers.md) for a worked example,
 per-workspace configuration via `providerConfig`, and the gotchas (status mapping, async provision,
 idempotent teardown).
 
@@ -393,8 +394,9 @@ instead of failing the first run:
 All repo I/O goes through the same VCS-neutral file abstraction the rest of the platform uses, so the
 adapter never sees a host or a token. These are optional adapter capabilities: a stock deployment
 running the generic manifest provider is unaffected. See
-[Custom Providers (Code Adapters)](../extend/custom-providers.md).
+[Add a Custom Provider](../extend/custom-providers.md).
 
 ---
 
-That covers deployment and operations. For internals, see the [Reference](../reference/architecture.md).
+Next: [Troubleshooting](./troubleshooting.md) when an environment will not come up, or
+[Add a Custom Provider](../extend/custom-providers.md) when no manifest describes your platform.

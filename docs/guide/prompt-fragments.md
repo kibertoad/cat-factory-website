@@ -1,11 +1,11 @@
-# Prompt Fragments
+# Apply Standards with Prompt Fragments
 
-Prompt fragments are reusable, version-controlled guidelines that agents pull into their
-prompts at run time. Encode your team's standards once - coding conventions, review
-checklists, security rules - and apply them everywhere.
+For a team that keeps telling agents the same thing. Prompt fragments are reusable,
+version-controlled guidelines that agents pull into their prompts at run time: encode your standards
+once - coding conventions, review checklists, security rules - and apply them everywhere.
 
 For a procedural playbook that runs as its own pipeline step rather than passive guidance folded into
-every agent, see [Claude Skills](./skills.md).
+every agent, see [Run a Claude Skill as a Step](./skills.md).
 
 ![The prompt-fragment library's Resolved catalog listing built-in fragments such as backend acceptance tests, acceptance scenarios, and design context, with This board, Documents, and Repo sources tabs](/images/app/context-fragments.webp)
 
@@ -53,7 +53,7 @@ fragments show below as chips you can remove. The picker also links straight to 
 library and to account fragments, so you can author or edit one without leaving the step.
 
 Fragments fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
-and architect) and into the **document-authoring** kinds (see [Document Tasks](./documents.md)). A
+and architect) and into the **document-authoring** kinds (see [Author a Document](./documents.md)). A
 code-style or review-checklist fragment reaches the coding steps automatically; a writing-style
 fragment reaches the document steps. Steps that touch neither code nor prose are left untouched.
 
@@ -166,7 +166,5 @@ add workspace fragments only where a specific board needs to differ.
 
 ---
 
-That completes the usage guides. To stand a deployment up, head to
-[Deploy](../deploy/configuration.md); to run one day to day, [Operate](../operate/observability.md).
-To build your own agents, gates and providers, see [Extend](../extend/custom-agents.md), or browse
-the [Reference](../reference/architecture.md).
+Next: run a playbook as its own step with [Run a Claude Skill as a Step](./skills.md), or try a
+fragment against real fixtures in [Compare Prompts and Models in the Sandbox](./sandbox.md).

@@ -12,7 +12,7 @@ need to resolve to the right connection.
 
 ## Setting each one up
 
-- **GitHub**: register a GitHub App. See [GitHub App](../deploy/github-app.md).
+- **GitHub**: register a GitHub App. See [Register the GitHub App](../deploy/github-app.md).
 - **GitLab**: opt-in and off by default. The provider works on every runtime, but the token is named
   per runtime: set `GITLAB_TOKEN` (scope `api`) on Cloudflare and Node, or `GITLAB_PAT` in
   [local mode](../deploy/local.md#gitlab-in-local-mode). `GITLAB_API_BASE` is optional on all three
@@ -73,5 +73,5 @@ Three rows decide most deployments:
 
 ---
 
-Next: [GitHub App](../deploy/github-app.md) to set up the reference provider, or
-[Repositories](../guide/repositories.md) to link one to a board.
+Next: [Register the GitHub App](../deploy/github-app.md) to set up the reference provider, or
+[Connect a Repository](../guide/repositories.md) to link one to a board.

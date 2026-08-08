@@ -1,7 +1,7 @@
-# Requirements
+# Clarify Requirements
 
-Agents succeed or fail on the quality of their context. Cat Factory works requirements at two
-levels:
+For anyone whose tasks are coming back wrong, and for anyone writing one before it runs. Agents
+succeed or fail on the quality of their context, and Cat Factory works requirements at two levels:
 
 1. A **per-task clarification loop**: the *requirements reviewer* makes one block unambiguous
    *before* any code is generated.
@@ -35,8 +35,8 @@ subject the [reviewer](#the-reviewer-agent) then clarifies, so brainstorming fee
 review loop.
 
 There is a matching **Architecture brainstorm** for exploring approaches before the Architect (see
-[Running Pipelines](./running-pipelines.md#anatomy-of-a-pipeline)). Neither ships in a build preset:
-add the one you want to a [cloned pipeline](./running-pipelines.md#editing-pipelines). Each is a human
+[Choose and Edit a Pipeline → Anatomy of a pipeline](./choosing-a-pipeline.md#anatomy-of-a-pipeline)). Neither ships in a build preset:
+add the one you want to a [cloned pipeline](./choosing-a-pipeline.md#editing-pipelines). Each is a human
 gate, so it only runs when you opt in and are present to steer it.
 
 ## The reviewer agent
@@ -112,7 +112,7 @@ The reviewer sorts every finding into one of two buckets as it raises it:
 Auto-recommendation runs on **every review round**, and because it pre-answers the mechanical
 findings, it suppresses the "recommendations to review" notification for those. It is **on by
 default**, controlled per pipeline as a toggle on the **requirements-review step** in the
-[pipeline builder](./running-pipelines.md#editing-pipelines): turn it off to answer every finding
+[pipeline builder](./choosing-a-pipeline.md#editing-pipelines): turn it off to answer every finding
 yourself.
 
 ### Requesting a recommendation yourself
@@ -237,4 +237,4 @@ Write/​link context  →  Run reviewer  →  Answer findings  →  Incorporate
 
 ---
 
-Next: turn a ready task into code with [Running Pipelines](./running-pipelines.md).
+Next: turn a ready task into code with [Run a Pipeline](./running-pipelines.md).

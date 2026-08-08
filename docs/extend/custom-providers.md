@@ -3,13 +3,14 @@ redirectFrom:
   - /deploy/custom-providers.html
 ---
 
-# Custom Providers (Code Adapters)
+# Add a Custom Provider
 
-For most deployments you connect infrastructure you own (a preview-environment platform or a
-runner scheduler) with a declarative [manifest](./manifests.md), and a single generic
-adapter drives it over HTTP. No code.
+For the deployment whose infrastructure a manifest cannot describe. Most deployments connect what
+they own (a preview-environment platform or a runner scheduler) with a declarative
+[manifest](./manifests.md), and a single generic adapter drives it over HTTP. No code. Read this page
+only once that has run out.
 
-Sometimes the manifest isn't enough: your platform speaks a protocol that doesn't map cleanly onto
+The manifest isn't enough when your platform speaks a protocol that doesn't map cleanly onto
 request/response templates, needs multi-step orchestration per operation, talks gRPC or a vendor
 SDK, or derives values (a URL, a status) from a response shape too dynamic for dot-paths. For those
 cases the backend exposes the same ports the built-in adapters implement as **code seams**, so you
@@ -585,6 +586,9 @@ These are the ones that actually bite when adapting a real platform:
 
 ---
 
-This is the deepest extension seam Cat Factory exposes. For the declarative alternative most
-deployments use, see [Runner Pools](../operate/runner-pools.md) and [Ephemeral Environments](../operate/environments.md);
-for where this code lives, see [Your Deployment Repository](../deploy/deployment-repository.md).
+This is the deepest extension seam Cat Factory exposes.
+
+Next: [Set Up Your Deployment Repository](../deploy/deployment-repository.md) for where this code
+lives, or the declarative alternative most deployments use in
+[Run Jobs on Your Own Runners](../operate/runner-pools.md) and
+[Provision Ephemeral Environments](../operate/environments.md).

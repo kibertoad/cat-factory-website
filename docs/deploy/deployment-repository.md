@@ -1,4 +1,4 @@
-# Your Deployment Repository
+# Set Up Your Deployment Repository
 
 Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR and Docker Hub). You don't fork
 it. Instead, you assemble a small **deployment repository** of thin packages that depend on the published
@@ -182,12 +182,12 @@ await start({ foundationalServiceRegistry })
 | Registry | What it declares |
 | --- | --- |
 | `defaultAgentKindRegistry()` | [Custom agent kinds](../extend/custom-agents.md), their traits, bundled skills, and MCP tool servers. |
-| `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](../extend/custom-agents.md#custom-gates). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
+| `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](../extend/custom-gates.md). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
 | `defaultPipelineRegistry()` | Predefined pipelines. |
 | `defaultTaskTypeRegistry()` | Namespaced [custom task types](../extend/frontend-extensions.md#custom-task-types). |
 | `defaultInitiativePresetRegistry()` | [Initiative presets](../guide/initiatives.md). |
 | `defaultFoundationalServiceRegistry()` | [Foundational services](../guide/foundational-services.md), resolved as the `builtin` tier of every workspace's catalog. |
-| `defaultBinaryGeneratorRegistry()` | [Generative binary integrations](../guide/running-pipelines.md#binary-output-steps) a `binary-output` step can select. |
+| `defaultBinaryGeneratorRegistry()` | [Generative binary integrations](../guide/choosing-a-pipeline.md#binary-output-steps) a `binary-output` step can select. |
 
 ::: warning Registration is validated at boot
 A malformed contract document, an unknown `helperKind`, or a `defaultPipelineId` that resolves to
@@ -300,5 +300,5 @@ Build from the repository root so the whole workspace is in the build context.
 ---
 
 Next: teach a deployment to talk to infrastructure you own with
-[Custom Providers](../extend/custom-providers.md), or set your secrets and toggles in
+[Add a Custom Provider](../extend/custom-providers.md), or set your secrets and toggles in
 [Configuration](./configuration.md).

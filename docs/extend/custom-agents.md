@@ -3,31 +3,25 @@ redirectFrom:
   - /deploy/custom-agents.html
 ---
 
-# Custom Agents & Gates (Code Adapters)
+# Add a Custom Agent Kind
 
-Cat Factory ships a full set of built-in agent kinds (Architect, Coder, Reviewer, Tester, and the
-rest) and a set of built-in gates (CI, merge-conflicts, post-release health, and the
-[document-quality gate](#the-document-quality-gate)). Your team may
-want ones of its own: a compliance auditor, a security scanner, an internal migration agent, a
-bespoke reviewer that knows your house rules, a license-header gate that blocks a merge until every
-file carries the company SPDX line. You can add agent kinds AND gates **from your own
-[deployment repository](../deploy/deployment-repository.md)**, without forking the platform and without
-rebuilding the executor-harness image.
+For a deployment that needs an agent the platform does not ship: a compliance auditor, a security
+scanner, an internal migration agent, a bespoke reviewer that knows your house rules. You add agent
+kinds **from your own [deployment repository](../deploy/deployment-repository.md)**, without forking
+the platform and without rebuilding the executor-harness image.
 
 A custom agent becomes a first-class citizen: a palette block in the pipeline builder, a step you can
-chain into pipelines, a live result window, all from registering it once at startup. A custom gate
-plugs into the same engine state machine the built-in gates use: a deterministic precheck that only
-escalates to a helper agent on a negative verdict, looping until the precheck passes or an attempt
-budget is spent. A [custom judge](#custom-judges) is the third shape: a rubric-scored assessment that
-can advance, park, or send the work back. This page shows the model, the seams, worked examples, how
-to package and wire them, and the gotchas.
+chain into pipelines, a live result window, all from registering it once at startup. This page shows
+the model, the seams, worked examples, how to package and wire them, and the gotchas.
+
+The two sibling shapes have their own page. A **gate** decides whether work is even needed, and a
+**judge** scores it against a rubric; both are in
+[Add a Custom Gate or Judge](./custom-gates.md).
 
 ::: tip This is a code extension
-Unlike a [provider manifest](./manifests.md), an agent or gate is code you write and ship
-in your deployment repo. It is the supported way to extend the agent and gate sets; you don't need to
-touch the core packages or the harness image. The built-in gate suite ships as one such package,
-[`@cat-factory/gates`](../reference/packages.md), authored through the exact same gate-registry seam
-your deployment uses.
+Unlike a [provider manifest](./manifests.md), an agent kind is code you write and ship in your
+deployment repo. It is the supported way to extend the agent set; you don't need to touch the core
+packages or the harness image.
 :::
 
 ## The mental model: three stages
@@ -168,7 +162,7 @@ kind with `registry.assignTraits(kind, traits)`. The ones the platform reads:
 | `foundational-catalog` | Hands the kind the [foundational-services catalog](../guide/foundational-services.md) and requires it to declare which services its design consumes. |
 | `foundational-contracts` | Hands the kind the full API contracts of the services a design declared. |
 | `binary-storage` | The kind uploads to the platform's binary-artifact store (run evidence such as screenshots). |
-| `binary-output` | The kind generates product binaries stored through a foundational service. See [Binary-output steps](../guide/running-pipelines.md#binary-output-steps). |
+| `binary-output` | The kind generates product binaries stored through a foundational service. See [Binary-output steps](../guide/choosing-a-pipeline.md#binary-output-steps). |
 | `interview-gate` | The kind conducts a clarification interview before proceeding. |
 
 #### Skills and tool servers
@@ -496,281 +490,6 @@ read/write), and `result` (the finished agent's result, present for `postOps` on
 
 When GitHub isn't connected, the engine skips the hooks rather than failing, so an unconfigured
 workspace runs unchanged.
-
-## Custom gates
-
-A gate is the other half of the extension story. Where an agent does work, a gate decides whether the
-work is even needed: it runs a deterministic programmatic precheck against a data source you supply
-and only escalates to a helper agent on a negative verdict, looping until the precheck passes or an
-attempt budget is spent. The built-in `ci`, `conflicts`, and `post-release-health` gates work this
-way, and they ship as [`@cat-factory/gates`](../reference/packages.md), a package authored through the
-same gate-registry seam your deployment uses. So the engine owns the shared state machine (re-attach
-on replay, init and persist `step.gate`, dispatch the helper, count attempts, emit); your gate is the
-small `GateDefinition` describing what makes it different.
-
-### The gate registration seam
-
-A deployment registers a gate with `gateRegistry.register(kind, factory)` on the `GateRegistry`
-the start function injects, the same shape as every other registry. The `kind` is the step
-`agentKind` the gate gates; the factory is `(ctx: GateContext) => GateDefinition`, invoked once when
-the engine builds its gate registry. A registered gate replaces a built-in of the same kind, so you
-can both add new gates and customize the built-in catalog (last registration wins).
-
-```ts
-import {
-  defineProviderToken,
-  isProviderWired,
-  wireProvider,
-  type GateProbe,
-} from '@cat-factory/kernel'
-
-// The verdict your deployment-supplied checker returns for a block's PR.
-interface LicenseCheckReport {
-  clean: boolean
-  headSha: string | null
-  summary?: string
-}
-interface LicenseProvider {
-  check(workspaceId: string, blockId: string): Promise<LicenseCheckReport>
-}
-
-// 1. Define a provider token and a one-line wire function. The gate reaches its data source
-//    through the typed provider registry, not a module global. Unwired ⇒ the gate passes through.
-const LICENSE_PROVIDER = defineProviderToken<LicenseProvider>('license')
-export function wireLicenseProvider(provider: LicenseProvider | undefined): void {
-  wireProvider(LICENSE_PROVIDER, provider)
-}
-
-// 2. Register the gate. `license-fixer` is a registered container-coding agent kind (see above)
-//    that adds the missing headers and pushes, like the built-in ci-fixer relates to ci.
-gateRegistry.register('license-check', (ctx) => ({
-  kind: 'license-check',
-  helperKind: 'license-fixer',
-  // The canonical source of the gate's "is my data source configured" answer.
-  wired: () => isProviderWired(LICENSE_PROVIDER),
-  unwiredOutput: 'License gate skipped (no license provider configured).',
-  // The precheck. requireProvider is SAFE here: the engine only probes a gate whose wired() is true.
-  probe: async (workspaceId, blockId): Promise<GateProbe> => {
-    const report = await ctx.requireProvider(LICENSE_PROVIDER).check(workspaceId, blockId)
-    return report.clean
-      ? { status: 'pass', headSha: report.headSha, passOutput: report.summary ?? 'License OK.' }
-      : { status: 'fail', headSha: report.headSha, failureSummary: report.summary }
-  },
-  // Hand the failing-file summary to the fixer as resolved context, like the CI gate.
-  helperPriorOutput: (summary) => ({ agentKind: 'license-check', output: summary }),
-  // Called when the attempt budget is spent: raise a human notification, return the failure message.
-  onExhausted: async ({ workspaceId, instance, block, step, summary }) => {
-    const attempts = step.gate?.attempts ?? 0
-    await ctx.raiseNotification(workspaceId, {
-      type: 'decision_required',
-      blockId: block.id,
-      executionId: instance.id,
-      title: 'License headers still missing',
-      body: `Still missing after ${attempts} fixer attempt(s). ${summary ?? ''}`.trim(),
-    })
-    return { error: `License headers still missing after ${attempts} attempt(s).` }
-  },
-}))
-```
-
-### The `GateProbe` verdict
-
-`probe` runs your precheck and returns a `GateProbe` with one of three statuses:
-
-| `status` | Meaning | What the engine does |
-| --- | --- | --- |
-| `pass` | The precheck is satisfied. | Finish the step with `passOutput`, advance the run. Nothing was spun up. |
-| `pending` | The data source is still computing. | Keep polling. |
-| `fail` | The precheck failed. | Escalate to `helperKind` (or give up once the attempt budget is spent). |
-
-`headSha` is the PR head commit the precheck ran against (or `null` when there is no open PR), used
-to detect a new push between polls. On `fail`, `failureSummary` is fed to the helper agent and the
-give-up error; `failingChecks` optionally carries structured failing-check detail the run-detail UI
-lists.
-
-### The `GateDefinition` fields
-
-The factory returns a `GateDefinition`:
-
-| Field | Purpose |
-| --- | --- |
-| `kind` | The step `agentKind` this gate gates (matches the registration key). |
-| `helperKind` | The container agent kind dispatched on a failed precheck. Must be a built-in helper (`ci-fixer`, `conflict-resolver`, `on-call`) or a registered container-capable kind, or [boot validation](#boot-time-validation) fails. |
-| `wired()` | Whether the gate's provider is configured. When false the gate is a pass-through. Make this `isProviderWired(token)` so it shares its source with `requireProvider`. |
-| `unwiredOutput` | Step output recorded when the gate passes through unwired. |
-| `probe(...)` | Run the precheck and classify it as a `GateProbe`. Receives the live `GateStepState` so a time-windowed gate can read its `watchSince`. |
-| `onExhausted(args)` | Run when the attempt budget is spent (or there is no async executor to escalate to). May raise a notification; returns the message used to fail the run. |
-| `pollExhaustion?` | `fail` (default) or `pass`. A time-windowed watch gate (like post-release-health) uses `pass`: running out of polls with no regression seen is a healthy result, not a timeout failure. |
-| `attemptBudget?(policy)` | The helper-attempt budget, resolved from the task's risk policy. Defaults to `ciMaxAttempts`. |
-| `helperPriorOutput?(summary)` | Extra context handed to the helper on escalation. |
-| `gatherHelperPriorOutputs?(...)` | Async builder for richer helper context gathered at dispatch time; takes precedence over `helperPriorOutput`. |
-| `resolveHelperCompletion?(args)` | See below: settle the gate from the helper's result instead of re-probing. |
-
-### The `GateContext` seams
-
-The factory receives a `GateContext`, the minimal set of engine seams a gate legitimately needs. The
-engine keeps owning dispatch, budget, persistence, and the state machine:
-
-| Seam | Use |
-| --- | --- |
-| `clock` | The engine clock (monotonic-ish ms), for time-windowed gates. |
-| `getBlock(workspaceId, blockId)` | Read a block, e.g. to gate only a release that actually shipped. |
-| `runInitiatorScope` | Run a function under the run initiator's ambient context (per-user credentials). |
-| `raiseNotification(workspaceId, input)` | Raise a human-actionable notification, e.g. from `onExhausted`. |
-| `getProvider(token)` | The wired impl for a provider token, or `undefined`. |
-| `requireProvider(token)` | The wired impl, or throw. Safe inside `probe()` because the engine only probes a wired gate. |
-
-::: tip Most helpers fix; investigate-only helpers settle differently
-A normal helper fixes the gated condition (the fixer pushes a fix, the conflict resolver re-merges),
-so the engine re-runs the precheck after it finishes and the gate's verdict stays the source of
-truth. An investigate-don't-fix helper (like the built-in `on-call`) changes nothing the precheck
-would observe, so re-probing would just regress and burn the budget. Implement
-`resolveHelperCompletion` on such a gate: the engine then calls it on the helper's completion (with
-the full `AgentRunResult`) and finishes the gate step with the returned output, letting the gate
-raise a notification or enrich an incident and let the run complete for a human to act out of band.
-:::
-
-### Step-completion resolvers
-
-A step-completion resolver is the related seam for deterministic backend work that must run after an
-agent step finishes, keyed by `agentKind` and driven from the agent's structured result, not from
-re-prompting. Register one with `stepResolverRegistry.register(kind, factory)`,
-where the factory is `(ctx: ResolverContext) => StepCompletionResolver`. The engine runs the matching
-resolver in `recordStepResult` once the step's agent finishes, regardless of the step's position in
-the pipeline.
-
-```ts
-import type { StepCompletionResolver } from '@cat-factory/kernel'
-
-const auditorSummaryResolver: StepCompletionResolver = {
-  kind: 'security-auditor',
-  applies: (result) => result.custom !== undefined, // no-op when the agent produced nothing
-  resolve: async ({ result }) => {
-    const assessment = securityAssessment.safeParse(result.custom)
-    if (!assessment) return { output: 'Security audit complete: result was not parseable.' }
-    return { output: `Security audit complete: ${assessment.findings?.length ?? 0} finding(s).` }
-  },
-}
-
-stepResolverRegistry.register(auditorSummaryResolver.kind, () => auditorSummaryResolver)
-```
-
-A resolver returns a `StepResolution`: an optional replacement `output` (a human-readable summary the
-run-detail UI shows), and an optional `ownsTerminalStatus` flag for a resolver that decides the
-block's terminal status itself. The built-in `merger` is such a resolver: it performs the real GitHub
-merge with backend-held credentials the sandboxed agent does not have, and flips the block to `done`
-or `pr_ready`. It stays a privileged built-in (it needs engine-internal access), so a custom resolver
-is the lighter archetype: act on the `result` it receives and reach any external system through a
-provider it closes over.
-
-### Wiring a gate's provider at startup
-
-A gate (or resolver) reaches its data source through the typed provider registry. You
-`defineProviderToken` once, export a one-line `wireX`, and the facade calls it at startup after
-importing your package. Until the provider is wired, `wired()` returns false and the gate is a
-harmless pass-through, so a bare `import '@your-org/org-gates'` is always safe.
-
-The built-in gates wire the same way. `@cat-factory/gates` exports `wireCiStatusProvider`,
-`wireMergeabilityProvider`, `wireReleaseHealthProvider`, and `wireIncidentEnrichment` (plus
-`applyGateProviders` for wiring a bag at once); the facade builds the GitHub-backed impls and hands
-them in. See [`@cat-factory/gates`](../reference/packages.md).
-
-### The document-quality gate
-
-The built-in **document-quality gate** (`doc-quality`) is a worked example of this seam that ships in
-`@cat-factory/gates`. It runs a deterministic, checkout-free structural check on a
-[document task's](../guide/documents.md) drafted file, missing required sections, leftover
-placeholders, heading-hierarchy problems, and broken in-repo links, and on a failure escalates to the
-`doc-fixer` helper (up to two attempts) to correct the draft in place. Like every gate it is a
-pass-through until its provider is wired; both shipped runtimes wire it:
-
-```ts
-import { wireDocQualityProvider } from '@cat-factory/gates'
-import { GitHubDocQualityProvider } from '@cat-factory/server'
-
-wireDocQualityProvider(new GitHubDocQualityProvider({ githubClient, resolveRepoTarget, blockRepository, documentRepository }))
-```
-
-The gate checks against the same template the writer used. To supply your own house structure for a
-document kind, either link a template document per workspace in the app (see
-[Document Tasks → Templates](../guide/documents.md#templates-and-examples)) or register one at startup
-with `registerDocTemplate` (from `@cat-factory/agents`). Passing the `documentRepository` above lets a workspace-linked template
-reach the gate; without it the gate falls back to the kind's built-in skeleton.
-
-## Custom judges
-
-A **judge** is the third extension shape, for grading rather than gating. Where a gate runs a cheap
-deterministic precheck and escalates a container helper, a judge always costs one model call, scores
-the run's work against a **rubric**, and disposes on that score: advance, park for a human, send the
-work back to the step that produced it, or fail the run. Reach for it when neither of the other seams
-fits: a step-completion resolver can reshape output but cannot park or loop a run, and a gate has no
-score.
-
-Unlike agent kinds and gates, judges register **by reference** on an app-owned registry rather than
-through an import side effect. Build one with `defaultJudgeRegistry()` (from `@cat-factory/kernel`),
-register your judges on it, and pass it as `judgeRegistry` when you build the container:
-
-```ts
-import { defaultJudgeRegistry } from '@cat-factory/kernel'
-import { start, buildNodeContainer } from '@cat-factory/node-server'
-
-const judgeRegistry = defaultJudgeRegistry()
-judgeRegistry.register('scope-adherence', scopeAdherenceJudgeFactory)
-
-start({ buildContainer: (opts) => buildNodeContainer({ ...opts, judgeRegistry }) })
-```
-
-The factory is `(ctx: JudgeContext) => JudgeDefinition`, invoked once when the engine builds its judge
-map, so a judge's hooks can close over the engine seams (`clock`, `getBlock`, `runInitiatorScope`,
-`raiseNotification`, and the provider registry) and over your own provider. Registering the same kind
-twice replaces the earlier entry.
-
-The registry is empty by default, so a stock deployment has no judges. The engine owns the whole state
-machine: rubric resolution, persistence, the threshold comparison, the disposition, the bounce budget,
-and emission. Your `JudgeDefinition` describes only what differs:
-
-| Field | Purpose |
-| --- | --- |
-| `kind` | The step `agentKind` this judge runs as. |
-| `rubric` | `{ id, name, body, fragmentId? }`. `body` is the default; naming a `fragmentId` lets a workspace override the rubric by authoring that [prompt fragment](../guide/prompt-fragments.md). |
-| `onFail` | What a below-threshold verdict does: `park` (ask a human), `bounce` (re-arm the producing step with the findings as rework feedback), or `fail`. |
-| `bounceTargets?` | The agent kinds this judge grades, searched backward from the judge step to find what a bounce re-arms. Omitted ⇒ the immediately preceding step. |
-| `parseVerdict?` | Parse the raw assessment. Defaults to the built-in verdict schema; pass your own parser for a richer rubric shape. Whatever it returns must expose a `score`. |
-| `threshold?` / `attemptBudget?` | Resolve the minimum score and the bounce budget from the task's risk policy. Default to the policy's `judgeMinScore` and `judgeMaxBounces`. |
-| `wired?` / `unwiredOutput` | Pass-through when the judge needs its own provider and it isn't configured. |
-| `presentation?` | Makes the kind a palette block and opens the shared **judge** result window. |
-
-Two knobs on the workspace's [risk policies](../guide/pull-requests.md#conflicts-ci-and-the-merger)
-make the strictness per-task: the minimum score a verdict must reach, and how many bounce rounds a
-judge may spend before it must stop and ask a human. A spent budget parks rather than advancing, so a
-rubric can never green a run silently. A bounce with nothing to send the work back to degrades to a
-park and records why.
-
-The assessment itself runs through the engine's inline model call, built from the model-provider
-dependencies every runtime already wires, so a judge needs no per-facade wiring. An unparseable
-assessment is recorded as a failing verdict rather than crashing the run. Judge verdicts appear in the
-run's judge window, in a `judge_review` notification when one parks, in the pull request's
-[verification report](../guide/pull-requests.md#the-verification-report-on-the-pull-request), and over
-`/api/v1/runs/{runId}/decisions` for a headless caller.
-
-### Boot-time validation
-
-A facade calls `validateRegistrationsOnce()` (from `@cat-factory/orchestration`) once at boot, after
-every `register*` side-effect import and provider wiring, before serving. It turns
-misconfigurations that would otherwise surface mid-run, or silently, into a loud startup error:
-
-- a gate `helperKind` that resolves to neither a built-in helper nor a registered container-capable
-  kind,
-- an `agent` kind whose `presentation.resultView` is not a known view id,
-- a registered pipeline naming a kind that doesn't exist (checked when a known built-in catalog is
-  supplied), and
-- (as a warning) a kind with `postOps` whose agent step declares no structured output, so the
-  post-ops would read an empty `result.custom`.
-
-The Node and Cloudflare facades already call it; if you write your own composition root, call it
-after your imports. `collectRegistrationProblems()` is the non-throwing form for tests and for logging
-warnings without aborting.
-
 ## Packaging and wiring
 
 A custom agent (or gate) is a small package in your [deployment repository](../deploy/deployment-repository.md).
@@ -795,7 +514,7 @@ its caller passes in:
 // packages/org-agents/src/index.ts
 import type { AgentKindRegistry } from '@cat-factory/agents'
 import type { GateRegistry, PipelineRegistry, StepResolverRegistry } from '@cat-factory/kernel'
-// … kind definitions, post-ops, the license-check gate factory + resolver as above …
+// … kind definitions, post-ops, and the license-check gate factory from the gates page …
 
 export function installOrgAgents(registries: {
   agentKinds: AgentKindRegistry
@@ -870,6 +589,24 @@ prebuilt frontend picks the new kind up with no rebuild.
 After that, link a repo and run a pipeline that includes your kinds (or the pipeline you registered).
 A brand-new repo-writing agent, or a gate that blocks the merge, ships with zero harness changes.
 
+## Boot-time validation
+
+A facade calls `validateRegistrationsOnce()` (from `@cat-factory/orchestration`) once at boot, after
+every `register*` side-effect import and provider wiring, before serving. It turns
+misconfigurations that would otherwise surface mid-run, or silently, into a loud startup error:
+
+- a gate `helperKind` that resolves to neither a built-in helper nor a registered container-capable
+  kind,
+- an `agent` kind whose `presentation.resultView` is not a known view id,
+- a registered pipeline naming a kind that doesn't exist (checked when a known built-in catalog is
+  supplied), and
+- (as a warning) a kind with `postOps` whose agent step declares no structured output, so the
+  post-ops would read an empty `result.custom`.
+
+The Node and Cloudflare facades already call it; if you write your own composition root, call it
+after your imports. `collectRegistrationProblems()` is the non-throwing form for tests and for logging
+warnings without aborting.
+
 ## Testing
 
 Pre/post-ops are plain functions over `RepoFiles`, so test them with a fake repo and no network:
@@ -899,27 +636,6 @@ it('renders and commits the report from the agent output', async () => {
 
 Cover the seams that bite: a missing or malformed `result.custom` (commits nothing), an unchanged
 artifact (skips the commit), and a noisy field that `safeParse` degrades to its default.
-
-A gate factory is a pure constructor, so test its real `wired()`/`probe()` path by wiring a fake
-provider and building it with `stubGateContext()` (from `@cat-factory/kernel`), which defaults to the
-real provider registry so a wired token shows through:
-
-```ts
-import { stubGateContext } from '@cat-factory/kernel'
-
-it('passes on a clean change and fails on a dirty one', async () => {
-  wireLicenseProvider({ check: async () => ({ clean: true, headSha: 'abc' }) })
-  const gate = licenseCheckFactory(stubGateContext())
-  expect(gate.wired()).toBe(true)
-  expect((await gate.probe('ws', 'block', {} as any)).status).toBe('pass')
-
-  wireLicenseProvider({ check: async () => ({ clean: false, headSha: 'abc' }) })
-  expect((await licenseCheckFactory(stubGateContext()).probe('ws', 'block', {} as any)).status).toBe('fail')
-
-  wireLicenseProvider(undefined) // clean up: unwired ⇒ the gate passes through
-})
-```
-
 ## Gotchas
 
 - **Keep mechanical work in the hooks.** Anything deterministic (rendering a file,
@@ -937,30 +653,17 @@ it('passes on a clean change and fails on a dirty one', async () => {
   `container-coding` for agents that genuinely edit and push.
 - **Choose the clone branch deliberately.** `pr` reviews the change under test, `base` reads the
   merge target, `work` reads the shared work branch. The wrong one audits the wrong code.
-- **A gate is a pass-through until its provider is wired.** Make `wired()` exactly
-  `isProviderWired(token)` so it shares its source with `requireProvider(token)` inside `probe()`.
-  Then `requireProvider` is safe: the engine only probes a gate whose `wired()` is true. A facade
-  build resets gate providers and re-wires from config, so wire yours at startup, not lazily.
-- **Reach providers through the registry, not a module global.** `defineProviderToken` once, wire at
-  startup, read back through `ctx.getProvider` / `ctx.requireProvider`. A module-level `let` provider
-  can leak across per-request facade builds.
 - **Validate at boot.** Let the facade's `validateRegistrationsOnce()` run. A typo'd gate
   `helperKind`, an unknown `resultView`, or a pipeline naming a missing kind then fails loudly at
   startup instead of mid-run.
-- **Custom agents and gates run alongside the built-ins.** This is the supported extension path and
-  is covered by the cross-runtime conformance suite, so a kind or gate behaves identically on
-  Cloudflare, Node, and local. The built-in gate suite is authored through this exact gate-registry
-  seam and ships as [`@cat-factory/gates`](../reference/packages.md); the engine builds its gate
-  registry from whatever is registered, with a registered kind replacing a built-in of the same id.
-  Built-in agent kinds (architect, coder, and the rest) keep their prompts in the platform's own
-  prompt catalog rather than being registered by a deployment, but a registered kind gets the same prompt
-  guardrails and result-view wiring a built-in does, and a registered id that collides with a
-  built-in track reuses that track's prompt.
+- **Custom kinds run alongside the built-ins.** This is the supported extension path and is covered
+  by the cross-runtime conformance suite, so a kind behaves identically on Cloudflare, Node, and
+  local. Built-in agent kinds (architect, coder, and the rest) keep their prompts in the platform's
+  own prompt catalog rather than being registered by a deployment, but a registered kind gets the
+  same prompt guardrails and result-view wiring a built-in does, and a registered id that collides
+  with a built-in track reuses that track's prompt.
 
 ---
 
-For where this code lives and how the deployment workspace is laid out, see
-[Your Deployment Repository](../deploy/deployment-repository.md). For the built-in gate suite this seam
-authors, see [`@cat-factory/gates`](../reference/packages.md). For extending infrastructure
-(environments and runner pools) the same way, see
-[Custom Providers (Code Adapters)](./custom-providers.md).
+Next: [Add a Custom Gate or Judge](./custom-gates.md) for the other two extension shapes, or
+[Set Up Your Deployment Repository](../deploy/deployment-repository.md) for where this code lives.

@@ -1,8 +1,8 @@
-# Document Tasks
+# Author a Document
 
-Not all work is code. A **document task** produces a written document, a PRD, an RFC, an ADR, a
-runbook, and ships it as a Markdown file in a repository through the same pull-request flow as a code
-change. It is the forward-authoring counterpart to the reverse-documentation agents that describe
+For anyone whose deliverable is prose rather than code. Not all work is code: a **document task**
+produces a written document, a PRD, an RFC, an ADR, a runbook, and ships it as a Markdown file in a
+repository through the same pull-request flow as a code change. It is the forward-authoring counterpart to the reverse-documentation agents that describe
 existing code (blueprints and the code documenters).
 
 ## Creating a document task
@@ -116,8 +116,8 @@ two attempts) before raising the issue for you. The gate resolves the same templ
 the two never disagree.
 
 Deployers wire the gate's provider once at startup; until then it passes through. See
-[Custom Agents & Gates → the document-quality gate](../extend/custom-agents.md#the-document-quality-gate).
+[the document-quality gate](../extend/custom-gates.md#the-document-quality-gate).
 
 ---
 
-Next: review and merge the document like any change in [Pull Requests](./pull-requests.md).
+Next: review and merge the document like any change in [Review and Merge Pull Requests](./pull-requests.md).

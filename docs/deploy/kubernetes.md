@@ -1,7 +1,7 @@
-# Kubernetes
+# Deploy on Kubernetes
 
-Cat Factory runs on Kubernetes two ways, and they are independent. You can use either, both, or
-neither:
+For an operator who already has a cluster and wants Cat Factory to use it. Cat Factory runs on
+Kubernetes two ways, and they are independent. You can use either, both, or neither:
 
 - **Agent containers**: run each per-run coding job as a Kubernetes pod, instead of a manifest-driven
   [runner pool](../operate/runner-pools.md) or local Docker.
@@ -201,5 +201,5 @@ cert.
 
 ---
 
-Next: give agents somewhere to test their work with [Ephemeral Environments](../operate/environments.md), or
-bring your own scheduler with [Runner Pools](../operate/runner-pools.md).
+Next: give agents somewhere to test their work with [Provision Ephemeral Environments](../operate/environments.md), or
+bring your own scheduler with [Run Jobs on Your Own Runners](../operate/runner-pools.md).

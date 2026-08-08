@@ -1,8 +1,8 @@
-# Frontend Previews & UI Testing
+# Preview and Test a Frontend
 
-A **frontend** [repository type](./repositories.md#repository-types) turns a service frame into a UI
-app that Cat Factory can build, wire to its backends, and drive in a browser. Two things run off one
-configuration:
+For anyone shipping a UI, where "the tests pass" is not the same as "it works". A **frontend**
+[repository type](./repositories.md#repository-types) turns a service frame into an app Cat Factory
+can build, wire to its backends, and drive in a browser. Two things run off one configuration:
 
 - A **self-contained UI test**: in one container Cat Factory builds the app from its branch, points it
   at the live backend under test (and mocks every other upstream), serves it, and runs the **UI
@@ -76,7 +76,7 @@ A pipeline is a **visual** pipeline when it contains a **UI Tester** or **Visual
 and the pipeline pickers hide visual pipelines for frames that can't run them.
 
 The UI-test flow and the **Visual Confirmation** gate are covered in
-[Running Pipelines → Visual confirmation](./running-pipelines.md#visual-confirmation).
+[Choose and Edit a Pipeline → Visual confirmation](./choosing-a-pipeline.md#visual-confirmation).
 
 ## Browsable preview
 
@@ -95,3 +95,9 @@ is stable at `http://localhost:<port>`. If that port is already in use (a second
 `vite preview`), starting the preview reports the clash instead of picking a random port. Free the
 port and start again.
 :::
+
+---
+
+Next: put a person in front of those screenshots with
+[Choose and Edit a Pipeline → Visual confirmation](./choosing-a-pipeline.md#visual-confirmation), or
+start the run itself with [Run a Pipeline](./running-pipelines.md).

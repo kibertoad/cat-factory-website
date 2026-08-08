@@ -1,5 +1,6 @@
 # Introduction
 
+The starting point for anyone new to Cat Factory: what it is, who it is for, and how the pieces fit.
 Cat Factory is a self-hosted platform that brings a visual board, task management, and LLM coding
 agents together in one place. You lay out the work as a board of services, modules, and tasks,
 attach dependencies and context, then run agent pipelines that turn those tasks into reviewed pull
@@ -56,5 +57,7 @@ At a glance, Cat Factory is:
   Durable Objects, and Workflows) or Node.js (with PostgreSQL and pg-boss).
 - **Per-run containers** that execute the actual coding work and Git operations.
 
-See [Core Concepts](./core-concepts.md) for the vocabulary, or jump straight to the
+---
+
+Next: [Core Concepts](./core-concepts.md) for the vocabulary, or jump straight to the
 [Quick Start](./quick-start.md) to get an instance running.

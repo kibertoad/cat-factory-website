@@ -1,6 +1,7 @@
 # Run Locally
 
-Local mode runs the whole product on one machine: the orchestrator as a Node process, each agent
+For anyone evaluating Cat Factory, or developing against it, on a single machine. Local mode runs
+the whole product on one machine: the orchestrator as a Node process, each agent
 job as a local Docker container, GitHub or GitLab through a personal access token, and persistence on
 a local PostgreSQL. It is the fastest way to try Cat Factory end to end, and unlike a pure dev setup
 it does real work: agent containers clone, commit, and push to real repositories, CI gates on real
@@ -322,15 +323,15 @@ registered:
 
 Both default off. A single wrapper package can implement the `EnvironmentProvider` and
 `RunnerPoolProvider` ports together (Kargo, for example) to serve both concerns; see
-[Custom Providers](../extend/custom-providers.md). Ephemeral environments carry no enable flag: the module
+[Add a Custom Provider](../extend/custom-providers.md). Ephemeral environments carry no enable flag: the module
 assembles wherever `ENCRYPTION_KEY` is set (always, in local mode), and stays inert until a service
 declares a provision type and a workspace handler is registered. See
-[Ephemeral Environments](../operate/environments.md).
+[Provision Ephemeral Environments](../operate/environments.md).
 
 To run agents and previews on a local Kubernetes cluster instead, use the native **Kubernetes**
 backends. The `cat-factory k3s` command provisions a local k3d/kind/k3s cluster, wires least-privilege
 access, and hands off to the app to fill the connect form. See
-[Kubernetes → Local k3s guided setup](./kubernetes.md#local-k3s-guided-setup).
+[Deploy on Kubernetes → Local k3s guided setup](./kubernetes.md#local-k3s-guided-setup).
 
 ## Models in local mode
 
@@ -343,7 +344,7 @@ You have several options, in rough order of "no cloud account needed":
   [Running on a local LLM](../guide/model-providers.md#running-on-a-local-llm-ollama-lm-studio).
 - **A provider key or subscription**: connect an OpenAI/Anthropic/etc. key, or your personal
   Claude/GLM/Codex subscription, in the UI exactly as on a hosted deployment. See
-  [Model Providers & Subscriptions](../guide/model-providers.md).
+  [Connect a Model Provider](../guide/model-providers.md).
 - **Cloudflare Workers AI over REST**: off-Worker there is no `AI` binding, so Workers AI is served
   through Cloudflare's REST API and is gated on **`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`**
   (mint a Workers AI API token; find the account id with `wrangler whoami`). Set both and the

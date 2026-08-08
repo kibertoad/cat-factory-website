@@ -1,8 +1,8 @@
-# Repositories
+# Connect a Repository
 
-Services on your board map to Git repositories, where agents actually do their work. Cat Factory
-connects to GitHub through a GitHub App, which it uses to link, bootstrap, and reconcile
-repositories.
+For whoever has to point a board at the code. Services on your board map to Git repositories, where
+agents actually do their work; Cat Factory connects to GitHub through a GitHub App, which it uses to
+link, bootstrap, and reconcile repositories.
 
 ## GitHub App integration
 
@@ -71,7 +71,7 @@ The standard flow:
 The default GitHub App holds no `Administration` permission, so it cannot create repositories.
 Creating the empty repo yourself is the one manual step. An organization can remove it by opting
 into the privileged App tier, which creates the repo programmatically; see
-[GitHub App → Programmatic repository creation](../deploy/github-app.md#programmatic-repository-creation-optional).
+[Register the GitHub App → Programmatic repository creation](../deploy/github-app.md#programmatic-repository-creation-optional).
 
 Every new service starts from a consistent, known-good baseline.
 
@@ -83,7 +83,7 @@ which pipelines and infrastructure apply to it:
 | Type | For | Behaviour |
 | --- | --- | --- |
 | **Service** | A backend service (the default). | Full pipelines, ephemeral environments, and the Tester's infra. |
-| **Frontend** | A UI app. | Backend links and a UI-test flow. See [Frontend Previews & UI Testing](./frontend-preview.md). |
+| **Frontend** | A UI app. | Backend links and a UI-test flow. See [Preview and Test a Frontend](./frontend-preview.md). |
 | **Library** | A published package. | Build, test, and merge, with no deploy step, no ephemeral environment, and no Tester infra. |
 | **Document** | A docs repo. | Only `spike` and `document` tasks, and the document pipelines. Non-doc tasks are refused, and a task dragged into a doc frame is re-typed. |
 
@@ -92,7 +92,7 @@ serve, and test config, plus **backend bindings**: you map a frontend env var (e
 `VITE_BACKEND_URL`) to a backend service's live preview URL or a WireMock stub. A binding to another
 service draws a **board link** (a cyan edge) between the two frames, so the board shows which backend
 a frontend is wired to. Configuring a frontend frame, the browser-based UI test, and the local
-browsable preview are covered in [Frontend Previews & UI Testing](./frontend-preview.md).
+browsable preview are covered in [Preview and Test a Frontend](./frontend-preview.md).
 
 ## Service blueprints & reconciliation
 
@@ -179,4 +179,5 @@ sub-hierarchies are unavailable (GitLab's basic API doesn't provide them).
 
 ---
 
-Next: pull requirements straight from your trackers with [Issue Sources](./issue-sources.md).
+Next: pull requirements straight from your trackers with
+[Connect Issue & Document Sources](./issue-sources.md).

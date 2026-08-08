@@ -26,10 +26,10 @@ epic, a service frame, a module inside a frame, or a task leaf. "Card" is the sa
 drawn on the board.
 
 **Board.** The pannable canvas a workspace's blocks live on. See
-[Designing Your Board](../guide/designing-your-board.md).
+[Design Your Board](../guide/designing-your-board.md).
 
 **Budget.** The monetary ceiling on metered model spend, tiered per workspace, account, and user.
-Subscription and local-runner runs are not metered against it. See [Budgets](../guide/budgets.md).
+Subscription and local-runner runs are not metered against it. See [Control Spend with Budgets](../guide/budgets.md).
 
 **Bug hunt.** The interactive surface that rates a tracker board's open, unassigned bugs on impact
 against complexity and adopts the one you confirm as a task. Distinct from **bug intake**, the
@@ -65,7 +65,7 @@ so integration and end-to-end tests hit a running system. See
 
 **Foundational service.** A shared capability your organization already runs (an auth service, a
 payments gateway) declared once so every agent is told it exists instead of reinventing it. See
-[Foundational Services](../guide/foundational-services.md).
+[Register Foundational Services](../guide/foundational-services.md).
 
 **Frame.** A service block on the board: the container a module or task sits inside. A task's
 repository is resolved by walking up to its enclosing frame, so a task outside one cannot run.
@@ -89,7 +89,7 @@ repository, driven through the [public API](../extend/public-api.md).
 ## I
 
 **Initiative.** A larger body of work decomposed into blocks, optionally from a preset. See
-[Initiatives](../guide/initiatives.md).
+[Plan an Initiative](../guide/initiatives.md).
 
 **Interface mode.** Basic (the shipped default) or advanced. Basic hides override controls whose
 default is already what the hidden field would show; nothing that is only reachable in advanced mode
@@ -116,22 +116,22 @@ Cloudflare fallback. A preset's route order decides which one a run takes.
 
 **Model preset.** A named assignment of models to agent kinds: one base model plus optional
 per-kind overrides. Exactly one preset is a workspace's default. See
-[Model Providers](../guide/model-providers.md#model-presets).
+[Connect a Model Provider → Model presets](../guide/model-providers.md#model-presets).
 
 **Module.** A block level between a service frame and its tasks, used to group tasks inside one
 service.
 
 **Mount.** How one account-owned service appears on several boards as a single synced copy. Its
 position on each board belongs to the mount, not to the service. See
-[Shared Services](../guide/shared-services.md).
+[Share Services Across Workspaces](../guide/shared-services.md).
 
 ## P
 
 **Pipeline.** The ordered chain of steps a task runs: which agent kinds, in what order, with which
-gates and human decision points. See [Running Pipelines](../guide/running-pipelines.md).
+gates and human decision points. See [Run a Pipeline](../guide/running-pipelines.md).
 
 **Prompt fragment.** A reusable block of standing context or standards folded into agent prompts.
-See [Prompt Fragments](../guide/prompt-fragments.md).
+See [Apply Standards with Prompt Fragments](../guide/prompt-fragments.md).
 
 ## R
 
@@ -143,7 +143,7 @@ classification (a badge and a card), not an operation.
 interruptions, and resume. See [Runs](../guide/core-concepts.md#runs).
 
 **Runner pool.** Your own infrastructure executing agent containers instead of the platform's
-default. See [Runner Pools](../operate/runner-pools.md).
+default. See [Run Jobs on Your Own Runners](../operate/runner-pools.md).
 
 ## S
 
@@ -166,7 +166,7 @@ decides a card's badge and which pipeline it starts with.
 [Issue Sources](../guide/issue-sources.md).
 
 **Tool server.** An MCP server an agent may call during a run, registered by the deployment and
-handed a credential resolved by name. See [Custom Agents](../extend/custom-agents.md#skills-and-tool-servers).
+handed a credential resolved by name. See [Add a Custom Agent Kind → Skills and tool servers](../extend/custom-agents.md#skills-and-tool-servers).
 
 ## W
 

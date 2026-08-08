@@ -16,7 +16,7 @@ run container will run any command its tools allow, and its prompt-level restric
 `allowedTools`, a "read-only" role description) have already failed.
 
 Out of scope on this page: attacks on the platform's own HTTP surface (see
-[Team & Access](../guide/team-and-access.md)), a malicious operator, and a compromised VCS host.
+[Invite and Manage Your Team](../guide/team-and-access.md)), a malicious operator, and a compromised VCS host.
 
 ## Three kinds of control, and only one of them holds
 
@@ -104,7 +104,7 @@ possible at all.
    know otherwise.
 2. **Choose merge presets deliberately.** For anything sensitive, pin *Manual review only*, or keep
    auto-merge and add class floors for source and schema changes. The shipped default auto-merges
-   under balanced ceilings with no floors. See [Pull Requests](../guide/pull-requests.md).
+   under balanced ceilings with no floors. See [Review and Merge Pull Requests](../guide/pull-requests.md).
 3. **Scope the GitHub App installation to only the repositories the platform should work on.** Do
    not install on "All repositories" of an organization that also holds crown jewels.
 4. **Govern stored personal PATs, or step 3 does not bind.** An initiator's stored personal token
@@ -128,7 +128,7 @@ possible at all.
    whose content you do not trust.
 6. **Self-hosted runner pools are inside the trust boundary.** Jobs execute there with these
    tokens, so run pools only on infrastructure you would trust with the installation token itself.
-   See [Runner Pools](../operate/runner-pools.md).
+   See [Run Jobs on Your Own Runners](../operate/runner-pools.md).
 7. **Leave `LOCAL_MODELS_ALLOW_LAN` off on any shared deployment.** A user-registered local model
    endpoint is fetched server-side, so this flag decides what the server may be pointed at. The
    default permits loopback only; the opt-in widens it to the whole private network, which on a
@@ -154,5 +154,5 @@ Stated rather than papered over, because each one changes how you should configu
 ---
 
 Next: [Agent Isolation](./agent-isolation.md) for what a run can reach,
-[Team & Access](../guide/team-and-access.md) for who may start one, and
-[Pull Requests](../guide/pull-requests.md) for the merge policy the checklist keeps referring to.
+[Invite and Manage Your Team](../guide/team-and-access.md) for who may start one, and
+[Review and Merge Pull Requests](../guide/pull-requests.md) for the merge policy the checklist keeps referring to.

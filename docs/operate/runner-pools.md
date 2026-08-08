@@ -3,11 +3,12 @@ redirectFrom:
   - /deploy/runner-pools.html
 ---
 
-# Self-Hosted Runner Pools
+# Run Jobs on Your Own Runners
 
-On Cloudflare, per-run coding work executes in Cloudflare Containers by default. If you want control
-over where agents run, or you want to bring your own compute, Cat Factory supports self-hosted runner
-pools. On the Node.js runtime there is no built-in per-run container, so repo-operating agent
+For the operator who needs agent jobs to run on compute they control, and for anyone on the Node.js
+runtime, where a pool is not optional. On Cloudflare, per-run coding work executes in Cloudflare
+Containers by default; if you want control over where agents run, Cat Factory supports self-hosted
+runner pools. On the Node.js runtime there is no built-in per-run container, so repo-operating agent
 kinds (coder, mocker, blueprints, ci-fixer, conflict-resolver, merger, spec-writer,
 analysis) run on a runner pool. Wiring one up is what turns those kinds on there.
 
@@ -51,7 +52,7 @@ deployment. If your scheduler can't be driven over HTTP at all, the Node.js runt
 runner-pool and environment-provisioning ports as code seams: you can build the container with your
 own adapter implementation instead of the manifest-driven one. This is an advanced, code-level
 extension; reach for the manifest first. For a full walkthrough (the `RunnerPoolProvider` port,
-a worked example, wiring, and gotchas), see [Custom Providers (Code Adapters)](../extend/custom-providers.md).
+a worked example, wiring, and gotchas), see [Add a Custom Provider](../extend/custom-providers.md).
 
 Cat Factory dispatches per-run jobs to the pool, which executes the executor-harness container
 image. That's the same payload that runs the coding agent, performs Git operations, and produces the
@@ -87,7 +88,7 @@ registers an [environment provider](./environments.md); a single pool can back b
 If your compute is a Kubernetes cluster, you don't need a manifest at all. Select the **Kubernetes**
 backend on the **Agent containers** tab and fill in a form (apiserver URL, namespace, a ServiceAccount
 token, and the executor-harness image): Cat Factory creates one pod per run directly, no HTTP
-scheduler in between. See [Kubernetes → Agent containers](../deploy/kubernetes.md#agent-containers-on-kubernetes).
+scheduler in between. See [Deploy on Kubernetes → Agent containers](../deploy/kubernetes.md#agent-containers-on-kubernetes).
 On a developer machine, [`cat-factory k3s`](../deploy/kubernetes.md#local-k3s-guided-setup) wires a local
 cluster into this backend in one command.
 
@@ -113,4 +114,6 @@ platform on infrastructure you control, while keeping the same board UI, API, an
 
 ---
 
-Next: give agents somewhere to test their work with [Ephemeral Environments](./environments.md).
+Next: give agents somewhere to test their work with
+[Provision Ephemeral Environments](./environments.md), or describe your scheduler declaratively with
+[Integration Manifests](../extend/manifests.md).

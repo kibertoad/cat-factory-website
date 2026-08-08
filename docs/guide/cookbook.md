@@ -1,6 +1,7 @@
 # Cookbook
 
-Task-indexed recipes for changing a flow you already run. The rest of the guide is organized by
+For someone who already runs Cat Factory and has one concrete change to make. Task-indexed recipes
+for changing a flow you already have. The rest of the guide is organized by
 subject, which is right when you want to understand a mechanism and wrong when you have a concrete
 edit to make and half an afternoon to make it. Each recipe here is the short path: what to click,
 what it changes, and the one page to read if you need the full model.
@@ -75,8 +76,8 @@ anywhere else in the chain.
 triage** category for a deep, token-bounded review of the open pull request that returns prioritized
 findings you triage yourself. It writes no code.
 
-Full model: [Running Pipelines](./running-pipelines.md#anatomy-of-a-pipeline) and
-[Pull Requests](./pull-requests.md#deep-reviewing-an-existing-pull-request).
+Full model: [Choose and Edit a Pipeline → Anatomy of a pipeline](./choosing-a-pipeline.md#anatomy-of-a-pipeline) and
+[Review and Merge Pull Requests](./pull-requests.md#deep-reviewing-an-existing-pull-request).
 
 ### Add a human approval gate
 
@@ -113,7 +114,7 @@ and the run continues, so adding one is safe before the integration exists. When
 own parameters, they render as **Gate settings** on the step, straight from the gate's registration.
 
 Gates your deployment writes itself (a license-header check, an internal compliance probe) are code,
-not a builder operation. See [Custom Agents & Gates](../extend/custom-agents.md#custom-gates).
+not a builder operation. See [Add a Custom Gate or Judge](../extend/custom-gates.md).
 
 ### Change a step's prompt
 
@@ -140,7 +141,7 @@ variant** selector instead of editing: same job, different instructions, no work
 
 For guidance that many kinds should follow rather than one kind's whole job, use
 [prompt fragments](#apply-team-standards-to-every-coding-step) instead.
-Full model: [Rewriting an agent's prompt](./running-pipelines.md#rewriting-an-agent-s-prompt).
+Full model: [Rewriting an agent's prompt](./choosing-a-pipeline.md#rewriting-an-agent-s-prompt).
 
 ### Attach a skill
 
@@ -197,7 +198,7 @@ companion with it, so there is no second threshold to keep in sync.
 
 This is exactly how the **Adaptive build** preset switches its Architect, Tester, and Human Review on
 per task. Full model:
-[Estimating and gating expensive steps](./running-pipelines.md#estimating-and-gating-expensive-steps).
+[Estimating and gating expensive steps](./choosing-a-pipeline.md#estimating-and-gating-expensive-steps).
 
 ### Change which model a step runs on
 
@@ -212,7 +213,7 @@ click **Configure models** in the builder.
 
 The picker shows each model's list price, provider, and context window as you assign, so keep
 stronger models for architecturally significant kinds. See
-[Model Providers](./model-providers.md#model-presets) and [Budgets](./budgets.md).
+[Connect a Model Provider → Model presets](./model-providers.md#model-presets) and [Control Spend with Budgets](./budgets.md).
 
 ### Cap what a step may write
 
@@ -242,7 +243,7 @@ Enable consensus on the step, then either pick reusable **consensus groups** the
 to, or configure participants inline. Each group carries its own estimate bar, and the engine
 convenes the most demanding one the task clears, falling back to a single agent when it clears none.
 Strategies are specialist panel, debate (1 to 5 rounds), and ranked voting. Details:
-[Multi-model consensus](./running-pipelines.md#multi-model-consensus).
+[Multi-model consensus](./choosing-a-pipeline.md#multi-model-consensus).
 
 ### Undo a change
 
@@ -261,14 +262,14 @@ Strategies are specialist panel, debate (1 to 5 rounds), and ranked voting. Deta
 | A Skill step needs a skill selected before you can save | Pick a skill on the step, or remove the step. |
 | This skill is no longer in the catalog; pick another | The skill's directory was renamed or unlinked. Pick the current one. |
 | This purpose writes no code and runs no tests, but the pipeline still has implementation or testing steps | Remove those steps, or set **Purpose** back to **Build**. |
-| A step that generates binary outputs has no storage service selected | Pick a storage service on the step. See [Binary-output steps](./running-pipelines.md#binary-output-steps). |
+| A step that generates binary outputs has no storage service selected | Pick a storage service on the step. See [Binary-output steps](./choosing-a-pipeline.md#binary-output-steps). |
 
 ## When a run is refused at start
 
 | What it says | What to do |
 | --- | --- |
 | This service needs an environment provisioned before a Tester, human-test, or Playwright step can run | Add a **Deployer** step before it. |
-| This pipeline has visual test steps, but the target has no user interface to exercise | Run it on a frontend frame, or one that binds to a frontend. See [Frontend Previews](./frontend-preview.md). |
+| This pipeline has visual test steps, but the target has no user interface to exercise | Run it on a frontend frame, or one that binds to a frontend. See [Preview and Test a Frontend](./frontend-preview.md). |
 | Model preset can't run this pipeline | An inline step (the requirements reviewer, for example) is pinned to a subscription-only model, which runs only in container agents. Point the inline steps at a provider-backed model: a direct API key, an aggregator, or Cloudflare AI. |
 | No storage for this pipeline | The pipeline includes an agent that needs binary storage. Configure content storage for the account. |
 
@@ -278,14 +279,15 @@ Everything above is a UI operation on a workspace. Three things are not, and eac
 your [deployment repository](../deploy/deployment-repository.md):
 
 - **A new agent kind, gate, or judge of your own**, including a gate's helper agent and a kind's
-  bundled skills or MCP tool servers: [Custom Agents & Gates](../extend/custom-agents.md). Registered
+  bundled skills or MCP tool servers: [Add a Custom Agent Kind](../extend/custom-agents.md). Registered
   kinds arrive in the palette with no frontend rebuild.
 - **A new task type** and other frontend contributions:
-  [Frontend Extensions](../extend/frontend-extensions.md).
+  [Extend the App with Frontend Modules](../extend/frontend-extensions.md).
 - **New infrastructure providers** (environments, runner pools):
-  [Custom Providers](../extend/custom-providers.md) and
+  [Add a Custom Provider](../extend/custom-providers.md) and
   [Integration Manifests](../extend/manifests.md).
 
 ---
 
-Next: the full pipeline model behind these recipes, in [Running Pipelines](./running-pipelines.md).
+Next: the full pipeline model behind these recipes, in
+[Choose and Edit a Pipeline](./choosing-a-pipeline.md) and [Run a Pipeline](./running-pipelines.md).

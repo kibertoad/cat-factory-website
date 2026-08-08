@@ -5,18 +5,18 @@ redirectFrom:
 
 # Integration Manifests
 
-Cat Factory is self-hosted and has no public API to integrate against. Where it *does* reach out
-to infrastructure you own, whether to provision a preview environment or to dispatch a coding job to your
-own runners, you describe that infrastructure declaratively with a manifest. A single generic
-adapter interprets any manifest, so there is no per-organization code and no fixed vendor to
-integrate with.
+The reference for the declarative documents an operator writes to point Cat Factory at their own
+infrastructure. Where the platform reaches out to something you run, whether to provision a preview
+environment or to dispatch a coding job to your own runners, you describe it with a manifest. A
+single generic adapter interprets any manifest, so there is no per-organization code and no fixed
+vendor to integrate with.
 
 There are two manifests, and they share the same building blocks:
 
 - Ephemeral environment provider: your provision / status / teardown API. See
-  [Ephemeral Environments](../operate/environments.md).
+  [Provision Ephemeral Environments](../operate/environments.md).
 - Runner pool: your container/runner scheduler's dispatch / poll / release API. See
-  [Runner Pools](../operate/runner-pools.md).
+  [Run Jobs on Your Own Runners](../operate/runner-pools.md).
 
 You author both in-app, in the top-level **Infrastructure** window (a **Container agents**
 tab for the runner pool, a **Test environments** tab for the environment provider). Each tab has a
@@ -49,7 +49,7 @@ settings the standard fields don't cover (a project name, a target service, stat
 overrides). Because it rides the connection, it is **per workspace**: one deployment-wide code
 adapter can serve many workspaces, each with its own `providerConfig`, while deployment-wide
 defaults come from the environment. See
-[Custom Providers → How configuration reaches your adapter](./custom-providers.md#how-configuration-reaches-your-adapter).
+[Add a Custom Provider → How configuration reaches your adapter](./custom-providers.md#how-configuration-reaches-your-adapter).
 
 ## Environment provider manifest
 
@@ -96,5 +96,7 @@ live subtask progress.
 
 ---
 
-For the deployment steps that register these, see [Runner Pools](../operate/runner-pools.md) and
-[Ephemeral Environments](../operate/environments.md).
+Next: the deployment steps that register these, in
+[Run Jobs on Your Own Runners](../operate/runner-pools.md) and
+[Provision Ephemeral Environments](../operate/environments.md), or
+[Add a Custom Provider](./custom-providers.md) when a manifest cannot describe your platform.

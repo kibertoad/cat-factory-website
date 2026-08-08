@@ -1,7 +1,7 @@
-# Initiatives
+# Plan an Initiative
 
-Some work is too big for a single task and a single pull request: a cross-cutting refactor, a
-migration, a strangler conversion. An **initiative** plans that kind of work into an ordered set of
+For whoever is planning work too big for a single task and a single pull request: a cross-cutting
+refactor, a migration, a strangler conversion. An **initiative** plans that kind of work into an ordered set of
 phases and items, then drives each item to a merged PR on its own, spawning ordinary board tasks as
 it goes.
 
@@ -49,7 +49,7 @@ discipline reaches the spawned runs, not just the planning run.
 Beyond the three built-ins, a deployment can **register its own initiative presets** in code, the same
 way it registers custom agent kinds and gates. A custom preset carries its own create-time form,
 planning binding, mandated plan shape, prompt steering, and per-item spawn decoration; see
-[Custom Agents & Gates](../extend/custom-agents.md). There is no UI or config path for defining one,
+[Add a Custom Agent Kind](../extend/custom-agents.md). There is no UI or config path for defining one,
 because a preset can run repo-reading and agent-steering code and so is trusted like a custom kind.
 
 ### Documentation refresh
@@ -183,5 +183,5 @@ GitHub wired for the workspace; everything else runs without it.
 
 ---
 
-Next: turn a ready task into code with [Running Pipelines](./running-pipelines.md), or plan
-document work with [Document Tasks](./documents.md).
+Next: turn a ready task into code with [Run a Pipeline](./running-pipelines.md), or plan
+document work with [Author a Document](./documents.md).

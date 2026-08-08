@@ -1,7 +1,8 @@
-# Issue & Document Sources
+# Connect Issue & Document Sources
 
-Most requirements already live somewhere, in a tracker ticket or a spec document. Cat Factory lets
-you link those sources directly to blocks, import them, and use them as agent context.
+For teams whose requirements already live somewhere else, in a tracker ticket or a spec document.
+Cat Factory lets you link those sources directly to blocks, import them, and use them as agent
+context.
 
 ## Supported sources
 
@@ -31,7 +32,7 @@ with a personal API key. It works across four capacities:
 access token; Cat Factory pulls component structure, layout, and design tokens and renders them to
 Markdown so the UI coding agents get the design as context. Link a frame or screen to a task like any
 other document. This pairs with the
-[Visual Confirmation](./running-pipelines.md#visual-confirmation) flow.
+[Visual Confirmation](./choosing-a-pipeline.md#visual-confirmation) flow.
 :::
 
 ## Finding and linking context
@@ -236,4 +237,4 @@ the agent's context aligned with what your team is actually tracking.
 
 ---
 
-Next: keep agent costs predictable with [Budgets & Spend](./budgets.md).
+Next: keep agent costs predictable with [Control Spend with Budgets](./budgets.md).

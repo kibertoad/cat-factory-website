@@ -3,10 +3,11 @@ redirectFrom:
   - /deploy/frontend-extensions.html
 ---
 
-# Extending the App (Frontend Modules)
+# Extend the App with Frontend Modules
 
-[Custom agents, gates, and judges](./custom-agents.md) extend the backend. This page is the frontend
-counterpart: a deployment that consumes the app layer can contribute its own **components** to the
+For a deployment that needs the app itself to show something the platform does not ship.
+[Custom agents, gates, and judges](./custom-agents.md) extend the backend; this page is the frontend
+counterpart. A deployment that consumes the app layer can contribute its own **components** to the
 running SPA, result windows, navigation entries, inspector panels, task types, and full-screen
 overlays, without forking the layer and without a host edit.
 
@@ -71,7 +72,7 @@ with no config change.
 
 Backend data selects a frontend component, joined by a namespaced id. Register an agent kind whose
 `presentation.resultView` is `'<ns>:<name>'` (see
-[Custom Agents](./custom-agents.md#the-registration-seam)), contribute the component to `resultViews`
+[Add a Custom Agent Kind → The registration seam](./custom-agents.md#the-registration-seam)), contribute the component to `resultViews`
 under the same id, and opening a step of that kind mounts your component. An unpaired id degrades to
 the generic prose panel with a dev-console warning naming it; a structured kind with no bespoke window
 gets the built-in `generic-structured` viewer for free.
@@ -226,5 +227,5 @@ Composables and `registerAppModule` are auto-imported across layers, so those ne
 
 ---
 
-For the backend half, see [Custom Agents & Gates](./custom-agents.md). For where this code lives in
-your deployment, see [Your Deployment Repository](../deploy/deployment-repository.md).
+Next: the backend half in [Add a Custom Agent Kind](./custom-agents.md), or
+[Set Up Your Deployment Repository](../deploy/deployment-repository.md) for where this code lives.

@@ -1,7 +1,7 @@
 # Architecture
 
-A high-level map of how Cat Factory is put together. You don't need this to *use* the platform,
-but it helps when deploying, extending, or debugging it.
+For the deployer, the extender, and anyone debugging a system they did not build. A high-level map
+of how Cat Factory is put together. You don't need this to *use* the platform.
 
 ## The big picture
 
@@ -103,5 +103,5 @@ deduplicated to once per repo per org, then distributed to each linked workspace
 
 ---
 
-See also: [Integration Manifests](../extend/manifests.md) for the runner-pool and environment-provider
-surfaces you author.
+Next: [Packages & Repository Layout](./packages.md) for where each piece lives in source, or
+[Agent Isolation Model](./agent-isolation.md) for the boundary around the part that runs a model.

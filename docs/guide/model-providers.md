@@ -1,7 +1,8 @@
-# Model Providers & Subscriptions
+# Connect a Model Provider
 
-Agents need a model behind them. Cat Factory can reach models four ways, and a single run can mix
-them per agent kind. This page explains the options and how to connect a coding-plan subscription.
+For whoever supplies the models the agents run on. Cat Factory can reach models four ways, and a
+single run can mix them per agent kind. This page covers the options and how to connect a
+coding-plan subscription.
 
 ## The four ways a model is served
 
@@ -62,7 +63,7 @@ from the provider that would actually serve it. A model on the Workers AI fallba
 connect a direct key for that provider and the same model upgrades to its cache-capable direct
 flavour, which the badge reflects. The step metrics bar then breaks out cached input tokens, and the
 [observability dashboard](../operate/observability.md#the-built-in-dashboard) reports the cache-hit
-rate per run. See [Budgets → Prompt caching](./budgets.md#prompt-caching).
+rate per run. See [Control Spend with Budgets → Prompt caching](./budgets.md#prompt-caching).
 
 ### Aggregator gateways: OpenRouter and LiteLLM
 
@@ -280,7 +281,7 @@ boot (`defaultModelPresetId` on `start`/`startLocal`/`createApp`).
 A task picks its preset in the new-task form or the inspector; changing it affects only the steps
 that haven't started yet. Reserve stronger models for architecturally significant kinds and keep
 cheaper ones on routine steps. See [Choosing models](./running-pipelines.md#choosing-models) and
-[Budgets & Spend](./budgets.md).
+[Control Spend with Budgets](./budgets.md).
 
 ### Route order per preset
 
@@ -328,4 +329,6 @@ trusted route, or ask an admin to adjust the policy.
 
 ---
 
-Next: turn a ready task into code with [Running Pipelines](./running-pipelines.md).
+Next: try two models against each other before you commit with
+[Compare Prompts and Models in the Sandbox](./sandbox.md), or turn a ready task into code with
+[Run a Pipeline](./running-pipelines.md).

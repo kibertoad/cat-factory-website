@@ -1,7 +1,9 @@
 # Agent Isolation Model
 
-An agent run is a language model doing work on a checkout of one repository. This page explains the
-boundary around that model: what it can reach, what it never gets, and what mediates each pathway.
+For anyone who has to answer "what can that model actually reach" — a security reviewer, or an
+operator deciding what to connect. An agent run is a language model doing work on a checkout of one
+repository. This page describes the boundary around that model: what it can reach, what it never
+gets, and what mediates each pathway.
 
 The short version: the model never holds the credentials to your own systems, never connects to your
 linked systems, and never pushes to GitHub itself. It reads and edits files in a single checkout, and
@@ -21,7 +23,7 @@ A per-run container holds two distinct programs, and the distinction is the whol
   to files in the checkout.
 
 Custom agent kinds do not change this. A custom kind's deterministic logic runs on the backend as
-`preOps`/`postOps` (see [Custom Agents](../extend/custom-agents.md)), never as code inside the
+`preOps`/`postOps` (see [Add a Custom Agent Kind](../extend/custom-agents.md)), never as code inside the
 container. The container always runs the same generic harness over a checkout, so adding an agent
 kind never widens what runs in the sandbox.
 
@@ -91,7 +93,7 @@ shape:
 
 | Deployment shape | Credential | Scope | Lifetime |
 | --- | --- | --- | --- |
-| Cloudflare or Node engine | A [GitHub App](../deploy/github-app.md) installation token minted at dispatch | Installation-wide: every repository the workspace's installation covers, at the permissions the install granted | About an hour, in memory only |
+| Cloudflare or Node engine | A [Register the GitHub App](../deploy/github-app.md) installation token minted at dispatch | Installation-wide: every repository the workspace's installation covers, at the permissions the install granted | About an hour, in memory only |
 | Local mode | The deployment's shared `GITHUB_PAT` | Whatever the person who created the PAT granted | The PAT's own |
 | GitLab, any shape | A per-workspace PAT, sealed at rest and unsealed server-side per use | Whatever the person who created the PAT granted | The PAT's own |
 
@@ -143,7 +145,7 @@ model, turns those into a reviewable change:
 Nothing an agent decides or returns merges that branch. The merger agent returns only a JSON
 assessment; the decision to merge is made by backend policy against thresholds you configure, and
 anything outside them raises a review card for a person. See
-[Pull Requests](../guide/pull-requests.md). The clone and push host is allow-listed, so the token
+[Review and Merge Pull Requests](../guide/pull-requests.md). The clone and push host is allow-listed, so the token
 cannot be sent anywhere but your own host.
 
 Read the scope of that claim precisely: it constrains the agent's **output**. It is not a defence
@@ -190,6 +192,6 @@ beyond a branch you review before it merges.
 
 ---
 
-See also: [Architecture](./architecture.md) for the wider system map,
-[Configuration](../deploy/configuration.md) for the credential and proxy settings, and
-[Team & Access](../guide/team-and-access.md) for user-level access control.
+Next: [Security Model & Hardening](./security-model.md) for the layers around this one, or
+[Architecture](./architecture.md) for the wider system map. The credential and proxy settings
+themselves are in [Configuration](../deploy/configuration.md).

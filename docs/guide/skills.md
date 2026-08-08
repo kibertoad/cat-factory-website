@@ -1,7 +1,7 @@
-# Claude Skills
+# Run a Claude Skill as a Step
 
-A **Claude Skill** is a procedural playbook your team authors in a repository and runs against a task
-as a pipeline step. Where [prompt fragments](./prompt-fragments.md) are passive guidance folded into
+For a team with a procedure it wants run the same way every time. A **Claude Skill** is a procedural
+playbook your team authors in a repository and runs against a task as a pipeline step. Where [prompt fragments](./prompt-fragments.md) are passive guidance folded into
 every code-aware agent, a skill is an executable step you pick per pipeline: it clones the repo, does
 what the playbook prescribes, and commits the result.
 
@@ -64,4 +64,4 @@ repo path instead of inlined.
 
 ---
 
-Next: keep agent costs predictable with [Budgets & Spend](./budgets.md).
+Next: keep agent costs predictable with [Control Spend with Budgets](./budgets.md).

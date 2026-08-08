@@ -1,8 +1,8 @@
 # Deploy to Node.js
 
-Prefer to run on your own infrastructure? Cat Factory ships a runtime-neutral backend that
-runs as a standard Node.js service backed by PostgreSQL, with the same HTTP API as the
-Cloudflare deployment.
+For an operator who would rather run on their own infrastructure than on Cloudflare. Cat Factory
+ships a runtime-neutral backend that runs as a standard Node.js service backed by PostgreSQL, with
+the same HTTP API as the Cloudflare deployment.
 
 ::: tip Just evaluating?
 To try the whole product on one machine with Docker and a GitHub token, see
@@ -18,14 +18,14 @@ it, copy the `deploy/node` example directory, swap its `workspace:*` dependency 
 npm version, and point the config at your resources. You can layer in
 [proprietary agents and providers](../reference/architecture.md#extending-a-deployment) the same way.
 For a step-by-step on the workspace layout, the local dev loop, and where custom code plugs in, see
-[Your Deployment Repository](./deployment-repository.md).
+[Set Up Your Deployment Repository](./deployment-repository.md).
 
 ## Prerequisites
 
 - Node.js 24+, required for native type stripping and `--env-file` support.
 - A PostgreSQL database.
 - Your own deployment project (see above), depending on the published `@cat-factory/node-server`.
-- A GitHub App for authentication and repository operations (see [GitHub App](./github-app.md)).
+- A GitHub App for authentication and repository operations (see [Register the GitHub App](./github-app.md)).
 - LLM provider API keys.
 - A container runtime (Docker/Kubernetes/your scheduler) for per-run coding jobs.
 
@@ -108,7 +108,7 @@ Cloudflare Worker needs none of this: its event hub and storage are globally add
 ```
 
 For self-hosted execution at scale, point the service at a runner pool. See
-[Runner Pools](../operate/runner-pools.md).
+[Run Jobs on Your Own Runners](../operate/runner-pools.md).
 
 ---
 

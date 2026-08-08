@@ -3,10 +3,11 @@ redirectFrom:
   - /deploy/notifications.html
 ---
 
-# Notifications
+# Set Up Notifications
 
-Cat Factory raises a notification whenever a run needs attention or reaches a milestone: a merge
-review is waiting, a pipeline completed, CI failed, or a requirement review is ready. Every
+For whoever has to make sure a parked run reaches a human. Cat Factory raises a notification
+whenever a run needs attention or reaches a milestone: a merge review is waiting, a pipeline
+completed, CI failed, or a requirement review is ready. Every
 notification lands in the in-app inbox. Slack and an outbound webhook are optional additional
 transports for the same events.
 
@@ -146,4 +147,4 @@ is scoped to webhooks alone: widening it does not widen the runner-pool or envir
 ---
 
 Next: see the full variable list in [Configuration](../deploy/configuration.md), or scale execution with
-[Runner Pools](./runner-pools.md).
+[Run Jobs on Your Own Runners](./runner-pools.md).

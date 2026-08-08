@@ -1,8 +1,9 @@
 # Quick Start
 
-This walkthrough takes you from an empty board to a merged, agent-built pull request. It assumes you (or
-someone on your team) has a Cat Factory instance deployed. If not, deploy one first: see
-[Cloudflare](../deploy/cloudflare.md) or [Node.js](../deploy/nodejs.md).
+For someone with a Cat Factory instance in front of them and nothing on the board yet. This
+walkthrough takes you from an empty board to a merged, agent-built pull request. If you have no
+instance, deploy one first: see [Deploy to Cloudflare](../deploy/cloudflare.md) or
+[Deploy to Node.js](../deploy/nodejs.md).
 
 It is a map of the loop, with each stage linking to its own page. If you would rather be walked
 through one concrete run end to end, take
@@ -13,7 +14,7 @@ through one concrete run end to end, take
 Before you start, make sure you have:
 
 - A **running Cat Factory instance** (backend + frontend).
-- A **GitHub App** connected for authentication and repository operations (see [GitHub App](../deploy/github-app.md)).
+- A **GitHub App** connected for authentication and repository operations (see [Register the GitHub App](../deploy/github-app.md)).
 - At least one **LLM provider** configured: your own `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`, or
   the Cloudflare Workers AI default (no key required).
 - A **GitHub repository** you want agents to work in (or let Cat Factory bootstrap a new one).
@@ -46,7 +47,7 @@ On the canvas:
 4. Draw **dependency edges** where order matters.
 
 Link the service to a repository, or use **repository bootstrap** to scaffold a new one from a
-reference architecture. See [Designing Your Board](./designing-your-board.md).
+reference architecture. See [Design Your Board](./designing-your-board.md).
 
 ## 3. Attach requirements
 
@@ -57,7 +58,7 @@ Give a task enough context for an agent to succeed:
   (Jira, GitHub Issues, Confluence, Notion, GitHub repo docs) and import it.
 
 Then trigger the **reviewer agent** to surface gaps and risky assumptions, and answer its
-questions. See [Requirements](./requirements.md) and [Issue & Document Sources](./issue-sources.md).
+questions. See [Clarify Requirements](./requirements.md) and [Connect Issue & Document Sources](./issue-sources.md).
 
 ## 4. Run an agent pipeline
 
@@ -70,7 +71,7 @@ Select a task and start a run:
 Each agent runs on the model its kind draws from the task's **model preset**, set in
 **Configuration → Model Configuration**.
 
-See [Running Pipelines](./running-pipelines.md).
+See [Run a Pipeline](./running-pipelines.md).
 
 ## 5. Review and merge the pull request
 
@@ -79,7 +80,7 @@ a deterministic branch; Cat Factory then pushes it, opens a **pull request**, an
 **Tester**, **Conflicts Gate**, **CI Gate**, and **Merger** steps validate and prepare the PR.
 
 You review the PR like any other. When you **merge**, the block flips to **Done** and the board
-updates in real time. See [Pull Requests](./pull-requests.md).
+updates in real time. See [Review and Merge Pull Requests](./pull-requests.md).
 
 ---
 
@@ -91,5 +92,10 @@ Design board  →  Attach requirements  →  Run pipeline  →  Review PR  →  
      └──────────────────────────  iterate on the next block  ◀──────────────────────────┘
 ```
 
-That's the whole cycle. From here, dig into the [Using Cat Factory](./designing-your-board.md)
-guides for each stage, or set up [Budgets](./budgets.md) before you turn agents loose at scale.
+That's the whole cycle.
+
+---
+
+Next: walk one concrete run end to end in
+[Tutorial: Your First Task to a Merged Pull Request](./first-task-tutorial.md), or start on the
+guides with [Design Your Board](./designing-your-board.md).
