@@ -5,9 +5,10 @@ redirectFrom:
 
 # Public API
 
-Cat Factory exposes a key-authenticated HTTP API under `/api/v1` for driving work from outside the
-app. It covers headless jobs (breaking down an [initiative](../guide/initiatives.md) and other
-inline pipelines), the full board workload (list services, create and read tasks, start/stop/retry/
+The reference for driving Cat Factory from outside the app: CI, a script, another service, an agent
+of your own. Cat Factory exposes a key-authenticated HTTP API under `/api/v1`. It covers headless
+jobs (breaking down an [initiative](../guide/initiatives.md) and other inline pipelines), the full
+board workload (list services, create and read tasks, start/stop/retry/
 delete runs, stream progress), pipeline discovery, parked human decisions, a notification inbox, the
 workspace's spend, and a read-only run-debugging surface. Every operation is scoped to one workspace
 and authenticated by a bearer key.
@@ -295,11 +296,11 @@ Polling is the fallback, not the design. Two pushes carry a park outward:
 
 - **SSE**: both public streams stay open across a park and emit a `decision` frame.
 - **Outbound webhook**: a per-workspace HTTPS endpoint that receives notifications as they are raised.
-  See [Notifications → Outbound webhooks](../operate/notifications.md#outbound-webhooks).
+  See [Set Up Notifications → Outbound webhooks](../operate/notifications.md#outbound-webhooks).
 
 You can also echo the open questions onto the task's linked tracker issue, so the clarification
 reaches whoever asked for the work. See
-[Issue Sources → Writing back to the tracker](../guide/issue-sources.md#writing-back-to-the-tracker).
+[Connect Issue & Document Sources → Writing back to the tracker](../guide/issue-sources.md#writing-back-to-the-tracker).
 
 ## Notification inbox
 
@@ -373,7 +374,7 @@ cap. `rows` breaks spend down per `(billing, vendor, provider, model)`.
 Do not sum the two billing kinds. A `subscription` row's `costEstimate` is illustrative, because a
 flat-rate plan bills nothing per token; only `metered` rows are money. The endpoint is workspace-tier
 by design, so a workspace key never learns a sibling workspace's spend. See
-[Budgets](../guide/budgets.md).
+[Control Spend with Budgets](../guide/budgets.md).
 
 ## Run debugging
 
@@ -406,5 +407,5 @@ their own poll; for push at scale, register the
 
 ---
 
-For the board-level initiative feature (interactive planning, execution, the tracker), see
-[Initiatives](../guide/initiatives.md).
+Next: the [Official SDKs](./sdks.md) if you would rather not hand-roll a client, or the
+[MCP Server](./mcp-server.md) to give an MCP host the same surface.

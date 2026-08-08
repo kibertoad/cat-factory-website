@@ -1,7 +1,7 @@
-# Sandbox
+# Compare Prompts and Models in the Sandbox
 
-The Sandbox is a place to test prompts and models side by side, off to the side of your board. You
-pick an agent kind, one or more prompt versions, one or more models, and a set of graded fixtures,
+For anyone choosing between two models, or two versions of a prompt, without spending a real run to
+find out. The Sandbox tests them side by side, off to the side of your board. You pick an agent kind, one or more prompt versions, one or more models, and a set of graded fixtures,
 then run them all at once. A judge model scores every combination so you can see which prompt and
 which model handle the work best before you commit to a [preset](./model-providers.md#model-presets).
 
@@ -117,4 +117,4 @@ agent) are not run in the Sandbox. The shipped fixtures are all inline.
 ---
 
 Next: wire the winning model into a [preset](./model-providers.md#model-presets), or shape the prompt
-itself with [Prompt Fragments](./prompt-fragments.md).
+itself with [Apply Standards with Prompt Fragments](./prompt-fragments.md).

@@ -1,7 +1,8 @@
-# Designing Your Board
+# Design Your Board
 
-The board is where you describe what you're building. It is also the work queue, so there is no
-separate backlog to keep in sync. This page covers building and organizing that structure.
+For whoever lays out the work before any agent runs. The board is where you describe what you're
+building, and it is also the work queue, so there is no separate backlog to keep in sync. This page
+covers building and organizing that structure.
 
 ## The canvas
 
@@ -66,7 +67,7 @@ feels like it spans several PRs, split it into sibling leaves.
   **Document**, **Spike**, **Review**, or **Ralph loop**), which adjusts the form (a Bug collects
   severity and steps to reproduce, a Spike a time-box, a [Document](./documents.md) its kind and
   target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to audit
-  and a review focus, a [Ralph loop](./running-pipelines.md#the-ralph-loop) its validation command and
+  and a review focus, a [Ralph loop](./choosing-a-pipeline.md#the-ralph-loop) its validation command and
   iteration budget) and lets the workspace cap concurrency per type. A deployment can
   [add task types of its own](../extend/frontend-extensions.md#custom-task-types), an "incident" or a
   "compliance-audit", which then appear in the picker and as a badge on the card like any built-in.
@@ -101,7 +102,7 @@ Beyond the parent/child hierarchy, two relationships connect tasks across the bo
 container, so an epic can pull in tasks from several frames, and deleting the epic clears the
 grouping without deleting the tasks. Importing a Jira epic or a GitHub parent issue can create the
 epic and all its child tasks at once, seeding dependency edges from the issues' "blocked by" links
-(see [Issue & Document Sources](./issue-sources.md)).
+(see [Connect Issue & Document Sources](./issue-sources.md)).
 
 ## Service connections
 
@@ -148,7 +149,7 @@ A service frame typically maps to one Git repository. You have three options:
   template into it, then the service frame materializes on the board.
 - **Reconcile** an existing repo's structure onto the board with service blueprints.
 
-All of this is covered in [Repositories](./repositories.md).
+All of this is covered in [Connect a Repository](./repositories.md).
 
 ## Assigning models
 
@@ -197,8 +198,8 @@ number is visible before you start authoring rather than only when you are stopp
 3. Break modules into **tasks** sized for a single PR.
 4. Connect **dependency edges** where order matters.
 5. Link or bootstrap **repositories** on each service.
-6. Move to [Requirements](./requirements.md) to make each task agent-ready.
+6. Move to [Clarify Requirements](./requirements.md) to make each task agent-ready.
 
 ---
 
-Next: make your tasks unambiguous with [Requirements](./requirements.md).
+Next: make your tasks unambiguous with [Clarify Requirements](./requirements.md).

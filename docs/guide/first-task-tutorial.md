@@ -14,7 +14,7 @@ stage has its own how-to page linked at the end.
 - A repository the deployment can reach, with a protected default branch. Protection matters here:
   it is what makes "merge" a decision you take rather than something a run could do for you.
 - One usable model source. A deployment with no provider key at all still works: it falls back to
-  Cloudflare Workers AI. See [Model Providers](./model-providers.md).
+  Cloudflare Workers AI. See [Connect a Model Provider](./model-providers.md).
 
 **What you will end up with**: one merged pull request, and a board card that says Done because
 that pull request merged, not because an agent said it was finished.
@@ -34,7 +34,7 @@ You now have an empty frame linked to real code. Cards you drop inside it inheri
 
 ::: tip If the repository picker is empty
 The deployment has no source-control connection yet, or the connection cannot see that repository.
-See [Repositories](./repositories.md).
+See [Connect a Repository](./repositories.md).
 :::
 
 ## 2. Write one task worth running
@@ -106,12 +106,12 @@ preset you configured, routing anything outside it to a person.
 
 - **Run the same task type again** and change one thing: a different model preset, or a pipeline
   with a tester step. Comparing two runs of one task teaches more than one run of two tasks.
-- **Set a budget** before you turn agents loose at scale. See [Budgets](./budgets.md).
+- **Set a budget** before you turn agents loose at scale. See [Control Spend with Budgets](./budgets.md).
 - **Decide your merge policy** deliberately, because the shipped default auto-merges under balanced
-  ceilings with no class floors. See [Pull Requests](./pull-requests.md) and the
+  ceilings with no class floors. See [Review and Merge Pull Requests](./pull-requests.md) and the
   [hardening checklist](../reference/security-model.md#operator-hardening-checklist).
 
 ---
 
-Next: [Designing Your Board](./designing-your-board.md) to lay out more than one task, or the
+Next: [Design Your Board](./designing-your-board.md) to lay out more than one task, or the
 [Cookbook](./cookbook.md) for a short recipe per operation.

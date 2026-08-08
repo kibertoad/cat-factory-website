@@ -29,6 +29,7 @@ const GUIDE_GROUPS = [
   {
     text: 'Run pipelines',
     children: [
+      '/guide/choosing-a-pipeline.md',
       '/guide/running-pipelines.md',
       '/guide/recurring-pipelines.md',
       '/guide/pull-requests.md',
@@ -79,6 +80,7 @@ const OPERATE = [
 
 const EXTEND = [
   '/extend/custom-agents.md',
+  '/extend/custom-gates.md',
   '/extend/custom-providers.md',
   '/extend/frontend-extensions.md',
   '/extend/manifests.md',

@@ -1,15 +1,15 @@
-# Members, Roles & Invitations
+# Invite and Manage Your Team
 
-Cat Factory has real user identities, more than one way to sign in, and email invitations for
-bringing teammates into a shared organization. This page covers how people get in, the roles they
-hold, and how to invite them.
+For whoever administers who can see and do what. Cat Factory has real user identities, more than one
+way to sign in, and email invitations for bringing teammates into a shared organization. This page
+covers how people get in, the roles they hold, and how to invite them.
 
 ## Signing in
 
 A deployment can offer any combination of three sign-in providers, each enabled by its operator:
 
 - **GitHub** OAuth. Also the source of repository access: the per-tenant
-  [GitHub App](../deploy/github-app.md) installation mints the tokens agents use, so repo access
+  [Register the GitHub App](../deploy/github-app.md) installation mints the tokens agents use, so repo access
   never depends on a personal GitHub token.
 - **Google** OAuth.
 - **Email + password** (hashed with PBKDF2).

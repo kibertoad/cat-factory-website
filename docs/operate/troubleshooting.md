@@ -35,7 +35,7 @@ purpose rather than starting in a state that looks configured.
 
 **"No AI model configured".** No connected source can serve any model. Connect a provider key, an
 aggregator key, a subscription, or a local runner. See
-[Model Providers](../guide/model-providers.md).
+[Connect a Model Provider](../guide/model-providers.md).
 
 **The start is refused naming a model.** The workspace's default preset points at a model none of
 your connected sources can serve, or an account [model access policy](../guide/model-providers.md#restricting-model-families)
@@ -44,7 +44,7 @@ model your sources can serve or to adjust the policy.
 
 **The start is refused over budget.** The workspace has reached its monthly spend limit and the
 pipeline has at least one metered step. A pipeline whose every step runs on a subscription or a
-local runner starts normally, because neither is metered. See [Budgets](../guide/budgets.md).
+local runner starts normally, because neither is metered. See [Control Spend with Budgets](../guide/budgets.md).
 
 **A recurring pipeline refuses to start.** A scheduled run fires with nobody present to unlock a
 personal subscription, so a schedule that resolves to an individual-use model is refused. Point
@@ -53,7 +53,7 @@ recurring work at a pooled subscription, a direct key, or the Cloudflare default
 **"No repository is linked".** A task resolves its repository by walking up to the service frame
 that encloses it. There is deliberately no fallback to "the first repository", because guessing once
 pushed a task into somebody else's repository. Link the frame to a repository, or move the task
-under one that is linked. See [Repositories](../guide/repositories.md).
+under one that is linked. See [Connect a Repository](../guide/repositories.md).
 
 ## A run fails or stalls
 
@@ -97,7 +97,7 @@ pinning one is blocked at start rather than failing mid-run.
 **A local runner is refused.** The runner's base URL is fetched server-side, so it is constrained to
 loopback unless an operator opts into private-LAN reach. URLs carrying credentials, a query string,
 or a fragment are refused, and every redirect hop is re-checked. See
-[Model Providers → local runners](../guide/model-providers.md#running-on-a-local-llm-ollama-lm-studio).
+[Connect a Model Provider → local runners](../guide/model-providers.md#running-on-a-local-llm-ollama-lm-studio).
 
 **A webhook delivers nothing.** Inbound tracker webhooks fail closed when the signing secret is
 unconfigured, and outbound notification webhooks require a public HTTPS endpoint unless an operator

@@ -1,8 +1,9 @@
 # Configuration
 
-This page is the reference for every environment variable and toggle you'll set when deploying
-Cat Factory. Secrets are grouped by concern: authentication, model providers, infrastructure,
-service wiring, and feature toggles.
+For whoever owns the deployment's secrets and toggles. It is the reference for every environment
+variable you set when deploying Cat Factory, grouped by concern: authentication, model providers,
+infrastructure, service wiring, and feature toggles. The full generated list of variables, including
+ones no page here narrates, is [Environment Variables](../reference/environment-variables.md).
 
 ## When a required value is missing
 
@@ -70,11 +71,11 @@ shutdown begins. The Cloudflare Worker has no long-lived process and no readines
 A deployment can offer three sign-in providers in any combination: GitHub OAuth, Google OAuth, and
 email/password. Auth turns on as soon as **any** provider is configured together with a strong
 `AUTH_SESSION_SECRET`; each provider stays off until its own credentials are present. Regardless of
-how people sign in, repository access comes from the [GitHub App](./github-app.md) installation
+how people sign in, repository access comes from the [Register the GitHub App](./github-app.md) installation
 unless a run's initiator has stored a personal token, so a Google- or password-only user works fully.
 See [Which credential a run pushes with](../reference/agent-isolation.md#which-credential-a-run-pushes-with).
 For who is allowed to create an account and how roles and invitations work, see
-[Members, Roles & Invitations](../guide/team-and-access.md).
+[Invite and Manage Your Team](../guide/team-and-access.md).
 
 | Variable | Purpose |
 | --- | --- |
@@ -123,7 +124,7 @@ counts toward `AUTH_ALLOWED_ORGS`, matching GitHub.
 GitLab is a first-class source-control backend on every runtime, not just local mode. It is opt-in
 and off until you set a token. With it configured, a GitLab repo clones, pushes, gates on real CI, and
 merges through a real merge request, and users can sign in with a GitLab PAT. See
-[Repositories → GitLab](../guide/repositories.md#gitlab).
+[Connect a Repository → GitLab](../guide/repositories.md#gitlab).
 
 | Variable | Purpose |
 | --- | --- |
@@ -141,7 +142,7 @@ The same is true of **vendor credentials**: a coding-plan subscription (Claude, 
 per-user) or a poolable vendor credential (Kimi, DeepSeek), run through the Claude Code or Codex
 harness. None of these needs a provider env var; they only need `ENCRYPTION_KEY` set. **Local
 runners** (Ollama, LM Studio, …) are likewise pure per-user UI configuration with no deployment env
-var. See [Model Providers & Subscriptions](../guide/model-providers.md).
+var. See [Connect a Model Provider](../guide/model-providers.md).
 
 What stays in the environment is the Cloudflare Workers AI fallback, AWS Bedrock, the
 aggregator-gateway base URLs, and routing defaults:
@@ -182,7 +183,7 @@ providers keep working rather than the whole config failing.
 ## Spend caps (operator ceilings)
 
 Workspace, account, and per-user monthly budgets are set in the UI (see
-[Budgets & Spend](../guide/budgets.md)). Two optional env vars let an operator impose a hard ceiling
+[Control Spend with Budgets](../guide/budgets.md)). Two optional env vars let an operator impose a hard ceiling
 that a user cannot exceed from the UI:
 
 | Variable | Purpose |
@@ -215,7 +216,7 @@ the session or permanently per user.
 
 ## Content storage (binary artifacts)
 
-The Tester's screenshots for the [Visual Confirmation](../guide/running-pipelines.md#visual-confirmation)
+The Tester's screenshots for the [Visual Confirmation](../guide/choosing-a-pipeline.md#visual-confirmation)
 gate are kept in a binary-artifact store. This is configured **per account in the UI** (Account →
 Deployment settings), not through environment variables, and each account picks its own backend:
 
@@ -372,7 +373,7 @@ Task sources (Jira, GitHub Issues, and Linear) are configured per workspace. Eac
 workspace turns its sources on or off in the UI (**Workspace settings → Issue tracker**); they work
 on every runtime, GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the
 PAT) with no env, and Linear connects per workspace via OAuth or a personal API key. See
-[Issue & Document Sources](../guide/issue-sources.md). The tech-debt
+[Connect Issue & Document Sources](../guide/issue-sources.md). The tech-debt
 [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the workspace's chosen
 filing tracker.
 
@@ -420,7 +421,7 @@ observability provider (Datadog today) after a merge. They are opt-in and covere
 Board notifications (merge reviews, pipeline completions, CI failures, requirement reviews) land in
 the in-app inbox by default. Slack and a per-workspace outbound webhook are optional extra transports.
 Both are opt-in and configured per workspace, and their secrets are encrypted under `ENCRYPTION_KEY`.
-Full setup is in [Notifications](../operate/notifications.md).
+Full setup is in [Set Up Notifications](../operate/notifications.md).
 
 | Variable | Purpose |
 | --- | --- |
@@ -451,9 +452,9 @@ Optional integrations enabled by their own flag:
 | Variable | Purpose |
 | --- | --- |
 | `PROMPT_LIBRARY_ENABLED` | The [prompt-fragment library](../guide/prompt-fragments.md) is **on by default** (it needs no secrets and its tables ship in the base migrations). Set to `false` to turn it off. `PROMPT_LIBRARY_SELECTOR=llm` ranks fragments per run; anything else keeps the deterministic default. |
-| `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/running-pipelines.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
+| `CONSENSUS_ENABLED` | Set to `true` to enable [multi-model consensus](../guide/choosing-a-pipeline.md#multi-model-consensus) on eligible steps. Off (unset) leaves the standard single-actor behaviour; the `task-estimator` step works either way. |
 | `OBSERVABILITY_ENABLED` | Set to `true` for the [post-release-health gate and Agent-On-Call](../operate/observability.md#post-release-health-and-agent-on-call) (also requires `ENCRYPTION_KEY`). |
-| `SANDBOX_DB` | Cloudflare only. Optional D1 binding that turns on the [Sandbox](../guide/sandbox.md) for prompt and model testing. The Sandbox is off until it is bound. On Node and local it is a `sandbox` schema in `DATABASE_URL`. |
+| `SANDBOX_DB` | Cloudflare only. Optional D1 binding that turns on the [Compare Prompts and Models in the Sandbox](../guide/sandbox.md) for prompt and model testing. The Sandbox is off until it is bound. On Node and local it is a `sandbox` schema in `DATABASE_URL`. |
 
 [Ephemeral environments](../operate/environments.md) have no enable flag. The module assembles wherever
 `ENCRYPTION_KEY` is set (it seals environment-provider credentials under that key), the same
@@ -470,5 +471,6 @@ manager and never commit them.
 
 ---
 
-Scaling execution? Continue to [Runner Pools](../operate/runner-pools.md) and
-[Ephemeral Environments](../operate/environments.md).
+Next: scale execution with [Run Jobs on Your Own Runners](../operate/runner-pools.md) and
+[Provision Ephemeral Environments](../operate/environments.md), or check a value you set against
+[Troubleshooting](../operate/troubleshooting.md).

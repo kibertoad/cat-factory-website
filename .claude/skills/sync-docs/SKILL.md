@@ -97,8 +97,10 @@ so a path from an older sync may no longer exist.
 | Observability, telemetry store, ephemeral-env/container provisioning telemetry | `docs/operate/observability.md`, `docs/deploy/configuration.md` |
 | Retention windows, upgrade and image-tag rollout | `docs/operate/upgrades-and-retention.md` |
 | A new failure mode an operator will meet | `docs/operate/troubleshooting.md` |
-| Custom agents, manifest model, pre/agent/post-op, generic agent kind | `docs/extend/custom-agents.md`, `docs/extend/manifests.md` |
-| Custom gates, `@cat-factory/gates`, externally extensible gates | `docs/extend/custom-agents.md`, `docs/reference/packages.md` |
+| Custom agent kinds, traits, skills/tool servers, pre/agent/post-op, generic agent kind | `docs/extend/custom-agents.md`, `docs/extend/manifests.md` |
+| Custom gates and judges, step-completion resolvers, `@cat-factory/gates` | `docs/extend/custom-gates.md`, `docs/reference/packages.md` |
+| Pipeline catalog and presets, builder edits, step gating, binary-output steps, consensus | `docs/guide/choosing-a-pipeline.md` |
+| Starting/retrying a run, live progress, decision prompts, human gates | `docs/guide/running-pipelines.md` |
 | Public API endpoints, scopes, webhooks | `docs/extend/public-api.md` |
 | SDK clients, the MCP server and its tools | `docs/extend/sdks.md`, `docs/extend/mcp-server.md` |
 | Published `@cat-factory/*` packages | `docs/reference/packages.md` |

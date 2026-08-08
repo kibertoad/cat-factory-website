@@ -1,7 +1,8 @@
 # Packages & Repository Layout
 
-Cat Factory is a TypeScript monorepo. This page maps the published packages and the source tree,
-so you know where to look when extending or debugging the platform.
+For an extender or a contributor who needs to know which package owns what. Cat Factory is a
+TypeScript monorepo; this page maps the published packages and the source tree, so you know where to
+look when extending or debugging the platform.
 
 ## Published libraries
 
@@ -11,7 +12,7 @@ so you know where to look when extending or debugging the platform.
 | `@cat-factory/kernel` | Domain types, constants, repository ports, and the extension registries: the pipeline registry (`registerPipeline`), the gate registry (`registerGate`), the step-resolver registry (`registerStepResolver`), the typed provider registry (`defineProviderToken` / `wireProvider` / `requireProvider`), and the provider-neutral VCS registry (`registerVcsProvider` / `resolveVcsProvider`). |
 | `@cat-factory/orchestration` | Service composition root and workflow engines. Boot-time registration validation (`validateRegistrations` / `validateRegistrationsOnce`) lives here, since it cross-checks the gate, agent-kind, and pipeline registries. |
 | `@cat-factory/agents` | Agent catalog, prompt composition, model-provider facade, the agent-kind registry (`registerAgentKind`), the document-template registry (`registerDocTemplate`), schema-driven structured output (`defineStructuredOutput`), and web-research/cache policy. |
-| `@cat-factory/gates` | The built-in gate suite (CI, merge-conflicts, post-release health, the on-call escalation, and the [document-quality gate](../extend/custom-agents.md#the-document-quality-gate)), authored entirely through the public `registerGate` seam. Depends only on `@cat-factory/kernel` + `@cat-factory/contracts`, never the engine. A deployment imports it for its side effect and wires each gate's provider via the exported `wireX` handles. See [Custom Agents & Gates](../extend/custom-agents.md). |
+| `@cat-factory/gates` | The built-in gate suite (CI, merge-conflicts, post-release health, the on-call escalation, and the [document-quality gate](../extend/custom-gates.md#the-document-quality-gate)), authored entirely through the public `registerGate` seam. Depends only on `@cat-factory/kernel` + `@cat-factory/contracts`, never the engine. A deployment imports it for its side effect and wires each gate's provider via the exported `wireX` handles. See [Add a Custom Agent Kind](../extend/custom-agents.md) and [Add a Custom Gate or Judge](../extend/custom-gates.md). |
 | `@cat-factory/prompt-fragments` | The curated, versioned best-practice [prompt fragments](../guide/prompt-fragments.md) injected into agent prompts, including the writing-style fragments applied to document tasks. Register your own with `registerPromptFragment`. |
 | `@cat-factory/eks` | Opt-in AWS EKS runner and environment backends. Reuses the native Kubernetes transport behind a short-lived IAM (SigV4-presigned STS) apiserver token, with no runtime AWS SDK. Register `eksRunnerBackend` / `eksEnvironmentBackend` to offer the `eks` backend kind. See [Kubernetes → Amazon EKS](../deploy/kubernetes.md#amazon-eks). |
 | `@cat-factory/caching` | The app-level caching seam: `createAppCaches` builds the named in-memory read-through caches services consume through the kernel `AppCaches` port. In-memory only; Redis (when `REDIS_URL` is set on a multi-node Node deployment) is an invalidation bus, never a data tier. |
@@ -26,7 +27,7 @@ The model-provider, agent-kind, gate, step-resolver, provider, and pipeline regi
 extension seams. A deployment (e.g. a proprietary org package) can mix in providers, agent kinds,
 polling gates, and predefined pipelines without forking, registering each as a startup import side
 effect. The built-in gate suite ships as `@cat-factory/gates`, authored through the same `registerGate`
-seam a deployment uses. See [Custom Agents & Gates](../extend/custom-agents.md) and
+seam a deployment uses. See [Add a Custom Agent Kind](../extend/custom-agents.md) and [Add a Custom Gate or Judge](../extend/custom-gates.md) and
 [Architecture → Extending a deployment](./architecture.md#extending-a-deployment).
 :::
 
@@ -45,3 +46,6 @@ seam a deployment uses. See [Custom Agents & Gates](../extend/custom-agents.md) 
 
 The platform is MIT licensed. Source, issues, and contribution guidelines live at
 [kibertoad/cat-factory](https://github.com/kibertoad/cat-factory).
+
+Next: [Architecture](./architecture.md) for how these pieces fit together at runtime, or
+[Add a Custom Agent Kind](../extend/custom-agents.md) to build against them.

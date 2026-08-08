@@ -1,8 +1,8 @@
-# Recurring Pipelines
+# Schedule Recurring Work
 
-Some work is never "done": dependencies drift and tech debt accumulates. A **recurring pipeline**
-attaches a pipeline to a service and re-runs it on a cadence, so routine maintenance happens on
-schedule without anyone kicking it off.
+For the work that is never "done": dependencies drift and tech debt accumulates. A **recurring
+pipeline** attaches a pipeline to a service and re-runs it on a cadence, so routine maintenance
+happens on schedule without anyone kicking it off.
 
 ## How a schedule works
 
@@ -122,4 +122,4 @@ service but is a single record, so it fires **once per org**, no matter how many
 
 ---
 
-Next: review and merge what the agents produced in [Pull Requests](./pull-requests.md).
+Next: review and merge what the agents produced in [Review and Merge Pull Requests](./pull-requests.md).

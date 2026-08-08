@@ -1,8 +1,9 @@
-# GitHub App
+# Register the GitHub App
 
-Cat Factory uses a **single GitHub App** for two jobs: signing users in ("Login with GitHub")
-and acting on your repositories (cloning, pushing branches, opening pull requests, reading
-checks). Both come from the one App you create here.
+For the operator who has a deployment running and now needs it to reach GitHub. Cat Factory uses a
+**single GitHub App** for two jobs: signing users in ("Login with GitHub") and acting on your
+repositories (cloning, pushing branches, opening pull requests, reading checks). Both come from the
+one App you create here.
 
 Cat Factory is self-hosted, so **each deployment registers its own App** pointing at its own
 worker host. There is no shared or central App to install.
@@ -140,4 +141,6 @@ flow with no error.
 
 ---
 
-Continue to [Configuration](./configuration.md) for the full list of secrets and toggles.
+Next: [Configuration](./configuration.md) for the full list of secrets and toggles, or
+[Connect a Repository](../guide/repositories.md) to link the first repo through the App you just
+registered.

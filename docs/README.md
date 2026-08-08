@@ -46,8 +46,8 @@ Cat Factory connects to the tools you already use. Everything below ships in eve
 | **Sign-in** | <ul><li>GitHub</li><li>Google</li><li>Email and password</li></ul> |
 | **Notifications** | <ul><li>In-app inbox</li><li>Slack (optional)</li><li>Email invitations</li></ul> |
 
-See [Issue & Document Sources](/guide/issue-sources.html) and
-[Model Providers & Subscriptions](/guide/model-providers.html) for setup.
+See [Connect Issue & Document Sources](/guide/issue-sources.html) and
+[Connect a Model Provider](/guide/model-providers.html) for setup.
 
 ## Advanced capabilities
 
@@ -97,7 +97,7 @@ no spend.
 
 - **New here?** Start with the [Introduction](/guide/introduction.html) and [Core Concepts](/guide/core-concepts.html).
 - **Want it running?** Take the [first-task tutorial](/guide/first-task-tutorial.html) end to end, or pick a deployment target under [Deploy](/deploy/local.html).
-- **Daily driver?** Jump into [Designing Your Board](/guide/designing-your-board.html) and [Running Pipelines](/guide/running-pipelines.html).
+- **Daily driver?** Jump into [Design Your Board](/guide/designing-your-board.html) and [Run a Pipeline](/guide/running-pipelines.html).
 - **Changing a flow you already run?** The [Cookbook](/guide/cookbook.html) has a short recipe per operation: add a review step, add a gate, change a step's prompt, attach a skill.
 - **Integrating your infra?** See [Integration Manifests](/extend/manifests.html), the [SDKs](/extend/sdks.html), and the [Architecture](/reference/architecture.html) reference.
 - **Running it in production?** [Observability](/operate/observability.html), [Troubleshooting](/operate/troubleshooting.html), and the [hardening checklist](/reference/security-model.html#operator-hardening-checklist).

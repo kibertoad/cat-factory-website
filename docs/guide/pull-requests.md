@@ -1,8 +1,8 @@
-# Pull Requests & Merging
+# Review and Merge Pull Requests
 
-Cat Factory's definition of "done" is deliberately strict: a task is complete only when its
-**pull request is merged with passing CI**. This page covers what agents produce and how merging
-closes the loop.
+For the person who has to decide whether an agent's work is good enough to ship. Cat Factory's
+definition of "done" is deliberately strict: a task is complete only when its **pull request is
+merged with passing CI**. This page covers what agents produce and how merging closes the loop.
 
 ## What the coding agent produces
 
@@ -316,4 +316,4 @@ Each iteration is fully visible on the board and in the run's event log.
 
 ---
 
-Next: connect and bootstrap the repositories agents work in, [Repositories](./repositories.md).
+Next: connect and bootstrap the repositories agents work in, [Connect a Repository](./repositories.md).

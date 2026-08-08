@@ -5,15 +5,16 @@ redirectFrom:
 
 # Observability
 
-Cat Factory records every model call so you can see what agents are doing, what it costs, and where
-runs slow down or fail. There are three layers: a built-in dashboard that always runs, the telemetry
+For the operator answering "what did that run actually do, and what did it cost". Cat Factory
+records every model call so you can see what agents are doing, what they cost, and where runs slow
+down or fail. There are three layers: a built-in dashboard that always runs, the telemetry
 and provisioning data it draws on (kept in an isolated store you configure), and an optional Langfuse
 trace sink for teams that already centralize LLM observability.
 
 ## The built-in dashboard
 
 Every LLM call is metered, with no configuration required. Beyond the spend total (see
-[Budgets & Spend](../guide/budgets.md)), the observability dashboard records per run:
+[Control Spend with Budgets](../guide/budgets.md)), the observability dashboard records per run:
 
 - Input tokens in three classes, completion tokens, and the finish reason for each call.
 - The actual **cache-hit rate**, so you can confirm
@@ -486,4 +487,5 @@ run.
 
 ---
 
-Next: route notifications to your team in [Notifications](./notifications.md).
+Next: route what you find to your team with [Set Up Notifications](./notifications.md), or take a
+symptom to [Troubleshooting](./troubleshooting.md).

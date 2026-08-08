@@ -1,7 +1,8 @@
 # Core Concepts
 
-A short glossary of the moving parts. Understanding these makes everything else on this site
-easier to follow.
+For anyone about to read the rest of the site: the moving parts, and the words this documentation
+uses for them. Understanding these makes everything else easier to follow. The full A-to-Z is the
+[Glossary](../reference/glossary.md).
 
 ## Blocks
 
@@ -22,7 +23,7 @@ A task also has a **type** chosen when you create it: **Feature**, **Bug**, **Do
 steps, a Spike a time-box, a Review the pull request to audit, a Ralph loop its validation command)
 and lets a workspace cap how many tasks of each type run at once under a service. A **Review** task
 [deep-reviews an existing open pull request](./pull-requests.md#deep-reviewing-an-existing-pull-request);
-a **Ralph loop** task runs a [persistent retry-until-done coding loop](./running-pipelines.md#the-ralph-loop).
+a **Ralph loop** task runs a [persistent retry-until-done coding loop](./choosing-a-pipeline.md#the-ralph-loop).
 
 A task moves through these statuses:
 
@@ -46,14 +47,14 @@ Two relationships sit on top of the parent/child hierarchy:
   chain advances on its own (steps on an individual-usage model are skipped, since they can't unlock
   unattended).
 
-See [Designing Your Board → Epics and dependency edges](./designing-your-board.md#epics-and-dependency-edges).
+See [Design Your Board → Epics and dependency edges](./designing-your-board.md#epics-and-dependency-edges).
 
 ## Services and mounts
 
 A **service** is the account-owned unit a service frame represents: the frame plus its whole
 subtree, its linked repository, its runs, and its sync. A **workspace** mounts the services it
 cares about, and the same service can be mounted onto several boards in an org as **one shared
-copy** rather than duplicated. See [Shared Services](./shared-services.md).
+copy** rather than duplicated. See [Share Services Across Workspaces](./shared-services.md).
 
 ## Runs
 
@@ -92,7 +93,7 @@ step, and an issue/ticket tracker step. Agent kinds are an **open set**: a deplo
 [register custom kinds](../extend/custom-agents.md). You choose the pipeline (cloning a
 built-in to make an editable copy, then reordering or disabling steps), and assign models through a
 **model preset**. On deployments with it enabled, eligible steps can also run through
-[multi-model consensus](./running-pipelines.md#multi-model-consensus).
+[multi-model consensus](./choosing-a-pipeline.md#multi-model-consensus).
 
 ## Interface tiers
 
@@ -143,7 +144,7 @@ into the block's description and the run continues.
   **admin / developer / product** roles. Either way it owns shared services and account-wide
   standards, and spans all of its workspaces. You sign in with GitHub, Google, or email/password,
   and an admin brings teammates in by email invitation. See
-  [Members, Roles & Invitations](./team-and-access.md).
+  [Invite and Manage Your Team](./team-and-access.md).
 - A **workspace** is a per-team, per-project container with **membership controls** that determine
   who can see and act on its boards. Each board can be open to the whole account or restricted to an
   explicit member list, and each member holds a **Viewer**, **Member**, or **Admin** workspace role.
@@ -159,7 +160,7 @@ You assign models with **presets** under **Configuration → Model Configuration
 for the **Architect** and a cheaper one for the **Tester**). One preset is the workspace **default**;
 every workspace seeds three built-ins (**Kimi K2.7**, **GLM-5.2**, and **Claude Opus 5**). A task picks its preset, and
 changing it only affects steps that haven't started. See
-[Running Pipelines](./running-pipelines.md#choosing-models).
+[Run a Pipeline → Choosing models](./running-pipelines.md#choosing-models).
 
 ## Repositories
 
@@ -174,14 +175,15 @@ descriptive blueprint, a service also keeps a prescriptive [spec](./requirements
 **Prompt fragments** are versioned, reusable best-practice guidelines, assigned per service and
 folded into code-aware agent steps. They are scoped in three tiers (**built-in**, **account**, and
 **workspace**) so you can layer organization-wide standards with board-specific tweaks. See
-[Prompt Fragments](./prompt-fragments.md).
+[Apply Standards with Prompt Fragments](./prompt-fragments.md).
 
 ## Spend and budgets
 
 Every model call is **metered** against an organization-wide **monthly budget**. When the cap is
 reached, runs pause (showing **Paused (budget)**) and resume automatically when the period rolls
-over. See [Budgets & Spend](./budgets.md).
+over. See [Control Spend with Budgets](./budgets.md).
 
 ---
 
-Continue to the [Quick Start](./quick-start.md) to put these together.
+Next: put these together in the [Quick Start](./quick-start.md), or walk one concrete run end to end
+in [Tutorial: Your First Task to a Merged Pull Request](./first-task-tutorial.md).

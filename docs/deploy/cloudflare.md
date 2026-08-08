@@ -1,8 +1,8 @@
 # Deploy to Cloudflare
 
-Cloudflare is the reference runtime for Cat Factory. The backend runs as a Worker with D1,
-Durable Objects, and Workflows. The frontend is a Nuxt SPA on Cloudflare Pages, and per-run coding
-work executes in Cloudflare Containers.
+For an operator standing a deployment up on Cloudflare, which is the reference runtime for
+Cat Factory. The backend runs as a Worker with D1, Durable Objects, and Workflows. The frontend is a
+Nuxt SPA on Cloudflare Pages, and per-run coding work executes in Cloudflare Containers.
 
 ## Your deployment project
 
@@ -28,7 +28,7 @@ against a fork.
 
 - A Cloudflare account with Worker and D1 database access.
 - Your [deployment project](#your-deployment-project) depending on the published `@cat-factory/*` packages.
-- A GitHub App configured for authentication and repository operations (see [GitHub App](./github-app.md)).
+- A GitHub App configured for authentication and repository operations (see [Register the GitHub App](./github-app.md)).
 - LLM provider API keys, or use the Cloudflare Workers AI default (no key required; billed under your Cloudflare account's Workers AI pricing).
 - `wrangler` and `pnpm` installed locally.
 
@@ -108,5 +108,5 @@ settings, see [Configuration](./configuration.md).
 
 ---
 
-To run on your own servers, see [Deploy to Node.js](./nodejs.md). Then lock down
-[Configuration](./configuration.md).
+Next: set your secrets and toggles in [Configuration](./configuration.md), or run on your own
+servers instead with [Deploy to Node.js](./nodejs.md).

@@ -1,8 +1,8 @@
 # Documentation revamp: website restructure
 
-Status: **executing.** Phases A, B and C have landed; phase D is partly done and the rest is
-itemised at the bottom. The sibling tracker for the code repo's side of the revamp (which docs move
-here, which stay there, and the ownership model behind the split) lives in
+Status: **complete.** Phases A, B, C and D have landed. The sibling tracker for the code repo's side
+of the revamp (which docs move here, which stay there, and the ownership model behind the split)
+lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
 
 This file lives under `planning/`, outside `docs/`, so VuePress never publishes it.
@@ -135,15 +135,40 @@ repo; the page lands here first, then the repo links it).
 ### Phase D: page-quality pass
 
 - [x] D1 (new pages only). Every page added in phase B opens with who it is for and ends with next
-      steps. The 41 pre-existing pages have not been swept.
-- [ ] D1 (existing pages). The same opening and closing shape across the pages that predate this
-      revamp.
-- [ ] D2. Task-oriented titles for how-to pages. Several still carry feature titles
-      ("Model Providers & Subscriptions", "Ephemeral Environments").
-- [ ] D3. Split pages that mix doc types where they have grown past one need. The two candidates
-      are `extend/custom-agents.md` (961 lines, authoring how-to plus reference) and
-      `guide/running-pipelines.md` (671 lines).
+      steps.
+- [x] D1 (existing pages). The same opening and closing shape across the pages that predate this
+      revamp. Every page now carries a `---` rule and a `Next:` line naming two destinations; the
+      home page is the one exception, since its whole body is destinations. The trailing pointers
+      that already existed were kept and reworded, not replaced, so no page lost a link it had.
+- [x] D2. Task-oriented titles for how-to pages. 26 pages renamed, and every link whose text was the
+      old title updated with it. Reference pages kept their noun titles on purpose: the Diátaxis
+      split this revamp adopted puts task titles on how-to pages and descriptive ones on reference.
+      So `Glossary`, `Architecture`, `Public API`, `Integration Manifests` and the rest are
+      unchanged, while `Model Providers & Subscriptions` became `Connect a Model Provider` and
+      `Ephemeral Environments` became `Provision Ephemeral Environments`.
+- [x] D3. Both oversized pages split.
+      - `guide/running-pipelines.md` (671 lines) split by *when you need it* rather than by doc
+        type, which is where its two needs actually part: design time (which chain to run, and how
+        to edit one) versus run time (start it, watch it, answer what it asks). The catalog,
+        presets, builder edits, step gating, binary-output steps and consensus moved to the new
+        `guide/choosing-a-pipeline.md` ("Choose and Edit a Pipeline"); starting, models, live
+        progress, the test report, the human gates, retries and the lifecycle stayed on
+        `running-pipelines.md` ("Run a Pipeline"), which keeps the URL the code repo links.
+      - `extend/custom-agents.md` (966 lines) split by extension shape: authoring an agent kind
+        stayed, and gates, step-completion resolvers and judges moved to the new
+        `extend/custom-gates.md` ("Add a Custom Gate or Judge"). A how-to/reference split was the
+        first plan and was rejected: the generated `reference/environment-variables.md` links
+        `custom-agents.md#skills-and-tool-servers` through `scripts/sync-env-vars.mjs`, so moving
+        the definition tables off that page would break a link on a page that must not be
+        hand-edited. Splitting by shape leaves that anchor where it is, and the two halves are two
+        genuinely different jobs. Packaging, wiring and boot-time validation are shared and stayed
+        on the agent page, linked from the gate page rather than duplicated.
 - [x] D4. The first-task-to-merged-PR tutorial (Start).
+
+Neither split moved a URL, so neither needed a redirect: each new page is a new URL and each old
+page kept its own. Every in-site link and heading anchor was re-checked after the moves and the
+renames; one pre-existing broken anchor (`budgets.md` → `#budget-of-0-local--or-subscription-only`,
+a doubled dash) turned up in that sweep and was fixed.
 
 ## Docs added since this tracker was written
 
@@ -177,9 +202,11 @@ leaving them for a later slice:
   fails on staleness. The canonical list has to stay in the code repo because a CI guard there
   reads it, and that guard is only useful when it fires in the PR that adds the variable.
 - **The `sync-docs` skill maps code-repo changes onto doc paths.** Its table has been updated for
-  the six sections, and it now names the two pages that are generated or owned elsewhere.
+  the six sections and for phase D's two splits, and it names the two pages that are generated or
+  owned elsewhere.
 - **The search plugin indexes headings.** Heading text was kept stable through the moves, so
-  remembered searches keep working.
+  remembered searches keep working. Phase D's renames changed page titles (H1s) but left every H2
+  and H3 alone, which is also what kept the anchor churn to the two split pages.
 - **New pages must not restate the code repo.** Content arrives by the sibling tracker's
   move-not-mirror rule; a page authored here from scratch while the repo doc lives on recreates the
   drift this revamp removes.

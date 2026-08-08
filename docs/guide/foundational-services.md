@@ -1,8 +1,8 @@
-# Foundational Services
+# Register Foundational Services
 
-A foundational service is a shared capability your organization already runs: file storage,
-notifications, audit, identity. Register it once and the agents designing work on your board consume
-it instead of proposing a rebuild.
+For an organization whose agents keep proposing to rebuild something it already runs. A foundational
+service is a shared capability you already have: file storage, notifications, audit, identity.
+Register it once and the agents designing work on your board consume it instead.
 
 This is standing platform context, not per-task setup. A board can deliver its whole backlog with an
 empty catalog; you fill it once, from whoever knows the estate.
@@ -75,7 +75,7 @@ Capability tags are free-form, with two exceptions the platform reads:
 
 | Tag | Meaning |
 | --- | --- |
-| `asset-storage` | Required for a service to be selectable as a [binary-output step's](./running-pipelines.md#binary-output-steps) storage target. Enforced at run admission. |
+| `asset-storage` | Required for a service to be selectable as a [binary-output step's](./choosing-a-pipeline.md#binary-output-steps) storage target. Enforced at run admission. |
 | `generation-context` | Conventional, not enforced. Marks a service that can scope a generation by answering "what entities exist, which lack an asset, how is each described". A picker orders by it. |
 
 A near-miss of either (`asset_storage`, `Asset-Storage`, `assetstorage`) is refused at registration.
@@ -120,7 +120,7 @@ The catalog merges three tiers, each overriding the one below it by service id:
 
 | Tier | Where it comes from |
 | --- | --- |
-| **Deployment** | Registered in code by the deployment. See [Deployment Repository](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code). |
+| **Deployment** | Registered in code by the deployment. See [Set Up Your Deployment Repository](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code). |
 | **Account** | Registered in the app at account scope. Inherited by every board under the account. |
 | **Board** | Registered in the app on one board. |
 
@@ -147,5 +147,5 @@ state the failure in the run's report.
 ---
 
 Next: see how a design's declared services reach a run's outputs in
-[Running Pipelines](./running-pipelines.md), or register your estate in code from a
+[Run a Pipeline](./running-pipelines.md), or register your estate in code from a
 [deployment repository](../deploy/deployment-repository.md).
