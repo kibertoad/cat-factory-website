@@ -40,8 +40,12 @@ const sourcePath = path.join(repoRoot, ...sourceRelPath.split('/'))
 const targetPath = path.join(referenceDir, 'environment-variables.md')
 const baselinePath = path.join(here, 'env-vars-coverage-baseline.json')
 const configurationPath = path.join(docsRoot, 'deploy', 'configuration.md')
+// Which revision to READ the canonical list from. Only this varies: the links this page EMITS
+// always point at main, because they are published permalinks for readers. Letting the ref reach
+// them would also make --check fail on URL differences alone whenever it compared against a
+// branch, which is precisely when it is being used to confirm a paired pull request.
 const ref = process.env.CAT_FACTORY_REF ?? 'main'
-const blob = `https://github.com/kibertoad/cat-factory/blob/${ref}`
+const blob = 'https://github.com/kibertoad/cat-factory/blob/main'
 const raw = `https://raw.githubusercontent.com/kibertoad/cat-factory/${ref}`
 const sourceUrl = `${blob}/${sourceRelPath}`
 
