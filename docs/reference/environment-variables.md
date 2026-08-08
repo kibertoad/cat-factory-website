@@ -10,8 +10,11 @@ deployment modes each applies to. This page is generated from the
 [canonical list in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/environment-variables.md), which a CI guard reads on every change, so
 the two cannot drift.
 
-For the narrative on how to configure a deployment (what to set first, what refuses to boot without
-it), read [Configuration](../deploy/configuration.md) instead. This page is the complete list.
+That canonical list is the backend's own, and a deployment needs a few things it does not carry —
+frontend build variables, and integration credentials that are entered in the UI rather than read
+from the environment. For the narrative on how to configure a deployment (what to set first, what
+refuses to boot without it), read [Configuration](../deploy/configuration.md), which is the
+authoritative page for standing a deployment up.
 
 ## These names are RESERVED
 

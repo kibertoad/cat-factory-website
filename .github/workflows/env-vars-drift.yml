@@ -1,0 +1,71 @@
+name: Environment-variable drift
+
+# docs/reference/environment-variables.md is rendered from the canonical list in
+# kibertoad/cat-factory. That list lives in the other repository on purpose (a CI guard there reads
+# it), so this site can only ever be as current as the last sync.
+#
+# This runs on a schedule rather than on pull requests. The two repositories move in PAIRED pull
+# requests, so this site legitimately leads or lags the code repo's main branch for the life of a
+# pair. Blocking a pull request on it would go red for a reason that pull request cannot fix, which
+# is how a guard gets ignored and then removed. Here, red means exactly one thing: someone should
+# re-sync.
+#
+# The pull-request-blocking half of this design is `--verify` in ci.yml, which depends only on
+# files committed here.
+on:
+  schedule:
+    # Mondays, 06:17 UTC. Off the hour so it is not queued behind the top-of-hour rush.
+    - cron: '17 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Ref in kibertoad/cat-factory to compare against'
+        required: false
+        default: 'main'
+
+# Least privilege: grant no permissions by default, escalate per-job
+permissions: {}
+
+jobs:
+  check:
+    name: Check against the canonical list
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      # No local checkout of the code repo, so the script fetches the canonical list over HTTPS.
+      - name: Compare rendered page against the canonical list
+        id: check
+        env:
+          CAT_FACTORY_REF: ${{ inputs.ref || 'main' }}
+        run: node scripts/sync-env-vars.mjs --check
+
+      - name: Explain a failure
+        if: failure() && steps.check.outcome == 'failure'
+        env:
+          CAT_FACTORY_REF: ${{ inputs.ref || 'main' }}
+        run: |
+          {
+            echo "## Environment-variable reference has drifted"
+            echo
+            echo "\`docs/reference/environment-variables.md\` no longer matches a render of"
+            echo "\`docs/environment-variables.md\` in kibertoad/cat-factory@\`$CAT_FACTORY_REF\`."
+            echo
+            echo "Two things look the same here and are not:"
+            echo
+            echo "1. **Upstream moved ahead.** Re-sync: clone kibertoad/cat-factory beside this"
+            echo "   repo and run \`pnpm run docs:env-vars\`, then commit the result."
+            echo "2. **A paired pull request is still open.** If this site's page was rendered from"
+            echo "   a cat-factory branch that has not merged yet, this is expected until it does."
+            echo "   Re-run this workflow with that branch as the \`ref\` input to confirm."
+          } >> "$GITHUB_STEP_SUMMARY"

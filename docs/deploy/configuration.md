@@ -402,7 +402,7 @@ schedule. See [Observability → The telemetry store](../operate/observability.m
 | --- | --- |
 | `TELEMETRY_DB` | Cloudflare only. D1 binding for the telemetry store. Required on the Worker: the build path and the retention cron fail fast if it is unbound. On Node and local the store is a `telemetry` schema in `DATABASE_URL`, with no separate binding. |
 | `PROVISIONING_DB` | Cloudflare only. Optional D1 binding for the ephemeral-environment and container-provisioning event log. The log is off when unbound. On Node and local it is a `provisioning` schema in `DATABASE_URL`. |
-| `LLM_CALL_METRICS_RETENTION_DAYS` | How long call metrics and agent-context snapshots are kept before the retention cron prunes them. Defaults to 3 days. |
+| `LLM_CALL_METRICS_RETENTION_DAYS` | How long call metrics and agent-context snapshots are kept before the retention cron prunes them. Defaults to 14 days. |
 | `PROVISIONING_LOG_RETENTION_DAYS` | How long provisioning events are kept. Defaults to 14 days. |
 
 The **post-release-health** gate and **Agent-On-Call** watch production through a pluggable

@@ -166,5 +166,7 @@ add workspace fragments only where a specific board needs to differ.
 
 ---
 
-That completes the usage guides. For operating the platform, head to
-[Deploy & Operate](../deploy/cloudflare.md), or browse the [Reference](../reference/architecture.md).
+That completes the usage guides. To stand a deployment up, head to
+[Deploy](../deploy/configuration.md); to run one day to day, [Operate](../operate/observability.md).
+To build your own agents, gates and providers, see [Extend](../extend/custom-agents.md), or browse
+the [Reference](../reference/architecture.md).

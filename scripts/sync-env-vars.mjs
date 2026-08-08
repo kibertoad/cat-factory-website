@@ -6,23 +6,44 @@
 // reserved set, and that guard is only useful when it fires in the pull request that adds the
 // variable. So this site renders that file rather than keeping a second copy of it.
 //
-//   node scripts/sync-env-vars.mjs                       # expects ../cat-factory
+//   node scripts/sync-env-vars.mjs                       # render; expects ../cat-factory
 //   CAT_FACTORY_REPO=/path/to/cat-factory node scripts/sync-env-vars.mjs
+//   CAT_FACTORY_REF=some-branch node scripts/sync-env-vars.mjs   # fetch over HTTPS instead
 //   node scripts/sync-env-vars.mjs --check               # fail if the rendered page is stale
+//   node scripts/sync-env-vars.mjs --verify              # offline checks on the committed page
+//   node scripts/sync-env-vars.mjs --update-baseline     # re-record the coverage baseline
 //
-// Run it after pulling the code repo, and commit the result.
+// Run the render after pulling the code repo, and commit the result.
+//
+// The two check modes are deliberately split by what they depend on:
+//
+//   --check   needs the canonical source, so it can only be as current as the OTHER repo. The two
+//             repos move in paired pull requests, so this site legitimately leads or lags upstream
+//             main for the life of a pair. Running it as a blocking pull-request gate would go red
+//             for a reason the pull request under review cannot fix, so it runs on a schedule
+//             instead: red there means "go re-sync", not "this change is broken".
+//   --verify  depends only on files committed here, so it is deterministic and safe to block a
+//             pull request on. It is what catches a hand-edited page, a dead cross-link, and new
+//             coverage drift.
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const siteRoot = path.resolve(here, '..')
+const docsRoot = path.join(siteRoot, 'docs')
+const referenceDir = path.join(docsRoot, 'reference')
 const repoRoot = path.resolve(process.env.CAT_FACTORY_REPO ?? path.join(siteRoot, '..', 'cat-factory'))
-const sourcePath = path.join(repoRoot, 'docs', 'environment-variables.md')
-const targetPath = path.join(siteRoot, 'docs', 'reference', 'environment-variables.md')
-const blob = 'https://github.com/kibertoad/cat-factory/blob/main'
-const sourceUrl = `${blob}/docs/environment-variables.md`
+const sourceRelPath = 'docs/environment-variables.md'
+const sourcePath = path.join(repoRoot, ...sourceRelPath.split('/'))
+const targetPath = path.join(referenceDir, 'environment-variables.md')
+const baselinePath = path.join(here, 'env-vars-coverage-baseline.json')
+const configurationPath = path.join(docsRoot, 'deploy', 'configuration.md')
+const ref = process.env.CAT_FACTORY_REF ?? 'main'
+const blob = `https://github.com/kibertoad/cat-factory/blob/${ref}`
+const raw = `https://raw.githubusercontent.com/kibertoad/cat-factory/${ref}`
+const sourceUrl = `${blob}/${sourceRelPath}`
 
 // Repo-relative link targets that have a page on this site. Anything else becomes a GitHub link,
 // which is honest: those documents are for people changing the code.
@@ -48,26 +69,132 @@ deployment modes each applies to. This page is generated from the
 [canonical list in the code repository](${sourceUrl}), which a CI guard reads on every change, so
 the two cannot drift.
 
-For the narrative on how to configure a deployment (what to set first, what refuses to boot without
-it), read [Configuration](../deploy/configuration.md) instead. This page is the complete list.
+That canonical list is the backend's own, and a deployment needs a few things it does not carry —
+frontend build variables, and integration credentials that are entered in the UI rather than read
+from the environment. For the narrative on how to configure a deployment (what to set first, what
+refuses to boot without it), read [Configuration](../deploy/configuration.md), which is the
+authoritative page for standing a deployment up.
 
 `
+
+const failures = []
+const warnings = []
+
+function fail(message) {
+  failures.push(message)
+}
+
+// GitHub/VuePress-flavoured heading slug: strip inline markup, drop anything that is not a word
+// character, space or hyphen, then hyphenate. Good enough to catch a link pointing at a heading
+// that does not exist, which is the whole job here.
+function slugify(heading) {
+  return heading
+    .replace(/`([^`]*)`/g, '$1')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[*_~]/g, '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+}
+
+// Body lines only: skips YAML frontmatter (whose comments start with # but are not headings) and
+// fenced code blocks (where a shell comment does the same).
+function* markdownLines(content) {
+  const lines = content.split('\n')
+  let i = 0
+  if (lines[0] === '---') {
+    i = 1
+    while (i < lines.length && lines[i] !== '---') i++
+    i++
+  }
+  let inFence = false
+  for (; i < lines.length; i++) {
+    if (/^\s*(```|~~~)/.test(lines[i])) {
+      inFence = !inFence
+      continue
+    }
+    if (!inFence) yield lines[i]
+  }
+}
+
+function headings(content, depth = 6) {
+  const found = []
+  for (const line of markdownLines(content)) {
+    const m = new RegExp(`^(#{1,${depth}})\\s+(.*?)\\s*$`).exec(line)
+    if (m) found.push(m[2])
+  }
+  return found
+}
+
+const anchorCache = new Map()
+
+function anchorsOf(filePath) {
+  if (anchorCache.has(filePath)) return anchorCache.get(filePath)
+  const anchors = existsSync(filePath)
+    ? new Set(headings(readFileSync(filePath, 'utf8')).map(slugify))
+    : null
+  anchorCache.set(filePath, anchors)
+  return anchors
+}
+
+// Resolve a site-relative markdown link (as written inside docs/reference/) to a path on disk.
+function resolveSiteLink(target) {
+  return path.resolve(referenceDir, target)
+}
+
+// Check that `target#anchor` resolves. Returns the link to actually emit: the anchor is dropped
+// when it does not exist, so the reader still lands on the right page instead of nowhere, and the
+// output stays deterministic for --check.
+function checkedSiteLink(target, context) {
+  const [file, anchor] = target.split('#')
+  const filePath = resolveSiteLink(file)
+  const anchors = anchorsOf(filePath)
+  if (anchors === null) {
+    fail(`${context}: links to ${file}, which does not exist on this site`)
+    return target
+  }
+  if (anchor && !anchors.has(anchor)) {
+    warnings.push(
+      `${context}: dropped #${anchor} — ${file} has no such heading. ` +
+        'The pages on this site are written independently of the code repo, so an upstream anchor ' +
+        'does not necessarily exist here. Point the siteLinks entry at a real heading to keep it.',
+    )
+    return file
+  }
+  return target
+}
 
 function render(source) {
   let body = source
 
   // Drop the repo doc's own title and its contributor-facing opening paragraph; the header above
-  // states the same thing for this audience.
-  body = body.replace(/^# Environment variables\n+[\s\S]*?\n(?=## These names are RESERVED)/, '')
+  // states the same thing for this audience. Assert it happened: if upstream renames the title or
+  // the RESERVED heading this silently becomes a no-op and the page ships with two H1s.
+  const titleBlock = /^# Environment variables\n+[\s\S]*?\n(?=## These names are RESERVED)/
+  if (!titleBlock.test(body)) {
+    fail(
+      'could not find the upstream title block ("# Environment variables" … "## These names are ' +
+        `RESERVED") in ${sourceRelPath}. Upstream changed shape; update the titleBlock pattern.`,
+    )
+  }
+  body = body.replace(titleBlock, '')
 
   // Rewrite repo-relative links: onto this site where a page owns the topic, onto GitHub otherwise.
-  body = body.replace(/\]\((\.\.?\/[^)\s#]+\.md)(#[^)\s]*)?\)/g, (whole, rel, anchor = '') => {
+  // Matches bare relative targets (`initiatives/foo.md`) as well as `./` and `../` ones — an
+  // unrewritten bare link would 404 on this site, since the two repos have different layouts.
+  body = body.replace(/\]\(([^)\s#]+\.md)(#[^)\s]*)?\)/g, (whole, rel, anchor = '') => {
+    if (/^(https?:)?\/\//.test(rel) || rel.startsWith('/')) return whole
     const repoRel = path
       .relative(repoRoot, path.resolve(path.join(repoRoot, 'docs'), rel))
       .split(path.sep)
       .join('/')
     const onSite = siteLinks.get(repoRel)
-    if (onSite) return `](${onSite}${onSite.includes('#') ? '' : anchor})`
+    if (onSite) {
+      // An anchor already in the mapping wins: it was chosen against this site's headings.
+      const target = onSite.includes('#') ? onSite : `${onSite}${anchor}`
+      return `](${checkedSiteLink(target, `link to ${repoRel}`)})`
+    }
     return `](${blob}/${repoRel}${anchor})`
   })
 
@@ -77,29 +204,169 @@ function render(source) {
   return `${header}${body.trimStart()}\n---\n\nNext: [Configuration](../deploy/configuration.md) for what to set first, or\n[Upgrades & Data Retention](../operate/upgrades-and-retention.md) for the retention windows in context.\n`
 }
 
-let source
-try {
-  source = readFileSync(sourcePath, 'utf8')
-} catch {
-  console.error(
-    `Could not read ${sourcePath}.\n` +
-      'Clone kibertoad/cat-factory beside this repo, or set CAT_FACTORY_REPO to its path.',
-  )
-  process.exit(1)
+// ---------------------------------------------------------------------------
+// Offline verification of whatever is committed at docs/reference/environment-variables.md
+// ---------------------------------------------------------------------------
+
+const VARIABLE = /`([A-Z][A-Z0-9_]{2,})`/g
+
+// Variable names appearing in the first column of a markdown table. Those cells are where
+// configuration.md enumerates variables; prose mentions elsewhere are not a promise of coverage.
+function tableVariables(content) {
+  const found = new Set()
+  for (const line of content.split('\n')) {
+    const cell = /^\|\s*([^|]+?)\s*\|/.exec(line)
+    if (!cell) continue
+    for (const m of cell[1].matchAll(VARIABLE)) found.add(m[1])
+  }
+  return found
 }
 
-const rendered = render(source)
+function documentedVariables(content) {
+  const found = new Set()
+  for (const m of content.matchAll(VARIABLE)) found.add(m[1])
+  return found
+}
 
-if (process.argv.includes('--check')) {
-  const current = readFileSync(targetPath, 'utf8')
-  if (current !== rendered) {
+// Variables this site documents in Configuration that the canonical list does not carry. Some are
+// out of the canonical list's scope by design (frontend build variables, UI-entered integration
+// credentials); others are genuine upstream omissions. Telling those apart needs the code, so this
+// does not try: it ratchets on the SET, failing only when it grows. A new omission is a real
+// regression; the standing gap is recorded in the baseline and shrinks as upstream catches up.
+function coverageGap(generated) {
+  const documented = tableVariables(readFileSync(configurationPath, 'utf8'))
+  const covered = documentedVariables(generated)
+  return [...documented].filter((name) => !covered.has(name)).sort()
+}
+
+function readBaseline() {
+  return JSON.parse(readFileSync(baselinePath, 'utf8'))
+}
+
+function verify(generated) {
+  // 1. The page must still be a generated page. A hand edit that strips the banner is the failure
+  //    this whole design exists to prevent, and it is invisible until the next sync overwrites it.
+  if (!generated.includes('# GENERATED by scripts/sync-env-vars.mjs. Do not edit by hand.')) {
+    fail('docs/reference/environment-variables.md has lost its GENERATED banner')
+  }
+  // Two H1s is the exact symptom of the upstream title block no longer being stripped.
+  const h1s = headings(generated, 1)
+  if (h1s.length !== 1) {
+    fail(`expected exactly one H1 in the generated page, found ${h1s.length}: ${h1s.join(' | ')}`)
+  }
+
+  // 2. Every relative link must resolve to a real page, with a real anchor.
+  for (const m of generated.matchAll(/\]\(([^)\s#]+\.md)(#[^)\s]*)?\)/g)) {
+    const [, target, anchor = ''] = m
+    if (/^(https?:)?\/\//.test(target) || target.startsWith('/')) continue
+    const filePath = resolveSiteLink(target)
+    const anchors = anchorsOf(filePath)
+    if (anchors === null) {
+      fail(`generated page links to ${target}, which does not exist on this site`)
+      continue
+    }
+    if (anchor && !anchors.has(anchor.slice(1))) {
+      fail(`generated page links to ${target}${anchor}, but that page has no such heading`)
+    }
+  }
+
+  // 3. Coverage must not get worse.
+  const baseline = readBaseline()
+  const gap = coverageGap(generated)
+  const known = new Set(baseline.missingFromCanonicalList)
+  const added = gap.filter((name) => !known.has(name))
+  const closed = baseline.missingFromCanonicalList.filter((name) => !gap.includes(name))
+  if (added.length) {
+    fail(
+      `${added.length} variable(s) documented in docs/deploy/configuration.md are missing from the ` +
+        `canonical list and are not in the baseline: ${added.join(', ')}.\n` +
+        '  Add them to kibertoad/cat-factory docs/environment-variables.md and re-sync, or — if ' +
+        'they are out of that list\'s scope — record them with: node scripts/sync-env-vars.mjs --update-baseline',
+    )
+  }
+  if (closed.length) {
+    fail(
+      `${closed.length} baseline entr(ies) are now covered upstream: ${closed.join(', ')}.\n` +
+        '  Shrink the baseline with: node scripts/sync-env-vars.mjs --update-baseline',
+    )
+  }
+  return gap
+}
+
+function writeBaseline(generated) {
+  const gap = coverageGap(generated)
+  const baseline = {
+    _comment:
+      'Variables documented in docs/deploy/configuration.md tables that the code repo\'s canonical ' +
+      'environment-variable list does not carry. Some are out of that list\'s scope by design ' +
+      '(frontend build variables, UI-entered integration credentials); the rest are upstream gaps. ' +
+      'scripts/sync-env-vars.mjs --verify fails when this set grows, so new drift is caught; the ' +
+      'list should shrink over time as upstream catches up.',
+    missingFromCanonicalList: gap,
+  }
+  writeFileSync(baselinePath, `${JSON.stringify(baseline, null, 2)}\n`)
+  return gap
+}
+
+// ---------------------------------------------------------------------------
+
+async function readSource() {
+  if (existsSync(sourcePath)) return readFileSync(sourcePath, 'utf8')
+  // No local checkout: fetch the canonical list over HTTPS so the scheduled drift check can run
+  // without cloning a second repository.
+  const url = `${raw}/${sourceRelPath}`
+  const response = await fetch(url)
+  if (!response.ok) {
     console.error(
-      'docs/reference/environment-variables.md is stale. Run: node scripts/sync-env-vars.mjs',
+      `Could not read ${sourcePath}, and fetching ${url} returned ${response.status}.\n` +
+        'Clone kibertoad/cat-factory beside this repo, or set CAT_FACTORY_REPO to its path.',
     )
     process.exit(1)
   }
-  console.log('environment-variables.md is up to date')
+  return response.text()
+}
+
+function report() {
+  for (const warning of warnings) console.warn(`warning: ${warning}`)
+  if (failures.length) {
+    for (const failure of failures) console.error(`error: ${failure}`)
+    process.exit(1)
+  }
+}
+
+const mode = process.argv.includes('--check')
+  ? 'check'
+  : process.argv.includes('--verify')
+    ? 'verify'
+    : process.argv.includes('--update-baseline')
+      ? 'update-baseline'
+      : 'render'
+
+if (mode === 'verify') {
+  const gap = verify(readFileSync(targetPath, 'utf8'))
+  report()
+  console.log(
+    `environment-variables.md verified: generated banner intact, links resolve, ` +
+      `${gap.length} known coverage gap(s) unchanged`,
+  )
+} else if (mode === 'update-baseline') {
+  const gap = writeBaseline(readFileSync(targetPath, 'utf8'))
+  console.log(`wrote ${path.relative(siteRoot, baselinePath)} with ${gap.length} entr(ies)`)
 } else {
-  writeFileSync(targetPath, rendered)
-  console.log(`wrote ${path.relative(siteRoot, targetPath)} from ${sourceUrl}`)
+  const rendered = render(await readSource())
+  report()
+  if (mode === 'check') {
+    const current = readFileSync(targetPath, 'utf8')
+    if (current !== rendered) {
+      console.error(
+        `docs/reference/environment-variables.md is stale against kibertoad/cat-factory@${ref}.\n` +
+          'Run: node scripts/sync-env-vars.mjs',
+      )
+      process.exit(1)
+    }
+    console.log(`environment-variables.md is up to date with kibertoad/cat-factory@${ref}`)
+  } else {
+    writeFileSync(targetPath, rendered)
+    console.log(`wrote ${path.relative(siteRoot, targetPath)} from ${sourceUrl}`)
+  }
 }

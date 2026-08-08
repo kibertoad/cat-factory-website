@@ -84,8 +84,6 @@ Match the voice and structure of the surrounding doc you are editing.
 
 ## Feature-area to doc-file map
 
-| Area in the code | Doc file(s) |
-| --- | --- |
 The site has six sections: `docs/guide/` (Start and Guides), `docs/deploy/`, `docs/operate/`,
 `docs/extend/`, and `docs/reference/`. Operating and extension pages moved out of `docs/deploy/`,
 so a path from an older sync may no longer exist.
@@ -126,10 +124,17 @@ closest page, or note it as out of scope.
 - **`docs/reference/environment-variables.md` is generated** from the code repo's
   `docs/environment-variables.md` by `node scripts/sync-env-vars.mjs`. A commit that adds or changes
   an environment variable is synced by running that script (with `CAT_FACTORY_REPO` pointing at the
-  checkout) and committing the result, never by editing the page. `--check` reports staleness.
+  checkout) and committing the result, never by editing the page. Three modes back that up:
+  `pnpm run docs:env-vars` renders, `docs:env-vars:check` compares against the code repo, and
+  `docs:env-vars:verify` runs the offline checks that CI blocks on.
 - **The canonical variable list stays in the code repo** because a CI guard there reads it. If the
   code repo's own list is missing a variable the commit added, say so in the PR rather than
   documenting it only here: a variable documented only on this site is one the guard cannot see.
+  `--verify` enforces this: it fails when a variable appears in a `docs/deploy/configuration.md`
+  table but not in the generated page, unless it is recorded in
+  `scripts/env-vars-coverage-baseline.json`. Recording one with `--update-baseline` is the escape
+  hatch for variables genuinely outside the canonical list's scope (frontend build variables,
+  UI-entered credentials) — it is not the way to close a real gap. Fix those upstream.
 
 ## Ownership: this site vs the code repo
 

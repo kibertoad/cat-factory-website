@@ -10,7 +10,10 @@
     "docs:build": "vuepress build docs",
     "docs:clean-dev": "vuepress dev docs --clean-cache",
     "docs:preview": "vuepress build docs && vuepress dev docs",
-    "docs:images": "node scripts/optimize-images.mjs"
+    "docs:images": "node scripts/optimize-images.mjs",
+    "docs:env-vars": "node scripts/sync-env-vars.mjs",
+    "docs:env-vars:check": "node scripts/sync-env-vars.mjs --check",
+    "docs:env-vars:verify": "node scripts/sync-env-vars.mjs --verify"
   },
   "devDependencies": {
     "@vuepress/bundler-vite": "2.0.0-rc.30",

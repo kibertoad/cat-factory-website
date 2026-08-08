@@ -21,6 +21,38 @@ npm run docs:dev
 npm run docs:build
 ```
 
+## The generated environment-variable reference
+
+`docs/reference/environment-variables.md` is **generated** — do not hand-edit it. It is rendered
+from `docs/environment-variables.md` in [kibertoad/cat-factory](https://github.com/kibertoad/cat-factory),
+which stays there because a CI guard in that repo reads it, and which is only useful when it fires
+in the pull request that adds the variable. Rendering rather than copying is what keeps the two
+from drifting.
+
+```bash
+# Render the page (expects ../cat-factory, or set CAT_FACTORY_REPO)
+npm run docs:env-vars
+
+# Offline checks — this is what CI blocks pull requests on
+npm run docs:env-vars:verify
+
+# Compare against the code repo's current canonical list
+npm run docs:env-vars:check
+```
+
+The two check modes are split by what they depend on, which is what decides where each can run:
+
+- **`:verify`** reads only files committed here, so it is deterministic and blocks pull requests
+  ([`ci.yml`](.github/workflows/ci.yml)). It catches a hand-edited page, a cross-link pointing at a
+  page or heading that does not exist, and growth in the set of variables that
+  `docs/deploy/configuration.md` documents but the canonical list omits. That set is recorded in
+  [`scripts/env-vars-coverage-baseline.json`](./scripts/env-vars-coverage-baseline.json) and
+  ratchets: new drift fails, and the baseline shrinks as upstream catches up.
+- **`:check`** needs the code repo, so it can only be as current as that repo. The two move in
+  paired pull requests and this site legitimately leads or lags upstream `main` while a pair is
+  open, so it runs weekly ([`env-vars-drift.yml`](.github/workflows/env-vars-drift.yml)) instead of
+  blocking a pull request it could fail for reasons that pull request cannot fix.
+
 ## Images
 
 Screenshots live in `docs/.vuepress/public/images/` and are committed as optimized **WebP**.
@@ -49,14 +81,18 @@ docs/
 ├── .vuepress/
 │   └── config.js          # Site config: nav, sidebar, theme, base path
 ├── README.md              # Home page (hero + features)
-├── guide/                 # Get Started + Using Cat Factory
-├── deploy/                # Deploy & Operate
-└── reference/             # Architecture, HTTP API, data model, packages
+├── guide/                 # Start + Guides (both navbar entries live here)
+├── deploy/                # Install and configure a deployment
+├── operate/               # Run a deployment day to day
+├── extend/                # Build agents, gates, providers and API clients
+└── reference/             # Architecture, environment variables, packages, glossary
+
+scripts/                   # Repo tooling: image optimization, env-var sync
 ```
 
-Anything under `planning/` is an unpublished in-flight plan, not site content. The section
-restructure currently proposed there:
-[`planning/documentation-revamp.md`](./planning/documentation-revamp.md).
+Anything under `planning/` is an unpublished in-flight plan, not site content.
+[`planning/documentation-revamp.md`](./planning/documentation-revamp.md) tracks the section
+restructure and the follow-up work still open.
 
 ## Deployment
 

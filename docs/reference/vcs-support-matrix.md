@@ -13,10 +13,11 @@ need to resolve to the right connection.
 ## Setting each one up
 
 - **GitHub**: register a GitHub App. See [GitHub App](../deploy/github-app.md).
-- **GitLab**: opt-in and off by default. Set `GITLAB_TOKEN` to enable the provider, and optionally
-  `GITLAB_API_BASE` for a self-managed instance (it defaults to gitlab.com),
-  `GITLAB_CONNECTION_ID`, and `GITLAB_WEBHOOK_SECRET` for webhook delivery. Every runtime (Node,
-  Cloudflare, and local mode) wires it the same way. See
+- **GitLab**: opt-in and off by default. The provider works on every runtime, but the token is named
+  per runtime: set `GITLAB_TOKEN` (scope `api`) on Cloudflare and Node, or `GITLAB_PAT` in
+  [local mode](../deploy/local.md#gitlab-in-local-mode). `GITLAB_API_BASE` is optional on all three
+  and points at a self-managed instance (it defaults to gitlab.com). `GITLAB_CONNECTION_ID` and
+  `GITLAB_WEBHOOK_SECRET` (webhook delivery) are optional and apply to Cloudflare and Node. See
   [Configuration → GitLab](../deploy/configuration.md#gitlab-source-control).
 
 Each provider's API base also decides the **web host** the app links repositories, merge and pull
