@@ -54,6 +54,10 @@ docs/
 └── reference/             # Architecture, HTTP API, data model, packages
 ```
 
+Anything under `planning/` is an unpublished in-flight plan, not site content. The section
+restructure currently proposed there:
+[`planning/documentation-revamp.md`](./planning/documentation-revamp.md).
+
 ## Deployment
 
 Every push to `main` triggers the
