@@ -1,3 +1,8 @@
+---
+redirectFrom:
+  - /reference/manifests.html
+---
+
 # Integration Manifests
 
 Cat Factory is self-hosted and has no public API to integrate against. Where it *does* reach out
@@ -9,9 +14,9 @@ integrate with.
 There are two manifests, and they share the same building blocks:
 
 - Ephemeral environment provider: your provision / status / teardown API. See
-  [Ephemeral Environments](../deploy/environments.md).
+  [Ephemeral Environments](../operate/environments.md).
 - Runner pool: your container/runner scheduler's dispatch / poll / release API. See
-  [Runner Pools](../deploy/runner-pools.md).
+  [Runner Pools](../operate/runner-pools.md).
 
 You author both in-app, in the top-level **Infrastructure** window (a **Container agents**
 tab for the runner pool, a **Test environments** tab for the environment provider). Each tab has a
@@ -39,12 +44,12 @@ out of the per-run container.
 ### Per-workspace config for code adapters
 
 A manifest can also carry an optional **`providerConfig`**, an opaque key/value bag that the
-generic HTTP adapter ignores, but a [custom code adapter](../deploy/custom-providers.md) reads for
+generic HTTP adapter ignores, but a [custom code adapter](./custom-providers.md) reads for
 settings the standard fields don't cover (a project name, a target service, status-vocabulary
 overrides). Because it rides the connection, it is **per workspace**: one deployment-wide code
 adapter can serve many workspaces, each with its own `providerConfig`, while deployment-wide
 defaults come from the environment. See
-[Custom Providers → How configuration reaches your adapter](../deploy/custom-providers.md#how-configuration-reaches-your-adapter).
+[Custom Providers → How configuration reaches your adapter](./custom-providers.md#how-configuration-reaches-your-adapter).
 
 ## Environment provider manifest
 
@@ -91,5 +96,5 @@ live subtask progress.
 
 ---
 
-For the deployment steps that register these, see [Runner Pools](../deploy/runner-pools.md) and
-[Ephemeral Environments](../deploy/environments.md).
+For the deployment steps that register these, see [Runner Pools](../operate/runner-pools.md) and
+[Ephemeral Environments](../operate/environments.md).

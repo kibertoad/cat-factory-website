@@ -3,7 +3,7 @@
 Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR and Docker Hub). You don't fork
 it. Instead, you assemble a small **deployment repository** of thin packages that depend on the published
 libraries and carry only your configuration: environment, secrets, a `Dockerfile`, and any
-[custom providers](./custom-providers.md) you wire in.
+[custom providers](../extend/custom-providers.md) you wire in.
 
 This page walks through standing one up from scratch, the layout that keeps upgrades to a
 dependency bump, and the local development loop.
@@ -26,7 +26,7 @@ typical self-hosted setup has three:
 
 You rarely need all three: pick the runtime you deploy (`backend` **or** the Cloudflare worker),
 keep `local` for development, and add `frontend` if you serve your own board UI. If you write a
-[custom provider](./custom-providers.md), it lives here too, as a `packages/*` workspace package the
+[custom provider](../extend/custom-providers.md), it lives here too, as a `packages/*` workspace package the
 deploy packages depend on.
 
 ```
@@ -128,7 +128,7 @@ export default defineNuxtConfig({
 })
 ```
 
-When you're ready to inject a [custom provider](./custom-providers.md), these are the exact files
+When you're ready to inject a [custom provider](../extend/custom-providers.md), these are the exact files
 where it plugs in. Both `start()` and `startLocal()` take an options object for that, and nothing
 else changes.
 
@@ -148,7 +148,7 @@ The full set of variables is documented in [Configuration](./configuration.md). 
 
 ## 5. Register your platform data in code
 
-Beyond [custom agents and gates](./custom-agents.md), a deployment declares parts of its own estate
+Beyond [custom agents and gates](../extend/custom-agents.md), a deployment declares parts of its own estate
 programmatically, so a fresh workspace is useful from its first request with no manual setup step.
 Each of these follows the same shape: build a registry, register on it, pass it to the start
 function.
@@ -181,10 +181,10 @@ await start({ foundationalServiceRegistry })
 
 | Registry | What it declares |
 | --- | --- |
-| `defaultAgentKindRegistry()` | [Custom agent kinds](./custom-agents.md), their traits, bundled skills, and MCP tool servers. |
-| `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](./custom-agents.md#custom-gates). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
+| `defaultAgentKindRegistry()` | [Custom agent kinds](../extend/custom-agents.md), their traits, bundled skills, and MCP tool servers. |
+| `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](../extend/custom-agents.md#custom-gates). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
 | `defaultPipelineRegistry()` | Predefined pipelines. |
-| `defaultTaskTypeRegistry()` | Namespaced [custom task types](./frontend-extensions.md#custom-task-types). |
+| `defaultTaskTypeRegistry()` | Namespaced [custom task types](../extend/frontend-extensions.md#custom-task-types). |
 | `defaultInitiativePresetRegistry()` | [Initiative presets](../guide/initiatives.md). |
 | `defaultFoundationalServiceRegistry()` | [Foundational services](../guide/foundational-services.md), resolved as the `builtin` tier of every workspace's catalog. |
 | `defaultBinaryGeneratorRegistry()` | [Generative binary integrations](../guide/running-pipelines.md#binary-output-steps) a `binary-output` step can select. |
@@ -300,5 +300,5 @@ Build from the repository root so the whole workspace is in the build context.
 ---
 
 Next: teach a deployment to talk to infrastructure you own with
-[Custom Providers](./custom-providers.md), or set your secrets and toggles in
+[Custom Providers](../extend/custom-providers.md), or set your secrets and toggles in
 [Configuration](./configuration.md).

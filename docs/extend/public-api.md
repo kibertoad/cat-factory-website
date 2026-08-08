@@ -1,3 +1,8 @@
+---
+redirectFrom:
+  - /reference/public-api.html
+---
+
 # Public API
 
 Cat Factory exposes a key-authenticated HTTP API under `/api/v1` for driving work from outside the
@@ -95,7 +100,7 @@ session, guarded by the `secrets.manage` permission) for scripting key managemen
 | `DELETE /workspaces/:workspaceId/public-api-keys/:id` | Revoke a key (idempotent). |
 
 These inbound `public-api-keys` are distinct from the outbound `api-keys` provider-key pool that
-[custom providers](../deploy/custom-providers.md) draw on.
+[custom providers](./custom-providers.md) draw on.
 
 ## Client SDKs
 
@@ -169,7 +174,7 @@ started over the API executes exactly as one started from the board and appears 
 | `GET` | `/api/v1/pipelines` | read | Discover pipelines: each entry is `{ pipelineId, name, steps, public, headlessStartable }`. Use it to find a valid `pipelineId` and confirm a pipeline can start headlessly. |
 
 `taskType` also accepts a namespaced custom task type (`<namespace>:<name>`) the deployment
-[registered](../deploy/frontend-extensions.md#custom-task-types), so an "incident" or
+[registered](./frontend-extensions.md#custom-task-types), so an "incident" or
 "compliance-audit" is creatable over the API like any built-in type.
 
 A few refusals are worth planning for:
@@ -290,7 +295,7 @@ Polling is the fallback, not the design. Two pushes carry a park outward:
 
 - **SSE**: both public streams stay open across a park and emit a `decision` frame.
 - **Outbound webhook**: a per-workspace HTTPS endpoint that receives notifications as they are raised.
-  See [Notifications → Outbound webhooks](../deploy/notifications.md#outbound-webhooks).
+  See [Notifications → Outbound webhooks](../operate/notifications.md#outbound-webhooks).
 
 You can also echo the open questions onto the task's linked tracker issue, so the clarification
 reaches whoever asked for the work. See
@@ -397,7 +402,7 @@ no heartbeat, so a quiet run produces a quiet stream.
 
 Revoking a key cuts a live stream within about five seconds. Streams are per-run reads bounded by
 their own poll; for push at scale, register the
-[outbound webhook](../deploy/notifications.md#outbound-webhooks) instead.
+[outbound webhook](../operate/notifications.md#outbound-webhooks) instead.
 
 ---
 

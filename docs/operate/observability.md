@@ -1,3 +1,8 @@
+---
+redirectFrom:
+  - /deploy/observability.html
+---
+
 # Observability
 
 Cat Factory records every model call so you can see what agents are doing, what it costs, and where
@@ -58,7 +63,7 @@ honour `LLM_RECORD_PROMPTS`.
 
 ### Web search queries
 
-When a run's agents use [web search](./configuration.md#web-search), the observability panel's **Web
+When a run's agents use [web search](../deploy/configuration.md#web-search), the observability panel's **Web
 search** tab shows what they searched: a header saying whether search was available to the run's
 containers and which provider served it (Brave or SearXNG), then each query with the agent kind that
 issued it, the provider, and the result count. Queries land in a dedicated `agent_search_queries`
@@ -183,7 +188,7 @@ so a slow or broken step is diagnosable without reading logs:
 ### Debugging a run from outside the browser
 
 Everything above is reachable over HTTP as well, under `/api/v1/debug/*` with an ordinary `read`-scope
-[public API key](../reference/public-api.md#run-debugging). It exists for a caller with a fixed
+[public API key](../extend/public-api.md#run-debugging). It exists for a caller with a fixed
 context budget rather than a scrollbar, so an agent asked "why did this run fail" can use it.
 
 It is a two-level drill-down: a keyset-paginated run index, a per-run overview built purely from SQL
@@ -211,12 +216,16 @@ dashboard's 30- and 90-day windows read.
 
 | Variable | Prunes | Default |
 | --- | --- | --- |
-| `LLM_CALL_METRICS_RETENTION_DAYS` | `llm_call_metrics` and `agent_context_snapshots` (both ride this window) | 3 days |
+| `LLM_CALL_METRICS_RETENTION_DAYS` | `llm_call_metrics` and `agent_context_snapshots` (both ride this window) | 14 days |
 | `PROVISIONING_LOG_RETENTION_DAYS` | the provisioning event log | 14 days |
 
 The agent-context snapshots are heavy (full prompt plus injected-file bodies) and the LLM call
-metrics keep full per-call prompt and response, so both default to an aggressive 3-day window. The
-provisioning log is high-churn and defaults to 14 days. On Cloudflare the cron resolves `TELEMETRY_DB`
+metrics keep full per-call prompt and response, so the window trades disk against how far back a
+post-mortem can reach. It defaults to 14 days because the 3 days it replaced expired the record
+before most investigations start: a run that failed over a weekend was already gone. Set it back to
+3 to restore the smaller footprint. The provisioning log is high-churn and defaults to 14 days. The
+full set of windows, including the ones this cron does not run, is in
+[Upgrades & Data Retention](./upgrades-and-retention.md#retention-windows). On Cloudflare the cron resolves `TELEMETRY_DB`
 through the same fail-fast guard as the build path, so an unbound binding surfaces the same clear
 error rather than an opaque failure logged only as "retention sweep failed".
 
@@ -254,7 +263,7 @@ The sink respects `LLM_RECORD_PROMPTS`: with prompts disabled, traces carry only
 ::: tip Where to set these
 On Cloudflare, set `LANGFUSE_SECRET_KEY` as a Worker secret (`wrangler secret put LANGFUSE_SECRET_KEY`)
 and the rest as plain vars. On Node and local, put them in your `.env` or secret manager. See
-[Configuration → Observability](./configuration.md#observability).
+[Configuration → Observability](../deploy/configuration.md#observability).
 :::
 
 ## What gets traced

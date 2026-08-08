@@ -176,7 +176,7 @@ comments".
 A pipeline can add a **Post-release-health** gate after the Merger that watches Datadog monitors and
 SLOs for a window after the merge and escalates to an on-call agent on a regression. It's optional
 and needs a connected Datadog deployment; see
-[Observability → Post-release health](../deploy/observability.md#post-release-health-and-agent-on-call).
+[Observability → Post-release health](../operate/observability.md#post-release-health-and-agent-on-call).
 
 ## The verification report on the pull request
 

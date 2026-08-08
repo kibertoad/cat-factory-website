@@ -113,7 +113,7 @@ and the run continues, so adding one is safe before the integration exists. When
 own parameters, they render as **Gate settings** on the step, straight from the gate's registration.
 
 Gates your deployment writes itself (a license-header check, an internal compliance probe) are code,
-not a builder operation. See [Custom Agents & Gates](../deploy/custom-agents.md#custom-gates).
+not a builder operation. See [Custom Agents & Gates](../extend/custom-agents.md#custom-gates).
 
 ### Change a step's prompt
 
@@ -162,7 +162,7 @@ builder flags a step pinned to the old name.
 
 To make an existing kind (the Coder, say) always carry a playbook rather than adding a step,
 that is `assignSkills` in the deployment's code:
-[Skills and tool servers](../deploy/custom-agents.md#skills-and-tool-servers).
+[Skills and tool servers](../extend/custom-agents.md#skills-and-tool-servers).
 
 ### Apply team standards to every coding step
 
@@ -278,13 +278,13 @@ Everything above is a UI operation on a workspace. Three things are not, and eac
 your [deployment repository](../deploy/deployment-repository.md):
 
 - **A new agent kind, gate, or judge of your own**, including a gate's helper agent and a kind's
-  bundled skills or MCP tool servers: [Custom Agents & Gates](../deploy/custom-agents.md). Registered
+  bundled skills or MCP tool servers: [Custom Agents & Gates](../extend/custom-agents.md). Registered
   kinds arrive in the palette with no frontend rebuild.
 - **A new task type** and other frontend contributions:
-  [Frontend Extensions](../deploy/frontend-extensions.md).
+  [Frontend Extensions](../extend/frontend-extensions.md).
 - **New infrastructure providers** (environments, runner pools):
-  [Custom Providers](../deploy/custom-providers.md) and
-  [Integration Manifests](../reference/manifests.md).
+  [Custom Providers](../extend/custom-providers.md) and
+  [Integration Manifests](../extend/manifests.md).
 
 ---
 

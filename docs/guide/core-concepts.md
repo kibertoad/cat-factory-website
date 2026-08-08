@@ -89,7 +89,7 @@ Steps the presets leave out stay available in the builder, including the **Requi
 **Blueprinter**, the **Mock Builder**, and the documentation kinds. Other agent kinds include the
 **Acceptance Author**, **Acceptance Test Author**, **Documenter**, the **Fixer**, a tech-debt analysis
 step, and an issue/ticket tracker step. Agent kinds are an **open set**: a deployment can
-[register custom kinds](../deploy/custom-agents.md). You choose the pipeline (cloning a
+[register custom kinds](../extend/custom-agents.md). You choose the pipeline (cloning a
 built-in to make an editable copy, then reordering or disabling steps), and assign models through a
 **model preset**. On deployments with it enabled, eligible steps can also run through
 [multi-model consensus](./running-pipelines.md#multi-model-consensus).

@@ -73,7 +73,7 @@ Additional agent kinds include the **Fixer** (loops on failing tests inside the 
 **Bug Investigator**, **Playwright** (runnable e2e tests from the spec's acceptance scenarios),
 **Documenter**, a tech-debt analysis step, and a **Skill** step that runs a
 repo-sourced [Claude Skill](./skills.md) picked per step; a deployment can also
-[register its own agent kinds and pipelines](../deploy/custom-agents.md).
+[register its own agent kinds and pipelines](../extend/custom-agents.md).
 
 ### Retired pipelines
 
@@ -162,7 +162,7 @@ the same branch on later ones. Its `pl_ralph` pipeline is the default for a Ralp
 ### Human-testing a change
 
 The **human-test** gate puts a person in the loop before a change merges. When the run reaches it,
-Cat Factory spins up an [ephemeral environment](../deploy/environments.md), surfaces its live URL,
+Cat Factory spins up an [ephemeral environment](../operate/environments.md), surfaces its live URL,
 and **parks** the run (the task shows "Awaiting your validation") until you act on it. No preset ships
 it, since it needs someone present: add the `human-test` step to a
 [cloned pipeline](#editing-pipelines) before the merge tail.
@@ -394,7 +394,7 @@ Some agent kinds produce binary artifacts rather than code: generated images, mu
 which holds run evidence and not product deliverables.
 
 No built-in kind generates binaries. The kind comes from your deployment, which
-[registers it](../deploy/custom-agents.md) with the `binary-output` trait, and its step in the
+[registers it](../extend/custom-agents.md) with the `binary-output` trait, and its step in the
 builder then carries a required selection:
 
 | Setting | What it does |

@@ -77,7 +77,7 @@ actionable*) are pinned on every new document task. A deployment can register it
 as the default for any task type (feature, bug, review, and so on) at startup with
 `registerPromptFragments(...)` and `registerTaskTypeDefaultFragments(taskType, ids)`; registered ids
 augment the built-in document defaults rather than replacing them. This seeding is server-side, so it
-applies even to tasks created through the [public API](../reference/public-api.md), which has no
+applies even to tasks created through the [public API](../extend/public-api.md), which has no
 picker. It is a deployment-level seam, not a UI setting.
 
 ## Link an external document as a living fragment

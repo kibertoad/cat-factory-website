@@ -25,12 +25,12 @@ validates feature parity between them.
 | Repositories (data) | D1 | Drizzle / PostgreSQL |
 | Event hubs | Durable Objects | In-memory / HTTP WebSocket |
 | Durable execution | Cloudflare Workflows | pg-boss |
-| Agent jobs | Cloudflare Containers | Self-hosted [runner pool](../deploy/runner-pools.md) (Docker / Kubernetes / custom) |
+| Agent jobs | Cloudflare Containers | Self-hosted [runner pool](../operate/runner-pools.md) (Docker / Kubernetes / custom) |
 
 The chosen adapters are wired in at startup, following a hexagonal flow: controllers to services to
 ports, with infra adapters plugged in at the edges. The execution machinery is shared, so both
 runtimes run container agents: on Cloudflare via per-run Containers, on Node by dispatching to a
-registered [runner pool](../deploy/runner-pools.md).
+registered [runner pool](../operate/runner-pools.md).
 
 ## Extending a deployment
 
@@ -103,5 +103,5 @@ deduplicated to once per repo per org, then distributed to each linked workspace
 
 ---
 
-See also: [Integration Manifests](./manifests.md) for the runner-pool and environment-provider
+See also: [Integration Manifests](../extend/manifests.md) for the runner-pool and environment-provider
 surfaces you author.

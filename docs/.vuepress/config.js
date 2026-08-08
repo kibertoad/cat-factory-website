@@ -1,7 +1,101 @@
 import { defaultTheme } from '@vuepress/theme-default'
 import { viteBundler } from '@vuepress/bundler-vite'
+import { redirectPlugin } from '@vuepress/plugin-redirect'
 import { searchPlugin } from '@vuepress/plugin-search'
 import { defineUserConfig } from 'vuepress'
+
+// The six sections, each answering "what is my job right now" rather than "what does the product
+// have". Start and Guides both live under /guide/ on disk: regrouping them changed no URL, which is
+// why they were the cheap half of the restructure. Operate and Extend are real directories, and
+// every page that moved into them carries a `redirectFrom` for its old URL.
+const START = [
+  '/guide/introduction.md',
+  '/guide/core-concepts.md',
+  '/guide/quick-start.md',
+  '/guide/first-task-tutorial.md',
+]
+
+const GUIDE_GROUPS = [
+  { text: 'Recipes', children: ['/guide/cookbook.md'] },
+  {
+    text: 'Plan the work',
+    children: [
+      '/guide/designing-your-board.md',
+      '/guide/requirements.md',
+      '/guide/documents.md',
+      '/guide/initiatives.md',
+    ],
+  },
+  {
+    text: 'Run pipelines',
+    children: [
+      '/guide/running-pipelines.md',
+      '/guide/recurring-pipelines.md',
+      '/guide/pull-requests.md',
+      '/guide/budgets.md',
+    ],
+  },
+  {
+    text: 'Connect',
+    children: ['/guide/repositories.md', '/guide/issue-sources.md', '/guide/frontend-preview.md'],
+  },
+  {
+    text: 'Models & prompts',
+    children: [
+      '/guide/model-providers.md',
+      '/guide/prompt-fragments.md',
+      '/guide/skills.md',
+      '/guide/sandbox.md',
+    ],
+  },
+  {
+    text: 'Collaborate',
+    children: [
+      '/guide/team-and-access.md',
+      '/guide/shared-services.md',
+      '/guide/foundational-services.md',
+    ],
+  },
+]
+
+const DEPLOY = [
+  '/deploy/local.md',
+  '/deploy/nodejs.md',
+  '/deploy/cloudflare.md',
+  '/deploy/kubernetes.md',
+  '/deploy/github-app.md',
+  '/deploy/deployment-repository.md',
+  '/deploy/configuration.md',
+]
+
+const OPERATE = [
+  '/operate/observability.md',
+  '/operate/notifications.md',
+  '/operate/runner-pools.md',
+  '/operate/environments.md',
+  '/operate/troubleshooting.md',
+  '/operate/upgrades-and-retention.md',
+]
+
+const EXTEND = [
+  '/extend/custom-agents.md',
+  '/extend/custom-providers.md',
+  '/extend/frontend-extensions.md',
+  '/extend/manifests.md',
+  '/extend/public-api.md',
+  '/extend/sdks.md',
+  '/extend/mcp-server.md',
+]
+
+const REFERENCE = [
+  '/reference/architecture.md',
+  '/reference/agent-isolation.md',
+  '/reference/security-model.md',
+  '/reference/packages.md',
+  '/reference/environment-variables.md',
+  '/reference/vcs-support-matrix.md',
+  '/reference/glossary.md',
+]
 
 export default defineUserConfig({
   // Served from the custom domain root (catfactory.ai), so assets live at '/'.
@@ -32,161 +126,23 @@ export default defineUserConfig({
 
     navbar: [
       { text: 'Home', link: '/' },
-      {
-        text: 'Get Started',
-        children: [
-          '/guide/introduction.md',
-          '/guide/core-concepts.md',
-          '/guide/quick-start.md',
-          '/guide/cookbook.md',
-        ],
-      },
-      {
-        text: 'Using Cat Factory',
-        children: [
-          {
-            text: 'Board & Team',
-            children: [
-              '/guide/designing-your-board.md',
-              '/guide/team-and-access.md',
-              '/guide/shared-services.md',
-              '/guide/foundational-services.md',
-            ],
-          },
-          {
-            text: 'Planning & Pipelines',
-            children: [
-              '/guide/requirements.md',
-              '/guide/running-pipelines.md',
-              '/guide/recurring-pipelines.md',
-              '/guide/initiatives.md',
-              '/guide/documents.md',
-              '/guide/pull-requests.md',
-            ],
-          },
-          {
-            text: 'Repos & Sources',
-            children: [
-              '/guide/repositories.md',
-              '/guide/frontend-preview.md',
-              '/guide/issue-sources.md',
-            ],
-          },
-          {
-            text: 'Models & Prompts',
-            children: [
-              '/guide/model-providers.md',
-              '/guide/budgets.md',
-              '/guide/prompt-fragments.md',
-              '/guide/skills.md',
-              '/guide/sandbox.md',
-            ],
-          },
-        ],
-      },
-      {
-        text: 'Deploy & Operate',
-        children: [
-          '/deploy/cloudflare.md',
-          '/deploy/nodejs.md',
-          '/deploy/local.md',
-          '/deploy/deployment-repository.md',
-          '/deploy/github-app.md',
-          '/deploy/configuration.md',
-          '/deploy/observability.md',
-          '/deploy/notifications.md',
-          '/deploy/runner-pools.md',
-          '/deploy/environments.md',
-          '/deploy/kubernetes.md',
-          '/deploy/custom-providers.md',
-          '/deploy/custom-agents.md',
-          '/deploy/frontend-extensions.md',
-        ],
-      },
-      {
-        text: 'Reference',
-        children: [
-          '/reference/architecture.md',
-          '/reference/agent-isolation.md',
-          '/reference/manifests.md',
-          '/reference/packages.md',
-          '/reference/public-api.md',
-        ],
-      },
+      { text: 'Start', children: START },
+      { text: 'Guides', children: GUIDE_GROUPS },
+      { text: 'Deploy', children: DEPLOY },
+      { text: 'Operate', children: OPERATE },
+      { text: 'Extend', children: EXTEND },
+      { text: 'Reference', children: REFERENCE },
     ],
 
     sidebar: {
       '/guide/': [
-        {
-          text: 'Get Started',
-          collapsible: false,
-          children: [
-            '/guide/introduction.md',
-            '/guide/core-concepts.md',
-            '/guide/quick-start.md',
-            '/guide/cookbook.md',
-          ],
-        },
-        {
-          text: 'Using Cat Factory',
-          collapsible: false,
-          children: [
-            '/guide/designing-your-board.md',
-            '/guide/team-and-access.md',
-            '/guide/shared-services.md',
-            '/guide/foundational-services.md',
-            '/guide/requirements.md',
-            '/guide/running-pipelines.md',
-            '/guide/recurring-pipelines.md',
-            '/guide/initiatives.md',
-            '/guide/documents.md',
-            '/guide/pull-requests.md',
-            '/guide/repositories.md',
-            '/guide/frontend-preview.md',
-            '/guide/issue-sources.md',
-            '/guide/model-providers.md',
-            '/guide/budgets.md',
-            '/guide/prompt-fragments.md',
-            '/guide/skills.md',
-            '/guide/sandbox.md',
-          ],
-        },
+        { text: 'Start', collapsible: false, children: START },
+        ...GUIDE_GROUPS.map((group) => ({ ...group, collapsible: false })),
       ],
-      '/deploy/': [
-        {
-          text: 'Deploy & Operate',
-          collapsible: false,
-          children: [
-            '/deploy/cloudflare.md',
-            '/deploy/nodejs.md',
-            '/deploy/local.md',
-            '/deploy/deployment-repository.md',
-            '/deploy/github-app.md',
-            '/deploy/configuration.md',
-            '/deploy/observability.md',
-            '/deploy/notifications.md',
-            '/deploy/runner-pools.md',
-            '/deploy/environments.md',
-            '/deploy/kubernetes.md',
-            '/deploy/custom-providers.md',
-            '/deploy/custom-agents.md',
-            '/deploy/frontend-extensions.md',
-          ],
-        },
-      ],
-      '/reference/': [
-        {
-          text: 'Reference',
-          collapsible: false,
-          children: [
-            '/reference/architecture.md',
-            '/reference/agent-isolation.md',
-            '/reference/manifests.md',
-            '/reference/packages.md',
-            '/reference/public-api.md',
-          ],
-        },
-      ],
+      '/deploy/': [{ text: 'Deploy', collapsible: false, children: DEPLOY }],
+      '/operate/': [{ text: 'Operate', collapsible: false, children: OPERATE }],
+      '/extend/': [{ text: 'Extend', collapsible: false, children: EXTEND }],
+      '/reference/': [{ text: 'Reference', collapsible: false, children: REFERENCE }],
     },
   }),
 
@@ -194,5 +150,9 @@ export default defineUserConfig({
     searchPlugin({
       maxSuggestions: 10,
     }),
+    // Every URL the restructure moved keeps working. The old paths are declared as `redirectFrom`
+    // frontmatter on the page that now owns them, so a moved page carries its own redirect and a
+    // later move cannot leave one behind in a list nobody reads.
+    redirectPlugin(),
   ],
 })

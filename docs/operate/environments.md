@@ -1,3 +1,8 @@
+---
+redirectFrom:
+  - /deploy/environments.html
+---
+
 # Ephemeral Environments
 
 To validate agent-built changes against a running system, Cat Factory can provision ephemeral
@@ -48,7 +53,7 @@ For the real secrets a test genuinely needs (an API key a suite calls out with, 
 the **Test credentials (sensitive)** panel on a **service frame's inspector** rather than the
 environment-access handles above. It is a per-service, write-only editor: add named entries of a
 **variable name**, a **description**, and a **value**, then **Save credentials**. Values are
-encrypted at rest under [`ENCRYPTION_KEY`](./configuration.md#credential-encryption) and never read
+encrypted at rest under [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption) and never read
 back (only the name and description return), so the panel hides itself entirely on a deployment with
 no encryption key set.
 
@@ -130,10 +135,10 @@ Pick the one that matches how your previews run:
 
 | Backend | Runtimes | What it does |
 | --- | --- | --- |
-| **Kubernetes** | all | Applies the repo's own manifests into a per-PR namespace. Native, form-driven. See [Kubernetes](./kubernetes.md#ephemeral-environments-on-kubernetes). |
+| **Kubernetes** | all | Applies the repo's own manifests into a per-PR namespace. Native, form-driven. See [Kubernetes](../deploy/kubernetes.md#ephemeral-environments-on-kubernetes). |
 | **Docker Compose** | local | Stands the repo's compose file up on the host Docker daemon. See [below](#docker-compose-environments). |
 | **HTTP manifest** | all | Drives your own management API through request/response templates. See [below](#registering-an-http-manifest-provider). |
-| **Custom code adapter** | Node, local | Implements the `EnvironmentProvider` port when a manifest can't express your platform. See [Custom Providers](./custom-providers.md). |
+| **Custom code adapter** | Node, local | Implements the `EnvironmentProvider` port when a manifest can't express your platform. See [Custom Providers](../extend/custom-providers.md). |
 
 Which backend a given service uses is decided by its [provision type](#per-service-provision-types),
 so one workspace can preview a Kubernetes service and a Compose service side by side.
@@ -167,11 +172,11 @@ no longer offers the service's source directory (one carrying a Backstage `catal
 as a bogus deploy target. Point it at non-standard house layouts through the `manifestDirs` and
 `serviceManifestPaths` keys of `ENVIRONMENTS_DETECTION_CONVENTIONS`. The full model, including custom
 manifest types and the generate/fix repair agent, is on the
-[Kubernetes](./kubernetes.md#per-service-provision-types) page.
+[Kubernetes](../deploy/kubernetes.md#per-service-provision-types) page.
 
 ## Docker Compose environments
 
-In [local mode](./local.md), select the **Docker Compose** backend to stand a service up from the
+In [local mode](../deploy/local.md), select the **Docker Compose** backend to stand a service up from the
 compose file already in its repo, on the host Docker daemon. It reads the PR repo's compose file,
 rewrites it into a per-PR project with isolated host ports, runs `docker compose up -d --wait`, and
 returns `http://localhost:<port>` as the preview URL. Teardown runs `docker compose down -v`.
@@ -286,7 +291,7 @@ A deployment can declare its infrastructure dependencies in code instead of in a
 `seedSharedStacks` on `start()` or `startLocal()`, alongside
 [`seedEnvironmentHandlers`](#seeding-handlers-from-the-deployment). Both run over the same workspace
 enumeration at boot and again for each newly-created workspace. See
-[Your Deployment Repository](./deployment-repository.md#_5-register-your-platform-data-in-code).
+[Your Deployment Repository](../deploy/deployment-repository.md#_5-register-your-platform-data-in-code).
 
 ## Preflight checks
 
@@ -328,16 +333,16 @@ and no per-org code:
 
 Credentials are referenced by logical key, never embedded. You supply the values at
 registration, where they're stored encrypted at rest. The manifest's structure is documented in
-[Integration Manifests](../reference/manifests.md#environment-provider-manifest), and it's enabled
+[Integration Manifests](../extend/manifests.md#environment-provider-manifest), and it's enabled
 through the **Environment provider manifest** feature toggle. See
-[Configuration → Feature Toggles](./configuration.md#feature-toggles).
+[Configuration → Feature Toggles](../deploy/configuration.md#feature-toggles).
 
 You register, test, and rotate the provider entirely in-app. The top-level **Infrastructure** window
 has two tabs, **Agent containers** (the [runner pool](./runner-pools.md)) and **Test environments**
 (this provider); open the **Test environments** tab, select the **HTTP manifest** backend, and use the
 in-app JSON manifest editor to paste or edit the manifest, fill the write-only secrets sub-form, and
 run a test connection. The editor validates against the same wire contract the backend enforces, so a
-malformed manifest is caught before you save. In [local mode](./local.md), the delegation toggles sit
+malformed manifest is caught before you save. In [local mode](../deploy/local.md), the delegation toggles sit
 at the top of the same window.
 
 ::: tip Automatic cleanup
@@ -365,7 +370,7 @@ reachable by the runner pool, and vice versa.
 If your platform's API can't be expressed as request/response templates (asynchronous provisioning,
 a live URL buried in a dynamic response shape, a status vocabulary of its own, or a non-HTTP
 protocol), implement the `EnvironmentProvider` port in code instead and inject it when you build the
-container. See [Custom Providers (Code Adapters)](./custom-providers.md) for a worked example,
+container. See [Custom Providers (Code Adapters)](../extend/custom-providers.md) for a worked example,
 per-workspace configuration via `providerConfig`, and the gotchas (status mapping, async provision,
 idempotent teardown).
 
@@ -388,7 +393,7 @@ instead of failing the first run:
 All repo I/O goes through the same VCS-neutral file abstraction the rest of the platform uses, so the
 adapter never sees a host or a token. These are optional adapter capabilities: a stock deployment
 running the generic manifest provider is unaffected. See
-[Custom Providers (Code Adapters)](./custom-providers.md).
+[Custom Providers (Code Adapters)](../extend/custom-providers.md).
 
 ---
 
