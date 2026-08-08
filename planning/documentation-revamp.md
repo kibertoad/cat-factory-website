@@ -7,6 +7,9 @@ the ownership model behind the split) lives in
 
 This file lives under `planning/`, outside `docs/`, so VuePress never publishes it.
 
+Tracker PRs: this repo [#22](https://github.com/kibertoad/cat-factory-website/pull/22), code
+repo [cat-factory#1847](https://github.com/kibertoad/cat-factory/pull/1847).
+
 ## Goal and rationale
 
 The site's three sections (Guide, Deploy & Operate, Reference) were laid down when the site
