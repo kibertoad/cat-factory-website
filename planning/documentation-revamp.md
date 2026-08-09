@@ -1,8 +1,10 @@
 # Documentation revamp: website restructure
 
-Status: **phase G in flight.** Phases A to F landed. Phase G is the first one whose findings came
-out of READING pages rather than writing them, and two of the three are corrections: two Extend
-pages were teaching APIs that no longer exist. The
+Status: **phase H in flight; phases A to G landed.** Phase H writes the last two destinations the
+code repo's reduction pass named as debt: a Kubernetes topology page for the operator laying out a
+cluster, and the document-source behaviour that was only ever written as implementation. Phase G was
+the first one whose findings came out of READING pages rather than writing them, and two of the
+three were corrections: two Extend pages were teaching APIs that no longer exist. The
 sibling tracker for the code repo's side of the revamp (which docs move here, which stay there, and
 the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
@@ -341,6 +343,36 @@ Two things phase G is worth remembering for:
   other as the authority on presets and neither held it. Every link was live, so nothing was
   broken in any way a checker can see; the material simply did not exist. When a page says "see X
   for how to do this", open X and confirm it does.
+
+### Phase H: the last two destinations the reduction pass named
+
+Paired with the code repo's items 21 and 22, which reduce the two docs against these pages. Both
+were named as debt on the sibling tracker rather than cut ahead of a destination, which is phase F's
+lesson applied before the fact instead of after it.
+
+- [x] H1. **`deploy/kubernetes-topology.md`, "Lay Out a Kubernetes Cluster".** `deploy/kubernetes.md`
+      stops at the connect form: which fields to fill on the Agent containers and Test environments
+      tabs. An operator laying out the cluster the form points at (namespaces, node pools, a
+      `NetworkPolicy`, the ServiceAccount's RBAC verbs, egress, sizing for concurrent runs) had
+      nothing here at all, and needs no checkout for any of it. The page owns what runs where, the
+      control-plane / data-plane split, why a run pod has no Service and the RBAC-gated pod-proxy is
+      the only route into it, the two egress destinations, the reaping backstop a bare pod needs
+      because nothing garbage-collects it, sizing, and what changes under the bring-your-own-scheduler
+      backend. The connect page and the runner-pool page both link it.
+- [x] H2. **The document-source half that was written as implementation** (`guide/issue-sources.md`).
+      Three sections, all describing behaviour a user sees: what a pasted link resolves to (the trim
+      to canonical form, the widened-reference warning, the two refusal shapes, why an unreachable
+      source still stages), expanding a document into board structure (the plan preview, board-wide
+      versus aimed at a service, why a design document always needs a target, the heading fallback),
+      and who may connect a source versus who may attach one. The last of those was the sharpest: the
+      member/admin line is the reason the person linking a spec need not be the person who connected
+      Confluence, and it lived only in a permission table in the code repo.
+
+What phase H is worth remembering for: **the two items were queued as debt with their contents
+listed, and that list was the specification.** Neither needed a fresh reading of the code, because
+the sibling tracker's 15q and 15k entries had already written down what the page owed. Naming the
+missing destination at the moment the reduction stalls, rather than cutting toward a page that
+cannot receive the content, is what made both of these cheap.
 
 ## Docs added since this tracker was written
 

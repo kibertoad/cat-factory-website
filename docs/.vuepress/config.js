@@ -69,6 +69,7 @@ const DEPLOY = [
   '/deploy/nodejs.md',
   '/deploy/cloudflare.md',
   '/deploy/kubernetes.md',
+  '/deploy/kubernetes-topology.md',
   '/deploy/github-app.md',
   '/deploy/sso.md',
   '/deploy/deployment-repository.md',
