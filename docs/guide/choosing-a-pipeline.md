@@ -365,6 +365,12 @@ The step returns output in the same shape as the single-model version, and the f
 the step. Consensus only applies to the eligible kinds; other steps run normally even if a config is
 present.
 
+What a panel gives up is the working environment. Each participant is a single model call with no
+checkout, no shell and no [MCP tool servers](../extend/tool-servers.md): it judges the material the
+run inlines for it. Most eligible kinds run in a container in their single-model form, so a step
+that had tool servers loses them when the panel convenes. It is not silent: the participants are
+told which servers they are without, and the step records each one under `consensus_panel`.
+
 ---
 
 Next: start the pipeline you picked and steer it in [Run a Pipeline](./running-pipelines.md), or put
