@@ -1,0 +1,78 @@
+name: OpenAPI reference drift
+
+# docs/extend/api-reference.md is rendered from docs/openapi.json in kibertoad/cat-factory, which is
+# itself generated there from the contracts the server routes are built from. The spec stays in that
+# repository because it is what the four official SDK clients are generated from, so this site can
+# only ever be as current as the last sync.
+#
+# Scheduled rather than pull-request-blocking, for the reason env-vars-drift.yml is: the two
+# repositories move in PAIRED pull requests, so this site legitimately leads or lags upstream main
+# for the life of a pair, and a gate that goes red for a reason the pull request under review cannot
+# fix is a gate that gets ignored and then deleted. Red here means exactly one thing: re-sync.
+#
+# The pull-request-blocking half is `--verify` in ci.yml, which depends only on files committed here.
+#
+# It is a workflow of its own rather than a second job in env-vars-drift.yml because the two
+# generated pages drift for different reasons and are re-run against different branches: a paired
+# change almost always moves one of them, not both.
+on:
+  schedule:
+    # Mondays, 06:29 UTC. Between the env-var drift check and the cross-repository link check, and
+    # off the hour so none of the three is queued behind the top-of-hour rush.
+    - cron: '29 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Ref in kibertoad/cat-factory to compare against'
+        required: false
+        default: 'main'
+
+# Least privilege: grant no permissions by default, escalate per-job
+permissions: {}
+
+jobs:
+  check:
+    name: Check against the generated spec
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      # No local checkout of the code repo, so the script fetches the spec over HTTPS.
+      - name: Compare rendered page against the spec
+        id: check
+        env:
+          CAT_FACTORY_REF: ${{ inputs.ref || 'main' }}
+        run: node scripts/sync-openapi.mjs --check
+
+      - name: Explain a failure
+        if: failure() && steps.check.outcome == 'failure'
+        env:
+          CAT_FACTORY_REF: ${{ inputs.ref || 'main' }}
+        run: |
+          {
+            echo "## The API endpoint reference has drifted"
+            echo
+            echo "\`docs/extend/api-reference.md\` no longer matches a render of"
+            echo "\`docs/openapi.json\` in kibertoad/cat-factory@\`$CAT_FACTORY_REF\`."
+            echo
+            echo "Two things look the same here and are not:"
+            echo
+            echo "1. **The public surface changed.** Re-sync: clone kibertoad/cat-factory beside"
+            echo "   this repo and run \`pnpm run docs:openapi\`, then commit the result. Check the"
+            echo "   diff for removals as well as additions: an endpoint or field that disappeared"
+            echo "   is a compatibility break, and the code repo's own stability policy says one"
+            echo "   never lands in place."
+            echo "2. **A paired pull request is still open.** If this site's page was rendered from"
+            echo "   a cat-factory branch that has not merged yet, this is expected until it does."
+            echo "   Re-run this workflow with that branch as the \`ref\` input to confirm."
+          } >> "$GITHUB_STEP_SUMMARY"

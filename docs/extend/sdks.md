@@ -116,6 +116,10 @@ route contracts the deployment validates against. Each client's transport, error
 policy, pagination helper, and event-stream reader are hand-written and live beside the generated
 files, which is what keeps a contract change from rewriting behaviour.
 
+The [API Endpoint Reference](./api-reference.md) is rendered from that same spec, so what it says a
+field is called and what your client calls it are the same fact rendered twice, never two claims
+that can disagree.
+
 A cross-client smoketest drives the same scenario through all four against one real backend and
 compares their reports field by field, so one language decoding a field differently, mapping a
 refusal to the wrong class, or paginating one page short fails a test rather than shipping.

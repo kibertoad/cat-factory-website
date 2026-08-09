@@ -97,7 +97,8 @@ so a path from an older sync may no longer exist.
 | Observability, telemetry store, ephemeral-env/container provisioning telemetry | `docs/operate/observability.md`, `docs/deploy/configuration.md` |
 | Retention windows, upgrade and image-tag rollout | `docs/operate/upgrades-and-retention.md` |
 | A new failure mode an operator will meet | `docs/operate/troubleshooting.md` |
-| Custom agent kinds, traits, skills/tool servers, pre/agent/post-op, generic agent kind | `docs/extend/custom-agents.md`, `docs/extend/manifests.md` |
+| Custom agent kinds, traits, skills, pre/agent/post-op, generic agent kind | `docs/extend/custom-agents.md`, `docs/extend/manifests.md` |
+| MCP tool servers an agent CONSUMES: registration, harness support, credentials, OAuth, the Test button | `docs/extend/tool-servers.md` |
 | The manifest FORMAT itself: fields, auth schemes, template variables, response mapping | `docs/extend/manifests.md` (this site owns the field level for both manifests; the code repo keeps the integration protocol) |
 | Custom task types, task-type fields/defaults/suppression, descriptor form vocabulary | `docs/extend/reusable-operations.md` |
 | Sign-in providers, OIDC/SSO, session revocation, admission allowlists | `docs/deploy/sso.md` (SSO), `docs/deploy/configuration.md#authentication` (the rest) |
@@ -105,7 +106,8 @@ so a path from an older sync may no longer exist.
 | Custom gates and judges, step-completion resolvers, `@cat-factory/gates` | `docs/extend/custom-gates.md`, `docs/reference/packages.md` |
 | Pipeline catalog and presets, builder edits, step gating, binary-output steps, consensus | `docs/guide/choosing-a-pipeline.md` |
 | Starting/retrying a run, live progress, decision prompts, human gates | `docs/guide/running-pipelines.md` |
-| Public API endpoints, scopes, webhooks | `docs/extend/public-api.md` |
+| Public API narrative: authenticating, scopes, worked workloads, webhooks | `docs/extend/public-api.md` |
+| `/api/v1/debug/*`, run telemetry read from outside the browser | `docs/operate/debugging-a-run.md` |
 | SDK clients, the MCP server and its tools | `docs/extend/sdks.md`, `docs/extend/mcp-server.md` |
 | Published `@cat-factory/*` packages | `docs/reference/packages.md` |
 | Agent isolation, the write path, hardening | `docs/reference/agent-isolation.md`, `docs/reference/security-model.md` |
@@ -125,7 +127,7 @@ so a path from an older sync may no longer exist.
 When a commit does not fit any row, decide from its diff which audience it serves and pick the
 closest page, or note it as out of scope.
 
-## Two pages you never hand-edit
+## Three pages you never hand-edit
 
 - **`docs/reference/environment-variables.md` is generated** from the code repo's
   `docs/environment-variables.md` by `node scripts/sync-env-vars.mjs`. A commit that adds or changes
@@ -133,6 +135,12 @@ closest page, or note it as out of scope.
   checkout) and committing the result, never by editing the page. Three modes back that up:
   `pnpm run docs:env-vars` renders, `docs:env-vars:check` compares against the code repo, and
   `docs:env-vars:verify` runs the offline checks that CI blocks on.
+- **`docs/extend/api-reference.md` is generated** from the code repo's `docs/openapi.json` by
+  `node scripts/sync-openapi.mjs`, with the same three modes (`pnpm run docs:openapi`,
+  `docs:openapi:check`, `docs:openapi:verify`). A commit that adds or changes a `/api/v1` endpoint,
+  a field or a scope is synced by running that script and committing the result. Read the diff
+  rather than only running it: an endpoint or field that DISAPPEARED is a compatibility break, and
+  the code repo's stability policy says one never lands in place.
 - **The canonical variable list stays in the code repo** because a CI guard there reads it. If the
   code repo's own list is missing a variable the commit added, say so in the PR rather than
   documenting it only here: a variable documented only on this site is one the guard cannot see.

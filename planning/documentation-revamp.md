@@ -1,10 +1,22 @@
 # Documentation revamp: website restructure
 
-Status: **phase E in flight.** Phases A, B, C and D landed, and this tracker read complete while
-still holding four destinations the code repo's reductions were waiting on. That is what phase E
-closes. The sibling tracker for the code repo's side of the revamp (which docs move here, which stay
-there, and the ownership model behind the split) lives in
+Status: **phase F in flight.** Phases A to E landed. Phase F closes two destinations phase E was
+never told about and renders the API reference the code repo's last open item is waiting on. The
+sibling tracker for the code repo's side of the revamp (which docs move here, which stay there, and
+the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
+
+**Phase F opens with the failure the whole ordering rule exists to prevent, and it had already
+happened.** The code repo's reduction pass cut `mcp-tool-servers.md` from 723 lines to 347 and
+`debug-api.md` from 433 to 207, each pointing at a page here, and its commit message said the site
+had gained them. It had not: phase E landed four pages and neither of these was among them. So for
+the time between that merge and this one, roughly 600 lines of the only account anyone had of
+wiring an MCP tool server and of reading a run's telemetry existed nowhere a reader could reach,
+behind two pointers that 404'd. `check-repo-links.mjs` (E5) would have caught it on its next
+Monday; it was written in the same pull request as the breakage, which is why nobody saw it. The
+lesson is not "run the guard" and it is not "the ordering rule was wrong". It is that the ordering
+rule was checked by asserting it rather than by loading the page, and phase F's own rule is
+therefore stated as an action, not a belief: see the last gotcha.
 
 **The lesson phase E is named after: a page EXISTING is not the topic being covered here.** Two of
 the code repo's reductions were scoped against `extend/manifests.md` on the strength of its
@@ -230,6 +242,51 @@ Two traps E5 had to get right, both of them the reason a hand-check kept missing
   page's own `redirectFrom` frontmatter rather than keeping a second list, which is the same reason
   a moved page carries its redirect in the first place.
 
+### Phase F: the two pages that were assumed, and the generated API reference
+
+Phase E filled the four gaps the code repo's reduction slices found. Phase F fills the two they
+did not find because they were never checked, and lands the one piece of machinery the sibling
+tracker's last open item is built on.
+
+- [x] F1. **Give Agents External Tools (MCP)** (`extend/tool-servers.md`). The destination
+      `mcp-tool-servers.md` was cut toward: registering a server, the harness support matrix, the
+      seven unavailability reasons and their fixes, `allowedTools` as scoping rather than a
+      boundary, the credential rules including the reserved-lookup-key floor and `envName`, OAuth
+      end to end, the Test button's nine verdicts, operating a `stdio` server, the security posture,
+      the current limits, a worked Slack runbook and an adoption checklist. Ten headings are
+      load-bearing: the code repo deep-links each of them, and they were chosen there before this
+      page existed, so the page is written to the anchors rather than the anchors adjusted to the
+      page.
+- [x] F2. **Debug a Run from Outside the Browser** (`operate/debugging-a-run.md`). The destination
+      `debug-api.md` was cut toward: the endpoint table, the five-step investigation (find and map,
+      follow the signal, grep the bodies, read the conversation, export the bundle), spend
+      attribution, the size ceilings and the known limitations. `#sizing-a-request` and
+      `#known-limitations` are deep-linked from the code repo.
+- [x] F3. **The generated API endpoint reference** (`extend/api-reference.md`,
+      `scripts/sync-openapi.mjs`). This is the site's half of the sibling tracker's item 12. That
+      item spent two revisions scoped as "move 2,000 lines of prose", and the answer was never a
+      move: the complete, always-current endpoint reference is the SPEC, which this site previously
+      only told the reader to go and fetch from the code repo. So it is rendered, on the machinery
+      both repos already trust: every operation with its minimum scope, parameters, request body and
+      responses, grouped by the spec's own tags, plus a field table per schema. `--check` compares
+      against the code repo on a schedule (`openapi-drift.yml`); `--verify` blocks a pull request
+      here on the half that needs no second checkout.
+
+What F3 got right by copying `sync-env-vars.mjs` and what it had to add:
+
+- **Copied**: the render / `--check` / `--verify` split, the reason `--check` is scheduled rather
+  than blocking, and reading the ref from the environment while always EMITTING links to `main`.
+- **Added**: the generator asserts the properties that make the page a reference rather than a dump.
+  Every operation states a minimum scope (one that did not would read as an endpoint needing no
+  authorization), operation summaries are unique (they become the anchors, so a collision points two
+  endpoints at one heading), every operation carries exactly one tag (the grouping IS the
+  navigation, so an untagged operation falls off the page and a multi-tagged one appears twice), and
+  no two headings anywhere on the page slug the same. Each of those fails the render rather than
+  shipping a page that looks complete.
+- **The page's own outline is suppressed** (`sidebarDepth: 1`). At 101 operations and 103 schemas the
+  default outline is about 120 sidebar entries; two in-page index lines do that job instead, and
+  every anchor is still there for anything linking one.
+
 ## Docs added since this tracker was written
 
 Checked against the code repo on 2026-08-08. The revamp's own execution absorbed these rather than
@@ -278,3 +335,15 @@ leaving them for a later slice:
 - **Say what depth a page owns when it takes one over.** Phase E's manifest page states that it is
   the authority for the format, because the previous version's silence on the question is what let
   two reductions be scoped against a page that could not receive them.
+- **A pull request that reduces a doc toward a page here LOADS that page, and says in its
+  description that it did.** This is the gotcha above turned into an action, because as a belief it
+  failed: the reduction pass that produced phase F's first two items asserted in its own commit
+  message that the site had gained both pages, and neither existed. Nothing in either repository's
+  pull-request checks could contradict it, by design, since the crossing guard is scheduled rather
+  than blocking and for a good reason. So the check is a person opening the URL. The code repo's
+  `CLAUDE.md` now carries the same rule from its side, phrased as "open the website pull request
+  first, and name it".
+- **Three pages here are generated and two of them are new.** `reference/environment-variables.md`
+  and `extend/api-reference.md` are rendered from the code repo and must never be hand-edited; the
+  banner at the top of each says so and CI checks that the banner is still there. Editing one is
+  invisible until the next sync silently reverts it.
