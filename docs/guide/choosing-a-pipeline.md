@@ -166,8 +166,10 @@ the same branch on later ones. Its `pl_ralph` pipeline is the default for a Ralp
 
 ::: warning Experimental
 The **Build & visual confirmation** pipeline is flagged experimental in the library. The UI Tester's
-automatic screenshot capture is not wired end to end yet, so today the **Visual Confirmation** gate
-runs in manual mode: a person uploads the reference designs and the screenshots and reviews them.
+automatic screenshot capture is not wired end to end yet, so today a person supplies the screenshots
+and reviews them. The reference side needs no upload: a design linked to the task contributes its
+own frames (see [Design context → Renders](./design-context.md#renders)), and uploading an image for
+a view overrides the design's frame for it.
 :::
 
 This UI-focused pipeline runs Coder → Reviewer → Mock Builder → **UI Tester** → **Visual
@@ -176,17 +178,21 @@ Confirmation** → the standard Conflicts → CI → Merger tail. A visual pipel
 the backend under test and mocks other upstreams, and drives it in a real browser. See
 [Preview and Test a Frontend](./frontend-preview.md) for the frontend configuration this uses. The
 UI Tester captures a screenshot of each distinct view; the Visual Confirmation gate pairs those
-screenshots with the uploaded reference designs by view and **parks** for a person to compare actual
-against reference. From the gate you can:
+screenshots by view against the references it holds for the task (a linked design's retained frames,
+plus any image uploaded against the task) and **parks** for a person to compare actual against
+reference. From the gate you can:
 
 - **Approve** — the change matches; the run advances to the merge tail.
 - **Request a fix** — describe what's off and the Tester's **Fixer** addresses it, then the gate
   re-parks for another look.
 - **Recapture** — re-run the UI Tester to refresh the screenshots.
 
+When a linked design contributes nothing, or fewer frames than it has, the gate says which design
+and why rather than showing a short gallery that reads as complete.
+
 It raises a **visual-confirmation-ready** notification and needs a binary-artifact store for the
-screenshots; the gate passes through when no store is wired. The store is configured per account under
-Account → Deployment settings (see
+screenshots and the retained frames; the gate passes through when no store is wired. The store is
+configured per account under Account → Deployment settings (see
 [Content storage](../deploy/configuration.md#content-storage-binary-artifacts)).
 
 ### Authoring a document

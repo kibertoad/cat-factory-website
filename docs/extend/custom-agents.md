@@ -162,6 +162,7 @@ kind with `registry.assignTraits(kind, traits)`. The ones the platform reads:
 | `foundational-catalog` | Hands the kind the [foundational-services catalog](../guide/foundational-services.md) and requires it to declare which services its design consumes. |
 | `foundational-contracts` | Hands the kind the full API contracts of the services a design declared. |
 | `binary-storage` | The kind uploads to the platform's binary-artifact store (run evidence such as screenshots). |
+| `design-images` | The kind is shown the PICTURES of the task's linked designs, not just their text. See [Design context → The agents that see them](../guide/design-context.md#the-agents-that-see-them). |
 | `binary-output` | The kind generates product binaries stored through a foundational service. See [Binary-output steps](../guide/choosing-a-pipeline.md#binary-output-steps). |
 | `interview-gate` | The kind conducts a clarification interview before proceeding. |
 
