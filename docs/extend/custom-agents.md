@@ -273,6 +273,8 @@ binaryGeneratorRegistry.register({
 | --- | --- |
 | `modalities` | The content types it produces: `image`, `audio`, `video`, `3d-model`, `3d-scene`, `document`. At least one. This is what the admission coverage check compares a step's requirements against. |
 | `mediaTypes?` | The concrete formats it can emit. Absent means only the coarse modalities are known, and the brief says so rather than implying every format of that modality is available. |
+| `capabilities?` | What it can be **asked for** while generating: a reference image, a masked edit, a seed, a transparent background. Each one unlocks a per-step generation option, so a step asking for something nothing it selected declares is refused before the run starts. See [what a step can ask for](#what-a-step-can-ask-for). |
+| `accepts?` | For the options with a closed set of legal values, **which** values this endpoint takes. See [values, not just yes or no](#values-not-just-yes-or-no). |
 | `endpoint?` | The API's base URL, so the agent does not infer one from the contract. Must be `https` or loopback, since the credential rides the request. |
 | `guidance?` | Operating notes folded into the brief verbatim: polling an async job, whether a payload comes back base64 or as a signed URL, a rate limit worth respecting. This is where you put what would otherwise be rediscovered once per run. |
 | `credentials?` | What it authenticates with: each declared by name (`key`), optionally delivered under a different variable (`envName`), with `usage` saying how to present it and `required: false` marking one the call can go without. A list, because a vendor account is not always one string. Values never reach a prompt. Absent means the integration is called unauthenticated. |
@@ -282,6 +284,67 @@ binaryGeneratorRegistry.register({
 modality: style, resolution or length limits, cost profile. The platform provides no discriminator
 field for that, because those axes do not partition the deliverable and a rule built on one would
 refuse correctly-configured steps.
+
+##### What a step can ask for
+
+`modalities` and `mediaTypes` say what an integration makes. `capabilities` says what it will
+accept while making it, and the image APIs you are most likely to register agree on almost none of
+it. A step that hands a reference image to an endpoint with no image input does not get a worse
+picture: it gets an error at the end of a paid run, or a picture that silently ignored the one
+input that made the output correct.
+
+```ts
+capabilities: ['reference-image', 'multi-reference', 'seed', 'aspect-ratio', 'exact-size'],
+```
+
+The vocabulary is closed: `reference-image`, `multi-reference`, `instruction-edit`, `mask-edit`,
+`negative-prompt`, `seed`, `aspect-ratio`, `exact-size`, `candidate-batch`, `upscale`,
+`transparent-background`, `tileable`. Each one unlocks a control in the pipeline builder, a
+paragraph in the agent's brief, and a requirement the platform checks before the run starts.
+
+A capability answers one question only: **can the request carry this at all**. Declare `seed` when
+the API has a seed parameter, `exact-size` when it takes a width and a height, `aspect-ratio` when
+it takes a shape (a ratio, or a bucket like `square | portrait | landscape`). An endpoint that does
+something adjacent without a parameter for it declares nothing: an upscale endpoint that enlarges
+at a ratio it fixes itself has no factor to be handed, so declaring `upscale` would admit a step
+asking for 4x and hand back an unknown multiple. Say what it does in `guidance` instead. Steps
+asking for that option are then refused, which is visible and fixable, rather than served an
+artifact that passes every check and is wrong.
+
+Declaring nothing at all is also a real answer, and the honest one for an endpoint nobody has
+audited: option requirements against it are reported as unverifiable rather than refused, and every
+integration keeps working. Declare capabilities once you know the endpoint's parameters, and the
+step gains a real check.
+
+##### Values, not just yes or no
+
+Some endpoints take a parameter only at values they enumerate. Two image APIs both take an aspect
+ratio, but one honours any ratio because it takes a width and a height while the other offers a
+picklist of ten. Under `capabilities` alone both say `aspect-ratio`, so a step asking for `7:3` is
+admitted against both and quietly cropped by one.
+
+`accepts` closes that, for the three options with a closed domain:
+
+```ts
+capabilities: ['aspect-ratio', 'exact-size', 'upscale'],
+accepts: {
+  aspectRatios: ['1:1', '16:9', '9:16'],
+  outputSizes: [{ width: 1024, height: 1024 }, { width: 1365, height: 1024 }],
+  upscaleFactors: [2],
+},
+```
+
+A step asking for a value nothing selected accepts is refused before it spends anything, and the
+message names what the selected integrations do accept. Where one integration enumerates its values
+and another declares none, the step still starts and both the builder and the agent's brief say
+which of them will actually serve it.
+
+Declare a set only where the endpoint genuinely has one, since a set is a refusal. An API that
+renders any size you hand it, inside limits no list can enumerate (a megapixel cap, dimensions in
+multiples of 32, a range that moves with the style), declares the capability, omits the set, and
+puts the limits in `guidance`. There is no way to express a range or a minimum, deliberately:
+ratios and sizes are checkable facts, and a constraint language would not be. Ratios are compared
+in lowest terms, so `1920:1080` matches a declared `16:9`.
 
 ##### Vendors that authenticate with more than one value
 
