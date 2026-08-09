@@ -47,7 +47,9 @@ What happens, and what you are deciding:
 3. You pick the **board** the host may act on and **what it may do** (`read`, `write`, `decide` or
    `admin`, the same ladder every API key carries). The screen names the host and the address your
    browser will be sent back to; that address was matched against what the host registered, so it
-   is the fact worth reading.
+   is the fact worth reading. What is preselected is `read and write`, never whatever the host asked
+   for: any host can register itself and ask for full access, so an ask above the default is shown
+   to you as a note and raising the grant stays something you do deliberately.
 4. The host receives an API key scoped to exactly that. It appears in the board's API-key settings
    as `MCP: <host name>`, and **revoking it there disconnects the host**.
 
@@ -63,11 +65,12 @@ Two things to know before you rely on it:
 - `ENCRYPTION_KEY`, which every value the flow carries between requests is sealed under.
 - The public API enabled, since what a host is issued is a public-API key.
 - `APP_BASE_URL`, **only** if the app is served from a different origin than the API. Same value the
-  invite and password-reset links already use.
+  invite and password-reset links already use, path prefix included if the app sits under one.
 
-Without the first two the endpoint still serves the discovery documents' absence honestly: the
-authorization routes answer `503` naming what is missing, and a host falls back to asking you for a
-key. Approving a connection requires the `secrets.manage` permission on the board you pick, which is
+Without the first two, nothing is advertised: the discovery documents and the authorization routes
+alike answer `503` naming what is missing, and a host falls back to asking you for a key. That is
+deliberate, because a deployment that described a complete authorization server it cannot run would
+send every host down a chain that fails at the last step. Approving a connection requires the `secrets.manage` permission on the board you pick, which is
 the same permission minting an API key by hand requires.
 
 ### If your host cannot do OAuth
