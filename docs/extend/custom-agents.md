@@ -302,6 +302,17 @@ entries may not arrive as the same environment variable (the same `envName`, or 
 `envName` colliding with another's `key`); that is refused at boot, because the job body is keyed by
 variable name and a collision would silently deliver one value and drop the other.
 
+That refusal reaches across your registrations too, with one exception. Two integrations on the same
+vendor account may share a variable, and often should: register both with the same lookup `key` and
+whichever runs first sets the variable to exactly the value the other wanted. What is refused is two
+integrations that mean **different** values by one variable name, because nothing downstream can
+serve both. The agent would be told to read that variable for each of them and would authenticate
+one vendor with the other's key. Give one of them a distinct `envName`.
+
+A step's brief is written from these entries, so a `required: false` credential is worth declaring
+honestly: the agent is told to call the integration anyway when that value is missing, while a
+missing required one means the integration must not be called at all.
+
 The platform names values and never assembles the request: there is no auth-scheme field, and
 nothing base64-encodes or builds a header for you. Say how to present each value in `usage` and the
 agent does the rest.
