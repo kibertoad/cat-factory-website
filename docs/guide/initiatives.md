@@ -49,8 +49,9 @@ discipline reaches the spawned runs, not just the planning run.
 Beyond the three built-ins, a deployment can **register its own initiative presets** in code, the same
 way it registers custom agent kinds and gates. A custom preset carries its own create-time form,
 planning binding, mandated plan shape, prompt steering, and per-item spawn decoration; see
-[Add a Custom Agent Kind](../extend/custom-agents.md). There is no UI or config path for defining one,
-because a preset can run repo-reading and agent-steering code and so is trusted like a custom kind.
+[Register an Initiative Preset](../extend/initiative-presets.md). There is no UI or config path for
+defining one, because a preset can run repo-reading and agent-steering code and so is trusted like a
+custom kind.
 
 ### Documentation refresh
 

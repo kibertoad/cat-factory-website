@@ -316,44 +316,130 @@ function ttlSeconds(manifest: EnvironmentManifest): number | undefined {
 from `provision` are persisted and handed back to `status`/`teardown` as `provisionFields`, so stash
 anything you need to re-address the environment (its id, a region, a sub-resource).
 
+### Proving a teardown
+
+A fourth, optional method is the difference between a **reported** reclaim and a **proven** one.
+Nothing reads your `teardown()` returning cleanly as the environment's death, so a backend that
+does not implement this has every teardown recorded as `unverifiable`, and a deployment counting
+on auto-teardown to control spend has no evidence it happened:
+
+```ts
+confirmTeardown?(req: EnvironmentTeardownRequest): Promise<TeardownProbe>
+
+type TeardownProbe =
+  | { state: 'gone' }                                          // the ONLY answer that proves one
+  | { state: 'present'; terminating: boolean; detail?: string }
+  | { state: 'unknown'; reason: string; retryable: boolean }
+```
+
+- **Under-claim.** Anything you cannot establish is `unknown`, never `gone`. A 404 from a
+  misconfigured base URL and a 404 from a reclaimed environment are the same response; if your
+  adapter cannot tell them apart, say so. The signal exists to be trusted, so cautious is the only
+  safe direction to be wrong in.
+- **`terminating` and `retryable` decide whether anyone should wait.** A resource draining its
+  finalizers confirms on a later pass; one that is simply still there never will. A transient
+  outage (`retryable: true`) is worth re-probing; a permanent inability to verify answers
+  identically forever and is only ever fixed by a person.
+- **Do not answer out of `status()` instead.** You wrote `status()` to describe a LIVE environment,
+  so what it says about a destroyed one is incidental. The generic manifest provider with no
+  `status:` template returns `ready` forever, which as a teardown verdict is a confident lie in the
+  worst direction.
+
+The probe is bounded in wall-clock time (it is awaited inline on an on-demand teardown and on the
+TTL sweep), so an unresponsive one costs the confirmation and never the teardown itself.
+
 ### Wire it in
 
-In your [deployment repository](../deploy/deployment-repository.md), inject the provider when you build the
-container. Both runtimes take it through a one-line seam:
+A provider is not injected as a deployment-wide singleton. You register a **backend** under a `kind`
+of your own, and a workspace selects that kind when it connects. That is what lets one deployment
+serve two workspaces on different platforms, and it is the same registry the built-in `manifest` and
+`kubernetes` backends register on.
+
+The backend is a small wrapper around the provider you just wrote. It answers the questions the
+platform asks before a run: what to call your kind, which config keys are secrets, how a connect
+config maps to and from the stored manifest, whether a config is safe to accept, which infra engines
+you serve, and how to build the live provider:
+
+```ts
+// deploy/shared/src/preview-backend.ts  (a plain value, NOT a side-effect import)
+import type { EnvironmentBackendProvider } from '@cat-factory/integrations'
+import { PreviewPlatformProvider } from '@your-org/preview-provider'
+
+export const previewEnvironmentBackend: EnvironmentBackendProvider = {
+  kind: 'acme-preview',
+  displayLabel: 'Acme Preview',
+  engines: () => ['remote-custom'],
+  referencedSecretKeys: () => ['preview_token'],
+  connectionMeta: (config) => ({
+    providerId: 'acme-preview',
+    label: 'Acme Preview',
+    baseUrl: config.baseUrl,
+  }),
+  assertConfigSafe: (config, opts) => assertUrlSafe(config.baseUrl, opts?.urlPolicy),
+  toManifest: (config) => buildManifest(config),
+  fromManifest: (manifest) => readConfig(manifest),
+  buildProvider: (ctx) =>
+    new PreviewPlatformProvider({ secretKey: 'preview_token', timeoutMs: 15_000, urlPolicy: ctx.urlPolicy }),
+}
+```
+
+Then register it by reference on the registry bundle and hand that bundle to the facade. Both
+runtimes take the same bundle, because an environment backend and its runner backend are two halves
+of one deployment's infrastructure:
 
 ```ts
 // deploy/backend/src/main.ts  (Node service)
-import { start, buildNodeContainer } from '@cat-factory/node-server'
-import { PreviewPlatformProvider } from '@your-org/preview-provider'
+import { start, buildNodeContainer, createBackendRegistries } from '@cat-factory/node-server'
+import { previewEnvironmentBackend } from '../../shared/src/preview-backend'
 
-const environmentProvider = new PreviewPlatformProvider({
-  baseUrl: process.env.PREVIEW_BASE_URL,
-  secretKey: 'preview_token',
-  timeoutMs: 15_000,
-})
+const backendRegistries = createBackendRegistries()
+backendRegistries.environmentBackendRegistry.register(previewEnvironmentBackend)
+// A `remote-custom` backend also needs a manifest type in the catalog, or no service can pin it.
+backendRegistries.customManifestTypeRegistry.register({ manifestId: 'acme-preview', label: 'Acme Preview' })
 
 start({
-  buildContainer: (opts) => buildNodeContainer({ ...opts, environmentProvider }),
+  buildContainer: (opts) => buildNodeContainer({ ...opts, backendRegistries }),
 }).catch((err) => { console.error(err); process.exit(1) })
 ```
 
 ```ts
 // deploy/local/src/main.ts  (local mode)
-import { startLocal } from '@cat-factory/local-server'
-import { PreviewPlatformProvider } from '@your-org/preview-provider'
+import { startLocal, createBackendRegistries } from '@cat-factory/local-server'
+import { previewEnvironmentBackend } from '../../shared/src/preview-backend'
 
-startLocal({
-  environmentProvider: new PreviewPlatformProvider({ secretKey: 'preview_token', timeoutMs: 15_000 }),
-}).catch((err) => { console.error(err); process.exit(1) })
+const backendRegistries = createBackendRegistries()
+backendRegistries.environmentBackendRegistry.register(previewEnvironmentBackend)
+
+startLocal({ backendRegistries }).catch((err) => { console.error(err); process.exit(1) })
 ```
 
-`startLocal({ environmentProvider })` keeps all of local mode's boot behaviour (container-runtime
-preflight, orphan reaping, PAT/auth warnings) and just threads your provider through, so the local
-entry stays a one-liner.
+`startLocal({ backendRegistries })` keeps all of local mode's boot behaviour (container-runtime
+preflight, orphan reaping, PAT/auth warnings) and just threads your registrations through, so the
+local entry stays a one-liner. On local it is its own boot option; on Node it rides
+`buildNodeContainer`, which `start` calls for you.
+
+::: warning Register by reference, and register on every process
+`createBackendRegistries()` news the instance; `register` mutates that instance. Never import a
+registry from `@cat-factory/kernel` or news a second one to register into, because a
+`workspace:*` dependency publishes as an exact version, so a consumer floating the range can
+resolve two physical copies and your registration lands in the one nothing reads. A
+[mothership deployment](../deploy/deployment-repository.md) is two processes, so it registers
+in both entry points.
+:::
+
+Registering the backend teaches the platform **how** a custom environment is stood up. It does not
+by itself let a service **choose** one: a service pins a `manifestId` from the custom-manifest-type
+catalog, and a `remote-custom` backend declares which ids it accepts (`acceptsManifestIds`, or none
+to accept any). Register the backend and leave that catalog empty, and the service inspector's
+provisioning picker offers nothing, which reads as the backend not being registered at all.
 
 The environments module still needs to be enabled (`ENVIRONMENTS_ENABLED=true` + an encryption key)
-and each workspace registers a **connection**. That connection is what holds the sealed token and
-the `providerConfig`. That requirement is intentional.
+and each workspace registers a **connection** selecting your `kind`. That connection is what holds
+the sealed token and the `providerConfig`. That requirement is intentional.
+
+Implement `confirmTeardown` too, or your environments are reclaimed and never **proven** reclaimed:
+nothing reads a clean `teardown()` as the environment's death, so a backend without the probe has
+every teardown recorded as unverifiable. See [the teardown probe](#proving-a-teardown).
 
 ### Teaching the detector to recognise your repos
 
@@ -516,8 +602,22 @@ Import the seam from the facade you already depend on, and note four rules:
 
 `create` may return `null` for "this deployment cannot serve the store right now" (an unset
 credential, an un-provisioned bucket). The resolver then reads as storage-unavailable, the same as a
-backend a runtime does not support, and logs which store declined. The full contract, including how
-the per-process cache is keyed, is in
+backend a runtime does not support, and logs which store declined. It is called once per account on
+a cache miss and memoised until that account's storage config changes, so the client you build there
+survives across requests.
+
+::: warning Register on every process that HANDLES the bytes
+A store is a live client holding credentials, so it cannot be shared over a machine API the way a
+registered generator can: the process holding the bytes is the one that has to construct it. A
+standalone deployment is one process and one registration. A **mothership deployment is two**: each
+node writes its artifacts through its own registry, and the mothership runs the artifact-retention
+sweep, which deletes through *its* registry. Register on `startLocal({ binaryStoreRegistry })` **and**
+on the mothership's `start({ binaryStoreRegistry })`. Registering only on the nodes writes the bytes
+and never reclaims them, and the sweep then reports the same zero it reports for a deployment that
+stores nothing.
+:::
+
+The full contract, including how the per-account cache is keyed, is in
 [`backend/docs/custom-binary-stores.md`](https://github.com/kibertoad/cat-factory/blob/main/backend/docs/custom-binary-stores.md).
 
 ## Testing your adapter

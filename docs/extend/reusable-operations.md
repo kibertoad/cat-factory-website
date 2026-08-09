@@ -68,7 +68,7 @@ pin would bypass both the trait-based routing and the design's own declaration, 
 | --- | --- | --- |
 | **Plain custom task type** | A first-class work-item *classification*: an "incident" card, a badge, a small form. | `presentation` + `fields`, no bundled pipeline or fragments. |
 | **Reusable operation** | A human fills a small per-case form and one canned pipeline delivers one outcome. | The full bundle. One invocation is one typed task. |
-| **Initiative preset** | The work must be *planned* and decomposed: phases, many spawned items, checkpoints between them. | An initiative preset. See [Run an Initiative](../guide/initiatives.md). |
+| **Initiative preset** | The work must be *planned* and decomposed: phases, many spawned items, checkpoints between them. | An initiative preset. See [Register an Initiative Preset](./initiative-presets.md). |
 | **Recurring schedule** | Time, or a webhook, is the trigger rather than a human with per-case input. | A schedule pointing at a pipeline. See [Schedule a Recurring Pipeline](../guide/recurring-pipelines.md). |
 
 The litmus: when the create-form answers **are** the whole per-case brief and one pipeline delivers
