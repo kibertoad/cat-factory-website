@@ -185,7 +185,7 @@ await start({ foundationalServiceRegistry })
 | `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](../extend/custom-gates.md). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
 | `defaultPipelineRegistry()` | Predefined pipelines. |
 | `defaultTaskTypeRegistry()` | Namespaced [custom task types](../extend/frontend-extensions.md#custom-task-types). |
-| `defaultInitiativePresetRegistry()` | [Initiative presets](../guide/initiatives.md). |
+| `defaultInitiativePresetRegistry()` | [Initiative presets](../extend/initiative-presets.md). |
 | `defaultFoundationalServiceRegistry()` | [Foundational services](../guide/foundational-services.md), resolved as the `builtin` tier of every workspace's catalog. |
 | `defaultBinaryGeneratorRegistry()` | [Generative binary integrations](../guide/choosing-a-pipeline.md#binary-output-steps) a `binary-output` step can select. |
 

@@ -1,10 +1,22 @@
 # Documentation revamp: website restructure
 
-Status: **phase F in flight.** Phases A to E landed. Phase F closes two destinations phase E was
-never told about and renders the API reference the code repo's last open item is waiting on. The
+Status: **phase G in flight.** Phases A to F landed. Phase G is the first one whose findings came
+out of READING pages rather than writing them, and two of the three are corrections: two Extend
+pages were teaching APIs that no longer exist. The
 sibling tracker for the code repo's side of the revamp (which docs move here, which stay there, and
 the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
+
+**Phase G's lesson: a page can be complete, well-shaped, and wrong.** Every quality bar this
+revamp has set so far is about coverage and structure, and both pages that broke passed all of
+them. `extend/custom-gates.md` told a deployment author to import `wireProvider` and
+`isProviderWired` from the kernel; neither is exported, because provider wiring moved to an
+app-owned registry instance. `extend/custom-providers.md` told them to pass `environmentProvider`
+to `buildNodeContainer` / `startLocal`; that option was removed when environment backends became a
+registry keyed by `kind`. In both cases the code repo's matching doc had the new model and said so
+plainly, and the reduction pass that pointed at these pages checked whether they EXISTED, which
+they did. Depth was checked in phase E. Phase G adds the third check: does the page still describe
+the code.
 
 **Phase F opens with the failure the whole ordering rule exists to prevent, and it had already
 happened.** The code repo's reduction pass cut `mcp-tool-servers.md` from 723 lines to 347 and
@@ -286,6 +298,49 @@ What F3 got right by copying `sync-env-vars.mjs` and what it had to add:
 - **The page's own outline is suppressed** (`sidebarDepth: 1`). At 101 operations and 103 schemas the
   default outline is about 120 sidebar entries; two in-page index lines do that job instead, and
   every anchor is still there for anything linking one.
+
+### Phase G: the pages that stopped describing the code, and the destination nobody had
+
+Paired with the code repo's slice 15 continuation, which reduces nine docs against these pages.
+
+- [x] G1. **Fix the provider wiring on `extend/custom-gates.md`.** Its registration example imported
+      `wireProvider` and `isProviderWired` from `@cat-factory/kernel` and called them as module-level
+      functions. Neither is exported. The registry is an app-owned `ProviderRegistry` instance the
+      facade builds and injects, so a wire function takes it as its first argument and a gate's
+      `wired()` reads `ctx.isProviderWired(token)`. The doc-quality example was missing the same
+      argument, and the gotcha telling readers to make `wired()` "exactly `isProviderWired(token)`"
+      was pointing at the dead spelling.
+- [x] G2. **Fix the environment-provider wiring on `extend/custom-providers.md`**, and close two
+      gaps found beside it. `buildNodeContainer({ environmentProvider })` and
+      `startLocal({ environmentProvider })` were removed when environment backends became a
+      registry keyed by `kind`: you now register an `EnvironmentBackendProvider` on the
+      `createBackendRegistries()` bundle. Registering a `remote-custom` backend without also
+      registering a custom manifest type leaves it unselectable, which reads exactly like the
+      registration not having happened, so that step is now in the example rather than a footnote.
+      Added: `confirmTeardown` (its absence is why a deployment can have every teardown recorded
+      as unverifiable), and the rule that a binary store is registered on every process that
+      HANDLES the bytes, which on a mothership deployment is two.
+- [x] G3. **`extend/initiative-presets.md`, the destination this site kept promising.**
+      `guide/initiatives.md` told a deployment author that presets are registered in code and sent
+      them to `extend/custom-agents.md`, which says nothing about presets;
+      `extend/reusable-operations.md` named the preset as one of four vehicles and sent them back to
+      `guide/initiatives.md`. So the reader who correctly picked the preset vehicle was routed in a
+      circle and landed nowhere. The page owns the seam, the four parts, the create-time form, the
+      mandated plan shape, spawn decoration, checkpoints and the cross-phase-artifact rule; both
+      cross-links now point at it, as does the deployment-repository registry table.
+
+Two things phase G is worth remembering for:
+
+- **The corrections were found by reducing, not by auditing.** Nothing scheduled would have caught
+  either: `check-repo-links.mjs` resolves a URL to a page and a heading, which both pages had. A
+  code example is not a link, and no cross-repo guard can typecheck one. What found them was a
+  person reading the code repo's doc beside the live page and noticing the two disagreed about
+  which API exists. That is an argument for the reduction pass being a REVIEW of the page as much
+  as a cut of the doc.
+- **The circular cross-link is the failure mode a new section invites.** Two pages each named the
+  other as the authority on presets and neither held it. Every link was live, so nothing was
+  broken in any way a checker can see; the material simply did not exist. When a page says "see X
+  for how to do this", open X and confirm it does.
 
 ## Docs added since this tracker was written
 
