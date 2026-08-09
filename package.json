@@ -14,6 +14,9 @@
     "docs:env-vars": "node scripts/sync-env-vars.mjs",
     "docs:env-vars:check": "node scripts/sync-env-vars.mjs --check",
     "docs:env-vars:verify": "node scripts/sync-env-vars.mjs --verify",
+    "docs:openapi": "node scripts/sync-openapi.mjs",
+    "docs:openapi:check": "node scripts/sync-openapi.mjs --check",
+    "docs:openapi:verify": "node scripts/sync-openapi.mjs --verify",
     "docs:repo-links": "node scripts/check-repo-links.mjs"
   },
   "devDependencies": {
