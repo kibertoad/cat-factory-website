@@ -319,6 +319,13 @@ aspect ratios and is asked for an eleventh does not fail: it crops to the neares
 successfully, and the artifact then passes every other check the platform can make. The consumer that
 rejects it is your game or your storefront, weeks later.
 
+A value only SOME of your integrations accept is neither of those. If one of them takes `7:3` and
+another has written down a list without it, the step is not refused: which integration renders which
+artifact is the agent's call, and one that accepts your value is selected. The builder names the ones
+that will not take it, because the fix is either dropping them from this step or accepting that they
+will be sent something else. Read that line even though the step starts, since it is the crop above
+being reported in advance rather than discovered later.
+
 Both checks are only as strong as what your deployment declared. An integration that has not stated
 which values it accepts might still serve the one you asked for, so the step starts and the builder
 says which of your integrations will actually honour it, rather than refusing a selection that is
