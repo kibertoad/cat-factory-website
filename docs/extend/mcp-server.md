@@ -100,22 +100,33 @@ One tool per exposed operation, named `<group>_<method>` to match the SDK call
 | Group | What it covers |
 | --- | --- |
 | `jobs_*` | Headless runs of a public inline pipeline against a brief. |
-| `services_*` | The board's service frames. |
-| `tasks_*` | A task's whole lifecycle: create, edit, start, stop, retry, read its run. |
+| `services_*` | The board's service frames: list them, or create one (optionally repo-backed). |
+| `spec_*` | A service's in-repo requirement tree and the Gherkin rendered from it. Read-only. |
+| `repos_*` | The repositories a service can be backed with, and which service each already backs. |
+| `tasks_*` | A task's whole lifecycle: create, edit, start, stop, retry, read its run, plus its dependencies and requirement links. |
 | `pipelines_*` | Which pipelines a task can be started with. |
+| `task_types_*` | What a task can be created as in this workspace, and the fields each kind accepts. |
 | `notifications_*` | The human-actionable inbox, including the merge tail. |
-| `usage_*` | The billing period's metered budget position. |
+| `webhook_*` | The workspace's outbound endpoints for notifications and run-lifecycle events. |
+| `usage_*` | The billing period's metered budget position, and spend sliced by repository, ticket or run. |
+| `me_*` | What the calling key is and what it may do. |
 | `decisions_*` | A parked run's human decisions. |
 | `debug_*` | A run's recorded telemetry: model calls, agent context, infrastructure logs. |
+| `evidence_*` | What a run proved: the verification report, the outcome summary, the captured artifacts. |
+| `merge_records_*` | The evidence behind the auto-merge policy, with its per-class rollups. |
+| `keys_*` | The workspace's own API keys: provision, list, revoke. |
 
 The server reports the live count on startup and lists the tools over the protocol, which is the one
 place the list cannot go stale.
 
-**The API's two event-stream operations are deliberately absent**, and the server says so rather
-than leaving a model to conclude the platform cannot do it. A tool call returns one result over no
-streaming channel, so poll `jobs_get` and `tasks_get_run` instead, or consume the streams through an
-SDK. A bounded "wait for the run" tool would not fix this: a run parked on a human decision waits
-indefinitely by design, so any such tool is a timeout dressed up as an answer.
+**Three operations are deliberately absent**, and the server says so rather than leaving a model to
+conclude the platform cannot do it. The two event streams have no home here (a tool call returns one
+result over no streaming channel), so poll `jobs_get` and `tasks_get_run` instead, or consume the
+streams through an SDK; a bounded "wait for the run" tool would not fix this, because a run parked
+on a human decision waits indefinitely by design, so any such tool is a timeout dressed up as an
+answer. The artifact byte download is the third: a tool result is text or a declared content block,
+not an arbitrary byte stream, so list the artifacts with `evidence_list_artifacts` and fetch the
+bytes over HTTP or an SDK with the same key.
 
 ## A worked flow
 

@@ -145,7 +145,10 @@ deployment environment.
   of your own, injected under the one the vendor's SDK wants. `envName` has its own narrower rule
   (not `PATH`, `NODE_OPTIONS`, `npm_config_*`, or anything else that would reconfigure the process
   instead of authenticating a call). It applies to `stdio` servers; on an `http` server the value
-  goes to the declared `header`, so an `envName` there is inert and warned about.
+  goes to the declared `header`, so an `envName` there is inert and warned about. The mirror is
+  refused outright: a `header` on a `stdio` server has no request to carry it, so the resolved
+  value would reach nothing and the server would start unauthenticated while the agent is told it
+  has the tool. That declaration fails boot (`unusable_credential_header`) instead.
 - **A workspace's own value wins over the deployment's.** The per-workspace credential store sits
   in front of the environment, per key, so a tenant supplies its own vendor account and a workspace
   that has stored nothing resolves exactly as it did before the store existed. The surface is a
