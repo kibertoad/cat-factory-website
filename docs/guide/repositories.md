@@ -130,6 +130,24 @@ run at the repository root by design, since their job spans the whole repo.
 
 Repositories that are not flagged as monorepos are unchanged: the service owns the whole repo.
 
+### One of them can be the frontend
+
+A monorepo that holds a UI app beside its backends can say so in the same pass. Select the
+directories as usual, then name the app's directory under **Frontend app**. It is added as a
+[**frontend** frame](#repository-types) pinned to that subdirectory instead of a backend service,
+and bound to every service added beside it, so the board draws the frontend-to-backend links as
+soon as the import finishes.
+
+The option appears once at least two directories are selected and the repository type is
+**Service**, because a backend binding can only point at a backend service. Leave it on **None**
+and every selected directory is imported as a service, exactly as before.
+
+Those bindings arrive without environment-variable names: nothing has read the app's source, and a
+guessed name would look configured while injecting a variable the app never reads. Open the
+frontend frame's inspector to name each one, or use **Detect from repo** to propose them from the
+repo's `.env` examples. Until a binding is named it is a board link and nothing more. See
+[Preview and Test a Frontend](./frontend-preview.md).
+
 ## Keeping in sync via webhooks
 
 Because the GitHub App sends webhooks, changes made directly in GitHub (pushes, PR merges,

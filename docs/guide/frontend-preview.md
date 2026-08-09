@@ -48,7 +48,8 @@ never overwriting an existing service link.
 
 For a monorepo, set the **Frontend directory** (the app's subfolder, e.g. `frontend/`) first: it
 scopes both what Detect reads and where install, build, and serve run. Leave it empty when the app is
-at the repo root.
+at the repo root. A frontend frame [imported from a monorepo](./repositories.md#monorepos) already
+has it filled in from the directory you picked, so there is nothing to set before clicking Detect.
 
 ## Backend bindings
 
