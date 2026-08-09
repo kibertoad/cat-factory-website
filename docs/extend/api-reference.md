@@ -8,7 +8,7 @@ sidebarDepth: 1
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.35.0**. 101 operations across 16 groups.
+Surface version **1.36.0**. 101 operations across 16 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](./public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](./sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -1357,7 +1357,7 @@ The binary artifacts the run captured (UI screenshots) plus the reference images
 
 Minimum scope: `read`.
 
-What the run changed and what backs that up, in product language, for a reader who will not open the diff: the run’s disposition, the pull requests it opened, requirement coverage joined to the service’s `spec/`, the tester’s verdict and concerns, the views it captured, and the machine checks that ran. The same reduction the app’s outcome card renders, over the same evidence the verification report is built from, so the two cannot state different totals for one run. Nothing here is asserted by a model: every count is derived from recorded verdicts. Prefer the verification report when you need a reviewer’s full bundle; prefer this when you need to say what shipped. Sections state `reported` or `absent` with a machine-readable gap code, and `truncations` names any list the response had to bound.
+What the run changed and what backs that up, in product language, for a reader who will not open the diff: the run’s disposition, the pull requests it opened, requirement coverage joined to the service’s `spec/`, the tester’s verdict and concerns, the views it captured, the throwaway environments it stood up (`state: "live"` is the only one worth opening, and every other row still carries its URL), and the machine checks that ran. The same reduction the app’s outcome card renders, over the same evidence the verification report is built from, so the two cannot state different totals for one run. Nothing here is asserted by a model: every count is derived from recorded verdicts. Prefer the verification report when you need a reviewer’s full bundle; prefer this when you need to say what shipped. Sections state `reported` or `absent` with a machine-readable gap code, and `truncations` names any list the response had to bound.
 
 **Path parameters**
 

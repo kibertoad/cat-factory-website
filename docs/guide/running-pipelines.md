@@ -194,6 +194,13 @@ person knows the change is waiting. If no ephemeral-environment provider is wire
 degraded manual mode: it still parks for your confirmation but stands up no live URL and the
 environment actions are disabled.
 
+You do not need the gate to reach the preview. Every environment a run stands up is listed on the
+task's **outcome card** (the "read the result" view), next to the screenshots the run captured, with
+a link on the ones that are still standing. An environment that has been torn down, has expired or
+never came up still shows its address, labelled with which of those happened, so a dead link is
+never offered as a live one. That is the fastest way for a designer or a product owner to check the
+change without reading the diff, and it works while the run is still going.
+
 ## Human review on the pull request
 
 The **Human Review** gate puts a required human code review in the pipeline. The **Adaptive build**
