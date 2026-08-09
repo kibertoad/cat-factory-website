@@ -378,10 +378,11 @@ by design, so a workspace key never learns a sibling workspace's spend. See
 
 ## Run debugging
 
-Eight read-only endpoints under `/api/v1/debug/*` diagnose a run from outside the browser: a run
-index, a per-run overview with precomputed signals, and budgeted drill-downs into model calls, agent
-context, searches, and provisioning logs. They use the same keys at `read` scope and are keyset
-paginated like the other lists.
+Read-only endpoints under `/api/v1/debug/*` diagnose a run from outside the browser: a run index, a
+per-run overview with precomputed signals, and budgeted drill-downs into model calls, agent context,
+searches, tool calls and provisioning logs. They use the same keys at `read` scope and are keyset
+paginated like the other lists. The endpoint table and the diagnostic playbook are
+[Debug a Run from Outside the Browser](../operate/debugging-a-run.md).
 
 Because they reach prompt and response bodies, treat a key that can call them as sensitive even
 though it is only `read`.

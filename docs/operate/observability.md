@@ -193,13 +193,12 @@ Everything above is reachable over HTTP as well, under `/api/v1/debug/*` with an
 context budget rather than a scrollbar, so an agent asked "why did this run fail" can use it.
 
 It is a two-level drill-down: a keyset-paginated run index, a per-run overview built purely from SQL
-aggregates (steps, per-sink availability and counts, LLM rollups, and precomputed diagnostic signals),
-then bounded pages over the run's model calls, agent-context dispatches, performed searches, and
-provisioning events.
+aggregates, then bounded pages over the run's model calls, agent-context dispatches, searches and
+provisioning events. Size discipline is enforced in the query rather than in the response, so a
+response's size is computable before you ask for it.
 
-Size discipline is enforced in the query rather than in the response: fan-out lists carry sizes rather
-than bodies, bodies are opt-in and byte-budgeted, slicing and filtering happen in SQL so an
-un-previewed page reads no body bytes at all, and every truncation reports what it left out.
+**[Debug a Run from Outside the Browser](./debugging-a-run.md)** is the full account: the endpoints,
+the signal-by-signal playbook, the body search, spend attribution, and the size ceilings.
 
 ::: warning A read key reaches prompts
 These endpoints serve prompt and response bodies that the app gates behind workspace roles. Treat a

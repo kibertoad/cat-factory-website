@@ -80,6 +80,7 @@ const OPERATE = [
   '/operate/notifications.md',
   '/operate/runner-pools.md',
   '/operate/environments.md',
+  '/operate/debugging-a-run.md',
   '/operate/troubleshooting.md',
   '/operate/upgrades-and-retention.md',
 ]
@@ -90,6 +91,7 @@ const EXTEND = [
   '/extend/custom-providers.md',
   '/extend/frontend-extensions.md',
   '/extend/manifests.md',
+  '/extend/tool-servers.md',
   '/extend/reusable-operations.md',
   '/extend/public-api.md',
   '/extend/sdks.md',

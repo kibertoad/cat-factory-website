@@ -55,7 +55,7 @@ const siteLinks = new Map([
   ['backend/docs/model-support.md', '../guide/model-providers.md'],
   ['backend/docs/security-model.md', './security-model.md'],
   ['backend/docs/custom-agents.md', '../extend/custom-agents.md'],
-  ['backend/docs/mcp-tool-servers.md', '../extend/custom-agents.md#skills-and-tool-servers'],
+  ['backend/docs/mcp-tool-servers.md', '../extend/tool-servers.md'],
   ['backend/docs/vcs-providers.md', './vcs-support-matrix.md'],
   ['backend/docs/storage-and-retention.md', '../operate/upgrades-and-retention.md'],
   ['docs/glossary.md', './glossary.md'],

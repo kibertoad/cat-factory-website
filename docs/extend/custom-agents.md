@@ -190,7 +190,8 @@ You can also pass the definition inline for a one-off, or reference an account-t
 is required by default: if the library is unconfigured or the skill was removed, the dispatch fails
 rather than running work nobody asked for. Pass `optional: true` to skip it with a note instead.
 
-A **tool server** is an MCP server, `stdio` or HTTP:
+A **tool server** is an MCP server, `stdio` or HTTP, registered with `registerToolServer` and named
+in a kind's `toolServers`:
 
 ```ts
 agentKindRegistry.registerToolServer({
@@ -203,25 +204,13 @@ agentKindRegistry.registerToolServer({
 })
 ```
 
-Credentials are declared by name and resolved at dispatch from the deployment environment; the value
-rides the job body only and never reaches a prompt. An HTTP server must be `https` or loopback,
-refused at registration and again at the harness job boundary, since its credential rides a header.
-`guidance` is what turns a wired server into a used one; without it an agent tends to ignore a tool it
-was handed.
+**[Give Agents External Tools (MCP)](./tool-servers.md) is the full account**: which harness can
+serve which transport, the credential rules (including why a lookup key may not name a platform
+variable, and what `envName` is for), OAuth-protected servers, the Test button and its verdicts,
+operating a `stdio` server, and the security posture. Read it before wiring a third-party server.
 
-A `key` may not name a variable the platform's own configuration owns. For a `stdio` server whose
-client reads a documented variable name inside a reserved prefix, split the two:
-`{ key: 'ACME_GITHUB_TOKEN', envName: 'GITHUB_PERSONAL_ACCESS_TOKEN' }`. A secret that does not
-resolve drops the whole server, with a note in the prompt, unless you mark it `required: false`.
-
-`allowedTools` is scoping, not a security boundary. It is always stated in the prompt and passed to
-the claude-code CLI's `--allowedTools`, but the run's permission mode decides whether the CLI treats
-it as a gate, and some harnesses cannot express a per-tool restriction. A server whose other tools a
-kind must genuinely never reach should not be wired for that kind at all. A server the run's harness
-cannot serve is stated to the agent as unavailable rather than silently dropped.
-
-Attach either to a **built-in** kind without redefining its prompt, which is how a stock `coder` or
-`pr-reviewer` gets your house playbook or your tracker:
+Attach either capability to a **built-in** kind without redefining its prompt, which is how a stock
+`coder` or `pr-reviewer` gets your house playbook or your tracker:
 
 ```ts
 agentKindRegistry.assignSkills('coder', ['acme-house-style'])
@@ -229,6 +218,7 @@ agentKindRegistry.assignToolServers('pr-reviewer', ['acme-tracker'])
 ```
 
 Boot validation errors on an unresolved skill or tool-server id.
+
 
 #### Kind variants
 

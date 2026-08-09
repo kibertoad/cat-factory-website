@@ -12,8 +12,21 @@ context.
 | **Documents** | Confluence, Notion, GitHub repo docs, Linear Docs |
 | **Design context** | Figma, Zeplin |
 
-**GitHub repo docs** lets you pull a Markdown/spec file straight from a connected repository
-(`owner/repo:path`, or a file URL), reusing the workspace's installed GitHub App.
+Each workspace connects its own sites and credentials in the app; nothing here is a deployment
+secret. What each document source needs:
+
+| Source | What to connect with |
+| --- | --- |
+| **Confluence** | Your own site plus an Atlassian **API token** (`id.atlassian.com` → Security → API tokens). The stored base URL must be `https` on a public host. |
+| **Notion** | An **internal integration** (`notion.so/my-integrations`), shared with each page you want readable, then paste the token. |
+| **GitHub repo docs** | Nothing. It rides the workspace's installed GitHub App, so it is live as soon as the App is installed, with no separate connect step. |
+| **Linear Docs** | The same Linear connection the tracker uses, below. |
+
+**GitHub repo docs** lets you pull a Markdown or spec file straight from a connected repository
+(`owner/repo:path`, or a file URL). Reads are scoped to the workspace's own installation, so a
+reference naming another account's repository cannot reach it. Instead of the free-text search box
+the other sources use, it offers a **repository picker**: search for a repo, then pick one or more
+files by searching the tree by path or browsing it.
 
 Connect **Linear** per workspace under **Integrations**, either through OAuth (the "Connect" flow) or
 with a personal API key. It works across four capacities:

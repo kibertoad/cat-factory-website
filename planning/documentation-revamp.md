@@ -211,6 +211,19 @@ own reduction slices found afterwards, each one blocking a cut that could not ot
       agent actually receives, what each import cap asks the reader to DO about it, the freshness
       verdicts and their four fixes, renders, and the commit-it-don't-connect-it workflow for Claude
       Design. The tip box is now a pointer.
+- [x] E6. **Two pages the code repo's reductions turned out to be blocked on**, found by measuring
+      phase E rather than by the audit. `extend/tool-servers.md` ("Give Agents External Tools (MCP)")
+      and `operate/debugging-a-run.md` ("Debug a Run from Outside the Browser"). Both are the same
+      shape as E1: a repo doc many times the size of its page, so the reduction could not land until
+      the page existed. `mcp-tool-servers.md` was 723 lines against 65 on `extend/custom-agents.md`;
+      `debug-api.md` was 433 against about 25 spread over two pages. With the pages here they cut to
+      347 and 207.
+
+      The custom-agents page's tool-server subsection is now a pointer, which moved a load-bearing
+      link: the generated environment-variable page maps that doc onto a site link through
+      `scripts/sync-env-vars.mjs`, and the mapping was repointed and the page regenerated in the same
+      change.
+
 - [x] E5. **Resolve the crossing links from the repository that holds the pages**
       (`scripts/check-repo-links.mjs`, the sibling tracker's item 18). Both directions: a
       catfactory.ai URL anywhere in the code repo must name a page here and, when it deep-links one,
@@ -278,3 +291,11 @@ leaving them for a later slice:
 - **Say what depth a page owns when it takes one over.** Phase E's manifest page states that it is
   the authority for the format, because the previous version's silence on the question is what let
   two reductions be scoped against a page that could not receive them.
+- **Measure the pair, not the page.** Phase E's first round added 1,139 lines here and removed 614
+  there, which is two parallel accounts with a link between them rather than a move. A page landing
+  is half a slice; the number that says whether the split happened is lines REMOVED from the code
+  repo. E6 exists because that number was checked.
+- **A repo doc many times the size of its page means the page is the blocker, not the doc.** It
+  happened three times in one phase (both manifests, then MCP tool servers, then the debug API), so
+  it is the expected shape: before scoping a reduction, compare the two lengths, and if the page is
+  a fraction of the doc, the first deliverable is here.
