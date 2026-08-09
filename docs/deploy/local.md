@@ -331,7 +331,9 @@ declares a provision type and a workspace handler is registered. See
 To run agents and previews on a local Kubernetes cluster instead, use the native **Kubernetes**
 backends. The `cat-factory k3s` command provisions a local k3d/kind/k3s cluster, wires least-privilege
 access, and hands off to the app to fill the connect form. See
-[Deploy on Kubernetes → Local k3s guided setup](./kubernetes.md#local-k3s-guided-setup).
+[Deploy on Kubernetes → Local k3s guided setup](./kubernetes.md#local-k3s-guided-setup). On Windows,
+install k3d and create the cluster first:
+[Set Up a Local Kubernetes Cluster on Windows](./kubernetes-windows.md).
 
 ## Models in local mode
 
