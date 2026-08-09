@@ -275,6 +275,7 @@ binaryGeneratorRegistry.register({
 | `mediaTypes?` | The concrete formats it can emit. Absent means only the coarse modalities are known, and the brief says so rather than implying every format of that modality is available. |
 | `endpoint?` | The API's base URL, so the agent does not infer one from the contract. Must be `https` or loopback, since the credential rides the request. |
 | `guidance?` | Operating notes folded into the brief verbatim: polling an async job, whether a payload comes back base64 or as a signed URL, a rate limit worth respecting. This is where you put what would otherwise be rediscovered once per run. |
+| `capabilities?` | What the API can be **asked for** while generating, from the closed vocabulary below. Each one unlocks a per-step generation option. Absent means only the coarse facts are known, so a step's option is admitted with the gap stated rather than refused. |
 | `credential?` | Declared by name (`key`), optionally delivered under a different variable (`envName`). The value never reaches a prompt. |
 | `contracts?` | API contract documents in the same formats the [foundational catalog](../guide/foundational-services.md) accepts, injected as `.cat-context/` files so the agent calls declared operations instead of inventing them. |
 
@@ -282,6 +283,40 @@ binaryGeneratorRegistry.register({
 modality: style, resolution or length limits, cost profile. The platform provides no discriminator
 field for that, because those axes do not partition the deliverable and a rule built on one would
 refuse correctly-configured steps.
+
+##### Capabilities
+
+`capabilities` is the one axis that does partition: an endpoint either accepts an input image or it
+does not, and the answer is a fact about the API rather than an opinion about the art. Each member
+unlocks a control in the pipeline builder and a paragraph in the agent's brief, and a step asking
+for something no selected integration declares is refused at run start.
+
+| Capability | The API accepts |
+| --- | --- |
+| `reference-image` | An input image the generation is conditioned on. |
+| `multi-reference` | Several reference images composed in **one** call. |
+| `instruction-edit` | A revision of a supplied artifact from a written instruction, with no mask. |
+| `mask-edit` | A revision of only the region a mask names (inpainting, outpainting). |
+| `negative-prompt` | What to keep out. |
+| `seed` | A fixed seed, so a generation can be reproduced or deliberately varied. |
+| `aspect-ratio` | An explicit aspect **shape**: a ratio such as `16:9`, or a fixed set of size buckets it rounds to. |
+| `exact-size` | Exact output **dimensions** in pixels: a width and a height it renders at natively. |
+| `candidate-batch` | Several candidates for one prompt in one call. Unlocks no control; it changes what the brief asks for. |
+| `upscale` | Upscaling its own output to a larger render. |
+| `transparent-background` | An alpha channel or cut-out subject. |
+| `tileable` | A seamlessly tiling image. |
+
+`aspect-ratio` and `exact-size` are separate members because a bucketed endpoint
+(`image_size: square | landscape`, `resolution: 1k | 2k`) honours a ratio exactly and exact
+dimensions not at all. **An API that takes a width and a height declares both**, since exact
+dimensions honour any ratio: the vocabulary is flat, so nothing infers one member from another.
+Forgetting the second word costs a refusal that names the missing capability, which is the trade
+made deliberately against an implication rule every future member would have to be placed in.
+
+The vocabulary does not say **which** sizes an endpoint supports. A per-integration size table would
+go stale here while the vendor changed it there, so limits (a maximum resolution, a grid the API
+rounds to, a range that moves with the style) belong in `guidance`, where a sentence can say what
+they are.
 
 The pipeline builder's picker and the run-admission check read the same registration, so a step
 configured from the picker is never refused at start as an unknown integration, even on a split

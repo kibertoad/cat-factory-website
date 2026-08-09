@@ -286,6 +286,7 @@ builder then carries a required selection:
 | **Generative integrations** | Which of the deployment's registered image, audio, video, or 3D APIs this step may call. Leave it empty and the step generates through whatever its agent already has, such as a model with native image output. |
 | **Content types** | What the step must deliver: `image`, `audio`, `video`, `3d-model`, `3d-scene`, or `document`. Every one must be covered by a selected integration. |
 | **Formats** | Exact media types the step must deliver (`model/gltf-binary`, `image/png`). Every entry is required, not any-of. |
+| **Generation options** | What every generation on this step must carry: a reference image, an edit instruction, a negative prompt, a seed, an aspect ratio, an exact output size, an upscale, a transparent background, seamless tiling. Each control appears only when a selected integration declares the [capability](../extend/custom-agents.md#capabilities) that makes it answerable. |
 
 Content types and formats are two independent statements and both are enforced as written. Neither is
 derived from the current selection, so removing a generator reads as a break rather than as a change
@@ -296,6 +297,21 @@ question that belongs in the prompt, but GLB, USDZ, and FBX are all one content 
 substitutes for another: a Godot importer takes the first, a RealityKit pipeline the second, an art
 pipeline the third. Declare the format you need, not the set you would accept, because the agent has
 to name a concrete container on the vendor call. Matching is exact, with no synonyms mapped.
+
+**Exact output size** is the option worth calling out, because for a lot of art the pixel dimensions
+are the deliverable rather than a refinement of it. Anything rendered to a fixed grid (a 96×96
+inventory icon, a sprite an engine slices, a texture an atlas packs) is stored and then never used at
+any other size. Set it and the step is refused at start unless a selected integration declares
+`exact-size`, so a bucketed API that would have generated a 1K image and downscaled it cannot be
+handed the work in the first place. It is mutually exclusive with the aspect ratio and the upscale,
+both of which state the delivered dimensions a second time and can disagree with it; the builder
+refuses the combination at save rather than leaving the agent to decide which the step meant.
+
+The platform checks that an integration **can be asked** for a size, not that a particular size is
+within its limits: a maximum resolution or a grid it rounds to lives in that integration's operating
+notes. After the run, the result window compares the dimensions the agent reported against the size
+the step asked for, and counts an artifact that reported none separately from one that came back
+wrong.
 
 When two of a step's selected integrations produce the same content type, the builder says so beside
 the step's prompt as an advisory. It refuses nothing: both selections pass every check the platform
