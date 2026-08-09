@@ -71,6 +71,12 @@ never widen it. Narrowing to a combination no harness can serve, such as an `htt
 Tool servers also need a container: an inline LLM step has no agent CLI to wire one into, and boot
 validation warns about that combination too.
 
+The same is true of a step that runs as a [multi-model consensus
+panel](../guide/choosing-a-pipeline.md#multi-model-consensus), and boot cannot warn about that one:
+the kind has a container surface, and the panel is a per-step choice. A diverted step withholds
+every declared server under `consensus_panel` below, tells its participants so, and records it, so
+the ceiling shows up where the run does rather than as a tool that quietly went unused.
+
 ## Why a run did not get the server
 
 A declared server that could not be wired is STATED to the agent, in the prompt, and recorded on the
@@ -88,6 +94,7 @@ different fix.
 | `oauth_not_connected` | The server authenticates with OAuth and this workspace holds no grant, or the deployment has no `ENCRYPTION_KEY` to keep one in | Press Connect on the board and sign in at the vendor. Set `ENCRYPTION_KEY` first if the deployment has no grant store |
 | `oauth_token_failed` | A grant is on file and produced no access token: a revoked or expired refresh, an authorization server that refused, discovery that failed | Reconnect, or wait out the vendor's outage |
 | `over_budget` | Nothing is wrong with the server. The kind declares more than one dispatch carries | Trim the kind's declarations |
+| `consensus_panel` | Nothing is wrong with the server either. The step ran as a multi-model consensus panel, whose participants are single model calls with no agent CLI | Turn consensus off for that step if it needs the tool, or accept that the panel judges without it |
 
 Where you see this: each step of a run records the servers it WIRED (with the tool list the
 declaration narrowed it to) and the ones it DROPPED with the reason above. The step detail renders
