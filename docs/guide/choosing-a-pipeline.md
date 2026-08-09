@@ -297,6 +297,45 @@ substitutes for another: a Godot importer takes the first, a RealityKit pipeline
 pipeline the third. Declare the format you need, not the set you would accept, because the agent has
 to name a concrete container on the vendor call. Matching is exact, with no synonyms mapped.
 
+### Generation options
+
+Beside the selections above, a binary-output step can state the parameters every generation it makes
+must carry: reference images (each with the role it plays, such as style or subject), an instruction
+or masked edit of an existing artifact, a negative prompt, a fixed seed, an aspect ratio, an exact
+output size in pixels, an upscale factor, a transparent background, and seamless tiling.
+
+These are statements about the deliverable, not preferences, and the platform checks them before the
+run starts rather than after it has spent anything. Two things can be wrong with one:
+
+- **Nothing you selected can be asked for it.** A reference image handed to an endpoint with no image
+  input, a seed asked of an API that has none. The step is refused, naming the option.
+- **Nothing you selected accepts the value.** Every selected integration takes an aspect ratio and
+  none of them takes `7:3`; every one renders at an exact size and none renders at 96×96. The step is
+  refused, and the message lists what they do accept, so the fix is picking one of those or selecting
+  an integration that renders yours.
+
+The second check is the one that catches a whole class of quiet damage. An endpoint that offers ten
+aspect ratios and is asked for an eleventh does not fail: it crops to the nearest one and returns
+successfully, and the artifact then passes every other check the platform can make. The consumer that
+rejects it is your game or your storefront, weeks later.
+
+A value only SOME of your integrations accept is neither of those. If one of them takes `7:3` and
+another has written down a list without it, the step is not refused: which integration renders which
+artifact is the agent's call, and one that accepts your value is selected. The builder names the ones
+that will not take it, because the fix is either dropping them from this step or accepting that they
+will be sent something else. Read that line even though the step starts, since it is the crop above
+being reported in advance rather than discovered later.
+
+Both checks are only as strong as what your deployment declared. An integration that has not stated
+which values it accepts might still serve the one you asked for, so the step starts and the builder
+says which of your integrations will actually honour it, rather than refusing a selection that is
+probably fine. Where no selected integration has stated anything, you see nothing new, which is the
+ordinary case until your deployment audits an endpoint.
+
+An exact size states the delivered dimensions, so it cannot be combined with an aspect ratio or an
+upscale factor: each of those states them a second time and the two can disagree. The builder refuses
+that combination on the spot, and the fix is deleting whichever of the two is not the requirement.
+
 When two of a step's selected integrations produce the same content type, the builder says so beside
 the step's prompt as an advisory. It refuses nothing: both selections pass every check the platform
 can make and exactly one is right, and the person who knows which is the person writing the prompt.
@@ -307,11 +346,14 @@ the context services, and each selected integration (its content types, formats,
 notes, API contracts, and the environment variable its credential arrives as). The credential's value
 never reaches a prompt.
 
-Two refusals are kept apart because different people fix them. A storage or context id that no longer
+Refusals are kept apart because different people fix them. A storage or context id that no longer
 resolves in the workspace catalog is refused at admission as `binary_output_service_invalid`, fixed
-by whoever manages the catalog. An unknown generator id or an uncovered content type or format is
-`binary_output_generator_invalid`, fixed in the deployment's build. A generator step with no selection
-at all is refused at save.
+by whoever manages the catalog. Everything about the generative side is
+`binary_output_generator_invalid`, and where that one is fixed depends on which fault it names: an
+unknown generator id is fixed in the deployment's build, while an uncovered content type or format,
+an unsupported generation option, or a value nothing accepts are all fixed in the step, by changing
+what it asks for or which integrations it selects. The refusal names the fault, so you do not have to
+guess which of the two you are holding. A generator step with no selection at all is refused at save.
 
 After the run, the step's result window reports what was stored: each artifact's service, location,
 entity, and media type, whether it went where the step pointed it, and each counted loss on its own
@@ -364,6 +406,12 @@ The step returns output in the same shape as the single-model version, and the f
 (each contribution, the synthesis, a confidence score, and any unresolved dissent) is viewable from
 the step. Consensus only applies to the eligible kinds; other steps run normally even if a config is
 present.
+
+What a panel gives up is the working environment. Each participant is a single model call with no
+checkout, no shell and no [MCP tool servers](../extend/tool-servers.md): it judges the material the
+run inlines for it. Most eligible kinds run in a container in their single-model form, so a step
+that had tool servers loses them when the panel convenes. It is not silent: the participants are
+told which servers they are without, and the step records each one under `consensus_panel`.
 
 ---
 
