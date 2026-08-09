@@ -43,7 +43,7 @@ Cat Factory connects to the tools you already use. Everything below ships in eve
 | **Issue trackers** | <ul><li>Jira</li><li>GitHub Issues</li><li>Linear</li></ul>Seed tasks from issues and write progress back. |
 | **Document & context sources** | <ul><li>Confluence</li><li>Notion</li><li>GitHub repo docs</li><li>Figma & Zeplin (design context)</li><li>Linear Docs</li></ul> |
 | **Model providers** | <ul><li>Coding subscriptions: Claude, GLM, ChatGPT/Codex</li><li>Direct API keys: Anthropic, OpenAI, Qwen, DeepSeek, Moonshot</li><li>Aggregators: OpenRouter, LiteLLM</li><li>Local runners: Ollama, LM Studio</li></ul> |
-| **Sign-in** | <ul><li>GitHub</li><li>Google</li><li>Email and password</li></ul> |
+| **Sign-in** | <ul><li>Enterprise SSO (any OpenID Connect provider)</li><li>GitHub</li><li>Google</li><li>Email and password</li></ul> |
 | **Notifications** | <ul><li>In-app inbox</li><li>Slack (optional)</li><li>Email invitations</li></ul> |
 
 See [Connect Issue & Document Sources](/guide/issue-sources.html) and
@@ -100,6 +100,8 @@ no spend.
 - **Daily driver?** Jump into [Design Your Board](/guide/designing-your-board.html) and [Run a Pipeline](/guide/running-pipelines.html).
 - **Changing a flow you already run?** The [Cookbook](/guide/cookbook.html) has a short recipe per operation: add a review step, add a gate, change a step's prompt, attach a skill.
 - **Integrating your infra?** See [Integration Manifests](/extend/manifests.html), the [SDKs](/extend/sdks.html), and the [Architecture](/reference/architecture.html) reference.
+- **Packaging your organization's own work?** [Package a Reusable Operation](/extend/reusable-operations.html) bundles a form, its standing context, and the pipeline that delivers it.
+- **Signing people in through your directory?** [Set Up Enterprise SSO](/deploy/sso.html).
 - **Running it in production?** [Observability](/operate/observability.html), [Troubleshooting](/operate/troubleshooting.html), and the [hardening checklist](/reference/security-model.html#operator-hardening-checklist).
 
 ::: tip A note on scope

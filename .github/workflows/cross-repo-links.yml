@@ -1,0 +1,82 @@
+name: Cross-repository links
+
+# Every link that crosses between this site and kibertoad/cat-factory, resolved in both directions:
+# a catfactory.ai URL built anywhere in the code repo must name a page here (and a heading, when it
+# deep-links one), and a GitHub blob link on a page here must name a file there.
+#
+# It runs on a schedule rather than on pull requests, for the same reason env-vars-drift.yml does:
+# it depends on the other repository, and the two move in PAIRED pull requests, so this site
+# legitimately leads or lags upstream main for the life of a pair. Blocking a pull request on it
+# would go red for a reason that pull request cannot fix. Red here means "go and re-point a link".
+#
+# The pull-request-blocking half of link checking lives in each repository separately: `--verify` in
+# ci.yml here, and check-doc-links.mjs / check-doc-anchors.mjs in the code repo. Only the crossing
+# links need both checkouts, which is exactly why only they are here.
+on:
+  schedule:
+    # Mondays, 06:41 UTC. Off the hour, and after the env-var drift check.
+    - cron: '41 6 * * 1'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Ref in kibertoad/cat-factory to check against'
+        required: false
+        default: 'main'
+
+# Least privilege: grant no permissions by default, escalate per-job
+permissions: {}
+
+jobs:
+  check:
+    name: Resolve links in both directions
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout the site
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      # A full checkout rather than a fetch of one file: this guard reads every page here and every
+      # source file there, so there is nothing to fetch piecemeal.
+      - name: Checkout the code repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: kibertoad/cat-factory
+          ref: ${{ inputs.ref || 'main' }}
+          path: .cat-factory
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+
+      - name: Resolve cross-repository links
+        id: check
+        env:
+          CAT_FACTORY_REPO: ${{ github.workspace }}/.cat-factory
+        run: node scripts/check-repo-links.mjs
+
+      - name: Explain a failure
+        if: failure() && steps.check.outcome == 'failure'
+        env:
+          CHECKED_REF: ${{ inputs.ref || 'main' }}
+        run: |
+          {
+            echo "## A cross-repository link does not resolve"
+            echo
+            echo "Checked against kibertoad/cat-factory@\`$CHECKED_REF\`."
+            echo
+            echo "Each error names the file the link is written in, so the fix belongs in whichever"
+            echo "repository that file lives in:"
+            echo
+            echo "1. **A page moved or was renamed here.** Give the page that now owns the URL a"
+            echo "   \`redirectFrom\` entry for the old one, which is what keeps readers' bookmarks"
+            echo "   working too."
+            echo "2. **A heading was reworded here.** Re-point the link, or restore the heading."
+            echo "3. **A doc moved in the code repository.** Re-point the link on the page here."
+            echo "4. **A paired pull request is still open.** Re-run this workflow with that branch"
+            echo "   as the \`ref\` input to confirm."
+          } >> "$GITHUB_STEP_SUMMARY"

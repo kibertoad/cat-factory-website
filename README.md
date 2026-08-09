@@ -53,6 +53,26 @@ The two check modes are split by what they depend on, which is what decides wher
   open, so it runs weekly ([`env-vars-drift.yml`](.github/workflows/env-vars-drift.yml)) instead of
   blocking a pull request it could fail for reasons that pull request cannot fix.
 
+## Links that cross into the code repository
+
+The two repositories link each other heavily: pages here point at contributor docs in
+kibertoad/cat-factory, and that repo's docs, package READMEs and error messages point at pages
+here. Nothing inside either checkout alone can resolve those.
+
+```bash
+# Resolve every crossing link, both directions (expects ../cat-factory, or set CAT_FACTORY_REPO)
+npm run docs:repo-links
+```
+
+It checks that a `catfactory.ai` URL built anywhere in the code repo names a page here, and a
+heading when it deep-links one, and that a `github.com/kibertoad/cat-factory/blob/main/...` link on
+a page here names a file, and a heading, there. It needs no page list (it reads the pages) and no
+network (both checkouts are on disk), and it honours each page's own `redirectFrom`, because a
+redirected URL still resolves for a reader.
+
+It runs weekly ([`cross-repo-links.yml`](.github/workflows/cross-repo-links.yml)) rather than
+blocking pull requests, for the same reason `:check` above does.
+
 ## Images
 
 Screenshots live in `docs/.vuepress/public/images/` and are committed as optimized **WebP**.
