@@ -122,8 +122,26 @@ Each document row states what became of its images, because every way of ending 
 the same otherwise: stored, partially stored, none, failed, or no image storage configured. A render
 failure never fails an import: the text is the load-bearing half.
 
-Delivering those pixels **to** an agent is not yet supported. They are retained for the visual
-gate; the agents read the text.
+### The agents that see them
+
+The retained frames are also put in front of the agents that build and plan a screen (the
+implementer, the architect and the fixer), alongside the text. Where an agent can be shown a
+picture, it is: on a coding run the frames are written into the checkout and the agent opens them,
+and on an inline step they ride the model request itself.
+
+Two things have to be true for that to happen, and neither is something you configure:
+
+- **The agent CLI running the step has to be able to read an image.** Claude Code can; the other
+  harnesses in this build cannot.
+- **The model has to accept image input.** The Claude, GPT and Gemini entries do, as does Llama 4
+  Scout on Workers AI. For a model whose catalog entry does not state either way, the pictures are
+  not attached, because guessing wrong sends a whole run's context to a model that will reject it.
+
+When they cannot be delivered, the agent is TOLD so, with which of the two is missing, so it works
+from the text rather than assuming the design has nothing more to show. Far fewer pictures are
+attached than are retained: an attached image costs input tokens on every turn of the run, where a
+retained one costs storage once. The views left out are named in the same place, and the text still
+describes them.
 
 ## Claude Design: commit it, don't connect it
 
@@ -149,6 +167,8 @@ run: no connector, no credential, no import step.
 | A whole-file import came back thin | The import-wide budget stopped after the first frames | Link the specific frames you need instead of the file. |
 | Every run warns the design may be stale | The source exposes no version token, or the connection cannot be read | The reason is named in the warning; only the first two of the four are yours to fix. |
 | No images beside the text | Image storage is not configured for the deployment | See [Configuration → Content storage](../deploy/configuration.md#content-storage-binary-artifacts). |
+| The agent worked from the text and said it was shown no pictures | The step's agent CLI or its model cannot take an image | The agent's own note names which of the two. Pin the step to a Claude Code model to get both. |
+| The agent was shown fewer screens than the design has | Only a handful of pictures are attached per run | Expected. The agent names the views it was not shown, and the text still covers them. |
 
 ---
 
