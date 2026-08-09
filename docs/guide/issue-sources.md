@@ -63,8 +63,79 @@ Each attached document row shows its full URL on hover and opens in a new tab. I
 error names the specific cause (no access, rate-limited, not found) with a **Copy details** action,
 instead of a generic "could not be linked" message.
 
-Imported content can also be expanded into structural components. A large epic, for example,
-can seed a module with several task leaves, each carrying its slice of context.
+## What a pasted link resolves to
+
+A pasted reference is judged as you type, before anything is imported. The picker stages what the
+import will actually do, not the text you pasted, so a link that will not work is a correction you
+make while you are still writing the task.
+
+- **The link is trimmed to its canonical form.** Share links carry title segments and tracking
+  parameters, and the chip shows the rebuilt link instead. For a few sources the id itself is the
+  canonical form, because the URL cannot be rebuilt without knowing something the picker does not
+  have (a Confluence site's base URL, a Linear workspace slug, which VCS host a repo doc lives on).
+  Seeing an id rather than a URL is a normal answer there, not a failed resolution.
+- **A reference that had to be widened says so.** Some links name a part the source cannot address
+  on its own, most often a Figma component instance. Rather than guess which frame you meant, the
+  import widens to the whole file or project, and the picker states in an amber line exactly what
+  was dropped, as you pasted it. "I attached this frame" and "I attached the entire design" would
+  otherwise look identical.
+- **A refusal names which correction it needs.** Either no link of that shape will ever work for the
+  selected source, in which case the message states the format that will, or the link is fine and
+  points at a different source, in which case the picker names that source and offers to switch with
+  your text unchanged.
+- **An unreachable source is not a refusal.** If the check cannot be made (an outage, a proxy error
+  page), the reference stays stageable and the import remains the backstop it always was. A
+  transient failure should not make a perfectly good link unattachable.
+- **Attachments are fetched before the task exists.** Anything you staged is resolved as part of
+  creating the task, and one that could not be read is marked on the chip that caused it. Creation
+  waits until you fix or remove it, rather than leaving you with a task that quietly lacks the spec
+  it was written about.
+
+## Expand a document into board structure
+
+An imported document can seed board structure instead of riding along as context. Cat Factory reads
+it, shows you a **plan preview**, and writes nothing until you approve. The question it answers
+depends on where you aim it:
+
+- **At the board**: what architecture does this document describe? The plan comes back as services,
+  each with its modules and tasks. A large epic seeds a module with several task leaves, each
+  carrying its slice of the document.
+- **At an existing service**: what work does this document imply inside a service that already
+  exists? The plan comes back as modules and tasks for that service, and the modules it already has
+  are taken into account, so the plan adds beside them rather than proposing a second "Checkout"
+  next to the one that is there. The preview says which service it is planning into.
+
+Approving creates exactly what the preview showed. A plan aimed at a service is authored for that
+service from the start, rather than a board-wide plan flattened into it, which is what keeps the
+approved preview and the created blocks the same thing.
+
+**A design document is always planned into a service**, so the preview asks you to pick one. A
+design describes screens, and asked for an architecture a model will happily invent a service per
+Figma page. Aimed at a service it decomposes into one task per screen, state or flow, named after
+the frame it came from.
+
+Planning normally uses the workspace's configured agent model. If no model is usable, or its answer
+cannot be read, it falls back to splitting the document by its own headings, so expanding always
+produces something. A deployment can force that deterministic split for everyone with the
+[`DOCUMENT_PLANNER` setting](../deploy/configuration.md#document-task-sources).
+
+## Who can connect a source, and who can attach one
+
+The two halves sit at different
+[workspace roles](./team-and-access.md#board-access-and-workspace-roles), because they have
+different blast radius:
+
+| Action | Role |
+| --- | --- |
+| Search a source, paste a reference, import a page, attach it to a task, refresh it, expand it into structure | **Member**. This is board authoring. |
+| Connect or disconnect a source | **Admin**. It writes the workspace's stored credential for that source. |
+| Tag a document as a kind's template or exemplar | **Admin**. It decides what every document run on the board writes from, not what one task reads. |
+
+The split is why the person who links the spec their task is about does not have to be the person
+who connected Confluence. It is also visible in the picker: a member sees the source named with no
+**add a source** entry, and the no-source empty state tells them to ask an admin, rather than
+offering a connect flow that would take a token and then refuse it. Viewers can read what is
+attached and attach nothing.
 
 ## Creating a task straight from an issue
 

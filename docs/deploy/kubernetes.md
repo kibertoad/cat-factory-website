@@ -13,6 +13,11 @@ Both are native backends: you fill in a form, not a manifest. You configure them
 developer machine, the [`cat-factory k3s` guided setup](#local-k3s-guided-setup) wires a local
 cluster into both in one command.
 
+This page is the connect form. Before you fill it in on a cluster that matters, decide the layout it
+connects to: namespaces, node pools, the `NetworkPolicy` around run pods, the ServiceAccount's RBAC
+and how many concurrent runs the pool is sized for. That is
+[Lay Out a Kubernetes Cluster](./kubernetes-topology.md).
+
 ## Agent containers on Kubernetes
 
 Select **Kubernetes** on the **Agent containers** tab and fill in the connect form. It creates one
@@ -192,7 +197,9 @@ The command:
    [Run Locally → Configuration](./local.md#configuration).
 
 k3s itself runs only on Linux. On Windows and macOS the command steers you to k3d (k3s inside
-Docker); a Windows walkthrough ships in the repo under `backend/docs`.
+Docker). On Windows it also needs k3d installed first, which is
+[Set Up a Local Kubernetes Cluster on Windows](./kubernetes-windows.md): the CLIs without admin
+rights, the cluster, and back to this form.
 
 Selecting the **Local k3s** preset by hand (without the CLI) pre-fills the Kubernetes environment
 form with local defaults: a `cf-env-{{pullNumber}}` namespace, a `{{branch}}.127.0.0.1.nip.io` host
@@ -201,5 +208,7 @@ cert.
 
 ---
 
-Next: give agents somewhere to test their work with [Provision Ephemeral Environments](../operate/environments.md), or
-bring your own scheduler with [Run Jobs on Your Own Runners](../operate/runner-pools.md).
+Next: lay the cluster out for production with
+[Lay Out a Kubernetes Cluster](./kubernetes-topology.md), give agents somewhere to test their work
+with [Provision Ephemeral Environments](../operate/environments.md), or bring your own scheduler
+with [Run Jobs on Your Own Runners](../operate/runner-pools.md).

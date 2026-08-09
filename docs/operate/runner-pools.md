@@ -90,7 +90,9 @@ backend on the **Agent containers** tab and fill in a form (apiserver URL, names
 token, and the executor-harness image): Cat Factory creates one pod per run directly, no HTTP
 scheduler in between. See [Deploy on Kubernetes → Agent containers](../deploy/kubernetes.md#agent-containers-on-kubernetes).
 On a developer machine, [`cat-factory k3s`](../deploy/kubernetes.md#local-k3s-guided-setup) wires a local
-cluster into this backend in one command.
+cluster into this backend in one command. How the cluster should be laid out around it (namespaces,
+the RBAC the token needs, egress, reaping leaked pods, sizing) is
+[Lay Out a Kubernetes Cluster](../deploy/kubernetes-topology.md).
 
 ### Reaching an internal pool
 
