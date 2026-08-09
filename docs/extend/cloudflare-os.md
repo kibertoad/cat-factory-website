@@ -181,17 +181,25 @@ await cat.approvals_subscribe(myCallback) // myCallback.onApprovalCard(card)
 await cat.runs_subscribe(myOtherCallback) // myOtherCallback.onRunEvent(state)
 ```
 
-Three things are worth knowing before you rely on one:
+Four things are worth knowing before you rely on one:
 
 - **Binding is not receiving.** Your workspace holds the registration and may ask a person before
   enabling it. Nothing is delivered, and nothing is stored on the Gatekeeper, until it is enabled.
+  If your workspace does not take the binding at all, the call is refused with the reason its own
+  side gave, so you can tell an approval queue that serves no subscriptions from a declined one.
 - **Every delivery is authorized.** The Gatekeeper asks for a fresh callback per event and puts the
   delivery through your approval queue as the read it is, so withdrawing someone's access stops the
   push without the Gatekeeper being told.
+- **A card is pushed on every transition, settlement included.** A run that ends settles the cards
+  it had open, and each one is pushed to an `approvals_subscribe` callback with its resolution
+  filled in. A gadget rendering the inbox from pushes alone therefore stops showing decisions
+  nobody can answer any more.
 - **A subscription can go quiet, and it says so.** The Gatekeeper holds your callback source in
   memory, so it is lost if the deployment's durable object is evicted between two events.
   `hooks_bound()` reports that as `live: false` with a rising `missed`: bind again, and read
   `approvals_list()` for what was missed. Nothing is lost, because the push was never the record.
+  Binding again from the same gadget re-arms the SAME subscription rather than adding a second, and
+  its counters carry over, so `hooks_bound()` does not grow an entry each time you recover one.
 
 ## Sharing a bound resource
 
@@ -200,8 +208,15 @@ reaches everything the resource's tier reaches**, and redacts no more of it. The
 Gatekeeper to verify that a new viewer could already have read everything read through it, and that
 comparison is how this one answers.
 
-Two shares are always refused: one where the observer holds no account this Gatekeeper can resolve
-a tier for, and one from a tier that can read captured agent text (model prompts and replies, tool
+The observer has to hold an account **this Gatekeeper minted**, and that is checked before any tier
+is compared. A viewer connected through some other vendor names an account of theirs, which this
+deployment has never issued and holds no tier for; measuring them against the tier a new account
+here would have got would admit someone who cannot read a single one of the operations being
+shared. To share with such a person, connect this deployment as a vendor in their workspace and
+share with the account it mints for them.
+
+Two shares are therefore always refused: one where the observer holds no account this Gatekeeper
+issued, and one from a tier that can read captured agent text (model prompts and replies, tool
 arguments, search terms), which is never shareable onward whatever the viewer holds. Each refusal
 says which case it is.
 
