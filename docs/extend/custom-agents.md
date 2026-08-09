@@ -339,6 +339,14 @@ message names what the selected integrations do accept. Where one integration en
 and another declares none, the step still starts and both the builder and the agent's brief say
 which of them will actually serve it.
 
+If you registered an integration before `accepts` existed, one declaration is worth revisiting. An
+endpoint whose size parameter offers a closed list of `WxH` values previously had to declare
+`aspect-ratio`, because `exact-size` meant dimensions it would render at exactly. That is no longer
+the rule: the capability now says what the request carries, so such an endpoint declares `exact-size`
+and lists its sizes under `accepts.outputSizes`. Nothing breaks if you leave it as it was, and moving
+it is what turns "a step asking for 96×96 is admitted and served a 1024×1024 downscale" into a
+refusal that names the size.
+
 Declare a set only where the endpoint genuinely has one, since a set is a refusal. An API that
 renders any size you hand it, inside limits no list can enumerate (a megapixel cap, dimensions in
 multiples of 32, a range that moves with the style), declares the capability, omits the set, and
