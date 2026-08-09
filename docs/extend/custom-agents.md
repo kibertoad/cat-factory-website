@@ -264,7 +264,7 @@ binaryGeneratorRegistry.register({
   mediaTypes: ['image/png', 'image/webp'],
   endpoint: 'https://api.acme.dev/v1',
   guidance: 'Submissions are async: POST /jobs, then poll /jobs/{id} until state is done.',
-  credentials: [{ key: 'ACME_IMAGE_KEY' }],
+  credentials: [{ key: 'ACME_IMAGE_KEY', usage: 'Authorization: Bearer <value>' }],
   contracts: [{ contractId: 'openapi', format: 'openapi', title: 'HTTP API', body: acmeImageSpec }],
 })
 ```
@@ -275,7 +275,7 @@ binaryGeneratorRegistry.register({
 | `mediaTypes?` | The concrete formats it can emit. Absent means only the coarse modalities are known, and the brief says so rather than implying every format of that modality is available. |
 | `endpoint?` | The API's base URL, so the agent does not infer one from the contract. Must be `https` or loopback, since the credential rides the request. |
 | `guidance?` | Operating notes folded into the brief verbatim: polling an async job, whether a payload comes back base64 or as a signed URL, a rate limit worth respecting. This is where you put what would otherwise be rediscovered once per run. |
-| `credentials?` | What it authenticates with, declared by name (`key`), each optionally delivered under a different variable (`envName`). A list, because a vendor account is not always one string. Values never reach a prompt. |
+| `credentials?` | What it authenticates with: each declared by name (`key`), optionally delivered under a different variable (`envName`), with `usage` saying how to present it and `required: false` marking one the call can go without. A list, because a vendor account is not always one string. Values never reach a prompt. Absent means the integration is called unauthenticated. |
 | `contracts?` | API contract documents in the same formats the [foundational catalog](../guide/foundational-services.md) accepts, injected as `.cat-context/` files so the agent calls declared operations instead of inventing them. |
 
 `description` is the half a model needs to choose between two registered generators of the same
@@ -300,7 +300,9 @@ Each entry becomes its own row on the workspace credential checklist, so the for
 in matches the values their vendor console issues, and either half can be rotated on its own. Two
 entries may not arrive as the same environment variable (the same `envName`, or one entry's
 `envName` colliding with another's `key`); that is refused at boot, because the job body is keyed by
-variable name and a collision would silently deliver one value and drop the other.
+variable name and a collision would silently deliver one value and drop the other. Names are
+compared ignoring case, since `ACME_KEY` and `acme_key` are one variable on any host whose
+environment ignores it. What is injected is the spelling you wrote.
 
 That refusal reaches across your registrations too, with one exception. Two integrations on the same
 vendor account may share a variable, and often should: register both with the same lookup `key` and
