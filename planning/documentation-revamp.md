@@ -1,13 +1,25 @@
 # Documentation revamp: website restructure
 
-Status: **phase H in flight; phases A to G landed.** Phase H writes the last two destinations the
-code repo's reduction pass named as debt: a Kubernetes topology page for the operator laying out a
-cluster, and the document-source behaviour that was only ever written as implementation. Phase G was
-the first one whose findings came out of READING pages rather than writing them, and two of the
-three were corrections: two Extend pages were teaching APIs that no longer exist. The
-sibling tracker for the code repo's side of the revamp (which docs move here, which stay there, and
-the ownership model behind the split) lives in
+Status: **complete; phases A to I landed.** Phase I is the close-out: the code repo re-derived its
+"repo-only, no website page today" row against this site's live navigation and found exactly one
+doc left in it, which is now a page here. The sibling tracker for the code repo's side of the
+revamp is converting to an ADR in the same pair, so the link below points at the tracker until that
+merges and at
+[`backend/docs/adr/0051-documentation-repo-website-split.md`](https://github.com/kibertoad/cat-factory/blob/main/backend/docs/adr/0051-documentation-repo-website-split.md)
+afterwards.
+
+Phase H wrote the last two destinations the code repo's reduction pass named as debt: a Kubernetes
+topology page for the operator laying out a cluster, and the document-source behaviour that was only
+ever written as implementation. Phase G was the first one whose findings came out of READING pages
+rather than writing them, and two of the three were corrections: two Extend pages were teaching APIs
+that no longer exist. The sibling tracker for the code repo's side of the revamp (which docs move
+here, which stay there, and the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
+
+**This file stays under `planning/` after the close-out**, as the record of why the site is shaped
+the way it is. A phase's reasoning (why Start and Guides share `/guide/` on disk, why reference
+pages kept noun titles, why the two generated pages may not be hand-edited) is what a later
+restructure would otherwise re-derive from the navigation alone.
 
 **Phase G's lesson: a page can be complete, well-shaped, and wrong.** Every quality bar this
 revamp has set so far is about coverage and structure, and both pages that broke passed all of
@@ -373,6 +385,34 @@ listed, and that list was the specification.** Neither needed a fresh reading of
 the sibling tracker's 15q and 15k entries had already written down what the page owed. Naming the
 missing destination at the moment the reduction stalls, rather than cutting toward a page that
 cannot receive the content, is what made both of these cheap.
+
+### Phase I: the close-out, and the one row that survived it
+
+Paired with the code repo's item 23, which converts its tracker to an ADR. That item asks two
+questions before it may close, and both are about the audit cell that is easiest to trust and
+cheapest to get wrong: which repo docs are still user-facing with no page here.
+
+- [x] I1. **`deploy/kubernetes-windows.md`, "Set Up a Local Kubernetes Cluster on Windows".** The
+      code repo's `local-kubernetes-setup-windows.md` was classified "user-facing, unmoved" on the
+      grounds that the Kubernetes page did not need it yet, and phase H removed that grounds. Its
+      reader is a Windows developer whose `cat-factory k3s` run stopped at "k3s runs only on Linux":
+      no checkout anywhere in that story, which is the reader test answering itself. The page owns
+      why k3d rather than k3s, installing the four CLIs with no administrator rights, the Docker
+      Desktop `kubectl` PATH collision, creating and deleting the cluster, and handing off to the
+      connect form. What stays in the code repo is the half that is about running THAT repository's
+      test suites against the cluster: the `K8S_IT_*` variables, the mock-harness image import, and
+      the version pins whose source of truth is CI's own job.
+- [x] I2. **Stop the connect page pointing into the code repo for it.** `deploy/kubernetes.md` said
+      "a Windows walkthrough ships in the repo under `backend/docs`", which is the split's failure
+      mode written down as a sentence: a page here sending a reader with no checkout somewhere they
+      cannot follow. It links the new page. `deploy/local.md` gained the same pointer, because the
+      local-mode reader is the one who hits this.
+
+What phase I is worth remembering for: **the audit cell said "none" and it was right, which is not
+the same as the row being closed.** Every other phase here filled a gap someone had named. This one
+had to re-derive the gap list from scratch against the live sidebar, because a cell recording an
+absence is the one kind that no slice comes back to update. The code repo's item 23 checked all 46
+of its docs the same way, and this was the only one left.
 
 ## Docs added since this tracker was written
 

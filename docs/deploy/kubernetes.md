@@ -197,7 +197,9 @@ The command:
    [Run Locally → Configuration](./local.md#configuration).
 
 k3s itself runs only on Linux. On Windows and macOS the command steers you to k3d (k3s inside
-Docker); a Windows walkthrough ships in the repo under `backend/docs`.
+Docker). On Windows it also needs k3d installed first, which is
+[Set Up a Local Kubernetes Cluster on Windows](./kubernetes-windows.md): the CLIs without admin
+rights, the cluster, and back to this form.
 
 Selecting the **Local k3s** preset by hand (without the CLI) pre-fills the Kubernetes environment
 form with local defaults: a `cf-env-{{pullNumber}}` namespace, a `{{branch}}.127.0.0.1.nip.io` host
