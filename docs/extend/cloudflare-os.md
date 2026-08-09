@@ -120,6 +120,18 @@ Holding the binding **is** the authorization on this path. It is configuration o
 operator can write, and the call never leaves Cloudflare's network, so there is no shared token in
 front of it.
 
+Keep the `allow_irrevocable_stub_storage` compatibility flag the template ships with:
+
+```toml
+compatibility_flags = ["nodejs_compat", "allow_irrevocable_stub_storage"]
+```
+
+Connecting an account hands your workspace an object it stores, and Cloudflare Workers refuses to
+store one whose Worker has not opted in. Without the flag the Gatekeeper is discovered, installs,
+and then fails on the first account anyone connects. `GET /health` cannot tell you: a Worker cannot
+read its own compatibility flags. A deployment that only serves `/rpc` pays nothing for the flag, so
+there is no reason to take it out.
+
 ## What an agent can do
 
 A session carries the operations its tier granted, plus a few that are always there:
@@ -219,6 +231,31 @@ Two shares are therefore always refused: one where the observer holds no account
 issued, and one from a tier that can read captured agent text (model prompts and replies, tool
 arguments, search terms), which is never shareable onward whatever the viewer holds. Each refusal
 says which case it is.
+
+## Could you use the MCP connector instead?
+
+Cloudflare OS ships connectors that front any MCP server, and Cat Factory serves one at
+`/api/v1/mcp`, so the question comes up before anyone deploys a Worker. The short answer is that the
+**MCP Server Portals** connector works and the plain **MCP** connector does not, and neither is a
+replacement for this.
+
+- **MCP** (users paste an endpoint) cannot reach Cat Factory. It connects unauthenticated or runs
+  the MCP OAuth discovery chain, and this deployment publishes no protected-resource metadata and no
+  dynamic client registration, so the chain dead-ends.
+- **MCP Server Portals** with `MCP_PORTAL_AUTH: "token"` does work: it presents one configured
+  bearer token, which can be a Cat Factory API key. Approvals behave sensibly too, because the tools
+  are annotated by HTTP method: reads run straight through as observations, and everything else
+  queues for your workspace to approve.
+
+What one deployment-wide token cannot carry is the reason the Gatekeeper exists. Every call is made
+with the same key, so runs are attributed to the integration rather than to a person, and
+[role-scoped merge policy](./public-api.md) has nobody to scope to. There is no tier: what an agent
+may call is whichever tools an admin ticked, with no floor underneath and no way to tell "your
+policy hides this" from "no policy can grant this". And the approvals only run one way, over calls
+the agent makes, so runs that park on a human decision never reach the workspace inbox at all.
+
+Reach for the connector if you want an agent to poke at Cat Factory from a workspace. Deploy the
+Gatekeeper if the workspace is where your team actually works.
 
 ## Without Cloudflare OS
 
