@@ -407,5 +407,7 @@ their own poll; for push at scale, register the
 
 ---
 
-Next: the [Official SDKs](./sdks.md) if you would rather not hand-roll a client, or the
-[MCP Server](./mcp-server.md) to give an MCP host the same surface.
+Next: the [Official SDKs](./sdks.md) if you would rather not hand-roll a client, the
+[MCP Server](./mcp-server.md) to give an MCP host the same surface, or the
+[Cloudflare OS Gatekeeper](./cloudflare-os.md) to install Cat Factory into a Cloudflare OS workspace
+without handing any agent a key.

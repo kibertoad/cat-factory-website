@@ -157,3 +157,9 @@ For a run against a supplied brief with no board card and nothing pushed to a re
 
 Next: [Public API](./public-api.md) for the operations behind these tools, or
 [Official SDKs](./sdks.md) to call them from code.
+
+## See also
+
+- [Cloudflare OS Gatekeeper](./cloudflare-os.md), which serves the same operations to a Cloudflare
+  OS workspace as an object capability, with per-person keys and an approval queue in front of every
+  call

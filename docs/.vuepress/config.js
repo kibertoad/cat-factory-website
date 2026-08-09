@@ -87,6 +87,7 @@ const EXTEND = [
   '/extend/public-api.md',
   '/extend/sdks.md',
   '/extend/mcp-server.md',
+  '/extend/cloudflare-os.md',
 ]
 
 const REFERENCE = [
