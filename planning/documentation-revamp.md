@@ -1,9 +1,18 @@
 # Documentation revamp: website restructure
 
-Status: **complete.** Phases A, B, C and D have landed. The sibling tracker for the code repo's side
-of the revamp (which docs move here, which stay there, and the ownership model behind the split)
-lives in
+Status: **phase E in flight.** Phases A, B, C and D landed, and this tracker read complete while
+still holding four destinations the code repo's reductions were waiting on. That is what phase E
+closes. The sibling tracker for the code repo's side of the revamp (which docs move here, which stay
+there, and the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
+
+**The lesson phase E is named after: a page EXISTING is not the topic being covered here.** Two of
+the code repo's reductions were scoped against `extend/manifests.md` on the strength of its
+per-manifest sections existing, and both were abandoned on reading it: the page stopped at a
+three-row operations table per manifest, so cutting toward it would have deleted the only account of
+the manifest format anyone could read. A section count made this site look like the senior partner
+and a section count is not coverage. So a phase-E page states what DEPTH it owns, and the code repo's
+matching doc says which half it kept.
 
 This file lives under `planning/`, outside `docs/`, so VuePress never publishes it.
 
@@ -170,6 +179,57 @@ page kept its own. Every in-site link and heading anchor was re-checked after th
 renames; one pre-existing broken anchor (`budgets.md` → `#budget-of-0-local--or-subscription-only`,
 a doubled dash) turned up in that sweep and was fixed.
 
+### Phase E: the destinations the code repo's reductions are waiting on
+
+Landed in [#25](https://github.com/kibertoad/cat-factory-website/pull/25), paired with
+[cat-factory#1884](https://github.com/kibertoad/cat-factory/pull/1884), which is the reduction half.
+
+Phases B and C filled the gaps the original audit could see. Phase E fills the four the code repo's
+own reduction slices found afterwards, each one blocking a cut that could not otherwise land.
+
+- [x] E1. **The manifest FORMAT, at the field level, for both manifests** (`extend/manifests.md`).
+      This is the site's half of the sibling tracker's item 17, decided as outcome (a): a manifest is
+      authored by a user, in the app, with no checkout, so the reader test puts the format here. The
+      page gains the shared auth-scheme table (it was identical in both code-repo docs, so it is
+      stated once), the request-template and response-mapping rules, and per manifest the field
+      schema, the template-variable namespaces, the worked examples and the response-mapping notes.
+      The three anchors other pages deep-link (`#environment-provider-manifest`,
+      `#runner-pool-manifest`, `#per-workspace-config-for-code-adapters`) are unchanged on purpose.
+- [x] E2. **Enterprise SSO** (`deploy/sso.md`, "Set Up Enterprise SSO"). The audit's sharpest
+      repo-only row: `deploy/configuration.md#authentication` named three sign-in providers and never
+      mentioned OIDC, so the only trace of SSO on this site was a generated environment-variable row
+      linking back into the code repo. The page owns registering the application, the nine variables,
+      the four boot refusals, the directory-as-allowlist admission model and its revocation
+      behaviour, and why SSO is configured in the environment rather than in the UI.
+- [x] E3. **Reusable operations** (`extend/reusable-operations.md`, "Package a Reusable Operation").
+      The site had no page for it at all. The reader is a deployment author writing their own package
+      against the published seams, which is exactly the Extend audience: the bundle, the form
+      vocabulary, standing context, variant steering, the pipeline lifecycle, the boot-validation
+      table, the composition-root walkthrough and the two dependency rules that bite.
+- [x] E4. **Design context** (`guide/design-context.md`, "Feed Design Context to Agents"). Figma and
+      Zeplin were a tip box on `guide/issue-sources.md`. The page owns connecting a source, what the
+      agent actually receives, what each import cap asks the reader to DO about it, the freshness
+      verdicts and their four fixes, renders, and the commit-it-don't-connect-it workflow for Claude
+      Design. The tip box is now a pointer.
+- [x] E5. **Resolve the crossing links from the repository that holds the pages**
+      (`scripts/check-repo-links.mjs`, the sibling tracker's item 18). Both directions: a
+      catfactory.ai URL anywhere in the code repo must name a page here and, when it deep-links one,
+      a heading; a GitHub blob link on a page here must name a file there. No page list and no
+      network, because both checkouts are on disk. It runs on a schedule
+      (`cross-repo-links.yml`) rather than as a pull-request gate, for the reason `env-vars-drift.yml`
+      does: the two repositories merge independently, so a paired change legitimately leaves one side
+      leading the other.
+
+Two traps E5 had to get right, both of them the reason a hand-check kept missing links:
+
+- **The slug rules differ per renderer, and using the wrong one reports a live link as broken.**
+  VuePress (`@mdit-vue/shared`) maps every RUN of punctuation to one hyphen, so
+  `## When the manifest isn't enough` is `#when-the-manifest-isn-t-enough`; GitHub DROPS punctuation
+  instead, so `## Enterprise SSO (generic OIDC)` is `#enterprise-sso-generic-oidc`.
+- **A redirected URL still resolves for a reader, so it must resolve for the guard.** It reads each
+  page's own `redirectFrom` frontmatter rather than keeping a second list, which is the same reason
+  a moved page carries its redirect in the first place.
+
 ## Docs added since this tracker was written
 
 Checked against the code repo on 2026-08-08. The revamp's own execution absorbed these rather than
@@ -210,3 +270,11 @@ leaving them for a later slice:
 - **New pages must not restate the code repo.** Content arrives by the sibling tracker's
   move-not-mirror rule; a page authored here from scratch while the repo doc lives on recreates the
   drift this revamp removes.
+- **A page that receives a move lands BEFORE the code repo's reduction merges, and the reduction is
+  what completes the move.** Landing the page alone leaves the material in two places, which is the
+  state this revamp exists to end; landing the reduction alone leaves a pointer at a page that never
+  gained the content. Phase E's four pages each have a named counterpart slice in the sibling
+  tracker, and neither half is done until both have merged.
+- **Say what depth a page owns when it takes one over.** Phase E's manifest page states that it is
+  the authority for the format, because the previous version's silence on the question is what let
+  two reductions be scoped against a page that could not receive them.

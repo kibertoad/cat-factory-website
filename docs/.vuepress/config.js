@@ -38,7 +38,12 @@ const GUIDE_GROUPS = [
   },
   {
     text: 'Connect',
-    children: ['/guide/repositories.md', '/guide/issue-sources.md', '/guide/frontend-preview.md'],
+    children: [
+      '/guide/repositories.md',
+      '/guide/issue-sources.md',
+      '/guide/design-context.md',
+      '/guide/frontend-preview.md',
+    ],
   },
   {
     text: 'Models & prompts',
@@ -65,6 +70,7 @@ const DEPLOY = [
   '/deploy/cloudflare.md',
   '/deploy/kubernetes.md',
   '/deploy/github-app.md',
+  '/deploy/sso.md',
   '/deploy/deployment-repository.md',
   '/deploy/configuration.md',
 ]
@@ -84,6 +90,7 @@ const EXTEND = [
   '/extend/custom-providers.md',
   '/extend/frontend-extensions.md',
   '/extend/manifests.md',
+  '/extend/reusable-operations.md',
   '/extend/public-api.md',
   '/extend/sdks.md',
   '/extend/mcp-server.md',

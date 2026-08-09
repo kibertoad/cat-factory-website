@@ -98,6 +98,10 @@ so a path from an older sync may no longer exist.
 | Retention windows, upgrade and image-tag rollout | `docs/operate/upgrades-and-retention.md` |
 | A new failure mode an operator will meet | `docs/operate/troubleshooting.md` |
 | Custom agent kinds, traits, skills/tool servers, pre/agent/post-op, generic agent kind | `docs/extend/custom-agents.md`, `docs/extend/manifests.md` |
+| The manifest FORMAT itself: fields, auth schemes, template variables, response mapping | `docs/extend/manifests.md` (this site owns the field level for both manifests; the code repo keeps the integration protocol) |
+| Custom task types, task-type fields/defaults/suppression, descriptor form vocabulary | `docs/extend/reusable-operations.md` |
+| Sign-in providers, OIDC/SSO, session revocation, admission allowlists | `docs/deploy/sso.md` (SSO), `docs/deploy/configuration.md#authentication` (the rest) |
+| Design-context sources (Figma, Zeplin), design renders, document freshness | `docs/guide/design-context.md` |
 | Custom gates and judges, step-completion resolvers, `@cat-factory/gates` | `docs/extend/custom-gates.md`, `docs/reference/packages.md` |
 | Pipeline catalog and presets, builder edits, step gating, binary-output steps, consensus | `docs/guide/choosing-a-pipeline.md` |
 | Starting/retrying a run, live progress, decision prompts, human gates | `docs/guide/running-pipelines.md` |

@@ -28,11 +28,11 @@ with a personal API key. It works across four capacities:
   completed workflow state when the PR merges.
 
 ::: tip Design context (Figma and Zeplin)
-**Figma** and **Zeplin** are design-context sources. Connect either per workspace with a personal
-access token; Cat Factory pulls component structure, layout, and design tokens and renders them to
-Markdown so the UI coding agents get the design as context. Link a frame or screen to a task like any
-other document. This pairs with the
-[Visual Confirmation](./choosing-a-pipeline.md#visual-confirmation) flow.
+**Figma** and **Zeplin** are design-context sources: Cat Factory pulls component structure, layout,
+and design tokens and renders them to Markdown so the UI coding agents get the design as context.
+They connect and link like any other document source, and everything specific to them (which
+credential, what the agent receives, the import caps, freshness) is on
+[Feed Design Context to Agents](./design-context.md).
 :::
 
 ## Finding and linking context
