@@ -22,6 +22,8 @@ Cat Factory deployment changes, and a deployment that never heard of Cloudflare 
   that park on a human decision surface in the workspace as cards an approver can answer.
 - **A typed session.** The agent gets a `.d.ts` describing exactly the operations its tier carries,
   generated from the same spec the deployment validates against.
+- **Push, not polling.** A session can subscribe to approval cards and run transitions, and your
+  workspace decides whether to enable the subscription before anything is delivered.
 
 ## How it fits together
 
@@ -61,7 +63,10 @@ wrangler secret put OS_SHARED_TOKEN    # the bearer for the HTTP routes
 ```
 
 `GET /health` checks the whole configuration in one pass and names everything that is unset, so you
-wire the deployment once rather than one redeploy at a time.
+wire the deployment once rather than one redeploy at a time. It answers two lists under `os`:
+`blockers` are what stop a workspace installing the Gatekeeper at all, and `limitations` are what it
+would install and find missing (a deployment that does not export the hook controller serves
+everything except the subscriptions).
 
 ### 3. Write the policy
 
@@ -128,6 +133,9 @@ A session carries the operations its tier granted, plus a few that are always th
 | `approvals_inspect(cardId)` | What that run is actually parked on now, and which verbs this tier can use. |
 | `approvals_answer(cardId, input)` | Answer a park. |
 | `runs_watched()` | Every run the Gatekeeper has been pushed lifecycle events for. |
+| `approvals_subscribe(cb)` | Be pushed each card as it is raised or settled. `cb.onApprovalCard(card)`. |
+| `runs_subscribe(cb)` | Be pushed each run transition. `cb.onRunEvent(state)`. |
+| `hooks_bound()` | What this account has subscribed to, and what each subscription has taken. |
 
 An operation the policy did not grant is **absent**, not a method that refuses, so a mistake in the
 policy is a missing method rather than a call that fails at your deployment.
@@ -149,6 +157,10 @@ Every call goes through the approval queue your workspace supplies:
   rather than performed twice.
 - **Actions ask the agent to stop.** This Gatekeeper does not simulate effects, so there is no
   provisional result to hand back while a person decides.
+- **Arguments are checked before any of that.** An argument the operation does not declare is
+  refused, naming what it does take, rather than being dropped on the way through: a filter nobody
+  applied comes back as an answer that looks filtered. The check runs before a key is minted or an
+  approval is spent.
 
 Two things it deliberately will not do:
 
@@ -159,10 +171,54 @@ Two things it deliberately will not do:
   where the stakes are real money or a merged pull request, so every other write is unannotated, and
   an unannotated write is read as destructive. If that ever changes, the catalog fills in on its own.
 
-Sharing a bound resource with another workspace user is **refused**. The contract asks a Gatekeeper
-to verify that a new viewer could already have read everything read through it, and this one cannot
-answer that. Give the other person their own account instead: their tier is then resolved from your
-own policy.
+## Being pushed instead of polling
+
+`approvals_list()` and `runs_watched()` answer the same questions a subscription pushes, and they
+stay the truth. A subscription is an accelerator over them:
+
+```js
+await cat.approvals_subscribe(myCallback) // myCallback.onApprovalCard(card)
+await cat.runs_subscribe(myOtherCallback) // myOtherCallback.onRunEvent(state)
+```
+
+Four things are worth knowing before you rely on one:
+
+- **Binding is not receiving.** Your workspace holds the registration and may ask a person before
+  enabling it. Nothing is delivered, and nothing is stored on the Gatekeeper, until it is enabled.
+  If your workspace does not take the binding at all, the call is refused with the reason its own
+  side gave, so you can tell an approval queue that serves no subscriptions from a declined one.
+- **Every delivery is authorized.** The Gatekeeper asks for a fresh callback per event and puts the
+  delivery through your approval queue as the read it is, so withdrawing someone's access stops the
+  push without the Gatekeeper being told.
+- **A card is pushed on every transition, settlement included.** A run that ends settles the cards
+  it had open, and each one is pushed to an `approvals_subscribe` callback with its resolution
+  filled in. A gadget rendering the inbox from pushes alone therefore stops showing decisions
+  nobody can answer any more.
+- **A subscription can go quiet, and it says so.** The Gatekeeper holds your callback source in
+  memory, so it is lost if the deployment's durable object is evicted between two events.
+  `hooks_bound()` reports that as `live: false` with a rising `missed`: bind again, and read
+  `approvals_list()` for what was missed. Nothing is lost, because the push was never the record.
+  Binding again from the same gadget re-arms the SAME subscription rather than adding a second, and
+  its counters carry over, so `hooks_bound()` does not grow an entry each time you recover one.
+
+## Sharing a bound resource
+
+Adding another workspace user as an observer is admitted only when **their own account's tier
+reaches everything the resource's tier reaches**, and redacts no more of it. The contract asks a
+Gatekeeper to verify that a new viewer could already have read everything read through it, and that
+comparison is how this one answers.
+
+The observer has to hold an account **this Gatekeeper minted**, and that is checked before any tier
+is compared. A viewer connected through some other vendor names an account of theirs, which this
+deployment has never issued and holds no tier for; measuring them against the tier a new account
+here would have got would admit someone who cannot read a single one of the operations being
+shared. To share with such a person, connect this deployment as a vendor in their workspace and
+share with the account it mints for them.
+
+Two shares are therefore always refused: one where the observer holds no account this Gatekeeper
+issued, and one from a tier that can read captured agent text (model prompts and replies, tool
+arguments, search terms), which is never shareable onward whatever the viewer holds. Each refusal
+says which case it is.
 
 ## Without Cloudflare OS
 
