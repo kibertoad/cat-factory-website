@@ -38,7 +38,12 @@ const GUIDE_GROUPS = [
   },
   {
     text: 'Connect',
-    children: ['/guide/repositories.md', '/guide/issue-sources.md', '/guide/frontend-preview.md'],
+    children: [
+      '/guide/repositories.md',
+      '/guide/issue-sources.md',
+      '/guide/design-context.md',
+      '/guide/frontend-preview.md',
+    ],
   },
   {
     text: 'Models & prompts',
@@ -65,6 +70,7 @@ const DEPLOY = [
   '/deploy/cloudflare.md',
   '/deploy/kubernetes.md',
   '/deploy/github-app.md',
+  '/deploy/sso.md',
   '/deploy/deployment-repository.md',
   '/deploy/configuration.md',
 ]
@@ -74,6 +80,7 @@ const OPERATE = [
   '/operate/notifications.md',
   '/operate/runner-pools.md',
   '/operate/environments.md',
+  '/operate/debugging-a-run.md',
   '/operate/troubleshooting.md',
   '/operate/upgrades-and-retention.md',
 ]
@@ -84,7 +91,11 @@ const EXTEND = [
   '/extend/custom-providers.md',
   '/extend/frontend-extensions.md',
   '/extend/manifests.md',
+  '/extend/tool-servers.md',
+  '/extend/reusable-operations.md',
+  '/extend/initiative-presets.md',
   '/extend/public-api.md',
+  '/extend/api-reference.md',
   '/extend/sdks.md',
   '/extend/mcp-server.md',
   '/extend/cloudflare-os.md',

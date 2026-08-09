@@ -43,6 +43,12 @@ jobs:
       - name: Verify environment-variables.md
         run: node scripts/sync-env-vars.mjs --verify
 
+      # The same offline half for the other generated page: banner intact, one H1, every schema
+      # link resolving to a section on the page itself, and every operation stating a scope. An
+      # operation rendered without one would read as an endpoint that needs no authorization.
+      - name: Verify api-reference.md
+        run: node scripts/sync-openapi.mjs --verify
+
   build:
     name: Build site
     runs-on: ubuntu-latest

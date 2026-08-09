@@ -1,9 +1,42 @@
 # Documentation revamp: website restructure
 
-Status: **complete.** Phases A, B, C and D have landed. The sibling tracker for the code repo's side
-of the revamp (which docs move here, which stay there, and the ownership model behind the split)
-lives in
+Status: **phase G in flight.** Phases A to F landed. Phase G is the first one whose findings came
+out of READING pages rather than writing them, and two of the three are corrections: two Extend
+pages were teaching APIs that no longer exist. The
+sibling tracker for the code repo's side of the revamp (which docs move here, which stay there, and
+the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
+
+**Phase G's lesson: a page can be complete, well-shaped, and wrong.** Every quality bar this
+revamp has set so far is about coverage and structure, and both pages that broke passed all of
+them. `extend/custom-gates.md` told a deployment author to import `wireProvider` and
+`isProviderWired` from the kernel; neither is exported, because provider wiring moved to an
+app-owned registry instance. `extend/custom-providers.md` told them to pass `environmentProvider`
+to `buildNodeContainer` / `startLocal`; that option was removed when environment backends became a
+registry keyed by `kind`. In both cases the code repo's matching doc had the new model and said so
+plainly, and the reduction pass that pointed at these pages checked whether they EXISTED, which
+they did. Depth was checked in phase E. Phase G adds the third check: does the page still describe
+the code.
+
+**Phase F opens with the failure the whole ordering rule exists to prevent, and it had already
+happened.** The code repo's reduction pass cut `mcp-tool-servers.md` from 723 lines to 347 and
+`debug-api.md` from 433 to 207, each pointing at a page here, and its commit message said the site
+had gained them. It had not: phase E landed four pages and neither of these was among them. So for
+the time between that merge and this one, roughly 600 lines of the only account anyone had of
+wiring an MCP tool server and of reading a run's telemetry existed nowhere a reader could reach,
+behind two pointers that 404'd. `check-repo-links.mjs` (E5) would have caught it on its next
+Monday; it was written in the same pull request as the breakage, which is why nobody saw it. The
+lesson is not "run the guard" and it is not "the ordering rule was wrong". It is that the ordering
+rule was checked by asserting it rather than by loading the page, and phase F's own rule is
+therefore stated as an action, not a belief: see the last gotcha.
+
+**The lesson phase E is named after: a page EXISTING is not the topic being covered here.** Two of
+the code repo's reductions were scoped against `extend/manifests.md` on the strength of its
+per-manifest sections existing, and both were abandoned on reading it: the page stopped at a
+three-row operations table per manifest, so cutting toward it would have deleted the only account of
+the manifest format anyone could read. A section count made this site look like the senior partner
+and a section count is not coverage. So a phase-E page states what DEPTH it owns, and the code repo's
+matching doc says which half it kept.
 
 This file lives under `planning/`, outside `docs/`, so VuePress never publishes it.
 
@@ -170,6 +203,145 @@ page kept its own. Every in-site link and heading anchor was re-checked after th
 renames; one pre-existing broken anchor (`budgets.md` → `#budget-of-0-local--or-subscription-only`,
 a doubled dash) turned up in that sweep and was fixed.
 
+### Phase E: the destinations the code repo's reductions are waiting on
+
+Landed in [#25](https://github.com/kibertoad/cat-factory-website/pull/25), paired with
+[cat-factory#1884](https://github.com/kibertoad/cat-factory/pull/1884), which is the reduction half.
+
+Phases B and C filled the gaps the original audit could see. Phase E fills the four the code repo's
+own reduction slices found afterwards, each one blocking a cut that could not otherwise land.
+
+- [x] E1. **The manifest FORMAT, at the field level, for both manifests** (`extend/manifests.md`).
+      This is the site's half of the sibling tracker's item 17, decided as outcome (a): a manifest is
+      authored by a user, in the app, with no checkout, so the reader test puts the format here. The
+      page gains the shared auth-scheme table (it was identical in both code-repo docs, so it is
+      stated once), the request-template and response-mapping rules, and per manifest the field
+      schema, the template-variable namespaces, the worked examples and the response-mapping notes.
+      The three anchors other pages deep-link (`#environment-provider-manifest`,
+      `#runner-pool-manifest`, `#per-workspace-config-for-code-adapters`) are unchanged on purpose.
+- [x] E2. **Enterprise SSO** (`deploy/sso.md`, "Set Up Enterprise SSO"). The audit's sharpest
+      repo-only row: `deploy/configuration.md#authentication` named three sign-in providers and never
+      mentioned OIDC, so the only trace of SSO on this site was a generated environment-variable row
+      linking back into the code repo. The page owns registering the application, the nine variables,
+      the four boot refusals, the directory-as-allowlist admission model and its revocation
+      behaviour, and why SSO is configured in the environment rather than in the UI.
+- [x] E3. **Reusable operations** (`extend/reusable-operations.md`, "Package a Reusable Operation").
+      The site had no page for it at all. The reader is a deployment author writing their own package
+      against the published seams, which is exactly the Extend audience: the bundle, the form
+      vocabulary, standing context, variant steering, the pipeline lifecycle, the boot-validation
+      table, the composition-root walkthrough and the two dependency rules that bite.
+- [x] E4. **Design context** (`guide/design-context.md`, "Feed Design Context to Agents"). Figma and
+      Zeplin were a tip box on `guide/issue-sources.md`. The page owns connecting a source, what the
+      agent actually receives, what each import cap asks the reader to DO about it, the freshness
+      verdicts and their four fixes, renders, and the commit-it-don't-connect-it workflow for Claude
+      Design. The tip box is now a pointer.
+- [x] E5. **Resolve the crossing links from the repository that holds the pages**
+      (`scripts/check-repo-links.mjs`, the sibling tracker's item 18). Both directions: a
+      catfactory.ai URL anywhere in the code repo must name a page here and, when it deep-links one,
+      a heading; a GitHub blob link on a page here must name a file there. No page list and no
+      network, because both checkouts are on disk. It runs on a schedule
+      (`cross-repo-links.yml`) rather than as a pull-request gate, for the reason `env-vars-drift.yml`
+      does: the two repositories merge independently, so a paired change legitimately leaves one side
+      leading the other.
+
+Two traps E5 had to get right, both of them the reason a hand-check kept missing links:
+
+- **The slug rules differ per renderer, and using the wrong one reports a live link as broken.**
+  VuePress (`@mdit-vue/shared`) maps every RUN of punctuation to one hyphen, so
+  `## When the manifest isn't enough` is `#when-the-manifest-isn-t-enough`; GitHub DROPS punctuation
+  instead, so `## Enterprise SSO (generic OIDC)` is `#enterprise-sso-generic-oidc`.
+- **A redirected URL still resolves for a reader, so it must resolve for the guard.** It reads each
+  page's own `redirectFrom` frontmatter rather than keeping a second list, which is the same reason
+  a moved page carries its redirect in the first place.
+
+### Phase F: the two pages that were assumed, and the generated API reference
+
+Phase E filled the four gaps the code repo's reduction slices found. Phase F fills the two they
+did not find because they were never checked, and lands the one piece of machinery the sibling
+tracker's last open item is built on.
+
+- [x] F1. **Give Agents External Tools (MCP)** (`extend/tool-servers.md`). The destination
+      `mcp-tool-servers.md` was cut toward: registering a server, the harness support matrix, the
+      seven unavailability reasons and their fixes, `allowedTools` as scoping rather than a
+      boundary, the credential rules including the reserved-lookup-key floor and `envName`, OAuth
+      end to end, the Test button's nine verdicts, operating a `stdio` server, the security posture,
+      the current limits, a worked Slack runbook and an adoption checklist. Ten headings are
+      load-bearing: the code repo deep-links each of them, and they were chosen there before this
+      page existed, so the page is written to the anchors rather than the anchors adjusted to the
+      page.
+- [x] F2. **Debug a Run from Outside the Browser** (`operate/debugging-a-run.md`). The destination
+      `debug-api.md` was cut toward: the endpoint table, the five-step investigation (find and map,
+      follow the signal, grep the bodies, read the conversation, export the bundle), spend
+      attribution, the size ceilings and the known limitations. `#sizing-a-request` and
+      `#known-limitations` are deep-linked from the code repo.
+- [x] F3. **The generated API endpoint reference** (`extend/api-reference.md`,
+      `scripts/sync-openapi.mjs`). This is the site's half of the sibling tracker's item 12. That
+      item spent two revisions scoped as "move 2,000 lines of prose", and the answer was never a
+      move: the complete, always-current endpoint reference is the SPEC, which this site previously
+      only told the reader to go and fetch from the code repo. So it is rendered, on the machinery
+      both repos already trust: every operation with its minimum scope, parameters, request body and
+      responses, grouped by the spec's own tags, plus a field table per schema. `--check` compares
+      against the code repo on a schedule (`openapi-drift.yml`); `--verify` blocks a pull request
+      here on the half that needs no second checkout.
+
+What F3 got right by copying `sync-env-vars.mjs` and what it had to add:
+
+- **Copied**: the render / `--check` / `--verify` split, the reason `--check` is scheduled rather
+  than blocking, and reading the ref from the environment while always EMITTING links to `main`.
+- **Added**: the generator asserts the properties that make the page a reference rather than a dump.
+  Every operation states a minimum scope (one that did not would read as an endpoint needing no
+  authorization), operation summaries are unique (they become the anchors, so a collision points two
+  endpoints at one heading), every operation carries exactly one tag (the grouping IS the
+  navigation, so an untagged operation falls off the page and a multi-tagged one appears twice), and
+  no two headings anywhere on the page slug the same. Each of those fails the render rather than
+  shipping a page that looks complete.
+- **The page's own outline is suppressed** (`sidebarDepth: 1`). At 101 operations and 103 schemas the
+  default outline is about 120 sidebar entries; two in-page index lines do that job instead, and
+  every anchor is still there for anything linking one.
+
+### Phase G: the pages that stopped describing the code, and the destination nobody had
+
+Paired with the code repo's slice 15 continuation, which reduces nine docs against these pages.
+
+- [x] G1. **Fix the provider wiring on `extend/custom-gates.md`.** Its registration example imported
+      `wireProvider` and `isProviderWired` from `@cat-factory/kernel` and called them as module-level
+      functions. Neither is exported. The registry is an app-owned `ProviderRegistry` instance the
+      facade builds and injects, so a wire function takes it as its first argument and a gate's
+      `wired()` reads `ctx.isProviderWired(token)`. The doc-quality example was missing the same
+      argument, and the gotcha telling readers to make `wired()` "exactly `isProviderWired(token)`"
+      was pointing at the dead spelling.
+- [x] G2. **Fix the environment-provider wiring on `extend/custom-providers.md`**, and close two
+      gaps found beside it. `buildNodeContainer({ environmentProvider })` and
+      `startLocal({ environmentProvider })` were removed when environment backends became a
+      registry keyed by `kind`: you now register an `EnvironmentBackendProvider` on the
+      `createBackendRegistries()` bundle. Registering a `remote-custom` backend without also
+      registering a custom manifest type leaves it unselectable, which reads exactly like the
+      registration not having happened, so that step is now in the example rather than a footnote.
+      Added: `confirmTeardown` (its absence is why a deployment can have every teardown recorded
+      as unverifiable), and the rule that a binary store is registered on every process that
+      HANDLES the bytes, which on a mothership deployment is two.
+- [x] G3. **`extend/initiative-presets.md`, the destination this site kept promising.**
+      `guide/initiatives.md` told a deployment author that presets are registered in code and sent
+      them to `extend/custom-agents.md`, which says nothing about presets;
+      `extend/reusable-operations.md` named the preset as one of four vehicles and sent them back to
+      `guide/initiatives.md`. So the reader who correctly picked the preset vehicle was routed in a
+      circle and landed nowhere. The page owns the seam, the four parts, the create-time form, the
+      mandated plan shape, spawn decoration, checkpoints and the cross-phase-artifact rule; both
+      cross-links now point at it, as does the deployment-repository registry table.
+
+Two things phase G is worth remembering for:
+
+- **The corrections were found by reducing, not by auditing.** Nothing scheduled would have caught
+  either: `check-repo-links.mjs` resolves a URL to a page and a heading, which both pages had. A
+  code example is not a link, and no cross-repo guard can typecheck one. What found them was a
+  person reading the code repo's doc beside the live page and noticing the two disagreed about
+  which API exists. That is an argument for the reduction pass being a REVIEW of the page as much
+  as a cut of the doc.
+- **The circular cross-link is the failure mode a new section invites.** Two pages each named the
+  other as the authority on presets and neither held it. Every link was live, so nothing was
+  broken in any way a checker can see; the material simply did not exist. When a page says "see X
+  for how to do this", open X and confirm it does.
+
 ## Docs added since this tracker was written
 
 Checked against the code repo on 2026-08-08. The revamp's own execution absorbed these rather than
@@ -210,3 +382,23 @@ leaving them for a later slice:
 - **New pages must not restate the code repo.** Content arrives by the sibling tracker's
   move-not-mirror rule; a page authored here from scratch while the repo doc lives on recreates the
   drift this revamp removes.
+- **A page that receives a move lands BEFORE the code repo's reduction merges, and the reduction is
+  what completes the move.** Landing the page alone leaves the material in two places, which is the
+  state this revamp exists to end; landing the reduction alone leaves a pointer at a page that never
+  gained the content. Phase E's four pages each have a named counterpart slice in the sibling
+  tracker, and neither half is done until both have merged.
+- **Say what depth a page owns when it takes one over.** Phase E's manifest page states that it is
+  the authority for the format, because the previous version's silence on the question is what let
+  two reductions be scoped against a page that could not receive them.
+- **A pull request that reduces a doc toward a page here LOADS that page, and says in its
+  description that it did.** This is the gotcha above turned into an action, because as a belief it
+  failed: the reduction pass that produced phase F's first two items asserted in its own commit
+  message that the site had gained both pages, and neither existed. Nothing in either repository's
+  pull-request checks could contradict it, by design, since the crossing guard is scheduled rather
+  than blocking and for a good reason. So the check is a person opening the URL. The code repo's
+  `CLAUDE.md` now carries the same rule from its side, phrased as "open the website pull request
+  first, and name it".
+- **Three pages here are generated and two of them are new.** `reference/environment-variables.md`
+  and `extend/api-reference.md` are rendered from the code repo and must never be hand-edited; the
+  banner at the top of each says so and CI checks that the banner is still there. Editing one is
+  invisible until the next sync silently reverts it.

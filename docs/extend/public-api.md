@@ -14,9 +14,14 @@ workspace's spend, and a read-only run-debugging surface. Every operation is sco
 and authenticated by a bearer key.
 
 Reach for an [official SDK](#client-sdks) before hand-rolling HTTP: clients ship for TypeScript,
-Python, Go and Java/Kotlin. The full request/response schemas ship as an OpenAPI 3.1 document at
-`docs/openapi.json` in the code repo. Point your client generator at it rather than
-hand-transcribing every field.
+Python, Go and Java/Kotlin.
+
+This page is the narrative: what to do, in what order, and which of the surface's rules will bite.
+Every operation's exact parameters, payload shapes and constraints are on the
+[API Endpoint Reference](./api-reference.md), which is generated from the same OpenAPI 3.1 document
+the SDK clients are, so it cannot fall behind the running surface. Point a client generator at
+[the spec itself](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json) rather than
+hand-transcribing any of it.
 
 ::: tip Availability
 The public API is available on any deployment that has [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption)
@@ -158,6 +163,11 @@ never on `message`. Two families appear:
 
 The bulk of the surface drives the board headlessly. Nothing here spins up a browser session; a run
 started over the API executes exactly as one started from the board and appears on it.
+
+The table below is the shape of the workload, annotated with what each call is FOR. It is not the
+complete parameter list for any of them: that is the
+[API Endpoint Reference](./api-reference.md#operations), which enumerates every operation on the
+surface, including the ones no narrative here reaches for.
 
 | Method | Path | Scope | Purpose |
 | --- | --- | --- | --- |
@@ -407,7 +417,8 @@ their own poll; for push at scale, register the
 
 ---
 
-Next: the [Official SDKs](./sdks.md) if you would rather not hand-roll a client, the
+Next: the [API Endpoint Reference](./api-reference.md) for every operation's exact fields, the
+[Official SDKs](./sdks.md) if you would rather not hand-roll a client, the
 [MCP Server](./mcp-server.md) to give an MCP host the same surface, or the
 [Cloudflare OS Gatekeeper](./cloudflare-os.md) to install Cat Factory into a Cloudflare OS workspace
 without handing any agent a key.

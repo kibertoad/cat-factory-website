@@ -35,9 +35,8 @@ can both add new gates and customize the built-in catalog (last registration win
 ```ts
 import {
   defineProviderToken,
-  isProviderWired,
-  wireProvider,
   type GateProbe,
+  type ProviderRegistry,
 } from '@cat-factory/kernel'
 
 // The verdict your deployment-supplied checker returns for a block's PR.
@@ -52,9 +51,15 @@ interface LicenseProvider {
 
 // 1. Define a provider token and a one-line wire function. The gate reaches its data source
 //    through the typed provider registry, not a module global. Unwired ⇒ the gate passes through.
+//    The registry is APP-OWNED: your wire function takes the instance the facade built, so a
+//    fresh build starts empty and a separately-published package cannot register into a
+//    phantom map of its own.
 const LICENSE_PROVIDER = defineProviderToken<LicenseProvider>('license')
-export function wireLicenseProvider(provider: LicenseProvider | undefined): void {
-  wireProvider(LICENSE_PROVIDER, provider)
+export function wireLicenseProvider(
+  registry: ProviderRegistry,
+  provider: LicenseProvider | undefined,
+): void {
+  registry.wire(LICENSE_PROVIDER, provider)
 }
 
 // 2. Register the gate. `license-fixer` is a registered container-coding agent kind (see the
@@ -62,8 +67,9 @@ export function wireLicenseProvider(provider: LicenseProvider | undefined): void
 gateRegistry.register('license-check', (ctx) => ({
   kind: 'license-check',
   helperKind: 'license-fixer',
-  // The canonical source of the gate's "is my data source configured" answer.
-  wired: () => isProviderWired(LICENSE_PROVIDER),
+  // The canonical source of the gate's "is my data source configured" answer. Read it off the
+  // same `ctx` the probe uses, so the two can never disagree about which registry they mean.
+  wired: () => ctx.isProviderWired(LICENSE_PROVIDER),
   unwiredOutput: 'License gate skipped (no license provider configured).',
   // The precheck. requireProvider is SAFE here: the engine only probes a gate whose wired() is true.
   probe: async (workspaceId, blockId): Promise<GateProbe> => {
@@ -112,7 +118,7 @@ The factory returns a `GateDefinition`:
 | --- | --- |
 | `kind` | The step `agentKind` this gate gates (matches the registration key). |
 | `helperKind` | The container agent kind dispatched on a failed precheck. Must be a built-in helper (`ci-fixer`, `conflict-resolver`, `on-call`) or a registered container-capable kind, or [boot validation](./custom-agents.md#boot-time-validation) fails. |
-| `wired()` | Whether the gate's provider is configured. When false the gate is a pass-through. Make this `isProviderWired(token)` so it shares its source with `requireProvider`. |
+| `wired()` | Whether the gate's provider is configured. When false the gate is a pass-through. Make this `ctx.isProviderWired(token)` so it shares its source with `ctx.requireProvider`. |
 | `unwiredOutput` | Step output recorded when the gate passes through unwired. |
 | `probe(...)` | Run the precheck and classify it as a `GateProbe`. Receives the live `GateStepState` so a time-windowed gate can read its `watchSince`. |
 | `onExhausted(args)` | Run when the attempt budget is spent (or there is no async executor to escalate to). May raise a notification; returns the message used to fail the run. |
@@ -135,6 +141,7 @@ engine keeps owning dispatch, budget, persistence, and the state machine:
 | `raiseNotification(workspaceId, input)` | Raise a human-actionable notification, e.g. from `onExhausted`. |
 | `getProvider(token)` | The wired impl for a provider token, or `undefined`. |
 | `requireProvider(token)` | The wired impl, or throw. Safe inside `probe()` because the engine only probes a wired gate. |
+| `isProviderWired(token)` | Whether an impl is wired. This is what `wired()` should return. |
 
 ::: tip Most helpers fix; investigate-only helpers settle differently
 A normal helper fixes the gated condition (the fixer pushes a fix, the conflict resolver re-merges),
@@ -186,10 +193,16 @@ A gate (or resolver) reaches its data source through the typed provider registry
 importing your package. Until the provider is wired, `wired()` returns false and the gate is a
 harmless pass-through, so a bare `import '@your-org/org-gates'` is always safe.
 
+Every wire function takes the registry as its first argument, because the registry is one instance
+the facade owns rather than a module-level map. That is what makes a fresh container build start
+empty, and it is why an extension package published separately from the platform can never wire
+into a copy nothing reads.
+
 The built-in gates wire the same way. `@cat-factory/gates` exports `wireCiStatusProvider`,
-`wireMergeabilityProvider`, `wireReleaseHealthProvider`, and `wireIncidentEnrichment` (plus
-`applyGateProviders` for wiring a bag at once); the facade builds the GitHub-backed impls and hands
-them in. See [`@cat-factory/gates`](../reference/packages.md).
+`wireMergeabilityProvider`, `wireReleaseHealthProvider`, `wireIncidentEnrichment`,
+`wirePullRequestReviewProvider`, and `wireDocQualityProvider` (plus `applyGateProviders` for wiring a
+bag at once); the facade builds the GitHub-backed impls and hands them in. See
+[`@cat-factory/gates`](../reference/packages.md).
 
 ## The document-quality gate
 
@@ -204,7 +217,10 @@ pass-through until its provider is wired; both shipped runtimes wire it:
 import { wireDocQualityProvider } from '@cat-factory/gates'
 import { GitHubDocQualityProvider } from '@cat-factory/server'
 
-wireDocQualityProvider(new GitHubDocQualityProvider({ githubClient, resolveRepoTarget, blockRepository, documentRepository }))
+wireDocQualityProvider(
+  providerRegistry,
+  new GitHubDocQualityProvider({ githubClient, resolveRepoTarget, blockRepository, documentRepository }),
+)
 ```
 
 The gate checks against the same template the writer used. To supply your own house structure for a
@@ -302,12 +318,14 @@ it('passes on a clean change and fails on a dirty one', async () => {
 ## Gotchas
 
 - **A gate is a pass-through until its provider is wired.** Make `wired()` exactly
-  `isProviderWired(token)` so it shares its source with `requireProvider(token)` inside `probe()`.
-  Then `requireProvider` is safe: the engine only probes a gate whose `wired()` is true. A facade
-  build resets gate providers and re-wires from config, so wire yours at startup, not lazily.
-- **Reach providers through the registry, not a module global.** `defineProviderToken` once, wire at
-  startup, read back through `ctx.getProvider` / `ctx.requireProvider`. A module-level `let` provider
-  can leak across per-request facade builds.
+  `ctx.isProviderWired(token)` so it shares its source with `ctx.requireProvider(token)` inside
+  `probe()`. Then `requireProvider` is safe: the engine only probes a gate whose `wired()` is true.
+  Each facade build news its own registry, so wire yours at startup, not lazily.
+- **Reach providers through the injected registry, not a module global.** `defineProviderToken`
+  once, wire onto the instance the facade hands you, read back through `ctx.getProvider` /
+  `ctx.requireProvider` / `ctx.isProviderWired`. A module-level `let` provider, or a wire function
+  that closes over one, leaks across per-build registries and lands in whichever copy the package
+  manager resolved rather than the one the engine reads.
 - **A registered gate replaces a built-in of the same kind.** The engine builds its gate registry
   from whatever is registered and the last registration wins, so the same seam that adds a gate also
   customizes the shipped catalog. That is deliberate; it also means a typo in the `kind` silently
