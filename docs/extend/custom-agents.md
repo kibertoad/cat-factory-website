@@ -264,7 +264,7 @@ binaryGeneratorRegistry.register({
   mediaTypes: ['image/png', 'image/webp'],
   endpoint: 'https://api.acme.dev/v1',
   guidance: 'Submissions are async: POST /jobs, then poll /jobs/{id} until state is done.',
-  credential: { key: 'ACME_IMAGE_KEY' },
+  credentials: [{ key: 'ACME_IMAGE_KEY' }],
   contracts: [{ contractId: 'openapi', format: 'openapi', title: 'HTTP API', body: acmeImageSpec }],
 })
 ```
@@ -275,13 +275,36 @@ binaryGeneratorRegistry.register({
 | `mediaTypes?` | The concrete formats it can emit. Absent means only the coarse modalities are known, and the brief says so rather than implying every format of that modality is available. |
 | `endpoint?` | The API's base URL, so the agent does not infer one from the contract. Must be `https` or loopback, since the credential rides the request. |
 | `guidance?` | Operating notes folded into the brief verbatim: polling an async job, whether a payload comes back base64 or as a signed URL, a rate limit worth respecting. This is where you put what would otherwise be rediscovered once per run. |
-| `credential?` | Declared by name (`key`), optionally delivered under a different variable (`envName`). The value never reaches a prompt. |
+| `credentials?` | What it authenticates with, declared by name (`key`), each optionally delivered under a different variable (`envName`). A list, because a vendor account is not always one string. Values never reach a prompt. |
 | `contracts?` | API contract documents in the same formats the [foundational catalog](../guide/foundational-services.md) accepts, injected as `.cat-context/` files so the agent calls declared operations instead of inventing them. |
 
 `description` is the half a model needs to choose between two registered generators of the same
 modality: style, resolution or length limits, cost profile. The platform provides no discriminator
 field for that, because those axes do not partition the deliverable and a rule built on one would
 refuse correctly-configured steps.
+
+##### Vendors that authenticate with more than one value
+
+`credentials` is a list because plenty of APIs do not authenticate with a single token. HTTP Basic
+over a key/secret pair is the common one: declare both halves, and say in each `usage` what part it
+plays, since the agent writes the request itself.
+
+```ts
+credentials: [
+  { key: 'ACME_API_KEY', usage: 'the Basic-auth username half' },
+  { key: 'ACME_API_SECRET', usage: 'the Basic-auth password half' },
+],
+```
+
+Each entry becomes its own row on the workspace credential checklist, so the form an operator fills
+in matches the values their vendor console issues, and either half can be rotated on its own. Two
+entries may not arrive as the same environment variable (the same `envName`, or one entry's
+`envName` colliding with another's `key`); that is refused at boot, because the job body is keyed by
+variable name and a collision would silently deliver one value and drop the other.
+
+The platform names values and never assembles the request: there is no auth-scheme field, and
+nothing base64-encodes or builds a header for you. Say how to present each value in `usage` and the
+agent does the rest.
 
 The pipeline builder's picker and the run-admission check read the same registration, so a step
 configured from the picker is never refused at start as an unknown integration, even on a split
