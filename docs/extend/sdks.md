@@ -13,7 +13,8 @@ deployment validates against, so a client cannot describe a request the server w
 
 Two projections sit beside them rather than being a fifth client: the
 [MCP server](./mcp-server.md), which exposes the same operations as tools to an MCP host, and the
-Gatekeeper bindings, a policy-annotated operation table for credential-holding front-ends.
+Gatekeeper bindings, a policy-annotated operation table for credential-holding front-ends. The
+[Cloudflare OS Gatekeeper](./cloudflare-os.md) is built on that table.
 
 ## Getting a key
 
