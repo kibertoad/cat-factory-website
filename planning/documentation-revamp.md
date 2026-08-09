@@ -181,6 +181,9 @@ a doubled dash) turned up in that sweep and was fixed.
 
 ### Phase E: the destinations the code repo's reductions are waiting on
 
+Landed in [#25](https://github.com/kibertoad/cat-factory-website/pull/25), paired with
+[cat-factory#1884](https://github.com/kibertoad/cat-factory/pull/1884), which is the reduction half.
+
 Phases B and C filled the gaps the original audit could see. Phase E fills the four the code repo's
 own reduction slices found afterwards, each one blocking a cut that could not otherwise land.
 
