@@ -84,6 +84,7 @@ different fix.
 | `transport_unsupported` | The CLI speaks MCP but cannot reach this transport (Codex is stdio-only) | A second declaration for the other transport |
 | `missing_secret` | A `required` credential did not resolve | Set the variable, or store the workspace value |
 | `reserved_secret` | The credential's LOOKUP key names a platform configuration variable | The DECLARATION. Setting the variable must not help |
+| `unusable_secret` | A credential resolved and had nowhere to go: it named a channel its transport does not have | The DECLARATION. The value is set and the key is fine, so neither of those helps |
 | `oauth_not_connected` | The server authenticates with OAuth and this workspace holds no grant, or the deployment has no `ENCRYPTION_KEY` to keep one in | Press Connect on the board and sign in at the vendor. Set `ENCRYPTION_KEY` first if the deployment has no grant store |
 | `oauth_token_failed` | A grant is on file and produced no access token: a revoked or expired refresh, an authorization server that refused, discovery that failed | Reconnect, or wait out the vendor's outage |
 | `over_budget` | Nothing is wrong with the server. The kind declares more than one dispatch carries | Trim the kind's declarations |
@@ -144,8 +145,19 @@ deployment environment.
   `{ key: 'ACME_GITHUB_TOKEN', envName: 'GITHUB_PERSONAL_ACCESS_TOKEN' }`: looked up under a name
   of your own, injected under the one the vendor's SDK wants. `envName` has its own narrower rule
   (not `PATH`, `NODE_OPTIONS`, `npm_config_*`, or anything else that would reconfigure the process
-  instead of authenticating a call). It applies to `stdio` servers; on an `http` server the value
-  goes to the declared `header`, so an `envName` there is inert and warned about.
+  instead of authenticating a call).
+- **The transport decides where a credential goes, so declare the matching one.** A `stdio` server
+  is a child process with an environment and no request to put a header on; an `http` server is a
+  remote url with headers and no process to set a variable in. So a `stdio` credential is injected
+  as a variable (its key, or its `envName`), and an `http` credential rides the `header` it names,
+  with an optional `headerTemplate` such as `Bearer {value}` for the scheme. Naming the other one
+  fails boot, in both directions: a `header` on `stdio` is `unusable_credential_header`, and an
+  `http` credential with no `header` is `missing_credential_header`. They are errors rather than
+  warnings because such a declaration does not work at all. The value resolves, is folded into
+  nothing, and the server is wired, advertised to the agent, and started unauthenticated, with the
+  first evidence a failing tool call minutes into a run. Declaring an `envName` on an `http` server
+  that DOES name a header is the harmless case, and only warned about: the value still arrives as
+  the header, and the injection name is read by nothing.
 - **A workspace's own value wins over the deployment's.** The per-workspace credential store sits
   in front of the environment, per key, so a tenant supplies its own vendor account and a workspace
   that has stored nothing resolves exactly as it did before the store existed. The surface is a
@@ -288,6 +300,7 @@ deployment's variable.
 | `ok` | The handshake completed and the tool list came back | Nothing. The row names the server, its version and its tool count |
 | `credentials_missing` | A `required` credential did not resolve, so nothing was sent | Store the value for this board, or set the variable |
 | `credential_refused` | A credential's lookup key names a platform configuration variable | The declaration. Setting the variable must not help |
+| `credential_unusable` | A credential resolved and named no header, so an `http` server would never receive it | The declaration. The probe stops here rather than letting the server answer `401`, which would read as a wrong value |
 | `oauth_not_connected` | The server uses OAuth and this board has not granted it, so nothing was sent | Press Connect and sign in at the vendor |
 | `oauth_token_failed` | A grant is on file and produced no token | Reconnect. The row's detail carries the cause |
 | `unreachable` | No answer at all: DNS, TLS, connection refused, or the 10s deadline | The endpoint, or the network between here and it |
@@ -430,8 +443,9 @@ platform reads.
    context snapshot. A remote (`http`) vendor server is the case the Test button exists for.
 
 5. **If the run says the server is unavailable**, the reason names the fix. `missing_secret` is a
-   value to supply, `reserved_secret` is a declaration to change, `harness_unsupported` means the
-   run used Pi, and `over_budget` means `coder` has accreted more servers than one dispatch carries.
+   value to supply, `reserved_secret` and `unusable_secret` are declarations to change,
+   `harness_unsupported` means the run used Pi, and `over_budget` means `coder` has accreted more
+   servers than one dispatch carries.
 
 ## Adoption checklist
 
