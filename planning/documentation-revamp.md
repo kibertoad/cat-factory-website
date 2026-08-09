@@ -1,8 +1,13 @@
 # Documentation revamp: website restructure
 
-Status: **complete.** Phases A, B, C and D have landed. The sibling tracker for the code repo's side
-of the revamp (which docs move here, which stay there, and the ownership model behind the split)
-lives in
+Status: **reopened at phase E.** Phases A, B, C and D have landed, and the structure they built is
+holding. What reopened it is the code repo's reduction pass: a reduction is the first thing that
+reads a page for DEPTH rather than existence, and four destinations turned out to be missing or too
+shallow to receive the content the sibling tracker planned to send. Two of them BLOCK slices there,
+so "complete" was a status this repo could not honestly hold while the other side waited on it.
+
+The sibling tracker for the code repo's side of the revamp (which docs move here, which stay there,
+and the ownership model behind the split) lives in
 [kibertoad/cat-factory `docs/initiatives/documentation-revamp.md`](https://github.com/kibertoad/cat-factory/blob/main/docs/initiatives/documentation-revamp.md).
 
 This file lives under `planning/`, outside `docs/`, so VuePress never publishes it.
@@ -170,6 +175,48 @@ page kept its own. Every in-site link and heading anchor was re-checked after th
 renames; one pre-existing broken anchor (`budgets.md` → `#budget-of-0-local--or-subscription-only`,
 a doubled dash) turned up in that sweep and was fixed.
 
+### Phase E: the depth the reductions asked for
+
+Ordered by what unblocks the other repo. E1 is the only one two code-repo slices are parked on.
+
+- [ ] E1. **`extend/manifests.md` gains the field level, or the format goes back.** The page is 102
+      lines: shared building blocks, a secrets rule, `providerConfig`, and one three-row operations
+      table per manifest. The code repo's two manifest sections are 152 and 203 lines of field
+      schema, auth-scheme tables, template-variable rules, response-mapping notes and worked
+      examples, and both reductions stopped rather than cut toward a page that cannot hold them.
+      Decide with the sibling tracker's item 17: either this page (or a split pair, one per
+      manifest) becomes the authority at field level, or the format is named a repo-owned
+      exception and neither reduction is planned again. The reader test points at the first: a
+      manifest is authored in the app's own editor by someone with no checkout.
+- [ ] E2. **Enterprise SSO has no destination here.** `deploy/configuration.md#authentication` names
+      GitHub OAuth, Google OAuth and email/password, and never mentions OIDC. The only trace of SSO
+      on this site is one row of the GENERATED environment-variable page, whose Description links
+      back into the code repo. So the deployment shape an enterprise actually buys is documented
+      only where a checkout is required, which is the exact problem the revamp exists to fix. Land
+      it as a section on the configuration page or its own Deploy page, sourced from the code
+      repo's `backend/docs/auth.md` (`## Enterprise SSO (generic OIDC)`, its access-control
+      subsections, and why SSO is configured by environment rather than in the UI).
+- [ ] E3. **Reusable operations has no page.** A deployment-registered operation bundles a per-case
+      form, standing context and its own canned pipeline. It is an Extend-section topic by every
+      rule this site uses, `backend/docs/reusable-operations.md` is 675 lines, and the phrase
+      appears nowhere in `docs/`.
+- [ ] E4. **Design-context sources (Figma, Zeplin) are a passing mention.** Two pages name them in a
+      list of document sources; nothing says what a design-context source feeds, what the UI agents
+      receive from it, or how a workspace connects one. Smallest of the four: likely a section on
+      `guide/documents.md` rather than a page.
+- [ ] E5. **Check the code repo's links INTO this site, from here.** The code repo builds 44 distinct
+      `catfactory.ai` URLs (docs, code and shipped READMEs) and its own guards deliberately cannot
+      resolve them: a page list checked in there rots in the deletion direction. This repo has the
+      pages, and already reaches into that repo on a schedule for `sync-env-vars.mjs --check`, so
+      the same job resolves each URL to a page file and a heading. Use `@mdit-vue/shared`'s
+      slugify, the one VuePress uses: it maps each punctuation run to `-`, so
+      `## When the manifest isn't enough` is `#when-the-manifest-isn-t-enough` and a GitHub-style
+      slugifier reports live links as broken. Resolve the reverse direction in the same job: seven
+      links here point into the code repo, one of them anchored.
+- [ ] E6. **Give `sync-docs` a row per new destination.** Its feature-area map has no row for
+      authentication and SSO, reusable operations, design-context sources, or the debug endpoints,
+      so a commit in any of those areas maps to nothing and is dropped as out of scope.
+
 ## Docs added since this tracker was written
 
 Checked against the code repo on 2026-08-08. The revamp's own execution absorbed these rather than
@@ -210,3 +257,8 @@ leaving them for a later slice:
 - **New pages must not restate the code repo.** Content arrives by the sibling tracker's
   move-not-mirror rule; a page authored here from scratch while the repo doc lives on recreates the
   drift this revamp removes.
+- **A section count is not coverage, and phase E is what that cost.** Both manifest sections here
+  read as complete against a table of contents and stop above the field level, so the sibling
+  repo scoped two reductions toward a page with nowhere to put them. When this tracker claims a
+  topic, the claim is about DEPTH: name what a reader can do with the page alone, and where the
+  page deliberately stops, say so on the page.
