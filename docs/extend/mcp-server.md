@@ -13,14 +13,74 @@ cannot describe a request shape the deployment would reject.
 
 Both serve the same tools.
 
-- **Hosted**, at `POST /api/v1/mcp` on your deployment. Nothing to install: give the host a URL and
-  a key. Reach for this first if your host speaks HTTP MCP.
+- **Hosted**, at `POST /api/v1/mcp` on your deployment. Nothing to install: give the host the URL
+  and let it connect over OAuth, or hand it a key. Reach for this first if your host speaks HTTP
+  MCP.
 - **The `@cat-factory/mcp-server` package**, over stdio. It needs no deployment of your own beyond
   the one you are calling, it is the only path for a host that cannot speak HTTP MCP, and it is the
   only one with per-host tool filters.
 
 A deployment mounts the hosted endpoint from that same package, so the tool table, the instructions,
 and the result rendering are identical on both paths.
+
+## Connecting a host over OAuth
+
+The hosted endpoint accepts a key, and it also speaks the MCP authorization spec, so a host can
+connect the way it connects to any other remote MCP server: you press Connect in the host, a browser
+opens, you choose what it may have, and the host gets its own credential. Nothing is pasted anywhere,
+and no long-lived key sits in a config file on disk.
+
+Hosts that discover authorization themselves (claude.ai, Claude Desktop, the IDE clients, the MCP
+Inspector) need only the URL:
+
+```
+https://cat-factory.example.com/api/v1/mcp
+```
+
+What happens, and what you are deciding:
+
+1. The host asks the endpoint, gets a `401` naming where this deployment's authorization metadata
+   lives, and registers itself as a client. Registration on its own grants nothing.
+2. Your browser opens on the deployment's consent screen. Sign in if you are not already: the
+   screen is part of the app, so an SSO deployment authenticates you through its own identity
+   provider here.
+3. You pick the **board** the host may act on and **what it may do** (`read`, `write`, `decide` or
+   `admin`, the same ladder every API key carries). The screen names the host and the address your
+   browser will be sent back to; that address was matched against what the host registered, so it
+   is the fact worth reading.
+4. The host receives an API key scoped to exactly that. It appears in the board's API-key settings
+   as `MCP: <host name>`, and **revoking it there disconnects the host**.
+
+Two things to know before you rely on it:
+
+- **The issued token does not expire**, so there is nothing to refresh and no renewal to schedule.
+  It is an ordinary public-API key with the usual lifecycle: it lives until someone revokes it.
+- **Approving twice issues two keys.** Reconnecting a host that lost its token leaves the old key
+  behind; revoke it when you are done.
+
+### What a deployment needs for it
+
+- `ENCRYPTION_KEY`, which every value the flow carries between requests is sealed under.
+- The public API enabled, since what a host is issued is a public-API key.
+- `APP_BASE_URL`, **only** if the app is served from a different origin than the API. Same value the
+  invite and password-reset links already use.
+
+Without the first two the endpoint still serves the discovery documents' absence honestly: the
+authorization routes answer `503` naming what is missing, and a host falls back to asking you for a
+key. Approving a connection requires the `secrets.manage` permission on the board you pick, which is
+the same permission minting an API key by hand requires.
+
+### If your host cannot do OAuth
+
+Give it a key, exactly as before:
+
+```sh
+claude mcp add --transport http cat-factory https://cat-factory.example.com/api/v1/mcp \
+  --header "Authorization: Bearer cf_live_..."
+```
+
+Both credentials are the same kind of key, so the scope ladder, the tool list and the audit trail
+behave identically whichever way the host got one.
 
 ## Running the stdio server
 
