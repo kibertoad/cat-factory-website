@@ -264,7 +264,7 @@ binaryGeneratorRegistry.register({
   mediaTypes: ['image/png', 'image/webp'],
   endpoint: 'https://api.acme.dev/v1',
   guidance: 'Submissions are async: POST /jobs, then poll /jobs/{id} until state is done.',
-  credential: { key: 'ACME_IMAGE_KEY' },
+  credentials: [{ key: 'ACME_IMAGE_KEY', usage: 'Authorization: Bearer <value>' }],
   contracts: [{ contractId: 'openapi', format: 'openapi', title: 'HTTP API', body: acmeImageSpec }],
 })
 ```
@@ -275,8 +275,29 @@ binaryGeneratorRegistry.register({
 | `mediaTypes?` | The concrete formats it can emit. Absent means only the coarse modalities are known, and the brief says so rather than implying every format of that modality is available. |
 | `endpoint?` | The API's base URL, so the agent does not infer one from the contract. Must be `https` or loopback, since the credential rides the request. |
 | `guidance?` | Operating notes folded into the brief verbatim: polling an async job, whether a payload comes back base64 or as a signed URL, a rate limit worth respecting. This is where you put what would otherwise be rediscovered once per run. |
-| `credential?` | Declared by name (`key`), optionally delivered under a different variable (`envName`). The value never reaches a prompt. |
+| `credentials?` | The credentials the integration authenticates with, each declared by name (`key`), optionally delivered under a different variable (`envName`), with `usage` saying how to present it and `required: false` marking one the call can go without. Values never reach a prompt. Absent means the integration is called unauthenticated. |
 | `contracts?` | API contract documents in the same formats the [foundational catalog](../guide/foundational-services.md) accepts, injected as `.cat-context/` files so the agent calls declared operations instead of inventing them. |
+
+A list, because a credential is not always one string. An API that authenticates with HTTP Basic
+over a key and a secret (Twilio, Mailgun and a long tail of REST APIs), an access key paired with
+its secret, or a key that only works alongside an account id, each declares two entries:
+
+```ts
+credentials: [
+  { key: 'SCENARIO_API_KEY', usage: 'the HTTP Basic username' },
+  { key: 'SCENARIO_API_SECRET', usage: 'the HTTP Basic password' },
+]
+```
+
+That asks for the two values the vendor's console actually issues, under the two names it issues
+them under, and each is stored and rotated on its own in the workspace's capability-credential
+panel. Each must land in a distinct environment variable, or the registration is refused at boot:
+two entries sharing a name would both resolve and one would silently overwrite the other.
+
+`usage` is prose rather than an auth-scheme setting because the agent writes the request, not the
+platform. A sentence covers every scheme, including signed requests and rotating timestamps, and
+including saying which half of a pair a value is. The brief names each variable and tells the agent
+that a call missing any required one must not be sent at all.
 
 `description` is the half a model needs to choose between two registered generators of the same
 modality: style, resolution or length limits, cost profile. The platform provides no discriminator
