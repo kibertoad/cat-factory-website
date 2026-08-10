@@ -1,0 +1,18 @@
+// Task-based entry cards on the homepage ("Where to next?"). Each card mirrors one
+// top-level sidebar section so the homepage teaches the same structure the sidebar uses.
+.next-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  gap: 1rem;
+}
+
+.next-card {
+  padding: 0.25rem 1.25rem;
+  border: 1px solid var(--vp-c-border);
+  border-radius: 8px;
+  background: var(--vp-c-bg-alt);
+
+  p {
+    margin: 0.75rem 0;
+  }
+}
