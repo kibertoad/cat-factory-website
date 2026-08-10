@@ -174,9 +174,10 @@ deployment can provision itself end to end without anyone opening the app.
 | `PATCH` | `/api/v1/services/{serviceId}` | admin | Patch a service, including where its manifests live. |
 | `GET` | `/api/v1/models` | admin | Which models a run here could actually dispatch to. |
 | `GET` | `/api/v1/vcs/connection` | admin | The source-control connection, and what it is permitted to do. |
-| `GET` | `/api/v1/merge-presets` | admin | The merge presets, and which one an unpinned task resolves. |
+| `GET` | `/api/v1/risk-policies` | admin | The risk policies, and which one an unpinned task resolves. Pin one as `riskPolicyId`. |
+| `GET` | `/api/v1/model-presets` | admin | The model presets, and which one an unpinned task resolves. Pin one as `modelPresetId`. |
 
-The three reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
+The four reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
 **deployment** has wired, including the permissions its source-control credential holds, where the
 board reads name board content, and anyone able to read that is already at the rung that could
 change it.
@@ -194,10 +195,14 @@ run you have already paid for.
   enforced by the provider at **push** time, so skipping this check turns a missing workflow
   permission into a repository that bootstrapped and then failed to gain its CI workflow, which
   reads like a broken bootstrap rather than a permission you can grant.
-- `GET /api/v1/merge-presets`: `autoMergeEnabled` on the `isDefault` row decides whether a run can
+- `GET /api/v1/risk-policies`: `autoMergeEnabled` on the `isDefault` row decides whether a run can
   land its pull request with no person involved. `dryRunRoles` is the one caveat this API cannot
   settle for you, because it does not report which workspace role your key's runs are admitted
-  under: a non-empty list means the preset merges for some roles and not others.
+  under: a non-empty list means the policy merges for some roles and not others.
+- `GET /api/v1/model-presets`: `baseModelId` is what every agent step runs on under that preset, and
+  `overrides` names the kinds that run on something else, which is usually what separates two
+  presets. Whether the model can actually be dispatched to is not repeated here; join `baseModelId`
+  against `/api/v1/models`, which keeps unconfigured and policy-refused apart.
 
 ### Bootstrapping a repository
 
@@ -263,10 +268,10 @@ on the surface, including the ones no narrative here reaches for.
 | Method | Path | Scope | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/api/v1/services` | read | List the workspace's services. |
-| `POST` | `/api/v1/services/{serviceId}/tasks` | write | Create a task. Body `{ title, description?, taskType?, ticket? }`; `taskType` is one of `feature`, `bug`, `document`, `spike`, `review`, `ralph` (default `feature`). See [Filing a task from a tracker ticket](#filing-a-task-from-a-tracker-ticket). |
+| `POST` | `/api/v1/services/{serviceId}/tasks` | write | Create a task. Body `{ title, description?, taskType?, ticket?, modelPresetId?, riskPolicyId? }`; `taskType` is one of `feature`, `bug`, `document`, `spike`, `review`, `ralph` (default `feature`). See [Filing a task from a tracker ticket](#filing-a-task-from-a-tracker-ticket) and [Pinning what a task runs on](#pinning-what-a-task-runs-on). |
 | `GET` | `/api/v1/services/{serviceId}/tasks` | read | List a service's tasks (its whole subtree), newest first. Paged; see [Paging](#paging). Filter with `?status=`. |
 | `GET` | `/api/v1/tasks/{taskId}` | read | Get a task's status projection: `{ taskId, serviceId, title, description, taskType, status, progress, runId, pullRequestUrl }`. |
-| `PATCH` | `/api/v1/tasks/{taskId}` | write | Edit the task's title or description. |
+| `PATCH` | `/api/v1/tasks/{taskId}` | write | Edit the task's title, description or either of its pins. |
 | `POST` | `/api/v1/tasks/{taskId}/start` | write | Start the task's pipeline. Body `{ pipelineId? }`, falling back to the task's pinned pipeline. |
 | `POST` | `/api/v1/tasks/{taskId}/stop` | write | Stop the in-flight run (idempotent; the run stays retryable). |
 | `POST` | `/api/v1/tasks/{taskId}/retry` | write | Retry a failed run. |
@@ -305,6 +310,39 @@ agent-raised decision, a judge park) are not knowable in advance and do not gate
 
 The inline-only restriction applies to headless jobs, not board tasks: a `decide` key may start
 container pipelines on board tasks.
+
+### Pinning what a task runs on
+
+By default a task resolves the workspace's default model preset and its default risk policy, so what
+a run costs and whether it can land without a person are whatever the workspace happens to be set to
+that day. Name either on the create call, or later with `PATCH /api/v1/tasks/{taskId}`, and this task
+holds its own:
+
+```http
+POST /api/v1/services/{serviceId}/tasks
+{ "title": "Paginate the catalog endpoint",
+  "modelPresetId": "mdp_claude", "riskPolicyId": "mp_manual" }
+```
+
+Get the ids from `GET /api/v1/model-presets` and `GET /api/v1/risk-policies`. Both are read back on
+the task, and `null` there means the task **follows** the workspace default rather than holding a
+copy of its id: move the default and an unpinned task moves with it.
+
+This is what makes an automated pass reproducible. Without it, the only way to run one task on a
+different model is to change the workspace default, which quietly changes every other caller's runs
+to settle one task.
+
+**An id nothing in the workspace carries is refused, not resolved to the default.** You get a `422`
+with `details.reason` of `model_preset_not_found` or `risk_policy_not_found`, because the two
+outcomes are indistinguishable afterwards: a run on the wrong model still succeeds, it is just about
+something else. A deployment that has not wired the library answers `503` with
+`model_presets_unwired` / `risk_policies_unwired` instead, which is a different problem needing a
+different fix. The refusal names the id that missed, never the library's contents, because pinning
+takes `write` and listing takes `admin`.
+
+Pinning a model preset does **not** widen what your account allows: the base model still resolves
+through the account's model-family policy, so a preset naming a blocked model fails at dispatch
+exactly as it would have on the workspace default.
 
 ### Filing a task from a tracker ticket
 

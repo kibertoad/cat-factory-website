@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.41.0**. 110 operations across 20 groups.
+Surface version **1.42.0**. 111 operations across 21 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -28,7 +28,7 @@ Each operation below states the LOWEST scope that admits it. A key below that li
 
 ## Operations
 
-[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge presets](#merge-presets) · [Merge records](#merge-records) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
+[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
 
 ### Debug
 
@@ -1627,24 +1627,6 @@ Revoke a key AND every key it minted, so a leaked provisioning key cannot outliv
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
-### Merge presets
-
-#### List the workspace’s merge-threshold presets
-
-`GET /api/v1/merge-presets`
-
-Minimum scope: `admin`.
-
-The preset library, including which row is the workspace default that a task pinning none resolves. `autoMergeEnabled` is the master switch that decides whether a run can land its pull request without a person; `dryRunRoles` names the roles whose runs the preset forces into dry-run mode, which is the difference between “this preset merges” and “this preset merges for everyone except one role”.
-
-**Responses**
-
-| Status | Body | Meaning |
-| --- | --- | --- |
-| `200` | object (`application/json`) | Success |
-| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
-| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
-
 ### Merge records
 
 #### List the per-change-class merge rollups
@@ -1722,6 +1704,24 @@ What kind of change the run’s pull request made (a change class derived on the
 | Name | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `runId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+### Model presets
+
+#### List the workspace’s model presets
+
+`GET /api/v1/model-presets`
+
+Minimum scope: `admin`.
+
+The preset library, including which row is the workspace default that a task pinning none resolves. `baseModelId` is the model every agent step runs on under the preset, and `overrides` names the agent kinds that run on something else, which is usually the one that matters: two presets often differ only in what the CODER gets. Whether a preset can actually be dispatched to is NOT repeated here, because the models endpoint already answers it while keeping unconfigured apart from refused-by-policy; join on `baseModelId`.
 
 **Responses**
 
@@ -1884,6 +1884,24 @@ Read a bootstrap run’s current state. `failureKind` says whether a retry could
 | Name | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `jobId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+### Risk policies
+
+#### List the workspace’s risk policies
+
+`GET /api/v1/risk-policies`
+
+Minimum scope: `admin`.
+
+The policy library, including which row is the workspace default that a task pinning none resolves. `autoMergeEnabled` is the master switch that decides whether a run can land its pull request without a person; `dryRunRoles` names the roles whose runs the policy forces into dry-run mode, which is the difference between “this policy merges” and “this policy merges for everyone except one role”. A policy also caps CI-fixer attempts, requirement and tester iteration rounds and the release-health watch, which is why it is not called a merge preset; the id is what a task pins as `riskPolicyId`.
 
 **Responses**
 
@@ -2612,6 +2630,8 @@ The payload shapes the operations above reference. Field names, types and constr
 | `description` | `string` | no | max 2000 characters |
 | `documents` | array of [`PublicTaskDocument`](#publictaskdocument) | no |  |
 | `fields` | map of `string` \| array of `string` \| `boolean` \| `number` | no |  |
+| `modelPresetId` | `string` | no | 1 to 120 characters |
+| `riskPolicyId` | `string` | no | 1 to 120 characters |
 | `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `string` | no |  |
 | `ticket` | [`PublicTaskTicket`](#publictaskticket) | no |  |
 | `title` | `string` | yes | 1 to 200 characters |
@@ -3537,8 +3557,10 @@ One of 13 shapes.
 | `autoStartDependents` | `boolean` | yes |  |
 | `dependsOn` | array of `string` | yes |  |
 | `description` | `string` | yes |  |
+| `modelPresetId` | `string` \| `null` | yes |  |
 | `progress` | `number` | yes |  |
 | `pullRequestUrl` | `string` \| `null` | yes |  |
+| `riskPolicyId` | `string` \| `null` | yes |  |
 | `runId` | `string` \| `null` | yes |  |
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
@@ -3711,6 +3733,8 @@ One of 2 shapes.
 | `autoStartDependents` | `boolean` | no |  |
 | `description` | `string` | no | max 2000 characters |
 | `fields` | map of `string` \| array of `string` \| `boolean` \| `number` | no |  |
+| `modelPresetId` | `string` | no | 1 to 120 characters |
+| `riskPolicyId` | `string` | no | 1 to 120 characters |
 | `title` | `string` | no | 1 to 200 characters |
 
 ---
