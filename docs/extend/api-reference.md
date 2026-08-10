@@ -8,7 +8,7 @@ sidebarDepth: 1
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.37.0**. 102 operations across 16 groups.
+Surface version **1.41.0**. 110 operations across 20 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](./public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](./sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -26,7 +26,7 @@ Each operation below states the LOWEST scope that admits it. A key below that li
 
 ## Operations
 
-[Debug](#debug) · [Decisions](#decisions) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge records](#merge-records) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Usage](#usage) · [Webhook](#webhook)
+[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge presets](#merge-presets) · [Merge records](#merge-records) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
 
 ### Debug
 
@@ -1304,6 +1304,44 @@ Submit findings against the captured screenshots and dispatch a fixer. The findi
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+### Environments
+
+#### Connect the workspace to the cluster its environments deploy onto
+
+`POST /api/v1/environments/connections`
+
+Minimum scope: `admin`.
+
+Bind environment provisioning to a Kubernetes cluster: the apiserver, how its TLS is verified, the namespace template, and how an environment URL is derived once manifests are applied. The secret bundle authenticating the connection is write-only; the response reports which secret KEYS were stored and never their values. Idempotent, so re-connecting replaces rather than accumulating.
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `201` | object (`application/json`) | Created |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Probe a candidate cluster connection without saving it
+
+`POST /api/v1/environments/connections/test`
+
+Minimum scope: `admin`.
+
+Reach the apiserver with the supplied credentials and report what came back, persisting nothing. Worth a call of its own because the alternative is discovering an unreachable cluster or an expired token on the deploy step of a run that has already paid for a design pass and an implementation. A cluster that refuses the credential is an ANSWER, so it is a 200 carrying `ok: false` rather than an error.
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Evidence
 
 What a run PROVED: the engine’s own verification report (the same bundle it writes onto the pull request) and the binary artifacts the run captured, bytes included. The surface for a consumer that has to judge a run (accept the change, score the fleet) rather than debug one. Read-only (`read` scope).
@@ -1587,6 +1625,24 @@ Revoke a key AND every key it minted, so a leaked provisioning key cannot outliv
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+### Merge presets
+
+#### List the workspace’s merge-threshold presets
+
+`GET /api/v1/merge-presets`
+
+Minimum scope: `admin`.
+
+The preset library, including which row is the workspace default that a task pinning none resolves. `autoMergeEnabled` is the master switch that decides whether a run can land its pull request without a person; `dryRunRoles` names the roles whose runs the preset forces into dry-run mode, which is the difference between “this preset merges” and “this preset merges for everyone except one role”.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Merge records
 
 #### List the per-change-class merge rollups
@@ -1664,6 +1720,24 @@ What kind of change the run’s pull request made (a change class derived on the
 | Name | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `runId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+### Models
+
+#### List the models a run in this workspace could dispatch to
+
+`GET /api/v1/models`
+
+Minimum scope: `admin`.
+
+The workspace’s model catalog with the two flags that decide whether an agent step can run at all: `available`, and `policyBlocked` for a model that is configured but refused by the account’s model-family policy. Those two need OPPOSITE fixes, which is why they are separate: everything blocked by policy is already configured, so adding another provider key changes nothing.
 
 **Responses**
 
@@ -1777,6 +1851,46 @@ List the repositories the key’s workspace has connected, each with the service
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+#### Create a repository and adapt it with the bootstrapper agent
+
+`POST /api/v1/repos/bootstrap`
+
+Minimum scope: `admin`.
+
+Create a brand-new repository under the account the workspace is connected to, then run the bootstrapper agent in a container to write it against the supplied brief (or to adapt a reference architecture). Answers 201 with a job to poll rather than blocking for the minutes a container takes. The job names the board service frame it materialises, so work can be filed against the service before the repository has finished being written. This is the one act of board setup with no other public counterpart: creating a service takes a repoId, and nothing else here makes one.
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `201` | object (`application/json`) | Created |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Poll one repository bootstrap
+
+`GET /api/v1/repos/bootstrap/{jobId}`
+
+Minimum scope: `admin`.
+
+Read a bootstrap run’s current state. `failureKind` says whether a retry could plausibly help: a `preflight` refusal (the target repository already has content, nothing is connected) cannot be retried into success, where an `evicted` container can.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `jobId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Services
 
 The workspace’s board services.
@@ -1812,6 +1926,30 @@ Create a board service, optionally backed by a repository from `GET /api/v1/repo
 | Status | Body | Meaning |
 | --- | --- | --- |
 | `201` | [`PublicService`](#publicservice) (`application/json`) | Created |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Patch a service, including where its per-run manifests live
+
+`PATCH /api/v1/services/{serviceId}`
+
+Minimum scope: `admin`.
+
+Change a service’s authored fields, and declare its `provisioning`: where the manifests for a per-run environment are read from. That second half is what a connected cluster alone cannot supply, because the platform keeps “which cluster” (one per workspace) apart from “which manifests” (one set per service). An omitted `provisioning` leaves the stored one alone rather than clearing it. Board coordinates are deliberately absent, as they are on service creation.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `serviceId` | `string` | yes |  |
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicService`](#publicservice) (`application/json`) | Success |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -2275,6 +2413,24 @@ Group the board’s spend over a window (`24h`, `7d`, `30d`, `90d`) by ONE dimen
 | Status | Body | Meaning |
 | --- | --- | --- |
 | `200` | [`PublicSpend`](#publicspend) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+### VCS
+
+#### Read the workspace’s source-control connection and what it may do
+
+`GET /api/v1/vcs/connection`
+
+Minimum scope: `admin`.
+
+The connected account, how the workspace authenticates to it, and the two permissions that decide whether an automated flow can complete: whether the platform may create repositories, and whether it may write workflow files. Both are enforced by the provider at push time, so a caller that cannot read them discovers a missing workflow permission as a repository that bootstrapped and then failed to gain its CI workflow. Provider-neutral: a GitLab-connected workspace answers here too. `connection` is null when nothing is connected, which is a state rather than an error.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -2788,6 +2944,7 @@ One of 3 shapes.
 | `run` | [`PrReportRun`](#prreportrun) | yes |  |
 | `scope` | object | no |  |
 | `scope.frameId` | `string` \| `null` | no |  |
+| `scope.frameIds` | array of `string` | no |  |
 | `scope.ownPullRequest` | object \| `null` | no |  |
 | `scope.role` | `"own"` \| `"peer"` | yes |  |
 | `tests` | [`PrReportTests`](#prreporttests) | yes |  |
@@ -3274,6 +3431,7 @@ One of 13 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `description` | `string` | yes |  |
+| `provisioning` | object | no |  |
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `title` | `string` | yes |  |
