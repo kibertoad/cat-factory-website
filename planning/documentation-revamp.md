@@ -471,6 +471,13 @@ leaving them for a later slice:
   `CLAUDE.md` now carries the same rule from its side, phrased as "open the website pull request
   first, and name it".
 - **Three pages here are generated and two of them are new.** `reference/environment-variables.md`
-  and `extend/api-reference.md` are rendered from the code repo and must never be hand-edited; the
+  and `reference/api-reference.md` are rendered from the code repo and must never be hand-edited; the
   banner at the top of each says so and CI checks that the banner is still there. Editing one is
   invisible until the next sync silently reverts it.
+- **A generated page's frontmatter is generated too, including its `redirectFrom`.** Phase F shipped
+  `api-reference.md` into `/extend/`, next to the narrative it serves, and that was the wrong side of
+  the line this revamp drew: the generated field-level page is a lookup, and Reference is where
+  lookups live (which is already where `environment-variables.md` sits, while its narrative twin
+  `deploy/configuration.md` sits in Deploy). It now lives at `/reference/api-reference.md`. The
+  redirect for the old URL is emitted by `sync-openapi.mjs` rather than hand-added, because a
+  hand-added frontmatter key would disappear on the next render.

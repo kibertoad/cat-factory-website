@@ -1,6 +1,6 @@
 name: OpenAPI reference drift
 
-# docs/extend/api-reference.md is rendered from docs/openapi.json in kibertoad/cat-factory, which is
+# docs/reference/api-reference.md is rendered from docs/openapi.json in kibertoad/cat-factory, which is
 # itself generated there from the contracts the server routes are built from. The spec stays in that
 # repository because it is what the four official SDK clients are generated from, so this site can
 # only ever be as current as the last sync.
@@ -62,7 +62,7 @@ jobs:
           {
             echo "## The API endpoint reference has drifted"
             echo
-            echo "\`docs/extend/api-reference.md\` no longer matches a render of"
+            echo "\`docs/reference/api-reference.md\` no longer matches a render of"
             echo "\`docs/openapi.json\` in kibertoad/cat-factory@\`$CAT_FACTORY_REF\`."
             echo
             echo "Two things look the same here and are not:"

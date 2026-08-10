@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Renders docs/extend/api-reference.md from the code repo's generated OpenAPI document.
+// Renders docs/reference/api-reference.md from the code repo's generated OpenAPI document.
 //
 // The spec is docs/openapi.json in kibertoad/cat-factory, itself generated from the contracts
 // (contracts -> openapi.json -> the four SDK clients, with a CI guard there failing on drift). It
@@ -28,6 +28,12 @@
 // integrator's first read (authenticating, picking a scope, the worked board workload, answering a
 // parked run) and links here for the field level. A generated page cannot carry judgement, and a
 // hand-written one cannot stay complete, so the two are split by exactly that line.
+//
+// That line is also why the two pages sit in DIFFERENT sections. "Drive Cat Factory from outside"
+// is a job, so the narrative is in Extend; "what are this endpoint's fields" is a lookup, so the
+// generated half is in Reference, beside the generated environment-variable list it is the twin of.
+// The page therefore emits `../extend/…` links to its narrative, and carries a `redirectFrom` for
+// the /extend/ URL it was first published at, which the code repo deep-links three times.
 
 import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import path from 'node:path'
@@ -39,7 +45,7 @@ const docsRoot = path.join(siteRoot, 'docs')
 const repoRoot = path.resolve(process.env.CAT_FACTORY_REPO ?? path.join(siteRoot, '..', 'cat-factory'))
 const sourceRelPath = 'docs/openapi.json'
 const sourcePath = path.join(repoRoot, ...sourceRelPath.split('/'))
-const targetPath = path.join(docsRoot, 'extend', 'api-reference.md')
+const targetPath = path.join(docsRoot, 'reference', 'api-reference.md')
 // Which revision to READ the spec from. Only this varies: the links the page EMITS always point at
 // main, because they are published permalinks for readers, and letting the ref reach them would
 // make --check fail on URL differences alone whenever it compared against a branch, which is
@@ -355,6 +361,10 @@ function render(specText) {
   // a sidebar nobody can read. The two in-page indexes below do that job instead, so the sidebar
   // stays at the three sections and the anchors are still there for anyone linking one.
   out.push('sidebarDepth: 1')
+  // The URL this page was first published at. Emitted here rather than hand-added, because the
+  // frontmatter is regenerated on every sync and a hand-added key would vanish on the next one.
+  out.push('redirectFrom:')
+  out.push('  - /extend/api-reference.html')
   out.push('---')
   out.push('')
   out.push('# API Endpoint Reference')
@@ -373,10 +383,11 @@ function render(specText) {
   out.push('')
   out.push('::: tip Start on the guide, not here')
   out.push(
-    'This page is the field level. [Public API](./public-api.md) is the page to read first: how to ' +
-      'mint a key, which scope to pick, the worked board workload, how to answer a run that parks, ' +
-      'and how the error envelope and paging work. Reach for an [official SDK](./sdks.md) before ' +
-      'hand-rolling HTTP, or point a generator at the spec linked above.',
+    'This page is the field level. [Public API](../extend/public-api.md) is the page to read first: ' +
+      'how to mint a key, which scope to pick, the worked board workload, how to answer a run that ' +
+      'parks, and how the error envelope and paging work. Reach for an ' +
+      '[official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec ' +
+      'linked above.',
   )
   out.push(':::')
   out.push('')
@@ -431,8 +442,8 @@ function render(specText) {
   out.push('---')
   out.push('')
   out.push(
-    'Next: [Public API](./public-api.md) for the narrative and the worked examples, or ' +
-      '[SDKs](./sdks.md) for a generated client that already speaks all of this.',
+    'Next: [Public API](../extend/public-api.md) for the narrative and the worked examples, or ' +
+      '[SDKs](../extend/sdks.md) for a generated client that already speaks all of this.',
   )
   out.push('')
 
@@ -452,7 +463,7 @@ function render(specText) {
 }
 
 // ---------------------------------------------------------------------------
-// Offline verification of whatever is committed at docs/extend/api-reference.md
+// Offline verification of whatever is committed at docs/reference/api-reference.md
 // ---------------------------------------------------------------------------
 
 function headingsOf(markdown, depth = 6) {
@@ -482,7 +493,7 @@ function verify(generated) {
   // 1. Still a generated page. A hand edit that strips the banner is the failure this design exists
   //    to prevent, and it is invisible until the next sync silently overwrites the edit.
   if (!generated.includes(BANNER)) {
-    fail('docs/extend/api-reference.md has lost its GENERATED banner')
+    fail('docs/reference/api-reference.md has lost its GENERATED banner')
   }
   const h1s = headingsOf(generated, 1)
   if (h1s.length !== 1) {
@@ -571,7 +582,7 @@ if (mode === 'verify') {
     const current = readFileSync(targetPath, 'utf8')
     if (current !== rendered) {
       console.error(
-        `docs/extend/api-reference.md is stale against kibertoad/cat-factory@${ref}.\n` +
+        `docs/reference/api-reference.md is stale against kibertoad/cat-factory@${ref}.\n` +
           'Run: node scripts/sync-openapi.mjs',
       )
       process.exit(1)
