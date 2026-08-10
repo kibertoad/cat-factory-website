@@ -135,7 +135,7 @@ closest page, or note it as out of scope.
   checkout) and committing the result, never by editing the page. Three modes back that up:
   `pnpm run docs:env-vars` renders, `docs:env-vars:check` compares against the code repo, and
   `docs:env-vars:verify` runs the offline checks that CI blocks on.
-- **`docs/extend/api-reference.md` is generated** from the code repo's `docs/openapi.json` by
+- **`docs/reference/api-reference.md` is generated** from the code repo's `docs/openapi.json` by
   `node scripts/sync-openapi.mjs`, with the same three modes (`pnpm run docs:openapi`,
   `docs:openapi:check`, `docs:openapi:verify`). A commit that adds or changes a `/api/v1` endpoint,
   a field or a scope is synced by running that script and committing the result. Read the diff

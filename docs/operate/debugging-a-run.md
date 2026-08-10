@@ -31,7 +31,7 @@ See [Sizing a request](#sizing-a-request).
 | `GET /api/v1/debug/runs/:runId/llm-export` | The run's model activity as one bundle. `?limit=`, `?order=`, `?bodyChars=` |
 
 Exact parameters and payload shapes for each are on the
-[API Endpoint Reference](../extend/api-reference.md#debug).
+[API Endpoint Reference](../reference/api-reference.md#debug).
 
 Two details of the tool-call list are worth knowing before you use it. It is the one list that
 returns its rows whole, bodies included, which it can do under the size rule because a tool call's

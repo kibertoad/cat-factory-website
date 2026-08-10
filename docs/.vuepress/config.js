@@ -104,19 +104,23 @@ const EXTEND = [
   '/extend/reusable-operations.md',
   '/extend/initiative-presets.md',
   '/extend/public-api.md',
-  '/extend/api-reference.md',
   '/extend/sdks.md',
   '/extend/mcp-server.md',
   '/extend/cloudflare-os.md',
 ]
 
+// The two generated pages sit together at the end of the descriptive ones. Both are rendered from
+// the code repo and both are lookups rather than reading: `/extend/` owns the JOB (drive the
+// platform from outside, configure a deployment) and Reference owns the FIELD LEVEL, which is why
+// `api-reference` is here while its narrative half stays at `/extend/public-api`.
 const REFERENCE = [
   '/reference/architecture.md',
   '/reference/agent-isolation.md',
   '/reference/security-model.md',
   '/reference/packages.md',
-  '/reference/environment-variables.md',
   '/reference/vcs-support-matrix.md',
+  '/reference/environment-variables.md',
+  '/reference/api-reference.md',
   '/reference/glossary.md',
 ]
 
