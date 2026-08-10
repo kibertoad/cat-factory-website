@@ -8,6 +8,13 @@ import { defineUserConfig } from 'vuepress'
 // have". Start and Guides both live under /guide/ on disk: regrouping them changed no URL, which is
 // why they were the cheap half of the restructure. Operate and Extend are real directories, and
 // every page that moved into them carries a `redirectFrom` for its old URL.
+//
+// Navigation model: the sidebar is the one and only page-level navigation. All six sections are
+// always present as collapsible groups, and the default theme opens a collapsible group exactly
+// when it contains the active page — so the current section is expanded and the other five stay
+// visible as one-line headers. The navbar deliberately carries no page lists: an earlier layout
+// duplicated every page into navbar dropdowns, which made two competing menus and left
+// cross-section navigation hidden behind hover dropdowns that users missed.
 const START = [
   '/guide/introduction.md',
   '/guide/core-concepts.md',
@@ -142,24 +149,17 @@ export default defineUserConfig({
 
     navbar: [
       { text: 'Home', link: '/' },
-      { text: 'Start', children: START },
-      { text: 'Guides', children: GUIDE_GROUPS },
-      { text: 'Deploy', children: DEPLOY },
-      { text: 'Operate', children: OPERATE },
-      { text: 'Extend', children: EXTEND },
-      { text: 'Reference', children: REFERENCE },
+      { text: 'Get Started', link: '/guide/introduction.md' },
     ],
 
-    sidebar: {
-      '/guide/': [
-        { text: 'Start', collapsible: false, children: START },
-        ...GUIDE_GROUPS.map((group) => ({ ...group, collapsible: false })),
-      ],
-      '/deploy/': [{ text: 'Deploy', collapsible: false, children: DEPLOY }],
-      '/operate/': [{ text: 'Operate', collapsible: false, children: OPERATE }],
-      '/extend/': [{ text: 'Extend', collapsible: false, children: EXTEND }],
-      '/reference/': [{ text: 'Reference', collapsible: false, children: REFERENCE }],
-    },
+    sidebar: [
+      { text: 'Start', collapsible: true, children: START },
+      { text: 'Guides', collapsible: true, children: GUIDE_GROUPS },
+      { text: 'Deploy', collapsible: true, children: DEPLOY },
+      { text: 'Operate', collapsible: true, children: OPERATE },
+      { text: 'Extend', collapsible: true, children: EXTEND },
+      { text: 'Reference', collapsible: true, children: REFERENCE },
+    ],
   }),
 
   plugins: [

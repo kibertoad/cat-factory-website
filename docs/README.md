@@ -33,6 +33,68 @@ repository checkout, and open pull requests for your team to review and merge. T
 where you watch every run as it happens and step in when an agent needs you. It is self-hosted and
 MIT licensed, so the whole platform is yours to run.
 
+## Where to next?
+
+Each card matches a section of the docs sidebar, so the path you pick here is the same one you
+will follow in the navigation.
+
+<div class="next-grid">
+<div class="next-card">
+
+**Start** — new here?
+
+Read the [Introduction](/guide/introduction.html) and
+[Core Concepts](/guide/core-concepts.html), then take the
+[first-task tutorial](/guide/first-task-tutorial.html) end to end.
+
+</div>
+<div class="next-card">
+
+**Guides** — using it day to day?
+
+[Design your board](/guide/designing-your-board.html),
+[run a pipeline](/guide/running-pipelines.html), or change a flow you already
+run with a short recipe from the [Cookbook](/guide/cookbook.html).
+
+</div>
+<div class="next-card">
+
+**Deploy** — want it running?
+
+Pick a runtime — [local](/deploy/local.html), [Cloudflare](/deploy/cloudflare.html),
+or [Node.js](/deploy/nodejs.html) — and sign people in through your directory with
+[enterprise SSO](/deploy/sso.html).
+
+</div>
+<div class="next-card">
+
+**Operate** — running it in production?
+
+Set up [observability](/operate/observability.html), keep
+[Troubleshooting](/operate/troubleshooting.html) within reach, and walk the
+[hardening checklist](/reference/security-model.html#operator-hardening-checklist).
+
+</div>
+<div class="next-card">
+
+**Extend** — building on it?
+
+Write an [integration manifest](/extend/manifests.html), build against the
+[SDKs](/extend/sdks.html), or
+[package a reusable operation](/extend/reusable-operations.html) for your organization.
+
+</div>
+<div class="next-card">
+
+**Reference** — looking something up?
+
+The [architecture](/reference/architecture.html),
+[environment variables](/reference/environment-variables.html), and the
+[glossary](/reference/glossary.html).
+
+</div>
+</div>
+
 ## Integrations
 
 Cat Factory connects to the tools you already use. Everything below ships in every deployment.
@@ -92,17 +154,6 @@ individual-use terms stay respected, and they unlock
 org-wide access, set a direct provider key, an aggregator like OpenRouter or LiteLLM, or run a
 [local model](/guide/model-providers.html#running-on-a-local-llm-ollama-lm-studio) with no key and
 no spend.
-
-## Where to next?
-
-- **New here?** Start with the [Introduction](/guide/introduction.html) and [Core Concepts](/guide/core-concepts.html).
-- **Want it running?** Take the [first-task tutorial](/guide/first-task-tutorial.html) end to end, or pick a deployment target under [Deploy](/deploy/local.html).
-- **Daily driver?** Jump into [Design Your Board](/guide/designing-your-board.html) and [Run a Pipeline](/guide/running-pipelines.html).
-- **Changing a flow you already run?** The [Cookbook](/guide/cookbook.html) has a short recipe per operation: add a review step, add a gate, change a step's prompt, attach a skill.
-- **Integrating your infra?** See [Integration Manifests](/extend/manifests.html), the [SDKs](/extend/sdks.html), and the [Architecture](/reference/architecture.html) reference.
-- **Packaging your organization's own work?** [Package a Reusable Operation](/extend/reusable-operations.html) bundles a form, its standing context, and the pipeline that delivers it.
-- **Signing people in through your directory?** [Set Up Enterprise SSO](/deploy/sso.html).
-- **Running it in production?** [Observability](/operate/observability.html), [Troubleshooting](/operate/troubleshooting.html), and the [hardening checklist](/reference/security-model.html#operator-hardening-checklist).
 
 ::: tip A note on scope
 This site documents how to **deploy and use** Cat Factory. For source code, issues, and
