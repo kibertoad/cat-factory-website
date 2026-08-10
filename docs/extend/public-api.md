@@ -159,6 +159,97 @@ never on `message`. Two families appear:
 | `no_review` | 404 | requirements decision routes when the run has no live review |
 | `notification_not_actionable` | 409 | `POST /notifications/:id/act` on a card with no automated action |
 
+## Setting a workspace up
+
+Everything under [Board workloads](#board-workloads) assumes a workspace that already has a
+repository, a cluster to deploy onto and a wired model. Getting there is on the surface too, so a
+deployment can provision itself end to end without anyone opening the app.
+
+| Method | Path | Scope | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/repos/bootstrap` | admin | Create a repository and let the bootstrapper agent write it. Returns a job to poll. |
+| `GET` | `/api/v1/repos/bootstrap/{jobId}` | admin | Poll one bootstrap. |
+| `POST` | `/api/v1/environments/connections/test` | admin | Probe a cluster connection without saving it. |
+| `POST` | `/api/v1/environments/connections` | admin | Bind per-run environments to a cluster. Re-connecting replaces. |
+| `PATCH` | `/api/v1/services/{serviceId}` | admin | Patch a service, including where its manifests live. |
+| `GET` | `/api/v1/models` | admin | Which models a run here could actually dispatch to. |
+| `GET` | `/api/v1/vcs/connection` | admin | The source-control connection, and what it is permitted to do. |
+| `GET` | `/api/v1/merge-presets` | admin | The merge presets, and which one an unpinned task resolves. |
+
+The three reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
+**deployment** has wired, including the permissions its source-control credential holds, where the
+board reads name board content, and anyone able to read that is already at the rung that could
+change it.
+
+### Check what is wired before you spend anything
+
+Each of these reads exists because the alternative is discovering the same fact forty minutes into a
+run you have already paid for.
+
+- `GET /api/v1/models` separates two states that need **opposite** fixes. `available: false` with
+  `policyBlocked: false` means nothing is configured for that model, so add a provider key.
+  `policyBlocked: true` means it is configured and your account's model-family policy refuses it, so
+  a key changes nothing and the fix is the policy.
+- `GET /api/v1/vcs/connection` exists for `canCreateRepos` and `canManageWorkflows`. Both are
+  enforced by the provider at **push** time, so skipping this check turns a missing workflow
+  permission into a repository that bootstrapped and then failed to gain its CI workflow, which
+  reads like a broken bootstrap rather than a permission you can grant.
+- `GET /api/v1/merge-presets`: `autoMergeEnabled` on the `isDefault` row decides whether a run can
+  land its pull request with no person involved. `dryRunRoles` is the one caveat this API cannot
+  settle for you, because it does not report which workspace role your key's runs are admitted
+  under: a non-empty list means the preset merges for some roles and not others.
+
+### Bootstrapping a repository
+
+```
+POST /api/v1/repos/bootstrap
+{ "repoName": "payments-api", "type": "service",
+  "instructions": "A Fastify service exposing a paginated catalog over Postgres." }
+```
+
+Supply either `instructions` or a `referenceArchitectureId` (a repository the platform clones and
+adapts); a request with neither describes no work and is refused. The response is a job, and its
+`serviceId` is the board service the run materialises. That id exists immediately, so you can file
+work against the service while its repository is still being written.
+
+Poll `GET /api/v1/repos/bootstrap/{jobId}` until `status` is `succeeded` or `failed`. On a failure,
+read `failureKind` before retrying: a `preflight` refusal (the repository already has content,
+nothing is connected) cannot be retried into success, where an `evicted` container can.
+`failureDetail` and `failureHint` carry the platform's own diagnosis, so relay them rather than
+paraphrasing.
+
+### Connecting a cluster, and pointing a service at its manifests
+
+These are two halves on purpose: the **engine** is one cluster per workspace, and the **source** is
+one set of manifests per service. A cluster on its own provisions nothing. Connect one and skip the
+per-service half and every deploy reads an empty manifest source, which surfaces as an empty
+environment that looks like a cluster fault.
+
+```
+POST /api/v1/environments/connections/test
+{ "connection": { "engine": "kubernetes",
+    "kubernetes": { "label": "Staging", "apiServerUrl": "https://cluster.example:6443",
+      "namespaceTemplate": "env-{{pullNumber}}",
+      "url": { "source": "ingressTemplate", "hostTemplate": "{{namespace}}.preview.example.com" } } },
+  "secrets": { "apiToken": "..." } }
+```
+
+A cluster that refuses the credential is an **answer**, not an error, so that comes back as `200`
+with `ok: false` and a message. Send the same body to `POST /api/v1/environments/connections` to
+persist it. The response lists which secret **keys** were stored and never their values, and no read
+returns them: a credential goes in and does not come back out.
+
+```
+PATCH /api/v1/services/{serviceId}
+{ "provisioning": { "type": "kubernetes",
+    "manifestSource": { "type": "colocated", "path": "deploy/k8s", "renderer": "raw" } } }
+```
+
+`provisioning` is a tagged union whose non-matching branches are ignored, so read it back off the
+response rather than trusting the `200`: a wrong-shaped patch is accepted and stored as something the
+deploy step later reads as "no manifests". An omitted `provisioning` leaves the stored one alone, so
+correcting a title cannot silently un-deploy a service.
+
 ## Board workloads
 
 The bulk of the surface drives the board headlessly. Nothing here spins up a browser session; a run
