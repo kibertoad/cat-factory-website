@@ -408,13 +408,20 @@ from the workspace default:
 POST /api/v1/services/svc_api/tasks
 
 { "title": "Fix cat photo 404s", "taskType": "bug",
-  "modelPresetId": "mdp_frontier", "riskPolicyId": "rp_manual_review" }
+  "modelPresetId": "mdp_claude", "riskPolicyId": "mp_manual_review" }
 ```
 
-Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies`. Both pins are optional,
-both come back on the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one
-means what it always meant: the task follows the workspace default rather than holding a copy of its
-id, so moving that default moves the task.
+Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies` rather than deriving
+them: the built-in model presets are `mdp_kimi`, `mdp_glm` and `mdp_claude`, and the built-in risk
+policies are `mp_balanced` and `mp_manual_review`, so the two libraries do not share a prefix and a
+workspace that has edited either carries ids of its own. Both pins are optional, both come back on
+the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one means what it always
+meant: the task follows the workspace default rather than holding a copy of its id, so moving that
+default moves the task.
+
+Pinning is what makes an automated pass reproducible. Without it, the only way to run one task on a
+different model is to move the workspace default, which changes every other caller's runs to settle
+one task.
 
 What matters to a caller is the **refusal**, not the fields:
 
