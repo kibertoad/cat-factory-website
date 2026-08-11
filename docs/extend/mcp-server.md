@@ -165,10 +165,15 @@ One tool per exposed operation, named `<group>_<method>` to match the SDK call
 | `jobs_*` | Headless runs of a public inline pipeline against a brief. |
 | `services_*` | The board's service frames: list them, or create one (optionally repo-backed). |
 | `spec_*` | A service's in-repo requirement tree and the Gherkin rendered from it. Read-only. |
-| `repos_*` | The repositories a service can be backed with, and which service each already backs. |
+| `repos_*` | The repositories a service can be backed with and which service each already backs, the ones the connection could reach but has not adopted yet, adopting one by name, and creating a brand-new one. |
 | `tasks_*` | A task's whole lifecycle: create, edit, start, stop, retry, read its run, plus its dependencies and requirement links. |
 | `pipelines_*` | Which pipelines a task can be started with. |
 | `task_types_*` | What a task can be created as in this workspace, and the fields each kind accepts. |
+| `risk_policies_*` | The risk policies a task can pin, and which is the workspace default. |
+| `model_presets_*` | The model presets a task can pin, and which is the workspace default. |
+| `models_*` | Which models a run here could dispatch to, and why an unavailable one is unavailable. |
+| `environments_*` | The cluster this workspace provisions per-run environments onto: probe a candidate connection, or bind one. |
+| `vcs_*` | The source-control connection: which account it talks to, and whether it may create repositories and write workflow files. |
 | `notifications_*` | The human-actionable inbox, including the merge tail. |
 | `webhook_*` | The workspace's outbound endpoints for notifications and run-lifecycle events. |
 | `usage_*` | The billing period's metered budget position, and spend sliced by repository, ticket or run. |

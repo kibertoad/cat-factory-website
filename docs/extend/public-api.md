@@ -167,6 +167,8 @@ deployment can provision itself end to end without anyone opening the app.
 
 | Method | Path | Scope | Purpose |
 | --- | --- | --- | --- |
+| `GET` | `/api/v1/repos/available` | admin | The repositories the connection can reach, linked here or not. |
+| `POST` | `/api/v1/repos/link` | admin | Adopt a reachable repository by `owner`/`name`. Idempotent. |
 | `POST` | `/api/v1/repos/bootstrap` | admin | Create a repository and let the bootstrapper agent write it. Returns a job to poll. |
 | `GET` | `/api/v1/repos/bootstrap/{jobId}` | admin | Poll one bootstrap. |
 | `POST` | `/api/v1/environments/connections/test` | admin | Probe a cluster connection without saving it. |
@@ -174,9 +176,10 @@ deployment can provision itself end to end without anyone opening the app.
 | `PATCH` | `/api/v1/services/{serviceId}` | admin | Patch a service, including where its manifests live. |
 | `GET` | `/api/v1/models` | admin | Which models a run here could actually dispatch to. |
 | `GET` | `/api/v1/vcs/connection` | admin | The source-control connection, and what it is permitted to do. |
-| `GET` | `/api/v1/merge-presets` | admin | The merge presets, and which one an unpinned task resolves. |
+| `GET` | `/api/v1/risk-policies` | admin | The risk policies a task can pin, and which one an unpinned task resolves. |
+| `GET` | `/api/v1/model-presets` | admin | The model presets a task can pin, and which one an unpinned task resolves. |
 
-The three reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
+These reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
 **deployment** has wired, including the permissions its source-control credential holds, where the
 board reads name board content, and anyone able to read that is already at the rung that could
 change it.
@@ -194,10 +197,61 @@ run you have already paid for.
   enforced by the provider at **push** time, so skipping this check turns a missing workflow
   permission into a repository that bootstrapped and then failed to gain its CI workflow, which
   reads like a broken bootstrap rather than a permission you can grant.
-- `GET /api/v1/merge-presets`: `autoMergeEnabled` on the `isDefault` row decides whether a run can
-  land its pull request with no person involved. `dryRunRoles` is the one caveat this API cannot
-  settle for you, because it does not report which workspace role your key's runs are admitted
-  under: a non-empty list means the preset merges for some roles and not others.
+- `GET /api/v1/risk-policies`: `autoMergeEnabled` on the `isDefault` row decides whether a run can
+  land its pull request with no person involved. Two caveats this API cannot settle for you, because
+  it does not report which workspace role your key's runs are admitted under: a non-empty
+  `dryRunRoles` means the policy merges for some roles and not others, and a non-empty
+  `submissionRestrictedRoles` means a run outside an allowed change class is held for a person
+  however good its scores are. Report those rather than concluding "this policy merges".
+- `GET /api/v1/model-presets`: which model each agent step runs on, so what a run costs. Read
+  `overrides` as well as `baseModelId`: two presets often differ only in what the **coder** gets.
+  Whether a preset's model can be dispatched to is not repeated here; join `baseModelId` onto
+  `GET /api/v1/models`, which keeps unconfigured and policy-refused apart.
+
+### Adopting a repository you already have
+
+`GET /api/v1/repos` lists the repositories this workspace has **linked**, and linking is an explicit
+per-workspace act: the provider webhook for an added repository does not project one, and a resync
+refreshes what is already linked rather than rediscovering the installation. So a repository that
+exists and is perfectly reachable is absent from that list in exactly the way one that was never
+created is, and `POST /api/v1/services` answers `404` for its `repoId` either way. Two reads and one
+write settle it:
+
+```
+GET  /api/v1/repos/available?q=acme/payments-api
+POST /api/v1/repos/link
+{ "owner": "acme", "name": "payments-api" }
+```
+
+The two reads are a **population pair**, not a duplicate. `/repos` is what is linked, so every row
+carries a `repoId` a service can be created against; `/repos/available` is what the connection can
+reach, with `linked` as the join. A repository missing from both does not exist, where one present in
+the second with `linked: false` is waiting to be adopted. Pass `q` as an exact `owner/name` for an
+authoritative point-read, as a substring to search, or omit it to browse.
+
+Four things to plan for:
+
+- **The adopt takes a name, not a `repoId`.** A caller setting a workspace up from configuration
+  knows the name and cannot know a provider id no public read lists. The response carries the
+  `repoId` for the service-creation call that follows.
+- **It is idempotent and answers `200` either way.** A repository this workspace already links comes
+  back as its existing row, so a setup script re-running itself needs no special case. That is
+  resolved from what the workspace links before the provider is consulted, so it holds even for a
+  repository the credential can no longer see.
+- **Both reads report whether the repository is spoken for**, through `serviceId` and
+  `linkedElsewhere`. A repository nobody here has linked can still back a service on another board of
+  the account, and service creation refuses it either way, so check the flags before adopting.
+- **`truncated: true` on the available read means the rows are a prefix.** The provider legs behind
+  it stop at a page cap and a search cap, so on a wide connection a reachable repository can be
+  missing from a browse. Narrow with `q` rather than concluding it does not exist; a point-read is
+  never truncated.
+
+A repository the connection cannot reach is a `404` with `details.reason: repo_not_reachable`, which
+covers both "it does not exist" and "your credential is not granted it": a provider answers those
+identically. A credential the provider **rejects** is kept apart from both, as `503` with
+`details.reason: vcs_credential_rejected` (re-connect the workspace; an app installation may have
+been removed or a token revoked), and a throttled connection as `429`
+`details.reason: vcs_rate_limited`, which is the one failure here worth retrying.
 
 ### Bootstrapping a repository
 
@@ -263,10 +317,10 @@ on the surface, including the ones no narrative here reaches for.
 | Method | Path | Scope | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/api/v1/services` | read | List the workspace's services. |
-| `POST` | `/api/v1/services/{serviceId}/tasks` | write | Create a task. Body `{ title, description?, taskType?, ticket? }`; `taskType` is one of `feature`, `bug`, `document`, `spike`, `review`, `ralph` (default `feature`). See [Filing a task from a tracker ticket](#filing-a-task-from-a-tracker-ticket). |
+| `POST` | `/api/v1/services/{serviceId}/tasks` | write | Create a task. Body `{ title, description?, taskType?, ticket?, modelPresetId?, riskPolicyId? }`; `taskType` is one of `feature`, `bug`, `document`, `spike`, `review`, `ralph` (default `feature`). See [Filing a task from a tracker ticket](#filing-a-task-from-a-tracker-ticket) and [Pinning a model preset and a risk policy](#pinning-a-model-preset-and-a-risk-policy). |
 | `GET` | `/api/v1/services/{serviceId}/tasks` | read | List a service's tasks (its whole subtree), newest first. Paged; see [Paging](#paging). Filter with `?status=`. |
-| `GET` | `/api/v1/tasks/{taskId}` | read | Get a task's status projection: `{ taskId, serviceId, title, description, taskType, status, progress, runId, pullRequestUrl }`. |
-| `PATCH` | `/api/v1/tasks/{taskId}` | write | Edit the task's title or description. |
+| `GET` | `/api/v1/tasks/{taskId}` | read | Get a task's status projection: `{ taskId, serviceId, title, description, taskType, status, progress, runId, pullRequestUrl, modelPresetId, riskPolicyId }`. |
+| `PATCH` | `/api/v1/tasks/{taskId}` | write | Edit the task's title or description, or correct either pin. |
 | `POST` | `/api/v1/tasks/{taskId}/start` | write | Start the task's pipeline. Body `{ pipelineId? }`, falling back to the task's pinned pipeline. |
 | `POST` | `/api/v1/tasks/{taskId}/stop` | write | Stop the in-flight run (idempotent; the run stays retryable). |
 | `POST` | `/api/v1/tasks/{taskId}/retry` | write | Retry a failed run. |
@@ -344,6 +398,43 @@ Two refusals matter:
   one ticket in flight together are decided by a conditional write, so exactly one gets a task and
   the other gets the `409` naming it. The losing filing is rolled back off the board rather than
   left behind ticket-less.
+
+### Pinning a model preset and a risk policy
+
+A task can name what it runs on and how much oversight landing it takes, instead of inheriting both
+from the workspace default:
+
+```http
+POST /api/v1/services/svc_api/tasks
+
+{ "title": "Fix cat photo 404s", "taskType": "bug",
+  "modelPresetId": "mdp_frontier", "riskPolicyId": "rp_manual_review" }
+```
+
+Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies`. Both pins are optional,
+both come back on the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one
+means what it always meant: the task follows the workspace default rather than holding a copy of its
+id, so moving that default moves the task.
+
+What matters to a caller is the **refusal**, not the fields:
+
+- An id no library in this workspace carries is `422` with
+  `details.reason: model_preset_not_found` / `risk_policy_not_found`, never a quiet fall back to the
+  default. The two outcomes are indistinguishable afterwards from anything you can read, and a run
+  that succeeded on another model is worse than one that refused.
+- A deployment with the library unwired answers `503` with
+  `details.reason: model_presets_unwired` / `risk_policies_unwired` for a caller that pinned one.
+  That is a different fact from an unknown id and needs a different fix, so the two list endpoints
+  answer with the same two reasons.
+- **The refusal does not name the library's contents.** Pinning takes `write` and both lists take
+  `admin`, so a `422` carrying the available ids would let the lower rung enumerate by typo exactly
+  what the higher one gates. It names the id that missed and which library it missed.
+
+Pinning a model preset does not widen what the account allows: the base model still resolves through
+the account's model-family policy, so a preset naming a blocked model fails at dispatch with the same
+refusal it would have had on the workspace default. `riskPolicyId` is the pin that changes what a run
+may **do**, since a policy carries `autoMergeEnabled` and the score ceilings. An `admin` key may pin
+any policy its workspace holds, which is the authority it already had by editing one.
 
 ## Paging
 

@@ -39,9 +39,24 @@ pod per run, running the executor-harness image.
 | **Resources** | Optional. Default pod requests/limits (`cpu`, `memory`), with per-instance-size overrides. |
 | **Node selector / tolerations / labels / annotations** | Optional. Standard pod placement and metadata. |
 
-Use **Test connection** to probe the apiserver before you save. This is an alternative to a
+Use **Test connection** to probe the apiserver before you save. A probe that never got an answer
+names the transport cause it hit (refused, DNS, timeout, reset, an untrusted, expired, wrong-hostname
+or wrong-protocol certificate, a badly pasted credential) with the remedy for that cause, rather than
+the generic wrapper the runtime throws. This is an alternative to a
 [runner pool](../operate/runner-pools.md): a deployment reaches Kubernetes directly rather than dispatching to
 a scheduler over HTTP.
+
+::: warning Custom TLS needs the Node or local runtime
+**CA certificate** and **Skip TLS verify** are honoured on the Node and local deployments only. The
+Cloudflare Worker refuses a connection carrying either at registration, with the reason, rather than
+saving it and failing at every dispatch. On a Worker deployment, use an apiserver with a
+publicly-trusted certificate, or run the workspace on Node or local. This is the same limit that makes
+[EKS](#amazon-eks) a Node-and-local backend: a real EKS apiserver presents a private CA.
+:::
+
+A pasted ServiceAccount token is trimmed where the request header is built, so a trailing newline
+cannot pass the form check and then fail inside the HTTP client, and a token broken across a wrapped
+terminal line is flagged on the field itself.
 
 ## Ephemeral environments on Kubernetes
 
@@ -75,7 +90,8 @@ injection is either a `Secret` resource or a `generatorEnvFile` `.env` consumed 
 
 Pick the **URL source** that matches how your cluster exposes services:
 
-- **Ingress template**: build the host from a template, e.g. `{{branch}}.preview.example.com`.
+- **Ingress template**: build the host from a template, e.g. `{{branch}}.preview.example.com`, with
+  an optional **port**.
 - **Ingress status**: read the address back from a named Ingress once it is admitted.
 - **Service status**: read a `LoadBalancer` Service's external address, with an optional port.
 - **Gateway status** / **HTTPRoute status**: read a Gateway-API `Gateway` address, or resolve an
@@ -83,6 +99,12 @@ Pick the **URL source** that matches how your cluster exposes services:
 
 Each source takes an optional scheme (`http`, `https`, or left at the default, which is inferred from
 the resource).
+
+The ingress template's **port** is its own field rather than something you write into the host, and it
+has to be: the rendered host template is also the Ingress `spec.rules[].host` your manifests declare,
+and Kubernetes rejects a `host` carrying a port. So a cluster whose ingress controller answers on
+anything but the scheme's default port sets `port` and leaves the template portless. Left empty it
+means the scheme default, which is what every connection without it already meant.
 
 ## Amazon EKS
 
@@ -171,9 +193,10 @@ On a developer machine, `cat-factory k3s` wires a local Kubernetes cluster into 
 command. It never mutates anything without asking:
 
 ```bash
-cat-factory k3s               # probe, offer options, provision, hand off to the app
-cat-factory k3s --k3s-runtime podman
-cat-factory k3s --no-open     # print the deep-link instead of opening a browser
+cat-factory k3s                      # probe, offer options, provision, hand off to the app
+cat-factory k3s --runtime kind       # k3d (default), kind, or k3s
+cat-factory k3s --ingress-port 8080  # publish the ingress entrypoint on a free host port
+cat-factory k3s --no-open            # print the deep-link instead of opening a browser
 ```
 
 The command:
@@ -185,16 +208,61 @@ The command:
    is printed, never run for you).
 3. **Provisions** a least-privilege ServiceAccount and RBAC (never `cluster-admin`) and mints a
    long-lived token.
-4. **Hands off** to the SPA: it prints the connection once to the terminal and opens a deep link that
+4. **Checks the ingress path** rather than promising it, and reports one of three outcomes. See
+   [Ingress-derived preview URLs need two things](#ingress-derived-preview-urls-need-two-things).
+5. **Hands off** to the SPA: it prints the connection once to the terminal and opens a deep link that
    pre-fills the **Local k3s** connect form. The token is deliberately kept out of the URL, so you
    paste it from the terminal, then click **Test** and **Save**.
-5. **Enable the deploy runner.** The cluster connection says only *where* to deploy; a test
+6. **Enable the deploy runner.** The cluster connection says only *where* to deploy; a test
    environment also needs a deploy runner to render and apply the manifests. The command prints this
    step: set `LOCAL_DEPLOY_RUNTIME=container` in the local backend `.env` and restart (`container`
    resolves the deploy-harness image automatically, nothing else to set), or use `native` with
    `LOCAL_DEPLOY_HARNESS_ENTRY` to drive your own host `kubectl`/`kustomize`/`helm`. Without it a
    Kubernetes provision fails to stand up with "no deploy runner wired". See
    [Run Locally → Configuration](./local.md#configuration).
+
+### Ingress-derived preview URLs need two things
+
+A preview URL built from an ingress host template needs an ingress **controller** inside the cluster
+and a host **port** published into it. Both are checked rather than assumed, and the check reports
+one of three verdicts:
+
+| Verdict | What it means | What to do |
+| --- | --- | --- |
+| **Ready** | A controller answers and the host port is served. | Nothing. The connect form is pre-filled. |
+| **Missing** | One or both halves are established as absent, named individually. | Install the controller, or recreate the cluster with the port published. |
+| **Unknown** | The probe could not establish either answer (no `kubectl` on `PATH`, an unreachable or refusing apiserver, an unreadable payload). | Fix what the probe names and re-run. Nothing is concluded about the cluster. |
+
+An unestablished ingress path **withholds the connect-form prefill** instead of filling in a host
+template nothing serves. The form requires a host template for an `ingressTemplate` source, so you
+cannot save a URL that will only fail later at the tester step, and the printed summary names which
+half to fix.
+
+Two facts shape what you can fix without rebuilding:
+
+- **The host port is create-time-only.** Every local distribution runs the cluster inside Docker and
+  forwards only the ports it was asked for when the cluster was created, so a published port cannot
+  be added to a running k3d or kind cluster. Clusters this command creates publish it
+  (`--ingress-port`, default `80`); a cluster created any other way may not.
+- **kind ships no ingress controller**, where k3d bundles Traefik. The create path lays kind's
+  irreversible half (the port mapping and the `ingress-ready=true` node label) and leaves the
+  controller to you, because fetching a third-party manifest onto your machine is not a choice a
+  guided setup should make silently. It prints the command; a re-run then reports ready.
+
+To change a published host port, rebuild the cluster:
+
+```bash
+cat-factory k3s --recreate --ingress-port 8080
+```
+
+`--recreate` destroys and rebuilds the named k3d or kind cluster from the current flags. It names what
+is on the cluster before deleting anything and asks first, and it is never selected for you: `--yes`
+alone cannot pick this path. It is refused with `--runtime k3s`, where a host service has no cluster
+to rebuild from here.
+
+Because a local ingress controller serves TLS with a self-signed certificate, the derived environment
+URL is plain `http`: publishing the TLS entrypoint instead would trade a connection error for a
+certificate error at the tester, which is the worse of the two.
 
 k3s itself runs only on Linux. On Windows and macOS the command steers you to k3d (k3s inside
 Docker). On Windows it also needs k3d installed first, which is
