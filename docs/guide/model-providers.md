@@ -205,6 +205,23 @@ Cat Factory refuses to start one that resolves to an individual-usage model. Poi
 a pooled subscription, a direct API key, or the Cloudflare default.
 :::
 
+### Using your subscription from a script
+
+Work you drive yourself over the [public API](../extend/public-api.md) is not the unattended case
+above: you are present when it starts, so you can supply the password. It needs two things.
+
+Mint the API token with **Runs as: me** (Integrations → API access tokens). An ordinary token
+belongs to the workspace rather than to you, so it cannot reach anyone's personal subscription —
+and it cannot even see one: `GET /api/v1/models` reports such a model as unavailable and sets
+`excludesUserScopedModels` to say the answer left out models that belong to a person. Reading only
+the first half is misleading in a specific and common way, since a model you use in the app every
+day appears to have no provider configured.
+
+Then send your personal password in the `X-Personal-Password` header on every call that starts,
+retries, or answers a decision on such a run. It is never stored anywhere, by design, so ask for it
+when your program starts and keep it in memory rather than in a config file next to the token. A
+call that needs it and lacks it comes back `428 credential_required`, naming the vendor.
+
 ## Running on a local LLM (Ollama, LM Studio, …)
 
 You can point agents at a model running **on your own machine** (Ollama, LM Studio, llama.cpp,
