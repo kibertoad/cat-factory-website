@@ -181,6 +181,14 @@ so a slow or broken step is diagnosable without reading logs:
   start.
 - **Stalled runs**: if a run's durable driver is lost (an orchestrator crash or restart) and recovery
   can't resume it, the board marks it **stalled**, distinct from a plain failure, and offers a retry.
+- **Unreadable run state**: a run whose own stored row breaks its contract cannot be resumed by
+  anything, because every recovery path begins by reading it. Such a run is closed as **state
+  unreadable** instead of being left running forever, and its task drops back to **blocked**, so the
+  board stops showing work in progress that nothing is driving. Deliberately not the same disposition
+  as **stalled**: a retry there spins up a fresh run, where here it would re-read the same row, so
+  this one asks for a person to look at the data. Expect it to be rare, and read more than one as a
+  signal about the database rather than about the runs. It shows up in the failure-kind breakdown
+  below, and a per-kind alert rule can name `state_unreadable` like any other kind.
 - **Liveness heartbeat**: a step in a long output-less phase (a PR reviewer reading hundreds of
   files, say) shows "active Ns ago" separately from the elapsed clock, so a live-but-quiet step reads
   as working rather than wedged. The same heartbeat keeps the stalled-run sweeper from mis-marking it.
