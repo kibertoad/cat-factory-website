@@ -227,10 +227,11 @@ change it.
 Each of these reads exists because the alternative is discovering the same fact forty minutes into a
 run you have already paid for.
 
-- `GET /api/v1/models` separates two states that need **opposite** fixes. `available: false` with
+- `GET /api/v1/models` separates states that need **opposite** fixes. `available: false` with
   `policyBlocked: false` means nothing is configured for that model, so add a provider key.
   `policyBlocked: true` means it is configured and your account's model-family policy refuses it, so
-  a key changes nothing and the fix is the policy.
+  a key changes nothing and the fix is the policy. A third case is neither, and is covered under
+  [Models a key cannot spend](#models-a-key-cannot-spend) below.
 - `GET /api/v1/vcs/connection` exists for `canCreateRepos` and `canManageWorkflows`. Both are
   enforced by the provider at **push** time, so skipping this check turns a missing workflow
   permission into a repository that bootstrapped and then failed to gain its CI workflow, which
@@ -245,6 +246,55 @@ run you have already paid for.
   `overrides` as well as `baseModelId`: two presets often differ only in what the **coder** gets.
   Whether a preset's model can be dispatched to is not repeated here; join `baseModelId` onto
   `GET /api/v1/models`, which keeps unconfigured and policy-refused apart.
+
+### Models a key cannot spend
+
+Some models run on a credential that belongs to a **person** rather than to the workspace, and those
+read `available: false` with `policyBlocked: false` even though the model is perfectly well wired.
+Adding a provider key does nothing for them. Two fields on each row of `GET /api/v1/models` tell that
+case apart from a genuinely unconfigured one:
+
+- **`personalSubscription`** is true when the model declares a subscription route whose vendor is
+  licensed for individual use only (Claude, Codex, GLM). Its credential is stored per person, so a
+  key that resolves no user never consults it. Poolable vendors are deliberately excluded: their
+  token belongs to the workspace, so every key can already see it, and the fix there is a pooled
+  token or a provider key rather than a re-minted key.
+- **`subscriptionConfigured`** is whether a live personal subscription for that vendor is actually
+  stored for the person this key belongs to: its `actsAsUserId` when the key is bound, otherwise the
+  person who minted it.
+
+Read together, `available: false` beside `subscriptionConfigured: true` means the subscription is
+there and **this** token is not bound to it. The remedy is a key minted with **Runs as: me** by the
+subscription's owner, plus the `X-Personal-Password` header on the calls that spend it (see
+[Using your subscription from a script](../guide/model-providers.md#using-your-subscription-from-a-script)).
+Availability itself is unchanged by all this: it still resolves under the key's bound user alone, so
+the two statements coexist honestly.
+
+`subscriptionConfigured` is `null` when nobody was asked, and `null` is **not** a shy `false`. It
+means there was no person to ask about (a key provisioned headlessly through `POST /api/v1/keys`),
+the deployment stores no personal subscriptions, or the row is not a personal-subscription model at
+all. "Asked, and there is none" is a subscription to connect; "there was nobody to ask" is a token to
+mint in the app. A client that collapses the two sends an operator to a screen that was already
+correct.
+
+::: warning What an unbound key learns
+On a key with no bound user the person asked about is its **minter**, who need not be whoever holds
+the key, and that provenance is never re-validated against current membership. So an `admin`-scoped
+key handed to CI learns one bit (a live subscription for this vendor exists, or does not) about a
+named colleague, including one who has since left. The bit is existence only, never the person, the
+vendor account, or the credential, and the route floors at `admin` scope.
+:::
+
+`userScoped` still appears on every row and still answers what it always did, the subscription route
+**in force**. Prefer `personalSubscription`, which is read off what the model declares and so is
+correct for a model reachable both by subscription and by a metered gateway. `userScoped` is
+superseded and goes away in a future major version.
+
+Separately, `excludesUserScopedModels` on the envelope is not about subscriptions. It reports that
+the deployment serves per-user **locally-run** endpoints this read could not enumerate, because they
+belong to one person's machine and an unbound key cannot be handed someone else's. Those models are
+absent from the list entirely, where a personal subscription's model is present and merely
+unavailable.
 
 ### Adopting a repository you already have
 
@@ -436,6 +486,56 @@ Two refusals matter:
   one ticket in flight together are decided by a conditional write, so exactly one gets a task and
   the other gets the `409` naming it. The losing filing is rolled back off the board rather than
   left behind ticket-less.
+
+### Reading and setting tracker writeback
+
+Filing a task from a ticket is half the loop. The other half is whether the platform ever tells that
+ticket what happened, which is workspace configuration, and a deployment driven entirely over the API
+can read and move it without opening the app:
+
+```http
+GET   /api/v1/tracker/writeback
+PATCH /api/v1/tracker/writeback
+
+{ "writeback": { "resolveOnMerge": false } }
+```
+
+Both answer the same body: a `writeback` object of three independent booleans, plus `updatedAt`.
+
+- **`commentOnPrOpen`**: comment on the linked issue when the task's pull request opens.
+- **`resolveOnMerge`**: comment on and **close** the linked issue when that pull request merges.
+- **`questionsOnPark`**: post a headless run's parked requirements-review findings on the linked
+  issue, each with the id an answer names, so the reporter can answer where they filed. Only
+  consulted for runs started through this API or dispatched from a ticket.
+
+Three flags rather than one switch, because they are separately answerable: a workspace can want the
+merge recorded on the ticket without wanting a parked review's questions asked there.
+
+All three **default on**. Writeback only ever touches an issue a task is linked to, and nothing links
+one by accident, so the default closes the loop rather than leaving a merged pull request beside an
+open issue with nothing on it. Note this when you file ticket-linked tasks: unless the workspace has
+chosen otherwise, the platform will comment on and close the issues you name.
+
+Two properties worth planning for:
+
+- **The `PATCH` merges.** An omitted action keeps whatever the workspace holds, so one decision moves
+  one action and a caller acting on `resolveOnMerge` cannot silently move the other two. An empty
+  patch is a no-op and does not stamp `updatedAt`. That is unlike the in-app save, which has all
+  three rendered in front of it and replaces the row wholesale.
+- **`updatedAt` is `null` when nobody has ever chosen.** The values you read are then this
+  deployment's defaults rather than anyone's decision, which is what lets you tell a workspace you
+  are safe to configure from one whose choice you are about to overwrite. It is `null` and not an
+  epoch timestamp precisely so it cannot be formatted as a setting saved in 1970.
+
+Both calls need an `admin`-scoped key: this is workspace-wide configuration, so enabling
+`resolveOnMerge` changes what happens to every other task's ticket on the board too.
+
+The read covers the writeback half only, not the **filing** tracker (which tracker the tech-debt
+recurring pipeline raises its ticket on, and that vendor's project key or team). The two are
+independent: writeback follows each linked issue's own source, so a workspace with no filing tracker
+selected still writes back to the GitHub issue a task was filed from. See
+[Writing back to the tracker](../guide/issue-sources.md#writing-back-to-the-tracker) for the in-app
+panel and the per-task override.
 
 ### Pinning a model preset and a risk policy
 

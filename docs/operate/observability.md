@@ -188,7 +188,8 @@ so a slow or broken step is diagnosable without reading logs:
   as **stalled**: a retry there spins up a fresh run, where here it would re-read the same row, so
   this one asks for a person to look at the data. Expect it to be rare, and read more than one as a
   signal about the database rather than about the runs. It shows up in the failure-kind breakdown
-  below, and a per-kind alert rule can name `state_unreadable` like any other kind.
+  below, and a per-kind alert rule can name `state_unreadable` like any other kind. What you can and
+  cannot read back about one is [covered below](#runs-with-an-unreadable-state).
 - **Liveness heartbeat**: a step in a long output-less phase (a PR reviewer reading hundreds of
   files, say) shows "active Ns ago" separately from the elapsed clock, so a live-but-quiet step reads
   as working rather than wedged. The same heartbeat keeps the stalled-run sweeper from mis-marking it.
@@ -370,7 +371,8 @@ It shows:
 - **Run outcomes**: Total runs, Completed, Failed, and Success rate.
 - **Outcome trend**: a stacked sparkline of completed / failed / other over the window.
 - **Failure breakdown**: a bar per failure kind (Preflight, Dispatch, Environment, Evicted, Timeout,
-  Agent, Job failed, Rejected, Companion rejected, Stalled, Cancelled, Unknown).
+  Agent, Job failed, Rejected, Companion rejected, Stalled, Unreadable state, Cancelled, Unknown).
+  On **Unreadable state**, see [Runs with an unreadable state](#runs-with-an-unreadable-state).
 - **Live now**: current Running / Blocked / Paused / Pending counts.
 - **Run duration**: Average, Min, Max, and the **p50, p90, and p99** percentiles (nearest-rank over
   the terminal runs in the window).
@@ -381,6 +383,30 @@ The 30- and 90-day windows read a daily rollup the retention sweep materializes 
 raw runs. The projection reports how far back the rollup actually reaches, because an
 un-materialized rollup and a genuinely idle quarter both produce an empty series and are opposite
 facts.
+
+### Runs with an unreadable state
+
+Concretely, an [unreadable run](#run-and-step-diagnostics) broke its row contract in one of two ways:
+a column that must never be null, or an enum value outside the set this build knows. What follows
+from that is a reachability limit, worth knowing before you go looking for one:
+
+- The **failure breakdown counts them**, because it aggregates the stored failure column in SQL and
+  so can report a row nothing can decode.
+- The **ordinary run reads cannot serve them**, and that includes the debug ones.
+  `GET /api/v1/debug/runs` drops such a row from its page, and `GET /api/v1/debug/runs/:runId`
+  answers `500`. Both decode the run before projecting it, which is exactly what fails.
+
+So you see the count in the aggregate and cannot fetch the run behind it. That is the honest outcome:
+the row is past what an API can say about it, and the fix is at the database. Collect the run ids
+from the breakdown's failing-runs deep link when you report one.
+
+::: tip One bad row no longer stops recovery
+The stale-run sweeper recovers one run at a time inside a per-run boundary, so an undecodable row is
+skipped and counted (`sweep.run_recovery_failed`) instead of ending the pass and leaving every other
+stuck run unrecovered. A pass in which **every** run it took on threw still reports as a failed pass,
+so a wholly wedged sweeper keeps feeding the `sweep_degraded` alert condition rather than reporting
+itself healthy.
+:::
 
 ## Platform-health alerting
 

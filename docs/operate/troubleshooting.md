@@ -106,6 +106,15 @@ whoever minted it made it. See
 decision, which waits indefinitely by design. Check the run's decisions and the notification inbox.
 See [Decision prompts](../guide/core-concepts.md#decision-prompts).
 
+**A run failed as `state_unreadable`, and the debug endpoints will not serve it.** Its stored row
+violates its own contract (a column that must never be null, an enum outside the set), so nothing can
+decode it: `GET /api/v1/debug/runs` drops it from the page and `GET /api/v1/debug/runs/:runId`
+answers `500`. The run is settled rather than left `running` forever, and its card drops to
+**blocked**. This is the one failure a retry cannot help, because the retry re-reads the same row.
+It is a defect worth reporting: collect the run id from the dashboard's failure breakdown, which
+counts these in SQL and so can see rows the reads cannot. See
+[Runs with an unreadable state](./observability.md#runs-with-an-unreadable-state).
+
 **The CI gate never goes green.** The gate reads your host's real check runs, so it is exactly as
 strong, and as slow, as your CI. Repeated failures dispatch the CI-fixer agent up to the preset's
 attempt ceiling and then raise a review card rather than looping forever.

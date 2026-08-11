@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.44.0**. 113 operations across 21 groups.
+Surface version **1.48.0**. 115 operations across 22 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -28,7 +28,7 @@ Each operation below states the LOWEST scope that admits it. A key below that li
 
 ## Operations
 
-[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
+[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
 
 ### Debug
 
@@ -1739,7 +1739,7 @@ The preset library, including which row is the workspace default that a task pin
 
 Minimum scope: `admin`.
 
-The workspace’s model catalog with the two flags that decide whether an agent step can run at all: `available`, and `policyBlocked` for a model that is configured but refused by the account’s model-family policy. Those two need OPPOSITE fixes, which is why they are separate: everything blocked by policy is already configured, so adding another provider key changes nothing.
+The workspace’s model catalog with the flags that decide whether an agent step can run at all, and which of four unrelated fixes an unrunnable one needs. `available` says a run can dispatch to it now. `policyBlocked` says it is configured and refused by the account’s model-family policy, so adding another provider key changes nothing. `personalSubscription` says it runs on a credential belonging to a PERSON (an individual-usage subscription vendor), which a key resolving no user can never see. `subscriptionConfigured` then says whether that person actually holds one: `true` means the model is wired and only the key’s identity is in the way, `false` means the owner is known and holds none, and `null` means there was nobody to ask about, so it must not be read as `false`. `userScoped` is SUPERSEDED by `personalSubscription` and still answers its original narrower question (whether a subscription is the route in force); prefer the newer field.
 
 **Responses**
 
@@ -2434,6 +2434,42 @@ Stop a task’s in-flight run. Records a `cancelled` terminal state, leaving the
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+### Tracker
+
+#### Read the workspace’s tracker writeback disposition
+
+`GET /api/v1/tracker/writeback`
+
+Minimum scope: `admin`.
+
+What this workspace does to a task’s LINKED tracker issue as its pull request progresses: comment when the pull request opens, comment and close the issue when it merges, and post a headless run’s parked requirements-review findings so the reporter can answer where they filed. Worth reading before filing a ticket-linked task, since it decides whether the issue the work came from ever hears the outcome. `updatedAt` is null when nobody has chosen a disposition, in which case the values are this deployment’s defaults (all three ON). Requires an `admin` key.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Change the workspace’s tracker writeback disposition
+
+`PATCH /api/v1/tracker/writeback`
+
+Minimum scope: `admin`.
+
+Turn one or more writeback actions on or off. A MERGE: an action you omit keeps its stored value, so a caller acting on one decision cannot silently move the other two. This is workspace-wide configuration, so it changes what happens to every task’s ticket on the board; the read beside it reports `updatedAt` so a caller can see whether it is about to overwrite somebody’s choice. An empty patch is a no-op and does not stamp `updatedAt`. Requires an `admin` key.
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Usage
 
 #### Read the workspace's usage for the current period
@@ -3042,6 +3078,7 @@ One of 3 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `accountId` | `string` | yes |  |
+| `actsAsUserId` | `string` \| `null` | yes |  |
 | `createdAt` | `number` | yes |  |
 | `createdByKeyId` | `string` \| `null` | yes |  |
 | `createdByUserId` | `string` \| `null` | yes |  |

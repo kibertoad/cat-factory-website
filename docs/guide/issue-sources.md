@@ -262,9 +262,19 @@ it:
   [public API](../extend/public-api.md) pauses to clarify requirements, posts its open questions on
   the linked issue, each with the id an answer names.
 
-All three default off and can be overridden per task in the task inspector (**Inherit workspace**,
-**On**, or **Off**), so a one-off task can opt out of (or into) writeback without changing the
-workspace default.
+All three are **on by default**, and each can be overridden per task in the task inspector
+(**Inherit workspace**, **On**, or **Off**), so a one-off task can opt out of (or into) writeback
+without changing the workspace default.
+
+Writeback only ever touches an issue a task is **linked** to, and nothing links one by accident: a
+link arrives when you import an issue, when the recurring intake picks one up, or when a headless
+caller files a task with a `ticket`. Each of those is a request to work the issue where it was filed,
+so the default closes the loop rather than leaving a merged pull request beside an issue still
+sitting open with nothing on it saying the work was done.
+
+Writeback follows each linked issue's **own** source, not the filing tracker. A workspace with
+**Filing tracker: None** still comments on and closes the GitHub issue a task was filed from. The two
+settings are independent decisions.
 
 The questions toggle exists because a headless caller has no in-app inbox to watch: the clarification
 reaches whoever filed the issue, and they can answer it over the API against the ids in the comment.
@@ -272,6 +282,10 @@ It fires only for runs whose origin is the public API. A task started in the app
 clarification surface stays the in-app review window. The post is claimed once per review iteration
 and issue before it is attempted, so a retried or replayed run never double-posts onto an issue
 somebody is reading, and a tracker outage leaves the post retryable rather than lost.
+
+A deployment driven entirely over the API can read and change the same three actions without opening
+the app: see
+[Reading and setting tracker writeback](../extend/public-api.md#reading-and-setting-tracker-writeback).
 
 ## Using sources as agent context
 

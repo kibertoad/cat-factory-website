@@ -211,11 +211,13 @@ Work you drive yourself over the [public API](../extend/public-api.md) is not th
 above: you are present when it starts, so you can supply the password. It needs two things.
 
 Mint the API token with **Runs as: me** (Integrations → API access tokens). An ordinary token
-belongs to the workspace rather than to you, so it cannot reach anyone's personal subscription —
-and it cannot even see one: `GET /api/v1/models` reports such a model as unavailable and sets
-`excludesUserScopedModels` to say the answer left out models that belong to a person. Reading only
-the first half is misleading in a specific and common way, since a model you use in the app every
-day appears to have no provider configured.
+belongs to the workspace rather than to you, so it cannot reach anyone's personal subscription.
+`GET /api/v1/models` still lists such a model, and the row says which situation you are in:
+`personalSubscription: true` means it runs on a credential that belongs to a person, and
+`subscriptionConfigured: true` means that person does hold a live subscription for its vendor. A
+workspace token therefore reads `available: false` beside `subscriptionConfigured: true`, and both
+are true at once: the model is wired, and this token may not spend it. The fix is a token that runs
+as you, not a provider key.
 
 Then send your personal password in the `X-Personal-Password` header on every call that starts,
 retries, or answers a decision on such a run. It is never stored anywhere, by design, so ask for it
@@ -236,11 +238,20 @@ Add one under **Settings → My local runners**:
    API-key/bearer token is optional, for a runner that requires one.
 2. Cat Factory **probes the runner** (its `/v1/models`) and lists the models it found. Enable the
    ones you want to use.
-3. The enabled models appear in the picker as a **direct**-flavour model, with no API key. When you
+3. Set **Image support** on each enabled model, or leave it at **Not set** and let the recognised
+   open-weights families answer. This is what decides whether a run's design renders and screenshots
+   reach the model, and a local model has no catalog entry to read it off, so the option is here.
+   See [Design context → Locally-run models](./design-context.md#locally-run-models).
+4. The enabled models appear in the picker as a **direct**-flavour model, with no API key. When you
    start a run, the proxy resolves *your* runner's endpoint for that step.
 
 A model is only offered once you've enabled that specific model id, so a pin to a model you later
 disable is caught at the pipeline-start guard rather than failing mid-run.
+
+If a runner reports that some of its enabled models **could not be read and were discarded**,
+re-select the ones you want and save. The message is there because a discarded list and a runner
+nobody ever enabled anything on both render as zero models, and only one of them is fixed by
+re-ticking.
 
 ::: warning Local runners must be reachable from the backend
 The base URL is called **server-side** (both the test probe and the run-time proxy), so it is
