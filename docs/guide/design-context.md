@@ -129,7 +129,7 @@ implementer, the architect and the fixer), alongside the text. Where an agent ca
 picture, it is: on a coding run the frames are written into the checkout and the agent opens them,
 and on an inline step they ride the model request itself.
 
-Two things have to be true for that to happen, and neither is something you configure:
+Two things have to be true for that to happen:
 
 - **The agent CLI running the step has to be able to read an image.** Claude Code can; the other
   harnesses in this build cannot.
@@ -137,11 +137,53 @@ Two things have to be true for that to happen, and neither is something you conf
   Scout on Workers AI. For a model whose catalog entry does not state either way, the pictures are
   not attached, because guessing wrong sends a whole run's context to a model that will reject it.
 
-When they cannot be delivered, the agent is TOLD so, with which of the two is missing, so it works
-from the text rather than assuming the design has nothing more to show. Far fewer pictures are
+Neither is something you configure for a catalog model. A locally-run model has no catalog entry, so
+it is the one case where the answer can be yours to give: see
+[Locally-run models](#locally-run-models) below.
+
+When the frames cannot be delivered, the agent is TOLD so, with which of the two is missing, so it
+works from the text rather than assuming the design has nothing more to show. Far fewer pictures are
 attached than are retained: an attached image costs input tokens on every turn of the run, where a
 retained one costs storage once. The views left out are named in the same place, and the text still
 describes them.
+
+### Locally-run models
+
+A [model on your own machine](./model-providers.md#running-on-a-local-llm-ollama-lm-studio) has no
+catalog entry to read a modality off: the id is free text and the runner's `/models` probe returns
+ids and nothing else. Image support resolves in two tiers instead.
+
+**A table of recognised open-weights families** answers first, so the common case needs nothing from
+you. It covers Muse Glimmer, Gemma 4, Qwen's `-VL` builds, Llama 4, LLaVA, MiniCPM-V and Moondream,
+each listed because its publisher documents image input for the open weights. Matching ignores the
+org prefix, the size tag, the quantisation and the file format, so `gemma4:12b`,
+`google/gemma-4-12b`, `Gemma-4-12B-it-GGUF` and `mlx-community/Gemma-4-12B-4bit` are all recognised
+as the same family. Version digits stay significant, so a Gemma 3 id is not read as a Gemma 4 one.
+
+A family whose modality depends on the **size** is deliberately left out rather than approximated.
+Gemma 3 is the worked example: its 1B is text-only while its 4B and up are not, so a family-name
+match would have told every `gemma3:1b` user their model reads images. Those need a declaration from
+you.
+
+**Your own declaration outranks the table**, because you are the one who knows which build you
+pulled. Under **Settings → My local runners**, each enabled model carries an **Image support for
+`<model>`** control with three positions:
+
+- **Reads images**
+- **Text only**
+- **Not set**, which names what the table will do for that id (`Not set: Gemma 4 reads images`), or
+  reads `Images: not set` where the platform recognises nothing.
+
+Set it explicitly for a text-only quant, a fine-tune, or a re-tagged local copy the table would
+otherwise judge by its name.
+
+::: warning A run needs an initiator for this to be read
+Declarations belong to a person, so they are resolved from the run **initiator's** own runner
+entries. A run nobody started (a [recurring pipeline](./recurring-pipelines.md), a system sweep)
+resolves none, and the family table is not consulted in that case either: with no declarations read
+at all, your own **Text only** is exactly what could not be seen, so the frames are withheld rather
+than attached on a guess.
+:::
 
 ## Claude Design: commit it, don't connect it
 
@@ -168,6 +210,8 @@ run: no connector, no credential, no import step.
 | Every run warns the design may be stale | The source exposes no version token, or the connection cannot be read | The reason is named in the warning; only the first two of the four are yours to fix. |
 | No images beside the text | Image storage is not configured for the deployment | See [Configuration → Content storage](../deploy/configuration.md#content-storage-binary-artifacts). |
 | The agent worked from the text and said it was shown no pictures | The step's agent CLI or its model cannot take an image | The agent's own note names which of the two. Pin the step to a Claude Code model to get both. |
+| A local model that reads images was shown none | Its image support is **Not set** and the platform recognises nothing in the id | Declare it on the model under **Settings → My local runners**. |
+| A local model gets no pictures on a scheduled run only | A run with no initiator resolves nobody's declarations | Expected. Start the run yourself, or pin that step to a catalog model. |
 | The agent was shown fewer screens than the design has | Only a handful of pictures are attached per run | Expected. The agent names the views it was not shown, and the text still covers them. |
 
 ---
