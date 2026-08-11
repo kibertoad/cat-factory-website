@@ -9,8 +9,21 @@ Before anything else, two habits save most of the time here:
   beside the message, and the app maps it to specific remedy copy. "This deployment has not
   configured the capability" and "the capability is configured but its upstream is down" are
   different reasons with the same status.
+- **Open "Show details" before you quote anything.** A failure toast leads with what you can act on
+  and keeps the rest one click behind **Show details**: the platform's own untranslated message, a
+  validation failure's per-field issues, and the `requestId` that joins the failure to the one server
+  log line about it. Failure toasts do not auto-dismiss, their text is selectable, and one click
+  copies the whole report. That `requestId` is the difference between a reproducible report and a
+  screenshot.
 - **Check the run first, the deployment second.** [Run and step diagnostics](./observability.md#run-and-step-diagnostics)
   shows the failing step, its model calls, and the container's own logs.
+
+One thing to expect of transport failures: on the Node runtime a failed outbound connection reaches
+the platform from its HTTP client as a bare `fetch failed`, with what actually happened one level
+down. Every surface that describes a failure walks down to that cause and reports it, so a
+**Test connection** verdict, a log line, a toast and a persisted step reason all name the same real
+thing: `connect ECONNREFUSED 10.0.0.5:6443`, an expired certificate, a DNS miss. Take the named cause
+as the symptom to work from.
 
 ## The deployment will not boot
 
@@ -66,6 +79,28 @@ See [Upgrades](./upgrades-and-retention.md).
 window, which is deliberately tighter than any single command's own timeout. A slow cold install or
 a long build inside an agent step is the usual cause; the fix is to prepopulate dependencies rather
 than to raise the ceiling.
+
+**A step fails cloning, pushing or merging with a `403`.** The token the run authenticated as is too
+narrow for the work. The board raises a banner for this on open rather than letting a pipeline
+discover it several steps in: it resolves the token a run would **actually** present, asks GitHub what
+that token can do against the repositories this board's services target, and links to the token form
+with the kind of token carried over. Two things to know when you read it:
+
+- **It reports per capability, in three states.** A classic token's scopes come back on a response
+  header; a fine-grained token reports nothing anywhere, so its reach is only knowable by probing a
+  repository, which answers for push alone. `unknown` therefore means "not established", not
+  "missing", and only an established blocking gap or an outright rejected token raises the banner. An
+  unreachable or rate-limited GitHub raises nothing rather than accusing your credential.
+- **A `404` on every targeted repository is reported as a missing capability.** GitHub answers `404`
+  rather than `403` for a repository a credential may not see, so that is the fine-grained token
+  pointed at the wrong repositories.
+
+The banner names whether the credential is the **deployment's** or **yours**, so a local developer is
+not sent to their personal settings to replace a token from the deployment's `.env`. A workspace that
+turned off using the initiator's stored token is not warned about a credential none of its runs touch.
+The check reads capability and does not bound it: a token that passes is still exactly as wide as
+whoever minted it made it. See
+[Configuration → What a personal access token can do on the run path](../deploy/configuration.md#what-a-personal-access-token-can-do-on-the-run-path).
 
 **A run stops advancing and nothing is failing.** It has almost certainly parked on a human
 decision, which waits indefinitely by design. Check the run's decisions and the notification inbox.

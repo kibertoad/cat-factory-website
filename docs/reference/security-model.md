@@ -39,7 +39,7 @@ agent edits files in a per-run checkout
   → harness opens a pull request through the VCS API               (mechanism)
   → the CI gate reads your host's real check runs                  (mechanism + your CI)
   → the merger agent returns a JSON risk assessment, nothing else  (judgment)
-  → the engine compares that assessment to the merge preset and
+  → the engine compares that assessment to the risk policy and
     either merges or routes to a person                            (mechanism + configuration)
   → the host performs the merge, under branch protection           (configuration, host-side)
 ```
@@ -62,7 +62,7 @@ two cases apart when you read the layers below.
    radius of every run. See [which credential a run pushes with](./agent-isolation.md#which-credential-a-run-pushes-with):
    an initiator's stored personal PAT outranks the deployment credential unless you turn that off.
 4. **No agent decision merges to the default branch** (mechanism + configuration). The merger agent
-   returns an assessment; the engine scores it against your merge preset and either merges or raises
+   returns an assessment; the engine scores it against your risk policy and either merges or raises
    a review card. A pipeline with no merger never auto-completes a task.
 5. **Agent text is untrusted on every rendered surface** (mechanism). Model-authored text reaches
    pull-request bodies, tracker comments, and telemetry, and all of those are parsed surfaces. The
@@ -102,7 +102,7 @@ possible at all.
    protection preflight** probes each linked repository on demand and reports three states, never
    two: protected, unprotected, and could-not-determine. Treat the third as unprotected until you
    know otherwise.
-2. **Choose merge presets deliberately.** For anything sensitive, pin *Manual review only*, or keep
+2. **Choose risk policies deliberately.** For anything sensitive, pin *Manual review only*, or keep
    auto-merge and add class floors for source and schema changes. The shipped default auto-merges
    under balanced ceilings with no floors. See [Review and Merge Pull Requests](../guide/pull-requests.md).
 3. **Scope the GitHub App installation to only the repositories the platform should work on.** Do
@@ -122,7 +122,16 @@ possible at all.
    - **Enforced, per board**: turn off *Run credential* in workspace settings. The board then
      authenticates as the App installation, at the cost of bot attribution.
    - **Visible**: the personal-token form states what a token actually grants when it is tested or
-     saved. That is advice, not a gate.
+     saved, the board raises a banner on load when the token a run would present cannot do the work,
+     and a local deployment says the same thing in its boot log. All three read the same
+     classification, and all three are advice rather than a gate: they report a token's reach and
+     cannot narrow it. A token that passes is exactly as wide as whoever minted it made it.
+     The board check judges the token only where a run would present it (the repositories this
+     board's services target), so a GitLab-bound board is told nothing about a stored GitHub token,
+     and a board whose *Run credential* is off is not warned about a credential its runs never use.
+     What that check reports is a per-capability verdict, deliberately not the token's raw scope
+     list: anyone who can read the board could otherwise read the breadth of a shared deployment
+     credential.
 5. **Treat local native mode as trusted-input only.** With no container, the process boundary is
    only the agent CLI's own sandboxing. Do not point native-mode runs at repositories or issues
    whose content you do not trust.

@@ -119,6 +119,26 @@ deployment's configured PAT or a local password. GitLab PAT sign-in is offered o
 deployment has a GitLab connection configured (`GITLAB_TOKEN`, below); GitLab group membership then
 counts toward `AUTH_ALLOWED_ORGS`, matching GitHub.
 
+### What a personal access token can do on the run path
+
+A PAT is the **operational** credential on two deployment shapes, not just a sign-in identity. In
+local mode one token is both the identity and what every agent step clones, pushes and merges with. On
+a hosted deployment, a run initiator's stored `github_pat` outranks the GitHub App installation on the
+run path, unless the workspace turns that off. On both, a token too narrow for the work would
+otherwise reach its first failure several steps into a pipeline, as a `403` out of a container.
+
+Three surfaces report what the token in use can actually do, from one classification and one
+required-scope list: the connect form's warnings when a token is stored, the local deployment's boot
+log, and a check on board load that resolves the token a run would present through the same path the
+dispatch mint uses. That last one raises a banner only on an established blocking gap or a rejected
+token, and names whether the credential is the deployment's or the signed-in user's. See
+[Troubleshooting → a step fails cloning, pushing or merging](../operate/troubleshooting.md#a-run-fails-or-stalls).
+
+The token's raw scope list is deliberately not published on that response: any member can read it, and
+the breadth of a shared deployment credential is not a member-level fact. The per-capability verdict is
+what a reader can act on. None of this narrows a token either. Mint a fine-grained PAT restricted to
+the repositories the deployment works on rather than relying on a check to catch a broad one.
+
 ## GitLab (source control)
 
 GitLab is a first-class source-control backend on every runtime, not just local mode. It is opt-in
