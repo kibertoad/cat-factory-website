@@ -192,6 +192,7 @@ never on `message`. Two families appear:
 | `too_many_active_runs` | 429 | `POST /jobs` when five headless jobs are already in flight |
 | `pipeline_required` | 400 | `POST /tasks/:id/start` with no pinned pipeline and no `pipelineId` |
 | `service_archived` | 409 | `POST /tasks/:id/start` under an archived service |
+| `service_has_unfinished_tasks` | 422 | `DELETE /services/:serviceId` on a frame still holding work in flight. `details.unfinishedTasks` is the count; nothing is deleted. See [Taking a service back down](#taking-a-service-back-down) |
 | `individual_model_unsupported` | 409 | a [system token](#who-a-key-runs-as) starting, retrying, or `act`ing on a run that would use a personal-credential model. A personal token gets `428 credential_required` instead, which it can answer with the password |
 | `no_run` | 404 / 409 | run reads (404: never started) and stop/retry (409: nothing to act on) |
 | `no_review` | 404 | requirements decision routes when the run has no live review |
@@ -212,6 +213,7 @@ deployment can provision itself end to end without anyone opening the app.
 | `POST` | `/api/v1/environments/connections/test` | admin | Probe a cluster connection without saving it. |
 | `POST` | `/api/v1/environments/connections` | admin | Bind per-run environments to a cluster. Re-connecting replaces. |
 | `PATCH` | `/api/v1/services/{serviceId}` | admin | Patch a service, including where its manifests live. |
+| `DELETE` | `/api/v1/services/{serviceId}` | admin | Take a service back down: its subtree and the run history under it (destructive). See [Taking a service back down](#taking-a-service-back-down). |
 | `GET` | `/api/v1/models` | admin | Which models a run here could actually dispatch to. |
 | `GET` | `/api/v1/vcs/connection` | admin | The source-control connection, and what it is permitted to do. |
 | `GET` | `/api/v1/risk-policies` | admin | The risk policies a task can pin, and which one an unpinned task of **yours** resolves. |
@@ -422,6 +424,33 @@ PATCH /api/v1/services/{serviceId}
 response rather than trusting the `200`: a wrong-shaped patch is accepted and stored as something the
 deploy step later reads as "no manifests". An omitted `provisioning` leaves the stored one alone, so
 correcting a title cannot silently un-deploy a service.
+
+### Taking a service back down
+
+Whoever raises a service is whoever has to reclaim it: an environment rebuilt per test pass, a
+repository retired, a frame created against the wrong one. That is the same rung as raising it, so
+the delete is `admin` too, and it is the last board write that used to need a person in the app.
+
+```
+GET    /api/v1/services/blk_api/tasks     # what is under it
+DELETE /api/v1/tasks/blk_task             # each unfinished task, if you mean it
+DELETE /api/v1/services/blk_api           # 204: the frame, its subtree, its run history
+```
+
+It takes the frame, its modules, its tasks and the run history recorded under them. A run still going
+underneath is stopped and its container killed first, so nothing is left idling. Two answers to
+branch on rather than retry:
+
+- **`422`, `reason: service_has_unfinished_tasks`.** A frame holding a task that has not finished is
+  refused, because deleting one discards work in flight along with its history. `details` carries
+  `unfinishedTasks`, the count. The refusal is decided **before** anything is torn down, so a `422`
+  leaves the frame, its tasks and their runs exactly as they were: retrying changes nothing, and the
+  runs still going are still yours to stop or resume. Deleting those tasks first is you saying you
+  mean it.
+- **`404` for an ARCHIVED service.** Every per-service endpoint addresses exactly the population
+  `GET /api/v1/services` reports, and an archived frame is absent from it. Archiving is the app's
+  answer to "keep it but hide it", and this surface publishes neither the archive nor the restore, so
+  a frame you archived is one to handle in the app.
 
 ## Board workloads
 
