@@ -168,6 +168,14 @@ decides a card's badge and which pipeline it starts with.
 **Tool server.** An MCP server an agent may call during a run, registered by the deployment and
 handed a credential resolved by name. See [Add a Custom Agent Kind → Skills and tool servers](../extend/custom-agents.md#skills-and-tool-servers).
 
+## U
+
+**Unattended run.** A run nothing is watching: started over the public API, dispatched from a tracker
+issue, or fired by a schedule. It resolves the workspace's second default risk policy rather than its
+in-app one, and under an `unattended` policy it answers the checkpoints its own automatic loops raise
+instead of waiting for a person. Gates the pipeline asks for still stop it. See
+[Runs nobody is watching](../guide/pull-requests.md#runs-nobody-is-watching).
+
 ## W
 
 **Workspace.** One board plus its members, settings, presets, and connections. A workspace has

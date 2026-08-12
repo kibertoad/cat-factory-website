@@ -13,6 +13,11 @@ shows a single recurring task whose live status and run history you can inspect.
 If a previous fire is still running, the next fire is skipped rather than stacked, so a slow run
 never piles work on itself.
 
+Nobody is watching a scheduled fire, so a block that pins no risk policy of its own resolves the
+workspace's **unattended** default rather than its in-app one, and under that policy the run answers
+its own automatic checkpoints instead of parking until somebody opens the board. Gates the pipeline
+asks for still stop it. See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
+
 ## The built-in templates
 
 When you add a recurring pipeline you pick a template:

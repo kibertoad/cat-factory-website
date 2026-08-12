@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.48.0**. 115 operations across 22 groups.
+Surface version **1.49.0**. 115 operations across 22 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.

@@ -168,7 +168,10 @@ offered as a task source for import and linking too.
 
 A headless integration does the same thing by naming the ticket on
 [`POST /api/v1/services/{serviceId}/tasks`](../extend/public-api.md#filing-a-task-from-a-tracker-ticket),
-which imports the issue and attaches it rather than flattening it into the description.
+which imports the issue and attaches it rather than flattening it into the description. A task
+dispatched this way has nobody in the app, so if it pins no risk policy it resolves the workspace's
+**unattended** default and can answer its own automatic checkpoints rather than waiting on a person.
+See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 
 ## Bug hunt
 
