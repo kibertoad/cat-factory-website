@@ -91,16 +91,28 @@ Every build pipeline finishes with three engine steps that prepare the PR for me
   if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
   review rather than merging on a hollow score.
 
-Risk policies live in a per-workspace library, and each task picks one (tasks with no explicit choice
-use the workspace default). Two ship built in:
+Risk policies live in a per-workspace library, and each task picks one. A task that picks none falls
+back to a workspace default, and a workspace carries **two** of them: one for a run somebody started
+in the app, and one for a run nothing is watching (see
+[Runs nobody is watching](#runs-nobody-is-watching)). Three policies ship built in:
 
-- **Balanced** (the default): auto-merges a PR when its complexity, risk, and impact scores fall
-  within the thresholds, and routes anything above them to human review.
+- **Balanced** (the in-app default): auto-merges a PR when its complexity, risk, and impact scores
+  fall within the thresholds, and routes anything above them to human review.
+- **Unattended delivery** (the default for unwatched runs): the same ceilings, budgets, class rules
+  and per-role restrictions as your workspace's own in-app default, with one thing changed. A run
+  under it answers the checkpoints its own automatic loops raise instead of parking for a person who
+  isn't there. What it is allowed to land is identical, deliberately: a policy that ships as a
+  default may decide that an unwatched run shouldn't wait forever on an automation budget, and may
+  not decide that it gets to land a change your own thresholds would have held. Widen it yourself if
+  your track record says to.
 - **Manual review only**: never auto-merges. Every PR, whatever its scores, raises a merge-review
   notification for a person to merge. Reach for it on a board where a human always makes the final
   call.
 
-Edit these or add your own in the workspace's **Risk policies** panel.
+Edit these or add your own in the workspace's **Risk policies** panel. Each row has its own **Make
+default** and **Unattended default** promote buttons, since the two defaults are independent: flag one
+policy both ways to run a single posture everywhere. Neither default can be deleted while it holds its
+flag, and the panel says which flag is blocking.
 
 ### Rules per change class
 
@@ -158,6 +170,41 @@ Two ways a run becomes a dry run:
   the run actually got is reported back on the run.
 
 Both settings default to empty, so an existing policy behaves exactly as it did.
+
+### Runs nobody is watching
+
+A run started in the app has someone to ask. A run started over the [public API](../extend/public-api.md),
+dispatched from a [tracker issue](./issue-sources.md), or fired by a
+[schedule](./recurring-pipelines.md) does not, so a checkpoint raised for a person stops it
+indefinitely. Which of the two workspace defaults a task resolves follows exactly that split, and a
+task that pins a policy of its own overrides both.
+
+The posture is one switch on the policy: **Finish unattended runs without waiting for a person**. With
+it on, the run takes the documented **Proceed anyway** answer to the checkpoints its own automatic
+loops raise when they give up:
+
+- a **companion** that spent its rework budget with the producer still under the bar,
+- a **judge** that spent its bounce budget with the verdict still under the threshold,
+- an **iterative review** that spent its whole pass budget without converging,
+- **Coder follow-ups** nobody triaged, which are dismissed rather than queued (queueing sends the
+  Coder back to widen the change past what the task asked for, unreviewed, on a run with no
+  supervision). The items stay on the step with their text intact.
+
+It never touches a checkpoint the **pipeline** asked for. An approval gate, a `human-test` step, visual
+confirmation, the human and PR review gates, a brainstorm or interview, the implementation-fork choice
+and the pre-dispatch input gate all stop the run whichever posture is in force, and a companion step
+that is also gated still raises its approval gate at the cap. Nor does it answer a review that is
+asking **questions**: those answers are a product judgement, so that park stands under either posture.
+
+Each of these is recorded as settled by policy on the step it happened on, rather than left looking
+like a bar the work met: whoever reviews the resulting pull request can tell a run that proceeded
+under this posture from one whose companion simply stopped grading. The policy is read at the moment
+the cap is reached, so moving a task onto an attended policy mid-run gets the checkpoint back.
+
+Pinning a task to an unattended policy is a permission, not a preference. Somebody who does not manage
+the workspace's policy library cannot re-point a task from an attended policy onto an unattended one,
+in the picker or by moving the task; both refuse and name the reason. Landing authority is unaffected
+either way, which is the point of keeping the two apart.
 
 ### Recording how much review a merge actually needed
 

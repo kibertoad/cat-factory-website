@@ -41,7 +41,9 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 - **Risk policies**: manage the named risk policies a task chooses. After CI passes, the **Merger**
   step scores the PR on complexity, risk, and impact and auto-merges only within the policy's
   ceilings; the same policy also carries the CI-fixer, requirement/tester iteration, fork-decision,
-  and release-health knobs.
+  and release-health knobs, plus whether a run under it waits for a person at its own automatic
+  checkpoints. Promote one row as the default for runs started in the app and one as the default
+  for [runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 - **Workspace settings**: the running-task limit, the waiting-decision escalation threshold, and
   review-debt friction (see [Workspace settings](#workspace-settings)).
 

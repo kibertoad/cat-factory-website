@@ -102,9 +102,14 @@ possible at all.
    protection preflight** probes each linked repository on demand and reports three states, never
    two: protected, unprotected, and could-not-determine. Treat the third as unprotected until you
    know otherwise.
-2. **Choose risk policies deliberately.** For anything sensitive, pin *Manual review only*, or keep
-   auto-merge and add class floors for source and schema changes. The shipped default auto-merges
-   under balanced ceilings with no floors. See [Review and Merge Pull Requests](../guide/pull-requests.md).
+2. **Choose risk policies deliberately, and check both defaults.** For anything sensitive, pin
+   *Manual review only*, or keep auto-merge and add class floors for source and schema changes. The
+   shipped default auto-merges under balanced ceilings with no floors. A workspace has a second
+   default for runs nothing is watching (API, tracker, schedule), shipped as *Unattended delivery*:
+   it lands nothing the in-app default would have held, but a run under it answers its own automatic
+   checkpoints instead of stopping for a person. Re-point it at an attended policy if you want that
+   work to keep parking. See
+   [Runs nobody is watching](../guide/pull-requests.md#runs-nobody-is-watching).
 3. **Scope the GitHub App installation to only the repositories the platform should work on.** Do
    not install on "All repositories" of an organization that also holds crown jewels.
 4. **Govern stored personal PATs, or step 3 does not bind.** An initiator's stored personal token

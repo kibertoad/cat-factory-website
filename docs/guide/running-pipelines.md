@@ -85,6 +85,27 @@ open.
 Tester's Fixer) render as distinct sub-nodes on their parent step, so you can see a companion rate,
 rework, or skip rather than wondering why a step looped.
 
+### Reading a companion's verdict
+
+A companion's whole review is one piece of prose, so it is written and rendered to be skimmed. Each
+grading round gets its own card rather than being appended to the score line, and the verdict is laid
+out as blocks: one short sentence on what the work is and what holds it back, then **Must fix**,
+**Should fix**, and **Minor** groups (only the ones it has points for), worst first, each bullet a
+short bolded title plus the concrete change to make. You can tell what blocks the work from what is a
+nit without reading all of it.
+
+Every round is handed the rounds before it, so a companion re-grading a revised document knows what it
+asked for last time. That is what makes a rework budget buy convergence rather than a fresh sample of
+problems each pass, and it applies to both sides of the loop: the producer being reworked sees the
+prior verdicts too.
+
+Reviewer prose renders as Markdown throughout: judge summaries and findings, the
+[Best-practice adherence](./prompt-fragments.md) section, and the PR review's summary, findings and
+challenge verdicts. Fields carrying a value you copy rather than prose (a suggested fix, a gate's
+failure summary) stay preformatted, so a path with underscores and a command's quoting survive intact.
+A judge writes a short whole-verdict paragraph instead of the grouped bullets, because its points are
+already rendered as their own list beside the summary.
+
 ### The agent's effort report
 
 Every container agent reports on its own run: a **difficulty** score out of ten, what reduced its
@@ -143,6 +164,11 @@ For each item you can:
 Once everything is decided, the Coder loops once more for any sent-back follow-ups and answered
 questions, then the pipeline advances. The companion is **on per Coder step** and can be disabled for
 a step in the pipeline builder.
+
+On a run nobody is watching, undecided items are **dismissed** by policy rather than held, so the run
+finishes inside the brief it was given. Each dismissal is stamped as the policy's, and every item keeps
+its text on the step, so nothing the Coder noticed is lost. See
+[Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 
 ## Choosing an implementation approach
 
@@ -249,6 +275,15 @@ reviewer offers at its iteration cap:
 - **Proceed anyway**: accept the producer's current output and advance the pipeline.
 - **Stop & reset**: cancel the run and return the task to phase zero (editable), with the
   producer's latest output preserved on its branch.
+
+A judge that spends its bounce budget below the threshold, and an iterative review that spends its
+pass budget without converging, park the same way and for the same reason: the automation is
+reporting that it gave up, not asking you to settle a judgement.
+
+If nobody is watching the run, though, none of the three choices reaches anyone. A run started over
+the API, dispatched from a ticket or fired by a schedule resolves the workspace's **unattended**
+risk policy, and if that policy says so the platform takes **Proceed anyway** itself and records that
+it did. See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 
 A run parked on a decision waits as long as it needs; it is never cancelled for taking too long.
 Instead, its inbox notification turns red and is flagged **Overdue** once it has waited past the

@@ -214,7 +214,7 @@ deployment can provision itself end to end without anyone opening the app.
 | `PATCH` | `/api/v1/services/{serviceId}` | admin | Patch a service, including where its manifests live. |
 | `GET` | `/api/v1/models` | admin | Which models a run here could actually dispatch to. |
 | `GET` | `/api/v1/vcs/connection` | admin | The source-control connection, and what it is permitted to do. |
-| `GET` | `/api/v1/risk-policies` | admin | The risk policies a task can pin, and which one an unpinned task resolves. |
+| `GET` | `/api/v1/risk-policies` | admin | The risk policies a task can pin, and which one an unpinned task of **yours** resolves. |
 | `GET` | `/api/v1/model-presets` | admin | The model presets a task can pin, and which one an unpinned task resolves. |
 
 These reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
@@ -236,8 +236,14 @@ run you have already paid for.
   enforced by the provider at **push** time, so skipping this check turns a missing workflow
   permission into a repository that bootstrapped and then failed to gain its CI workflow, which
   reads like a broken bootstrap rather than a permission you can grant.
-- `GET /api/v1/risk-policies`: `autoMergeEnabled` on the `isDefault` row decides whether a run can
-  land its pull request with no person involved. Two caveats this API cannot settle for you, because
+- `GET /api/v1/risk-policies`: read the **`isUnattendedDefault`** row, not the `isDefault` one. A
+  workspace carries two defaults, and `isDefault` is the policy a task resolves when a person starts
+  it in the app; every run this API starts resolves the unattended one, as do tracker dispatches and
+  schedule fires. `isDefault` still means exactly what it always did, so an existing client is not
+  wrong about anything it was told, it was told about the other scope. See
+  [Whether your runs can finish on their own](#whether-your-runs-can-finish-on-their-own).
+  On that row, `autoMergeEnabled` decides whether a run can land its pull request with no person
+  involved. Two caveats this API cannot settle for you, because
   it does not report which workspace role your key's runs are admitted under: a non-empty
   `dryRunRoles` means the policy merges for some roles and not others, and a non-empty
   `submissionRestrictedRoles` means a run outside an allowed change class is held for a person
@@ -295,6 +301,31 @@ the deployment serves per-user **locally-run** endpoints this read could not enu
 belong to one person's machine and an unbound key cannot be handed someone else's. Those models are
 absent from the list entirely, where a personal subscription's model is present and merely
 unavailable.
+
+### Whether your runs can finish on their own
+
+Nothing is watching a run this API starts, so a checkpoint raised for a person stops it until somebody
+opens the app. `autonomy` on `GET /api/v1/risk-policies` is the field that answers whether that can
+happen, and the row to read it on is `isUnattendedDefault` (or the policy your task pins as
+`riskPolicyId`).
+
+- **`attended`**: a run can park on a judgement call `GET /api/v1/runs/{runId}/decisions` will list
+  and only a human can settle — a companion at its rework cap, a judge at its bounce cap, an iterative
+  review at its pass cap, follow-up items nobody triaged. With nobody to escalate to, the run waits
+  indefinitely. This is what every policy created without saying otherwise gets, and what an
+  unrecognised value reads as.
+- **`unattended`**: the platform takes the documented "proceed" answer to each of those and records on
+  the step that it did.
+
+Neither value covers a checkpoint the **pipeline** asks for. A `human-test` step, a review gate or an
+approval gate stops the run either way, which is what keeps this a statement about waiting rather than
+about oversight. When you report what a policy will do, keep the two apart.
+
+Every workspace seeds an **Unattended delivery** policy (`mp_unattended`) as its unattended default:
+identical to that workspace's own in-app default in every ceiling, budget and per-role restriction,
+with `autonomy` the only difference. A deployment that wants its API-started runs to keep parking
+re-points `isUnattendedDefault` at a policy whose `autonomy` is `attended`. See
+[Runs nobody is watching](../guide/pull-requests.md#runs-nobody-is-watching).
 
 ### Adopting a repository you already have
 
@@ -551,11 +582,12 @@ POST /api/v1/services/svc_api/tasks
 
 Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies` rather than deriving
 them: the built-in model presets are `mdp_kimi`, `mdp_glm` and `mdp_claude`, and the built-in risk
-policies are `mp_balanced` and `mp_manual_review`, so the two libraries do not share a prefix and a
-workspace that has edited either carries ids of its own. Both pins are optional, both come back on
-the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one means what it always
-meant: the task follows the workspace default rather than holding a copy of its id, so moving that
-default moves the task.
+policies are `mp_balanced`, `mp_unattended` and `mp_manual_review`, so the two libraries do not share
+a prefix and a workspace that has edited either carries ids of its own. Both pins are optional, both
+come back on the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one means
+what it always meant: the task follows the workspace default rather than holding a copy of its id, so
+moving that default moves the task. For `riskPolicyId` that default is the **unattended** one, since
+nothing is watching a run this API starts.
 
 Pinning is what makes an automated pass reproducible. Without it, the only way to run one task on a
 different model is to move the workspace default, which changes every other caller's runs to settle
@@ -578,8 +610,11 @@ What matters to a caller is the **refusal**, not the fields:
 Pinning a model preset does not widen what the account allows: the base model still resolves through
 the account's model-family policy, so a preset naming a blocked model fails at dispatch with the same
 refusal it would have had on the workspace default. `riskPolicyId` is the pin that changes what a run
-may **do**, since a policy carries `autoMergeEnabled` and the score ceilings. An `admin` key may pin
-any policy its workspace holds, which is the authority it already had by editing one.
+may **do**, since a policy carries `autoMergeEnabled`, the score ceilings and `autonomy`. An `admin`
+key may pin any policy its workspace holds, which is the authority it already had by editing one.
+That is a wider licence than a board member has: in the app, somebody who does not manage the policy
+library cannot re-point a task from an attended policy onto an `unattended` one, because dropping the
+run's human checkpoints is a permission rather than a preference.
 
 ## Paging
 
