@@ -56,9 +56,10 @@ Models are assigned through **presets**, managed in **Configuration → Model Co
 
 - A **preset** sets one **base model** for every agent kind, plus optional **per-kind overrides** to
   point a single kind (say, the **Architect**) at a stronger model.
-- One preset is the workspace **default**; every workspace seeds three built-ins, **Kimi K2.7**,
-  **GLM-5.2**, and **Claude Opus 5**. A task selects which preset it runs on (in the new-task form
-  or its inspector), and changing the preset only affects steps that haven't started yet.
+- One preset is the workspace **default**; every workspace seeds four built-ins, **Kimi K2.7**,
+  **GLM-5.2**, **Claude Opus 5** and **GPT-5.6 Sol**. A task selects which preset it runs on (in the
+  new-task form or its inspector), and changing the preset only affects steps that haven't started
+  yet.
 
 The picker shows each model's list price next to its provider and context window (quota-based
 subscription models show their quota burn rate instead), so you can weigh cost as you assign kinds.

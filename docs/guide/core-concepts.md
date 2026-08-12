@@ -158,8 +158,8 @@ into the block's description and the run continues.
 You assign models with **presets** under **Configuration → Model Configuration**. A preset names one
 **base model** for every agent kind plus optional **per-kind overrides** (for example, a strong model
 for the **Architect** and a cheaper one for the **Tester**). One preset is the workspace **default**;
-every workspace seeds three built-ins (**Kimi K2.7**, **GLM-5.2**, and **Claude Opus 5**). A task picks its preset, and
-changing it only affects steps that haven't started. See
+every workspace seeds four built-ins (**Kimi K2.7**, **GLM-5.2**, **Claude Opus 5** and **GPT-5.6
+Sol**). A task picks its preset, and changing it only affects steps that haven't started. See
 [Run a Pipeline → Choosing models](./running-pipelines.md#choosing-models).
 
 ## Repositories

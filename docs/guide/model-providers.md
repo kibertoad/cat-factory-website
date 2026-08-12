@@ -295,8 +295,14 @@ Whichever source serves a model, you assign models with **presets** under
 **Configuration → Model Configuration**. A preset names a single
 **base model** for every agent kind, plus optional **per-kind overrides** (point the Architect at a
 stronger model while everything else stays on the base). Exactly one preset is the workspace
-**default**. Every new workspace seeds three built-ins, **Kimi K2.7**, **GLM-5.2**, and **Claude
-Opus 5**, and you can add your own.
+**default**. Every new workspace seeds four built-ins, **Kimi K2.7**, **GLM-5.2**, **Claude Opus 5**
+and **GPT-5.6 Sol**, and you can add your own.
+
+The last two run on a subscription or through OpenRouter rather than on a key of their own: Claude
+Opus 5 on a connected Claude subscription, GPT-5.6 Sol on a ChatGPT subscription through Codex, and
+either of them pay-as-you-go through OpenRouter when no subscription is connected. So a workspace
+with only an OpenRouter key can still select them, and a connected subscription takes over
+automatically once it is there.
 
 Which one is the seeded default depends on the deployment: **Kimi K2.7** (Cloudflare-served, no key)
 on Cloudflare and Node, and **Claude Opus 5** on local mode, where a connected Claude subscription
