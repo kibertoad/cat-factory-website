@@ -268,7 +268,7 @@ Answer the questions to continue. The most common prompts are the **Requirements
 
 A second kind of prompt comes from a **companion that has spent its automatic rework budget**. When
 the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer above
-its quality bar within the allowed retries, it stops auto-looping and parks for you with a **Decide**
+its quality bar within the allowed rounds, it stops auto-looping and parks for you with a **Decide**
 button (rather than a plain Approve) offering three choices, the same three the requirements
 reviewer offers at its iteration cap:
 
@@ -276,6 +276,13 @@ reviewer offers at its iteration cap:
 - **Proceed anyway**: accept the producer's current output and advance the pipeline.
 - **Stop & reset**: cancel the run and return the task to phase zero (editable), with the
   producer's latest output preserved on its branch.
+
+How many rounds it gets before that is **Companion rework rounds** on the task's
+[risk policy](./pull-requests.md#conflicts-ci-and-the-merger), three on every built-in policy. Raise
+it on a board whose specs and designs usually need a couple of passes; lower it where a round costs
+more than it earns. Setting it to **0** does not switch the companion off: it still grades the work
+and writes its verdict, and the first verdict below the bar comes straight to you instead of buying a
+round. Note that a round you grant here yourself is on top of the budget, not out of it.
 
 A judge that spends its bounce budget below the threshold, and an iterative review that spends its
 pass budget without converging, park the same way and for the same reason: the automation is

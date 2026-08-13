@@ -109,6 +109,12 @@ in the app, and one for a run nothing is watching (see
   notification for a person to merge. Reach for it on a board where a human always makes the final
   call.
 
+A policy carries more than the merge decision: the same row holds the budgets the run's automatic
+loops spend before they stop and ask you. The CI-fix attempts, the requirement-review iterations and
+**Companion rework rounds** (how many times a reviewer may send its producer back, three by default)
+are all fields on it, so how much the platform retries on its own is a per-task choice rather than a
+platform constant.
+
 Edit these or add your own in the workspace's **Risk policies** panel. Each row has its own **Make
 default** and **Unattended default** promote buttons, since the two defaults are independent: flag one
 policy both ways to run a single posture everywhere. Neither default can be deleted while it holds its
