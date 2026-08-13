@@ -102,6 +102,27 @@ The check reads capability and does not bound it: a token that passes is still e
 whoever minted it made it. See
 [Configuration → What a personal access token can do on the run path](../deploy/configuration.md#what-a-personal-access-token-can-do-on-the-run-path).
 
+**A step reports that its push to the work branch was refused.** The platform pushes an agent's
+commits to the branch about once a minute while it works, so nothing is lost if the container dies.
+That makes the platform a writer on the branch too, and a push is refused when the branch carries
+commits the push would drop. The step is re-dispatched once and resumes from the branch as it now
+stands, so the usual outcome is a run that succeeds having spent one agent pass twice. The failure
+message names which of two causes it was, and they need different reactions:
+
+- **Another writer advanced the branch** (a second run started against the same task, or a person
+  pushed to it). Nothing is lost, and the agent resumes on top of those commits. If it recurs, check
+  whether two runs are active for the same task.
+- **The run rewrote history that was already published.** Agents are instructed to add commits and
+  never amend, reset or rebase, and the platform lets a run force over the commits that same pass
+  published, so a refusal here means the rewrite reached further back than that. No commits are
+  dropped; the re-dispatch continues from what is on the branch.
+
+A step re-dispatched for this reason reports it as `branchContentionRecoveries` on
+`GET /api/v1/debug/runs/:runId`, and each refusal increments the
+`cat_factory.platform.container_branch_contentions` counter, which is what answers whether it is
+happening more than it was. See [Debug a run](./debugging-a-run.md) and
+[Observability](./observability.md).
+
 **A run stops advancing and nothing is failing.** It has almost certainly parked on a human
 decision, which waits indefinitely by design. Check the run's decisions and the notification inbox.
 See [Decision prompts](../guide/core-concepts.md#decision-prompts).
