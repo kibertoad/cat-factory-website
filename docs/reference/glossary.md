@@ -31,10 +31,11 @@ drawn on the board.
 **Budget.** The monetary ceiling on metered model spend, tiered per workspace, account, and user.
 Subscription and local-runner runs are not metered against it. See [Control Spend with Budgets](../guide/budgets.md).
 
-**Bug hunt.** The interactive surface that rates a tracker board's open, unassigned bugs on impact
-against complexity and adopts the one you confirm as a task. Distinct from **bug intake**, the
-unattended step inside the recurring bug-triage pipeline, which claims the oldest matching issue on
-a schedule.
+**Bug hunt.** The interactive surface that rates the open, unassigned bugs of whatever you point it
+at on impact against complexity, and adopts the one you confirm as a task. That is a tracker board on
+Jira or Linear, and the chosen service's linked repository on GitHub Issues or GitLab Issues, which
+have no board to pick. Distinct from **bug intake**, the unattended step inside the recurring
+bug-triage pipeline, which claims the oldest matching issue on a schedule.
 
 ## C
 

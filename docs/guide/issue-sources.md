@@ -178,9 +178,24 @@ See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 **Bug hunt** is the interactive counterpart to the recurring bug-triage schedule: same board reading
 and same downstream pipeline, but you pick instead of the oldest match being claimed unattended.
 
-Choose a connected tracker and one of its boards, and the open, unassigned bugs come back rated on
-impact against implementation complexity. Confirm one candidate and it is adopted as a bug task
-running the standard [Triage & fix bug](./running-pipelines.md) pipeline.
+Choose a connected tracker and what to scan, and the open, unassigned bugs come back rated on impact
+against implementation complexity. Confirm one candidate and it is adopted as a bug task running the
+standard [Triage & fix bug](./running-pipelines.md) pipeline.
+
+What you scan depends on the tracker:
+
+- **Jira and Linear** hold many boards, so you pick one (a project, a team). A tracker that cannot
+  list its boards gives you a free-text field instead of an empty picker, so the hunt is still
+  usable.
+- **GitHub Issues and GitLab Issues** put every issue in one repository, so there is **no board to
+  pick**. You choose the service instead, and the hunt reads the repository that service is linked
+  to. The board field names that repository rather than offering a choice: a picker there could rate
+  and adopt a bug from a repository nothing on your board points at, and the run that followed would
+  open its pull request somewhere else entirely.
+
+Either way you also choose where a confirmed bug lands, which for a repository-backed tracker is the
+same choice as what gets scanned. A service with no repository linked has no issues to hunt, and the
+form says so: link one from the service panel first.
 
 ## The issue-tracker panel
 
