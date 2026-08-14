@@ -237,8 +237,9 @@ the session or permanently per user.
 ## Content storage (binary artifacts)
 
 The Tester's screenshots for the [Visual Confirmation](../guide/choosing-a-pipeline.md#visual-confirmation)
-gate are kept in a binary-artifact store. This is configured **per account in the UI** (Account →
-Deployment settings), not through environment variables, and each account picks its own backend:
+gate, and the assets a [Media task](../guide/choosing-a-pipeline.md#generating-media) generates, are
+kept in a binary-artifact store. This is configured **per account in the UI** (Account → Deployment
+settings), not through environment variables, and each account picks its own backend:
 
 | Backend | Runtimes | Notes |
 | --- | --- | --- |
@@ -247,10 +248,20 @@ Deployment settings), not through environment variables, and each account picks 
 | `r2` | Cloudflare | The Worker's R2 binding. The default and only backend on Cloudflare (the AWS SDK is kept out of the Worker bundle; for S3, run Node/local). |
 
 The default is `fs` on local, `r2` on Cloudflare, and **off** on Node until an account configures one.
+So a local deployment can run the Media pipeline with nothing configured at all: its assets land on
+disk under the base path above.
+
 A pipeline that includes an agent needing binary storage (the **UI Tester**, which uploads its
-screenshots) is refused at start when the account has no store configured, with a message that names
-the fix, rather than failing mid-run. Pipelines that don't use such an agent are unaffected. Switching
-an account's backend orphans artifacts stored under the previous one.
+screenshots, and the **Media Generator**, which stores what it generates) is refused at start when
+the account has no store configured, with a message that names the fix, rather than failing mid-run.
+Pipelines that don't use such an agent are unaffected. Switching an account's backend orphans
+artifacts stored under the previous one.
+
+Screenshots and generated assets have different lifetimes in this store. Screenshots are run
+evidence and are reclaimed on a clock (the workspace's artifact-retention window, 14 days by
+default); generated assets are the deliverable the run was started to produce and are **exempt**
+from it, so they stay until the workspace is deleted. Size the store accordingly: a board that
+generates media every day accumulates.
 
 ## Node container execution
 

@@ -66,11 +66,13 @@ feels like it spans several PRs, split it into sibling leaves.
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
   controls, at the level you need. When you add a task, pick its **type** (**Feature**, **Bug**,
-  **Document**, **Spike**, **Review**, or **Ralph loop**), which adjusts the form (a Bug collects
-  severity and steps to reproduce, a Spike a time-box, a [Document](./documents.md) its kind and
-  target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to audit
-  and a review focus, a [Ralph loop](./choosing-a-pipeline.md#the-ralph-loop) its validation command and
-  iteration budget) and lets the workspace cap concurrency per type. A deployment can
+  **Document**, **Spike**, **Review**, **Ralph loop**, or **Media**), which adjusts the form (a Bug
+  collects severity and steps to reproduce, a Spike a time-box, a [Document](./documents.md) its kind
+  and target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to
+  audit and a review focus, a [Ralph loop](./choosing-a-pipeline.md#the-ralph-loop) its validation
+  command and iteration budget) and lets the workspace cap concurrency per type. A
+  [Media](./choosing-a-pipeline.md#generating-media) task's deliverable is generated files (images,
+  3D models, audio) rather than code, so it opens no pull request. A deployment can
   [add task types of its own](../extend/frontend-extensions.md#custom-task-types), an "incident" or a
   "compliance-audit", which then appear in the picker and as a badge on the card like any built-in.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
