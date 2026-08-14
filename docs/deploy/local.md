@@ -167,6 +167,7 @@ container.
 | `DATABASE_URL` | yes | PostgreSQL connection string (the docker-compose service). |
 | `LOCAL_HARNESS_IMAGE` | no | The executor-harness image run per agent job. Optional: unset, it defaults to the version-matched image the backend recommends, which is pulled at boot (see [The executor-harness image](#the-executor-harness-image)). Set it to pin a specific tag or digest, or to a bare local tag you build yourself. |
 | `LOCAL_HARNESS_IMAGE_REFRESH` | no | Set to `off` (or `false`/`0`/`no`/`none`/`disabled`) to skip the boot-time image pull. Any other value keeps the default refresh on. |
+| `LOCAL_HARNESS_IMAGE_UI` | no | The image a **UI Tester** step runs on (Playwright + a browser), in its own container. Optional: unset, the version-matched `cat-factory-executor-ui` tag is used. It is pulled on first use rather than at boot (see [The UI-tester image](#the-ui-tester-image)). |
 | `LOCAL_NATIVE_AGENTS` | no | Comma-separated harnesses to run whole container agents on the host instead of in containers, e.g. `claude-code,codex`. Turns on [native agents](#native-agents-run-on-the-host). Off by default; unset means every container agent job runs sandboxed. |
 | `LOCAL_NATIVE_INLINE` | no | Which harnesses may serve **inline** LLM steps (requirements review, brainstorm, task-estimator, inline document kinds) on a subscription model. On by default (both `claude-code,codex`); set `off` to disable, or a subset to restrict vendors. See [Inline steps on subscription models](#inline-steps-on-subscription-models). |
 | `LLM_SUBSCRIPTION_MAX_CONCURRENCY` | no | Cap on in-flight inline subscription-model prompts per vendor. Defaults to `3`; override one vendor with `LLM_SUBSCRIPTION_MAX_CONCURRENCY_<VENDOR>` (e.g. `_KIMI`); any value `<= 0` uncaps. |
@@ -212,6 +213,19 @@ pull:
 
 Set `LOCAL_HARNESS_IMAGE_REFRESH=off` to skip the boot pull. The refresh is skipped on the Apple
 `container` runtime (its CLI differs); refresh that image out of band.
+
+### The UI-tester image
+
+A **UI Tester** step drives a real browser, so it runs on a second image: the same harness plus
+Playwright and Chromium, pnpm and yarn, a static file server and a headless JRE with WireMock. Local
+mode resolves the version-matched `cat-factory-executor-ui` tag with no configuration, and gives
+that step its own container beside the one the rest of the run shares.
+
+It is **not** pulled at boot, unlike the harness image above: it carries a browser and a JVM, and
+most deployments never dispatch to it, so the runtime pulls it the first time a UI Tester step runs.
+Expect that first dispatch to take a while. Set `LOCAL_HARNESS_IMAGE_UI` to pin a different tag or a
+local build, or pre-pull the recommended tag to move the wait somewhere you are watching. If it is
+set to something that does not exist, the UI Tester step fails at dispatch and says so.
 
 ### Version-matched harness check
 

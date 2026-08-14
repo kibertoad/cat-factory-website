@@ -166,11 +166,13 @@ the same branch on later ones. Its `pl_ralph` pipeline is the default for a Ralp
 ### Visual confirmation
 
 ::: warning Experimental
-The **Build & visual confirmation** pipeline is flagged experimental in the library. The UI Tester's
-automatic screenshot capture is not wired end to end yet, so today a person supplies the screenshots
-and reviews them. The reference side needs no upload: a design linked to the task contributes its
-own frames (see [Design context → Renders](./design-context.md#renders)), and uploading an image for
-a view overrides the design's frame for it.
+The **Build & visual confirmation** pipeline is flagged experimental in the library. Automatic
+screenshot capture needs the UI-tester image wired up (see
+[The UI-tester image](#the-ui-tester-image) below); without it a person supplies the screenshots
+and reviews them, and the gate works the same either way. The reference side needs no upload: a
+design linked to the task contributes its own frames (see
+[Design context → Renders](./design-context.md#renders)), and uploading an image for a view
+overrides the design's frame for it.
 :::
 
 This UI-focused pipeline runs Coder → Reviewer → Mock Builder → **UI Tester** → **Visual
@@ -195,6 +197,31 @@ It raises a **visual-confirmation-ready** notification and needs a binary-artifa
 screenshots and the retained frames; the gate passes through when no store is wired. The store is
 configured per account under Account → Deployment settings (see
 [Content storage](../deploy/configuration.md#content-storage-binary-artifacts)).
+
+#### The UI-tester image
+
+The UI Tester drives a real browser, so it runs on its own executor image: the standard harness plus
+Playwright and Chromium, pnpm and yarn, a static file server and a headless JRE with WireMock. It is
+kept separate on purpose, so that a browser and a JVM are not pulled on the cold start of every
+Coder, Merger and CI Fixer run. A UI Tester step therefore runs in its **own container**, beside the
+one the rest of its pipeline shares.
+
+Point your deployment at it before running the pipeline:
+
+- **Cloudflare** — publish `cat-factory-executor-ui` into your managed registry
+  (`pnpm image:publish:ui`) and add the `UiTesterContainer` class plus its `UI_CONTAINER` binding,
+  which the deployment template ships commented in place.
+- **Node with a Kubernetes runner pool** — set the pool's UI-tester image to a published
+  `cat-factory-executor-ui` tag.
+- **Local** — nothing to do: the version-matched image is used automatically and pulled the first
+  time a UI Tester step runs. Override it with
+  [`LOCAL_HARNESS_IMAGE_UI`](../reference/environment-variables.md).
+
+Until it is wired, a UI Tester step **fails at dispatch** and says which setting is missing. It is
+deliberately not run on the ordinary executor image instead: that image has no browser, so the step
+would spend a checkout, an install and several model turns before discovering it, and then report a
+generic failure to test rather than the missing wiring. Drop the UI Tester step from the pipeline to
+run the gate in its manual form.
 
 ### Authoring a document
 
