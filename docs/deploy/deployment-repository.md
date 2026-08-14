@@ -225,7 +225,8 @@ import { createWorker, defaultFoundationalServiceRegistry } from '@cat-factory/w
 export default createWorker({ overrides: { foundationalServiceRegistry } })
 export {
   ExecutionWorkflow, GitHubBackfillWorkflow, BootstrapWorkflow, EnvConfigRepairWorkflow,
-  EnvironmentTestWorkflow, ExecutionContainer, DeployContainer, WorkspaceEventsHub,
+  EnvironmentTestWorkflow, ExecutionContainer, DeployContainer, UiTesterContainer,
+  WorkspaceEventsHub,
 } from '@cat-factory/worker'
 ```
 :::
