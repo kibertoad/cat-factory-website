@@ -261,7 +261,13 @@ Screenshots and generated assets have different lifetimes in this store. Screens
 evidence and are reclaimed on a clock (the workspace's artifact-retention window, 14 days by
 default); generated assets are the deliverable the run was started to produce and are **exempt**
 from it, so they stay until the workspace is deleted. Size the store accordingly: a board that
-generates media every day accumulates.
+generates media every day accumulates. The candidates you did not keep are the exception, and only
+because the step is told to remove them once you have chosen: no clock would have.
+
+A single stored asset is capped at 24 MiB, and one run may store 200. Both are ceilings on what a
+container can write, not budgets to plan against: a step that has to deliver larger files than that
+delivers them into your organisation's own object store instead, which is what the storage selection
+on the step is for.
 
 ## Node container execution
 

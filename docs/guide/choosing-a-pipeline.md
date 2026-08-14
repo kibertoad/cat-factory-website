@@ -390,8 +390,13 @@ guess which of the two you are holding. A generator step with no selection at al
 
 A generating step can be set to **compare**: it renders more than one candidate per subject, pauses
 the run, and shows them side by side. Keep one, or turn on multi-select and keep several, each under
-its own name. What you discard is never stored. The **Generate media** pipeline ships with this on,
-because looking at two renders and picking one is the whole reason to run several image APIs at once.
+its own name. The **Generate media** pipeline ships with this on, because looking at two renders and
+picking one is the whole reason to run several image APIs at once.
+
+Every candidate is written to your storage while you decide, since that is where the picture you are
+looking at comes from. Once you have chosen, the step is told what you discarded and clears those
+files up. The platform's own asset storage accepts that; whether your organisation's store does is
+its own answer, and the step's report says which happened.
 
 The comparison window doubles as the record: once you have decided, it still shows what was compared,
 what you kept, and under which name. A step that generated only one candidate keeps it without asking
