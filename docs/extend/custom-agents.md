@@ -255,19 +255,35 @@ A kind carrying the `binary-output` trait produces binary artifacts. What makes 
 registration: the image, music, video, or 3D APIs your deployment pays for, declared on the
 `BinaryGeneratorRegistry` so a pipeline step can select among them.
 
+The platform registers one of these itself, `nano-banana` (Google's Gemini image models), which is
+what the built-in [Media pipeline](../guide/choosing-a-pipeline.md#generating-media) generates with.
+Your own registrations sit beside it on the same registry. Two things follow from that:
+
+- **An injected registry replaces the shipped set rather than adding to it.** Build yours from
+  `binaryGeneratorRegistryWithBuiltins()` (exported from every facade) unless dropping `nano-banana`
+  is what you mean, because the shipped Media pipeline selects it by id and would otherwise be
+  refused at run start for naming an integration nothing answers to.
+- **`defineBinaryGenerator` validates a definition at import**, running the same rules the boot check
+  does, so a malformed endpoint or a contract the agent could not read fails your test suite instead
+  of your next deployment. Use it in place of a bare object literal:
+
 ```ts
-binaryGeneratorRegistry.register({
-  id: 'acme-image',
-  name: 'Acme Image API',
-  summary: 'Photoreal product shots and stylised concept art.',
-  description: 'Good at product photography on a plain background. Not for text-heavy layouts.',
-  modalities: ['image'],
-  mediaTypes: ['image/png', 'image/webp'],
-  endpoint: 'https://api.acme.dev/v1',
-  guidance: 'Submissions are async: POST /jobs, then poll /jobs/{id} until state is done.',
-  credentials: [{ key: 'ACME_IMAGE_KEY', usage: 'Authorization: Bearer <value>' }],
-  contracts: [{ contractId: 'openapi', format: 'openapi', title: 'HTTP API', body: acmeImageSpec }],
-})
+import { defineBinaryGenerator, openApiContract } from '@cat-factory/node-server'
+
+binaryGeneratorRegistry.register(
+  defineBinaryGenerator({
+    id: 'acme-image',
+    name: 'Acme Image API',
+    summary: 'Photoreal product shots and stylised concept art.',
+    description: 'Good at product photography on a plain background. Not for text-heavy layouts.',
+    modalities: ['image'],
+    mediaTypes: ['image/png', 'image/webp'],
+    endpoint: 'https://api.acme.dev/v1',
+    guidance: 'Submissions are async: POST /jobs, then poll /jobs/{id} until state is done.',
+    credentials: [{ key: 'ACME_IMAGE_KEY', usage: 'Authorization: Bearer <value>' }],
+    contracts: [openApiContract({ contractId: 'openapi', title: 'HTTP API', document: acmeImageSpec })],
+  }),
+)
 ```
 
 | Field | Purpose |
