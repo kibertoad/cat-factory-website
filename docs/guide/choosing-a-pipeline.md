@@ -90,12 +90,13 @@ repoint or remove the schedule first.
 
 ### Pipeline purpose and task-type scoping
 
-Every pipeline carries a **purpose**: **Build**, **Documentation**, **Review**, **Research**, or
-**Planning**. The purpose narrows which pipelines a task can pick and which agents the builder offers:
+Every pipeline carries a **purpose**: **Build**, **Bug fix**, **Documentation**, **Review**,
+**Research**, **Planning**, or **Media**. The purpose narrows which pipelines a task can pick and
+which agents the builder offers:
 
-- A **Document** task is offered only Documentation pipelines, and a **Review** task only the
-  Review pipeline. Every other task type sees all pipelines. A pipeline with no purpose set is hidden
-  from Document and Review tasks and shown for the rest.
+- A **Document** task is offered only Documentation pipelines, a **Review** task only the Review
+  pipeline, and a **Media** task only Media pipelines. Every other task type sees all pipelines. A
+  pipeline with no purpose set is hidden from those three and shown for the rest.
 - In the builder, a non-Build purpose hides the Implementation and Testing agent categories from the
   palette, since those pipelines write no code and run no tests. Leaving implementation or testing
   steps on such a pipeline raises a warning to remove them or switch the purpose back to Build.
@@ -278,12 +279,36 @@ a property of the work you are doing. Leaving a tier unset inherits from the nex
 
 Some agent kinds produce binary artifacts rather than code: generated images, music, voice-over,
 3D assets, rendered documents. A step of such a kind stores what it produces through a
-[foundational service](./foundational-services.md), never through the platform's own artifact store,
-which holds run evidence and not product deliverables.
+[storage service](./foundational-services.md) its step selects.
 
-No built-in kind generates binaries. The kind comes from your deployment, which
-[registers it](../extend/custom-agents.md) with the `binary-output` trait, and its step in the
-builder then carries a required selection:
+### Generating media
+
+The quickest way to see this working is the built-in **Media** task type. Create a task, pick
+**Media**, describe what you want made, and start it: the **Generate media** pipeline runs one
+**Media Generator** step, which generates candidates, pauses for you to look at them, and stores
+the ones you keep.
+
+It works on a fresh deployment because the storage it points at is the platform's own: a
+`Platform asset storage` service is in every workspace's service catalog, and the bytes land in the
+account's [content storage](../deploy/configuration.md#content-storage-binary-artifacts). On a local
+deployment that is the filesystem with nothing configured. On any deployment that has configured no
+content storage at all, a Media run is refused at start with a message naming the fix, rather than
+generating and then having nowhere to put the result.
+
+What the step generates *with* is up to your deployment. With no
+[generative integrations](../extend/custom-agents.md) registered, the agent generates through
+whatever its model already offers. Register some, select them on the step, and each one renders its
+own candidates for you to compare.
+
+If your organisation already runs an asset store, register it as a
+[foundational service](./foundational-services.md) with the `asset-storage` capability and point the
+step at that instead. The one thing you give up is the read-back below: the platform can only show
+you an artifact whose bytes it holds.
+
+### Configuring a generating step
+
+Any agent kind carrying the `binary-output` trait gets this selection, whether it is the built-in
+Media Generator or one your deployment [registers](../extend/custom-agents.md) itself:
 
 | Setting | What it does |
 | --- | --- |
@@ -361,9 +386,33 @@ an unsupported generation option, or a value nothing accepts are all fixed in th
 what it asks for or which integrations it selects. The refusal names the fault, so you do not have to
 guess which of the two you are holding. A generator step with no selection at all is refused at save.
 
+### Comparing and keeping what was generated
+
+A generating step can be set to **compare**: it renders more than one candidate per subject, pauses
+the run, and shows them side by side. Keep one, or turn on multi-select and keep several, each under
+its own name. The **Generate media** pipeline ships with this on, because looking at two renders and
+picking one is the whole reason to run several image APIs at once.
+
+Every candidate is written to your storage while you decide, since that is where the picture you are
+looking at comes from. Once you have chosen, the step is told what you discarded and clears those
+files up. The platform's own asset storage accepts that; whether your organisation's store does is
+its own answer, and the step's report says which happened.
+
+The comparison window doubles as the record: once you have decided, it still shows what was compared,
+what you kept, and under which name. A step that generated only one candidate keeps it without asking
+and says so, so an unreviewed artifact is never presented as a reviewed one.
+
+### Reading the result back
+
 After the run, the step's result window reports what was stored: each artifact's service, location,
 entity, and media type, whether it went where the step pointed it, and each counted loss on its own
 line (undeclared, unparseable, invalid, over the cap, or naming an unknown service).
+
+For artifacts in the platform's own asset storage, the report also shows them: an image renders
+inline, anything else is named by its type, and both carry a link to open the file and one to save a
+copy wherever you want it. Artifacts in your organisation's own store show the location the agent
+recorded, which is what you paste into whatever reads that store, since the platform never held those
+bytes.
 
 ## Estimating and gating expensive steps
 
