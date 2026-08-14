@@ -86,6 +86,46 @@ rejected so a preview is reproducible. Image overrides use the kustomize `images
 injection is either a `Secret` resource or a `generatorEnvFile` `.env` consumed by a
 `secretGenerator`.
 
+### Pulling a private image on a local cluster
+
+A per-PR namespace is created seconds before the manifests are applied, so nothing can put a pull
+secret in it ahead of time, and an image your CI published to a private package answers 403 to a
+kubelet with no credential. The environment then provisions and never becomes ready, which looks
+like a broken cluster rather than a missing credential.
+
+On a cluster whose API server address is the machine Cat Factory runs on, it closes this itself.
+Each provision writes the workspace's own Git credential into the new namespace as a
+`dockerconfigjson` secret and attaches it to the service accounts your manifests run as, before any
+workload is applied. There is no field for it and nothing to set up. The addresses that qualify are
+the ones a local kubeconfig actually contains: `127.0.0.1`, `localhost` and `::1`, the `0.0.0.0`
+k3d writes by default, and Docker Desktop's `kubernetes.docker.internal` and
+`host.docker.internal`. That covers every local k3s, k3d, kind and Rancher Desktop cluster as
+installed.
+
+Three things bound it:
+
+- **The token still needs package-read rights.** It is your VCS connection's own credential, so a
+  classic PAT needs `read:packages`, a fine-grained token needs "Packages: Read", and a GitHub App
+  installation needs `packages: read`. Without that the pull fails exactly as before.
+- **Only registries that credential covers.** GHCR for a GitHub connection, the GitLab container
+  registry for a GitLab one, and a self-hosted instance's own host. An image on Docker Hub or a
+  third-party registry is left alone, because a Git token has no business being offered to it.
+- **The credential is short-lived and is not renewed.** It expires about an hour after the
+  provision, which covers the rollout. If a workload is restarted or scaled up long afterwards, its
+  new pods hit the same 403 again; re-provision the environment to write a fresh credential, or
+  make the package public if the environment is a long-lived one.
+
+One case on a local cluster is skipped: if your kustomize overlay sets its own namespace and you
+have not configured a namespace template, the namespace is only known once the overlay is built,
+which happens after this step. The provisioning log says so, and configuring a namespace template
+(which also gives you real per-PR isolation) is what turns it back on.
+
+Remote clusters are untouched: pushing a credential into every preview namespace is a reasonable
+trade on a cluster you throw away and not one to make silently on a shared one, so there it stays
+your decision (a pre-created pull secret referenced by your own manifests). Either way, each
+provision records what it did under `registry-auth` in the environment's provisioning log, naming
+the registry it wired or the reason it wired nothing.
+
 ### How the preview URL is resolved
 
 Pick the **URL source** that matches how your cluster exposes services:
