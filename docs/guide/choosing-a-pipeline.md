@@ -295,10 +295,18 @@ deployment that is the filesystem with nothing configured. On any deployment tha
 content storage at all, a Media run is refused at start with a message naming the fix, rather than
 generating and then having nowhere to put the result.
 
-What the step generates *with* is up to your deployment. With no
-[generative integrations](../extend/custom-agents.md) registered, the agent generates through
-whatever its model already offers. Register some, select them on the step, and each one renders its
-own candidates for you to compare.
+What the step generates *with* ships too. The **Generate media** pipeline selects **Nano Banana**,
+Google's Gemini image models, the one [generative integration](../extend/custom-agents.md#generative-binary-integrations)
+the platform registers for you. It needs one credential: a `GEMINI_API_KEY` from
+[Google AI Studio](https://aistudio.google.com/apikey), set as a
+[capability credential](../deploy/configuration.md#capability-credentials) on the workspace (or in
+the environment your runs dispatch from). Billing has to be enabled on the Google project, since
+none of these models has a free tier.
+
+Without that key the run still happens: the agent is told the integration is unavailable and reports
+that as the reason nothing was generated, rather than quietly producing whatever its own model can
+draw. Register [your own integrations](../extend/custom-agents.md#generative-binary-integrations)
+beside it and select them on the step, and each one renders its own candidates for you to compare.
 
 If your organisation already runs an asset store, register it as a
 [foundational service](./foundational-services.md) with the `asset-storage` capability and point the
@@ -314,7 +322,7 @@ Media Generator or one your deployment [registers](../extend/custom-agents.md) i
 | --- | --- |
 | **Storage service** | The catalog service every artifact is stored through. It must carry the `asset-storage` capability tag. |
 | **Context services** | Further catalog services consulted for the scope of the generation: an inventory that can say what entities exist, which lack an asset, and how each is described. No capability tag is required. |
-| **Generative integrations** | Which of the deployment's registered image, audio, video, or 3D APIs this step may call. Leave it empty and the step generates through whatever its agent already has, such as a model with native image output. |
+| **Generative integrations** | Which image, audio, video, or 3D APIs this step may call: the shipped `Nano Banana`, plus whatever your deployment registered. Leave it empty and the step generates through whatever its agent already has, such as a model with native image output. |
 | **Content types** | What the step must deliver: `image`, `audio`, `video`, `3d-model`, `3d-scene`, or `document`. Every one must be covered by a selected integration. |
 | **Formats** | Exact media types the step must deliver (`model/gltf-binary`, `image/png`). Every entry is required, not any-of. |
 

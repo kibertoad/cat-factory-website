@@ -328,6 +328,12 @@ need **by name**. Fill those names in per workspace on the **Infrastructure** wi
 credentials** tab, which sits beside the package registries because what an agent's tools authenticate
 as belongs with where those agents run. The tab needs `secrets.manage`.
 
+The shipped `Nano Banana` integration is one such row on every deployment: it asks for
+`GEMINI_API_KEY`, an API key from [Google AI Studio](https://aistudio.google.com/apikey) with billing
+enabled on the project. Fill it and the built-in
+[Media pipeline](../guide/choosing-a-pipeline.md#generating-media) generates; leave it empty and a
+Media run reports the missing credential as the reason nothing was made.
+
 The panel is a checklist projected from the deployment's own registrations, never a blank key-value
 form. Each row names the key, who asks for it (a tool server or a generative integration), whether it
 is required, and when it was last set. Values are write-only: a stored value is replaced by typing a
