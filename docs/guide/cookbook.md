@@ -58,9 +58,9 @@ Decide first which of the two shapes you want, because they behave differently.
 
 **A companion loops its producer back automatically.** Hover the producer step in the draft and
 click **Add the &lt;companion&gt;**. It is inserted directly after the step it reviews, rates the
-work, and sends it back for rework below the quality bar without asking anyone. When it spends its
-rework budget it parks with a **Decide** prompt (one more round, proceed anyway, or stop and reset).
-The shipped pairs:
+work, and sends it back for rework without asking anyone whenever the rating is below the quality
+bar or the review left a **Must fix** finding open. When it runs out of rework rounds it parks with
+a **Decide** prompt (one more round, proceed anyway, or stop and reset). The shipped pairs:
 
 | Producer | Companion |
 | --- | --- |

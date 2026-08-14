@@ -88,12 +88,17 @@ rework, or skip rather than wondering why a step looped.
 
 ### Reading a companion's verdict
 
-A companion's whole review is one piece of prose, so it is written and rendered to be skimmed. Each
-grading round gets its own card rather than being appended to the score line, and the verdict is laid
-out as blocks: one short sentence on what the work is and what holds it back, then **Must fix**,
-**Should fix**, and **Minor** groups (only the ones it has points for), worst first, each bullet a
-short bolded title plus the concrete change to make. You can tell what blocks the work from what is a
-nit without reading all of it.
+Each grading round gets its own card rather than being appended to the score line. A card carries the
+rating against the step's bar, a short verdict on the work as a whole, and then the findings
+themselves: one entry per point, tagged **Must fix**, **Should fix** or **Minor**, worst first, each
+a short bolded title plus the concrete change to make. You can tell what blocks the work from what is
+a nit without reading all of it.
+
+Those tags are not only for you to read. **A run does not advance while a Must fix is open**,
+whatever the rating says. A rating is one number over a whole deliverable, so a review can score work
+above its bar and still have named something that must not ship; when it does, the producer is sent
+back to fix it rather than the pipeline moving on. The rating decides everything else: at or above
+the bar with nothing must-fix outstanding, the run continues.
 
 Every round is handed the rounds before it, so a companion re-grading a revised document knows what it
 asked for last time. That is what makes a rework budget buy convergence rather than a fresh sample of
@@ -104,8 +109,8 @@ Reviewer prose renders as Markdown throughout: judge summaries and findings, the
 [Best-practice adherence](./prompt-fragments.md) section, and the PR review's summary, findings and
 challenge verdicts. Fields carrying a value you copy rather than prose (a suggested fix, a gate's
 failure summary) stay preformatted, so a path with underscores and a command's quoting survive intact.
-A judge writes a short whole-verdict paragraph instead of the grouped bullets, because its points are
-already rendered as their own list beside the summary.
+Every reviewer's summary is a whole-verdict paragraph rather than a restatement of its points, since
+those are already rendered as their own list beside it.
 
 ### The agent's effort report
 
@@ -266,11 +271,12 @@ When a step needs human input it moves to **Needs decision** and shows a **decis
 Answer the questions to continue. The most common prompts are the **Requirements Reviewer** and the
 **Architect**, which pause for your approval before implementation proceeds.
 
-A second kind of prompt comes from a **companion that has spent its automatic rework budget**. When
-the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer above
-its quality bar within the allowed rounds, it stops auto-looping and parks for you with a **Decide**
-button (rather than a plain Approve) offering three choices, the same three the requirements
-reviewer offers at its iteration cap:
+A second kind of prompt comes from a **companion whose rework loop has stopped**. When the Spec
+Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer past it within
+the allowed rounds — either because the rating never reached the quality bar, or because a **Must
+fix** finding is still open — it stops auto-looping and parks for you with a **Decide** button
+(rather than a plain Approve) offering three choices, the same three the requirements reviewer
+offers at its iteration cap:
 
 - **One more round**: raise the budget by one and loop the producer back for another pass.
 - **Proceed anyway**: accept the producer's current output and advance the pipeline.
@@ -281,17 +287,24 @@ How many rounds it gets before that is **Companion rework rounds** on the task's
 [risk policy](./pull-requests.md#conflicts-ci-and-the-merger), three on every built-in policy. Raise
 it on a board whose specs and designs usually need a couple of passes; lower it where a round costs
 more than it earns. Setting it to **0** does not switch the companion off: it still grades the work
-and writes its verdict, and the first verdict below the bar comes straight to you instead of buying a
-round. Note that a round you grant here yourself is on top of the budget, not out of it.
+and writes its verdict, and the first verdict it does not pass comes straight to you instead of
+buying a round. Note that a round you grant here yourself is on top of the budget, not out of it.
 
 A judge that spends its bounce budget below the threshold, and an iterative review that spends its
 pass budget without converging, park the same way and for the same reason: the automation is
 reporting that it gave up, not asking you to settle a judgement.
 
+An open **Must fix** is the exception, and it matters for the unattended case below. That park is
+not the automation giving up: it is a reviewer saying this work must not go further, so proceeding
+past it overrules a review rather than confirming that a loop should stop trying. Only a person
+makes that call.
+
 If nobody is watching the run, though, none of the three choices reaches anyone. A run started over
 the API, dispatched from a ticket or fired by a schedule resolves the workspace's **unattended**
 risk policy, and if that policy says so the platform takes **Proceed anyway** itself and records that
-it did. See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
+it did. It will not do that for an open **Must fix**: an unattended run parks on one exactly as an
+attended run does, and waits. See
+[Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 
 A run parked on a decision waits as long as it needs; it is never cancelled for taking too long.
 Instead, its inbox notification turns red and is flagged **Overdue** once it has waited past the

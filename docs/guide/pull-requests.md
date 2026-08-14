@@ -201,6 +201,9 @@ confirmation, the human and PR review gates, a brainstorm or interview, the impl
 and the pre-dispatch input gate all stop the run whichever posture is in force, and a companion step
 that is also gated still raises its approval gate at the cap. Nor does it answer a review that is
 asking **questions**: those answers are a product judgement, so that park stands under either posture.
+The same holds for a companion parked on an open **Must fix** finding. Proceeding there overrules a
+reviewer's judgement that the work must not go further, which is a different thing from confirming
+that a loop should stop trying, so that one waits for a person under either posture too.
 
 Each of these is recorded as settled by policy on the step it happened on, rather than left looking
 like a bar the work met: whoever reviews the resulting pull request can tell a run that proceeded
