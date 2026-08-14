@@ -83,7 +83,8 @@ opposite empty semantics.
 
 **Notification cards** (`types`). Omitting `types`, or passing `[]`, delivers the defaults, the cards
 a headless overseer must react to: `requirement_review`, `clarity_review`, `decision_required`,
-`fork_decision_pending`, `merge_review`, `pipeline_complete`, `ci_failed`, and `test_failed`.
+`fork_decision_pending`, `merge_review`, `pipeline_complete`, `ci_failed`, `test_failed`, and
+`deploy_blocked`.
 Operator-only cards such as `platform_health`, `budget_paused`, and `key_drift` are excluded by
 default so the endpoint isn't a firehose; list them explicitly if you want them. A card is pushed
 when it is raised and again when it is resolved.

@@ -715,7 +715,8 @@ merge-review requests, completed pipelines, and gate failures.
 | `POST` | `/api/v1/notifications/{id}/dismiss` | write | Dismiss a card without acting on it. |
 
 `act` only accepts cards with an automated action: `merge_review`, `pipeline_complete`, `ci_failed`,
-and `test_failed`. Any other open card returns `409 notification_not_actionable`; dismiss it instead.
+`test_failed`, and `deploy_blocked`. Any other open card returns `409 notification_not_actionable`;
+dismiss it instead.
 A merge triggered through `act` uses the deployment's GitHub installation token.
 
 ## Headless jobs

@@ -104,6 +104,39 @@ status, distinct from never-configured. The infrastructure banner and the board 
 dead runner pool or environment provider announces itself instead of waiting for the next run to
 discover it.
 
+## When a provision fails
+
+A failed provision is classified by CAUSE, not reported as one flat "environment failed". The
+distinction decides who is being asked to do something, and only one class is anything a repository
+can fix.
+
+**A placeholder your connection was meant to fill is refused before anything is applied.** A
+manifest that says `image: "{{image}}"` is correct; if the connection carries no image template, the
+value renders empty and the platform you deploy to reports a required field missing on a document
+whose source says nothing of the kind. Instead the provision stops up front and names the
+placeholder, the connection setting that fills it, and that the repository is not at fault. A
+placeholder the RUN supplies (the PR branch, the bound frontend origins, a peer environment's URL)
+is left to render empty as it always has: those are legitimately absent on an ordinary provision, so
+they are not a reason to stop.
+
+**A manifest the platform rejected on its own merits is repaired automatically.** That is the one
+class an edit in the checkout can address, so the `deployer` step escalates to a Deploy Fixer agent,
+which commits a fix to the pull-request branch, and the environment is stood up again. Two rounds by
+default; the step's `deployFix` option bounds it or turns it off for a deployer pointed at
+infrastructure you would rather have a person look at. Whether the repair worked is settled by the
+re-provision, never by the agent's account of itself.
+
+**Every other cause fails the run as it did before.** An unset connection setting, an image CI has
+not published, a refused credential, an unreachable cluster and a workload that never became healthy
+are all things no edit to the deployment files can fix, and an agent handed one has exactly one move
+available: weaken the deployment until the error goes away. A cause the platform could not identify
+is treated the same way, because "we could not tell what went wrong" is not evidence that an edit
+would help. Container-rendered deployments (kustomize, Helm) report their failures as command output
+rather than a structured cause, so they are not classified yet and never escalate.
+
+When the repair budget is spent, the run fails and raises a **deployment blocked** card. Acting on it
+retries the run, so the loop is the same one a red CI gate offers.
+
 ## Seeding handlers from the deployment
 
 A deployment that knows its own infrastructure can declare environment handlers in code, so a
