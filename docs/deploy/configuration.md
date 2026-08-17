@@ -91,6 +91,8 @@ For who is allowed to create an account and how roles and invitations work, see
 | `AUTH_ALLOWED_EMAIL_DOMAINS` | Comma-separated domains allowed to self-sign-up without an invite (password/Google), and allowed to sign in with a PAT. Empty means invite-only. |
 | `AUTH_ALLOWED_LOGINS` | Comma-separated GitHub/GitLab logins allowed to sign in with a PAT. |
 | `AUTH_ALLOWED_ORGS` | Comma-separated orgs whose members may sign in with a PAT. |
+| `AUTH_ALLOWED_REDIRECT_ORIGINS` | Comma-separated origins a login may land on besides the API's own. Required when the SPA is served from a different origin than the API. See [Where a login lands](#where-a-login-lands). |
+| `AUTH_SUCCESS_REDIRECT_URL` | One fixed landing URL for every login, which overrides the requested target entirely. The simplest choice for a deployment with a single SPA. |
 | `GITHUB_APP_ID` | Identifies the GitHub App used for repository operations. |
 | `GITHUB_APP_PRIVATE_KEY` | PKCS#8 private key that signs App requests and mints installation tokens. |
 | `GITHUB_WEBHOOK_SECRET` | Verifies inbound webhook payloads. Verification fails closed on an empty secret, so set a non-empty value on any deployment that receives GitHub webhooks. |
@@ -118,6 +120,24 @@ all three are empty). [Local mode](./local.md#signing-in) is the exception: it s
 deployment's configured PAT or a local password. GitLab PAT sign-in is offered only when the
 deployment has a GitLab connection configured (`GITLAB_TOKEN`, below); GitLab group membership then
 counts toward `AUTH_ALLOWED_ORGS`, matching GitHub.
+
+### Where a login lands
+
+After a sign-in round-trip the browser is sent to a landing URL carrying the new session token in
+the URL fragment. Because that URL receives the token, the deployment decides which ones are
+allowed, and an unrecognised target is replaced by the API's own origin rather than honoured:
+
+- **`AUTH_SUCCESS_REDIRECT_URL`**, when set, is used for every login and nothing else is consulted.
+- Otherwise a login may land on the API's **own origin**, on a **loopback** address
+  (`localhost`, `127.0.0.0/8`, `::1`, which is what lets a local node sign in through a hosted
+  deployment), or on any origin listed in **`AUTH_ALLOWED_REDIRECT_ORIGINS`**.
+
+So a deployment serving its SPA from a different origin than the API (say the SPA on
+`https://app.example.com` and the API on `https://api.example.com`) must list the SPA origin, or
+people finish signing in on the API host and the SPA never receives the session. Entries are full
+origins, comma-separated: `https://app.example.com,https://staging.example.com`. A scheme is part
+of an origin, so an entry without one (`app.example.com`) is refused **at boot**, naming itself,
+rather than being kept as a rule nothing can match.
 
 ### What a personal access token can do on the run path
 
