@@ -35,8 +35,8 @@ to review and merge. The same board is where you watch every run as it happens a
 agent needs you. It is self-hosted and MIT licensed, so the whole platform is yours to run.
 
 What the board tracks is work in flight: the state of every pipeline, the stage each one reached, what
-it has spent, and which decisions are waiting on a person. Grooming, estimation, and sprint planning
-stay in the tracker you already run.
+it has spent, and which decisions are waiting on a person. Backlog refinement, estimation, and
+sprint planning stay in the tracker you already run.
 
 ## Where to next?
 

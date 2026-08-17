@@ -10,9 +10,9 @@ your input.
 
 The tracking is about work in flight: which pipelines are running, what stage each one reached, what
 it has spent, and which decisions are waiting on a person. It is not a replacement for Jira or
-Linear. Grooming, estimation, sprint planning, and the long tail of a backlog stay in the tracker you
-already run, and Cat Factory imports the issues you have decided to build and writes progress back to
-them.
+Linear. Refinement, estimation, sprint planning, and the long tail of a backlog stay in the tracker
+you already run, and Cat Factory imports the issues you have decided to build and writes progress
+back to them.
 
 ## Who it's for
 
