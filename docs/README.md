@@ -2,7 +2,7 @@
 home: true
 title: Home
 heroText: Cat Factory
-tagline: A visual board, LLM coding agents, and a live view of every run in flight and every decision waiting on you. Tickets and plans go in, reviewed pull requests come out. Free, MIT licensed, and running entirely on your own infrastructure and the coding subscriptions you already pay for.
+tagline: A visual board, LLM coding agents, and a live view of every run in flight and every decision waiting on you. Tickets and plans go in, reviewed pull requests come out. Drive it from the board or entirely headlessly, over a versioned public API with SDKs for four languages. Free, MIT licensed, and running entirely on your own infrastructure and the coding subscriptions you already pay for.
 actions:
   - text: Get Started →
     link: /guide/introduction.html
@@ -21,9 +21,13 @@ features:
     details: Per-task risk policies set what merges without a human, through score ceilings, rules per change class (a migration is not a test-only diff), narrowing by workspace role, retry budgets, and human decision gates you can place anywhere in a pipeline.
   - title: Scales from one engineer to a whole org
     details: One person on a laptop and an engineering organization running every team's agent flows share the same build. Start with a model provider and nothing else; grow into directory SSO with group gating, an org-wide monthly LLM cap that meters spend and auto-pauses at the ceiling, and an audit log kept to outlive every other record. At either size, every step, decision, failure, and dollar streams live to the board, with traces exportable to OpenTelemetry or Langfuse.
+  - title: A public API you can build on
+    details: "A key-authenticated HTTP surface under /api/v1 covers the whole board, so a deployment can provision and run itself with nobody opening the app: link or bootstrap repositories, connect a cluster, file tasks from Jira, Linear, or GitHub tickets, start, stop, and retry runs, answer parked human decisions, read the workspace's spend, and drill into a finished run's model calls. It ships as an OpenAPI 3.1 document with official TypeScript, Python, Go, and Java/Kotlin clients generated from it, an MCP server over the same operations, and a stability contract: changes are additive, and a breaking one is served beside the old shape instead of replacing it."
+  - title: Headless from ticket to merged PR
+    details: "Runs started over the API execute exactly as board runs and show up on the board, with keyset-paged lists, per-run Server-Sent Events, and an outbound webhook that pushes anything needing an answer to your own endpoint. Set a run's risk policy to unattended and it takes the documented answer to each judgement call and records that it did, so a scheduled or CI-started run reaches a pull request instead of parking forever, while the gates you placed on purpose still stop it for a person."
   - title: Run it and extend it your way
     details: One machine, Cloudflare Workers, or self-hosted Node, on the coding subscriptions you already pay for instead of metered API spend. Add your own agents, gates, task types, and integrations through a manifest model and the published @cat-factory/* packages.
-footer: MIT Licensed | Copyright © Cat Factory contributors
+footer: MIT Licensed | Copyright © Igor Savin
 ---
 
 ## What it does
