@@ -2,7 +2,7 @@
 home: true
 title: Home
 heroText: Cat Factory
-tagline: A visual board, task management, and LLM coding agents in one place. Turn tasks into reviewed pull requests you can watch run end to end. Run it on your own machine, on the coding subscriptions you already pay for.
+tagline: A visual board, LLM coding agents, and a live view of every run in flight and every decision waiting on you. Tickets and plans go in, reviewed pull requests come out. Free, MIT licensed, and running entirely on your own infrastructure and the coding subscriptions you already pay for.
 actions:
   - text: Get Started →
     link: /guide/introduction.html
@@ -11,27 +11,32 @@ actions:
     link: /guide/core-concepts.html
     type: secondary
 features:
-  - title: 100% free and open source
-    details: MIT licensed, no paid tier, no open-core holdback, nothing behind a license key. You run the whole platform on your own infrastructure, so your code, data, and model credentials never leave it.
+  - title: From ticket to reviewed pull request
+    details: Import an issue from Jira, Linear, or GitHub Issues, or write the task on the board. An ordered agent chain (Architect → Coder → Reviewer → Tester → Acceptance) plans it, writes the code against a real repository checkout, reviews and tests it, opens the pull request, and comments the outcome back on the ticket.
   - title: The board is the plan
-    details: Lay out services, modules, and tasks on a pannable, zoomable canvas. Every block is both your plan and a unit of work, so there's no separate backlog to keep in sync.
-  - title: Agents do real work
-    details: Coding agents clone your repository, implement the task, and open a pull request. A block is "done" only when its PR is merged with passing CI.
-  - title: Multi-stage pipelines
-    details: Compose ordered agent chains (Architect → Coder → Reviewer → Tester → Acceptance) with default models per agent kind and human decision points along the way.
-  - title: Human in the loop
-    details: A reviewer agent flags open questions and risky assumptions before code is written. You answer the questions, approve the plan, and review every PR before merge.
-  - title: Run it your way
-    details: Heavy cloud workloads on Cloudflare Workers or self-hosted Node.js, or the whole platform on one machine in local mode. Run agents on coding subscriptions you already pay for instead of metered API spend.
+    details: Lay out services, modules, and tasks on a pannable, zoomable canvas, with dependency edges and context attached where it belongs. Nobody drags a card to done. A block closes when its pull request merges with CI green, so the board reports what actually shipped.
+  - title: 100% free and open source
+    details: MIT licensed, no paid tier, no open-core holdback, nothing behind a license key. Everything on this page ships in the version you self-host, and your code, data, and model credentials never leave your own infrastructure.
+  - title: You decide what agents may land
+    details: Per-task risk policies set what merges without a human, through score ceilings, rules per change class (a migration is not a test-only diff), narrowing by workspace role, retry budgets, and human decision gates you can place anywhere in a pipeline.
+  - title: Enterprise-grade operations
+    details: Every step, decision, failure, and dollar streams live to the board, with traces exportable to OpenTelemetry or Langfuse. An org-wide monthly LLM cap meters spend and auto-pauses on the ceiling, directory SSO with group gating decides who gets in, and the audit log is kept to outlive every other record.
+  - title: Run it and extend it your way
+    details: One machine, Cloudflare Workers, or self-hosted Node, on the coding subscriptions you already pay for instead of metered API spend. Add your own agents, gates, task types, and integrations through a manifest model and the published @cat-factory/* packages.
 footer: MIT Licensed | Copyright © Cat Factory contributors
 ---
 
 ## What it does
 
-You lay out work on a visual board. LLM agents pick up each block, implement it against a real
-repository checkout, and open pull requests for your team to review and merge. The same board is
-where you watch every run as it happens and step in when an agent needs you. It is self-hosted and
-MIT licensed, so the whole platform is yours to run.
+You lay out work on a visual board, writing blocks yourself or importing issues from Jira, Linear, or
+GitHub Issues, which stay the source of truth and get progress written back to them. LLM agents pick
+up each block, implement it against a real repository checkout, and open pull requests for your team
+to review and merge. The same board is where you watch every run as it happens and step in when an
+agent needs you. It is self-hosted and MIT licensed, so the whole platform is yours to run.
+
+What the board tracks is work in flight: the state of every pipeline, the stage each one reached, what
+it has spent, and which decisions are waiting on a person. Grooming, estimation, and sprint planning
+stay in the tracker you already run.
 
 ## Where to next?
 

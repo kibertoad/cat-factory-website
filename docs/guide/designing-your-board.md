@@ -1,7 +1,9 @@
 # Design Your Board
 
 For whoever lays out the work before any agent runs. The board is where you describe what you're
-building, and it is also the work queue, so there is no separate backlog to keep in sync. This page
+building, and it is also the work queue. Blocks can start here, or come from an issue imported from a
+connected tracker (see [Connect Issue & Document Sources](./issue-sources.md)); either way the
+tracker stays the source of truth for the issue and the board is where the work runs. This page
 covers building and organizing that structure.
 
 ## The canvas
