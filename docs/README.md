@@ -13,14 +13,14 @@ actions:
 features:
   - title: From ticket to reviewed pull request
     details: Import an issue from Jira, Linear, or GitHub Issues, or write the task on the board. An ordered agent chain (Architect → Coder → Reviewer → Tester → Acceptance) plans it, writes the code against a real repository checkout, reviews and tests it, opens the pull request, and comments the outcome back on the ticket.
-  - title: The board is the plan
-    details: Lay out services, modules, and tasks on a pannable, zoomable canvas, with dependency edges and context attached where it belongs. Nobody drags a card to done. A block closes when its pull request merges with CI green, so the board reports what actually shipped.
+  - title: Watch it all happen on one canvas
+    details: Zoom out for the whole system; zoom into a running task and its card opens into the live pipeline, its steps, and what it has spent. Runs in flight, failures, and decisions waiting on you appear where the work sits, and you answer a gate or retry a step right there instead of tailing logs.
   - title: 100% free and open source
     details: MIT licensed, no paid tier, no open-core holdback, nothing behind a license key. Everything on this page ships in the version you self-host, and your code, data, and model credentials never leave your own infrastructure.
   - title: You decide what agents may land
     details: Per-task risk policies set what merges without a human, through score ceilings, rules per change class (a migration is not a test-only diff), narrowing by workspace role, retry budgets, and human decision gates you can place anywhere in a pipeline.
-  - title: Enterprise-grade operations
-    details: Every step, decision, failure, and dollar streams live to the board, with traces exportable to OpenTelemetry or Langfuse. An org-wide monthly LLM cap meters spend and auto-pauses on the ceiling, directory SSO with group gating decides who gets in, and the audit log is kept to outlive every other record.
+  - title: Scales from one engineer to a whole org
+    details: One person on a laptop and an engineering organization running every team's agent flows share the same build. Start with a model provider and nothing else; grow into directory SSO with group gating, an org-wide monthly LLM cap that meters spend and auto-pauses at the ceiling, and an audit log kept to outlive every other record. At either size, every step, decision, failure, and dollar streams live to the board, with traces exportable to OpenTelemetry or Langfuse.
   - title: Run it and extend it your way
     details: One machine, Cloudflare Workers, or self-hosted Node, on the coding subscriptions you already pay for instead of metered API spend. Add your own agents, gates, task types, and integrations through a manifest model and the published @cat-factory/* packages.
 footer: MIT Licensed | Copyright © Cat Factory contributors
