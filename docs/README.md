@@ -104,7 +104,7 @@ Cat Factory connects to the tools you already use. Everything below ships in eve
 | **Repositories & pull requests** | <ul><li>GitHub (via GitHub App)</li><li>GitLab (all runtimes)</li></ul> |
 | **Issue trackers** | <ul><li>Jira</li><li>GitHub Issues</li><li>Linear</li></ul>Seed tasks from issues and write progress back. |
 | **Document & context sources** | <ul><li>Confluence</li><li>Notion</li><li>GitHub repo docs</li><li>Figma & Zeplin (design context)</li><li>Linear Docs</li></ul> |
-| **Model providers** | <ul><li>Coding subscriptions: Claude, GLM, ChatGPT/Codex</li><li>Direct API keys: Anthropic, OpenAI, Qwen, DeepSeek, Moonshot</li><li>Aggregators: OpenRouter, LiteLLM</li><li>Local runners: Ollama, LM Studio</li></ul> |
+| **Model providers** | <ul><li>Coding subscriptions: Claude, GLM, ChatGPT/Codex</li><li>Direct API keys: Anthropic, OpenAI, Qwen, DeepSeek, Moonshot, xAI</li><li>Aggregators: OpenRouter, Bifrost, LiteLLM</li><li>Local runners: Ollama, LM Studio</li></ul> |
 | **Sign-in** | <ul><li>Enterprise SSO (any OpenID Connect provider)</li><li>GitHub</li><li>Google</li><li>Email and password</li></ul> |
 | **Notifications** | <ul><li>In-app inbox</li><li>Slack (optional)</li><li>Email invitations</li></ul> |
 
@@ -151,7 +151,7 @@ Run agents on a coding subscription you already hold (Claude Pro/Max, GLM Coding
 ChatGPT/Codex) instead of metered API spend. These plans are kept per-user, so each vendor's
 individual-use terms stay respected, and they unlock
 [subscription-only models](/guide/model-providers.html) with no API-key equivalent. For shared,
-org-wide access, set a direct provider key, an aggregator like OpenRouter or LiteLLM, or run a
+org-wide access, set a direct provider key, an aggregator like OpenRouter, Bifrost or LiteLLM, or run a
 [local model](/guide/model-providers.html#running-on-a-local-llm-ollama-lm-studio) with no key and
 no spend.
 

@@ -28,16 +28,17 @@ serve, the task inspector flags the mismatch so a run never silently falls back.
 
 ## Connecting a direct provider key
 
-Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, and a
-self-hosted LiteLLM gateway) are onboarded in the UI and stored encrypted. Open **Model providers**
-from the sidebar's **Models** group. It splits credentials into horizontal tabs, one per kind:
+Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, xAI, OpenRouter, and a
+self-hosted Bifrost or LiteLLM gateway) are onboarded in the UI and stored encrypted. Open **Model
+providers** from the sidebar's **Models** group. It splits credentials into horizontal tabs, one per
+kind:
 
 - **Workspace pool**: pooled coding-plan subscriptions and commercial keys a team shares (Kimi,
   DeepSeek).
 - **Direct providers**: per-vendor API keys that talk straight to the vendor (OpenAI, Anthropic,
-  Qwen, DeepSeek, Moonshot).
-- **Proxies**: OpenAI-compatible gateways that front many upstream models (OpenRouter, LiteLLM),
-  kept separate because they are intermediaries, not vendors.
+  Qwen, DeepSeek, Moonshot, xAI).
+- **Proxies**: OpenAI-compatible gateways that front many upstream models (OpenRouter, Bifrost,
+  LiteLLM), kept separate because they are intermediaries, not vendors.
 - **Personal subscriptions**: individual-use credentials each member connects for their own runs.
 
 Each key is connected at one of three **scopes**, and a run draws from all
@@ -53,7 +54,7 @@ one and the model falls back to a subscription or Cloudflare. Because the keys a
 this is the supported path for **org-wide, programmatic, and unattended** access, including the
 Claude and GPT models that a personal subscription keeps per-user.
 
-Models served through OpenRouter, LiteLLM, and the other OpenAI-compatible direct providers back the
+Models served through OpenRouter, Bifrost, LiteLLM, and the other OpenAI-compatible direct providers back the
 **repo-operating container agents** (Coder, CI Fixer, and the repo bootstrap), not just the inline
 ones: the backend proxy forwards them the same way, so any connected provider is selectable for every
 agent kind.
@@ -65,9 +66,9 @@ flavour, which the badge reflects. The step metrics bar then breaks out cached i
 [observability dashboard](../operate/observability.md#the-built-in-dashboard) reports the cache-hit
 rate per run. See [Control Spend with Budgets → Prompt caching](./budgets.md#prompt-caching).
 
-### Aggregator gateways: OpenRouter and LiteLLM
+### Aggregator gateways: OpenRouter, Bifrost and LiteLLM
 
-Two of the direct providers are OpenAI-compatible gateways that front many upstream models:
+Three of the direct providers are OpenAI-compatible gateways that front many upstream models:
 
 - **OpenRouter** reaches hundreds of models through one key (`sk-or-…`), and is a first-class entry
   in the **Models** section. Connect the key inline there, then
@@ -77,11 +78,15 @@ Two of the direct providers are OpenAI-compatible gateways that front many upstr
   your [budget](./budgets.md). When only an OpenRouter key is in scope, a logical model routes through
   OpenRouter automatically; add the native vendor key and it switches to the vendor. The gateway URL
   has a public default, so the catalog works as soon as the key is connected.
-- **LiteLLM** is a gateway **you host**. Connect a virtual key (or its master key) the same way, but
-  its model stays unselectable until your operator sets the gateway's base URL
-  ([`LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)). A pipeline that pins a LiteLLM
-  model is blocked at start until then, rather than failing mid-run. Rename the catalog's generic
-  entry and tune its pricing to match your gateway's actual routing.
+- **Bifrost** and **LiteLLM** are gateways **you host**. Connect a virtual key (or the gateway's own
+  API/master key) the same way, but the model stays unselectable until your operator sets that
+  gateway's base URL
+  ([`BIFROST_BASE_URL` / `LITELLM_BASE_URL`](../deploy/configuration.md#llm-providers)). A pipeline
+  that pins one is blocked at start until then, rather than failing mid-run. Each ships one generic
+  catalog entry, since what a gateway you run serves is your own configuration: repoint it and tune
+  its pricing to match your gateway's actual routing. Bifrost names models by their canonical
+  `provider/model` pair (its entry defaults to `openai/gpt-4o`); LiteLLM by the `model_name` aliases
+  in your `config.yaml`.
 
 ### AWS Bedrock
 

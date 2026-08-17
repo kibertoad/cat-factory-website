@@ -155,7 +155,8 @@ merges through a real merge request, and users can sign in with a GitLab PAT. Se
 
 ## LLM providers
 
-Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, OpenRouter, LiteLLM) are
+Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, xAI, OpenRouter, Bifrost,
+LiteLLM) are
 onboarded **in the UI**, scoped to an account, workspace, or user, pooled, and stored encrypted
 under [`ENCRYPTION_KEY`](#credential-encryption).
 The same is true of **vendor credentials**: a coding-plan subscription (Claude, GLM, or Codex, kept
@@ -170,8 +171,9 @@ aggregator-gateway base URLs, and routing defaults:
 | Variable | Purpose |
 | --- | --- |
 | `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` | Serve Cloudflare Workers AI over REST off Cloudflare (no provider key; optional `CLOUDFLARE_AI_GATEWAY`). On the Worker, the `AI` binding serves it instead. |
-| `OPENAI_BASE_URL` / `QWEN_BASE_URL` / `DEEPSEEK_BASE_URL` / `MOONSHOT_BASE_URL` | Optional base-URL overrides for the OpenAI-compatible direct providers (the keys themselves come from the UI pool). |
+| `OPENAI_BASE_URL` / `QWEN_BASE_URL` / `DEEPSEEK_BASE_URL` / `MOONSHOT_BASE_URL` / `XAI_BASE_URL` | Optional base-URL overrides for the OpenAI-compatible direct providers (the keys themselves come from the UI pool). |
 | `OPENROUTER_BASE_URL` | Optional. Overrides the OpenRouter gateway; defaults to the public gateway (`https://openrouter.ai/api/v1`), so OpenRouter works with just a connected key. |
+| `BIFROST_BASE_URL` | **Required to enable Bifrost.** Your self-hosted Bifrost gateway URL, e.g. `http://localhost:8080/v1`. Until it is set, a connected Bifrost key yields no selectable model. |
 | `LITELLM_BASE_URL` | **Required to enable LiteLLM.** Your self-hosted LiteLLM gateway URL. Until it is set, a connected LiteLLM key yields no selectable model. |
 | `BEDROCK_REGION` + AWS credentials + `BEDROCK_MODELS` | AWS Bedrock, via `@cat-factory/provider-bedrock`. `BEDROCK_MODELS=""` (set but blank) means "allow all". |
 
