@@ -62,6 +62,7 @@ it defaults to github.com.
 | Webhooks: connection lifecycle (removed or suspended) | Yes | Not mapped: a removed or suspended connection is not pushed live |
 | Periodic reconciliation (catches missed webhooks) | Yes | Yes, on the same provider-neutral path |
 | Repository provisioning | Two-app tier, with permissions introspected before the create | Single token, optimistic: the capability is discovered by attempting the create |
+| Bootstrapping a new repository with an agent | Yes | Local mode only. On Cloudflare and Node the bootstrap capability reports itself unavailable rather than running against the wrong host |
 | Sign-in with a pasted PAT | Yes | Yes |
 | Sign-in with an OAuth browser flow | Yes | No, PAT only |
 | Sign-in allow-list by login or email domain | Yes | Yes |
