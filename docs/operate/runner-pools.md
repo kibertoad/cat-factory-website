@@ -77,6 +77,12 @@ The manifest's structure is documented in
 [Integration Manifests](../extend/manifests.md#runner-pool-manifest); registration is part of the
 Infrastructure configuration. See [Configuration → Infrastructure](../deploy/configuration.md#infrastructure).
 
+**If your repositories live on GitLab**, give the executor-harness container
+`GITHUB_ALLOWED_HOSTS=<your GitLab host>`. That is the allow-list of hosts the harness will send a
+clone credential to, and it defaults to github.com, so without it every GitLab clone is refused
+before it starts. See the
+[GitHub and GitLab support matrix](../reference/vcs-support-matrix.md#setting-each-one-up).
+
 You register the pool in-app. Open the top-level **Infrastructure** window, **Agent containers** tab,
 select the **HTTP manifest** backend, and use the in-app JSON manifest editor to paste or edit the
 manifest, fill the write-only secrets sub-form, and run a test dispatch. The editor validates against
