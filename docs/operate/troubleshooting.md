@@ -156,8 +156,10 @@ A 503 from this platform means one of two different things, and the reason says 
   you have enabled it, reports a dead environment provider or runner pool as unreachable and raises
   a notification instead of letting each run discover it.
 
-**A LiteLLM model stays unselectable.** It needs the gateway base URL set by an operator; a pipeline
-pinning one is blocked at start rather than failing mid-run.
+**A self-hosted gateway's model (Bifrost, LiteLLM) stays unselectable.** It needs that gateway's base
+URL set by an operator (`BIFROST_BASE_URL` / `LITELLM_BASE_URL`); a connected key alone is not enough,
+because there is no public endpoint to fall back on. A pipeline pinning one is blocked at start rather
+than failing mid-run.
 
 **A local runner is refused.** The runner's base URL is fetched server-side, so it is constrained to
 loopback unless an operator opts into private-LAN reach. URLs carrying credentials, a query string,
