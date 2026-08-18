@@ -23,6 +23,14 @@ When a workspace holds both a Figma grant and a leftover personal access token, 
 It is the credential the platform can renew, and a token an earlier connect left behind must not
 outlive the rotation that replaced it.
 
+::: warning Figma personal access tokens now expire
+Figma no longer issues a non-expiring personal access token: 90 days is the maximum lifetime a new
+one can be given. A workspace connected that way stops importing design context on that clock, with
+nothing in the deployment to warn you first, so plan the rotation or connect through OAuth instead.
+An organisation on a plan that offers **plan access tokens** has a third option: those are scoped to
+the organisation rather than to one person, so they survive that person leaving.
+:::
+
 ## Link a frame to a task
 
 Paste a Figma or Zeplin share URL into the context picker on the Add task popup or in the task

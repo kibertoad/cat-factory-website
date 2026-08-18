@@ -440,7 +440,7 @@ optional settings tune what is recorded and where it is sent. Both are covered i
 | `LLM_RECORD_PROMPTS` | Set to `false` to drop prompt text from recorded metrics and to skip full agent-context capture (tokens, timing, finish reason, and counts are still kept). Defaults to recording prompts. |
 | `LANGFUSE_ENABLED` | Set to `true` to stream every LLM call to Langfuse as a trace. Off by default. |
 | `LANGFUSE_PUBLIC_KEY` / `LANGFUSE_SECRET_KEY` | Langfuse project keys (`pk-lf-…` / `sk-lf-…`). Both required when enabled. |
-| `LANGFUSE_BASE_URL` | Langfuse host. Optional; defaults to `https://cloud.langfuse.com`. |
+| `LANGFUSE_BASE_URL` | Langfuse host. Optional; defaults to `https://cloud.langfuse.com`. Self-hosted needs v3.22.0+, which is where the OpenTelemetry endpoint traces are sent to arrived. |
 
 Langfuse honours `LLM_RECORD_PROMPTS`: with prompts off, the traces carry only numeric telemetry.
 
