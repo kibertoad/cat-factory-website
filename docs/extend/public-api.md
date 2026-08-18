@@ -197,6 +197,8 @@ never on `message`. Two families appear:
 | `no_run` | 404 / 409 | run reads (404: never started) and stop/retry (409: nothing to act on) |
 | `no_review` | 404 | requirements decision routes when the run has no live review |
 | `notification_not_actionable` | 409 | `POST /notifications/:id/act` on a card with no automated action |
+| `kaizen_entry_not_found` | 404 | Kaizen entry reads and `POST /kaizen/entries/:entryId/acknowledge` with an id this workspace does not hold |
+| `kaizen_entry_not_settled` | 409 | `POST /kaizen/entries/:entryId/acknowledge` on an entry whose grading is still queued or running. `details.status` names where it is; retry once it settles |
 
 ## Setting a workspace up
 
@@ -647,16 +649,17 @@ run's human checkpoints is a permission rather than a preference.
 
 ## Paging
 
-The two list endpoints that can grow without bound, `GET /api/v1/services/{serviceId}/tasks` and
-`GET /api/v1/jobs`, are **keyset-paginated**. Each response carries its array (`tasks` or `jobs`) plus
-a `nextCursor`, and you page until `nextCursor` is `null`:
+The list endpoints that can grow without bound, `GET /api/v1/services/{serviceId}/tasks`,
+`GET /api/v1/jobs` and `GET /api/v1/kaizen/entries`, are **keyset-paginated**. Each response carries
+its array (`tasks`, `jobs` or `entries`) plus a `nextCursor`, and you page until `nextCursor` is
+`null`:
 
 | Parameter | Meaning |
 | --- | --- |
 | `limit` | 1–100. The server caps a page at 50 entries regardless. |
 | `cursor` | The previous response's `nextCursor`. Omit for the first page. |
 | `status` | Filter by status. Tasks: `planned`, `ready`, `in_progress`, `blocked`, `pr_ready`, `done`. Jobs: `running`, `succeeded`, `failed`. |
-| `since` | Jobs only. Epoch milliseconds; return jobs created at or after this. |
+| `since` | Jobs and Kaizen entries. Epoch milliseconds; return rows created at or after this. |
 
 The cursor is a keyset (a sort key plus an id), not an offset, so a page can't shift under concurrent
 inserts and silently skip a row, and a burst of runs sharing a millisecond pages correctly. A
@@ -786,6 +789,67 @@ paginated like the other lists.
 
 Because they reach prompt and response bodies, treat a key that can call them as sensitive even
 though it is only `read`.
+
+## Kaizen entries: the platform's own improvement backlog
+
+After a run finishes, Cat Factory grades its own work: each completed agent step is scored 1 to 5 on
+how smooth or chaotic the interaction was, with recommendations for what would make it better, keyed
+by the `(agent kind, model, prompt version)` combination it ran on. A combination that scores highly
+with no recommendations often enough is marked verified and stops being graded. Inside the app those
+gradings are a screen you browse. Over the API they are a **backlog you drain**.
+
+| Method | Path | Scope | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/kaizen/entries` | read | One page of the workspace's entries, newest first. |
+| `GET` | `/api/v1/kaizen/entries/{entryId}` | read | One entry by id. |
+| `POST` | `/api/v1/kaizen/entries/{entryId}/acknowledge` | write | Record that it has been triaged, or clear that. |
+
+The list takes no run or task id, which is the point: an improvement loop is asking which runs
+produced recommendations, so it cannot name one first. Filter with `acknowledged=false` for what
+nobody has looked at, `settled=true` for what the grader has finished with, `status` for one exact
+grading state, `agentKind` for one role, and `since` for an incremental sweep. They compose.
+
+**`?acknowledged=false&settled=true` is the query to poll.** It is the backlog you can actually
+drain: every entry it returns is one the acknowledge route accepts. `acknowledged=false` on its own
+also returns gradings still in flight, which that route refuses with a `409`, and narrowing with
+`status=complete` instead would drop the `failed` entries, which are the ones worth acting on
+soonest.
+
+Each entry carries the context a follow-up needs, so acting on one does not mean opening the app:
+the run and step index it came from, the agent kind, the model as resolved at dispatch, the prompt
+version, the combination key and where that combination stands in its verification streak, the
+grade, the grader's summary and recommendations, which model graded it, and the board task plus its
+service. A task deleted since the run reports `task: null` rather than a blank title, and the `runId`
+joins straight onto [run debugging](#run-debugging) when a low grade deserves a look at the calls
+behind it. `task.serviceId` is the same id `GET /api/v1/services/{serviceId}` answers for, resolved
+the same way the task endpoints resolve it, and it comes with `task.serviceTitle` or not at all: you
+never receive an id that endpoint cannot resolve.
+
+A `failed` entry is a real entry rather than a hidden one, and usually names something about the
+deployment rather than about the run: no grader model is configured, or prompt recording is off so
+there was no telemetry to judge. Those are worth acknowledging too, which is why acknowledgement is
+allowed on them.
+
+```sh
+# The drainable backlog, most recent first.
+curl -s -H "$AUTH" "$BASE/api/v1/kaizen/entries?acknowledged=false&settled=true&limit=50"
+
+# Act on one, then take it off the backlog with a note for whoever reads it next.
+curl -s -X POST -H "$AUTH" -H 'content-type: application/json' \
+  -d '{"note":"filed as CF-431"}' \
+  "$BASE/api/v1/kaizen/entries/$ENTRY_ID/acknowledge"
+```
+
+Acknowledging is idempotent: a repeat returns the entry unchanged, so `acknowledgedAt` keeps naming
+when it was first triaged rather than when a retrying client last repeated itself. Send
+`{"acknowledged": false}` to undo one. An acknowledgement moves the entry's `updatedAt`, so that
+field works as a change watermark; a repeat, and an undo where nothing was acknowledged, leave it
+where it stood. The entry records who did it, as the user id when the key was
+minted onto a person and the key id otherwise.
+
+Acknowledgement is `write` rather than `admin` because it starts nothing and merges nothing. An
+entry whose grading has not settled yet is refused with `409 kaizen_entry_not_settled`: there are no
+recommendations to have read.
 
 ## Streaming
 

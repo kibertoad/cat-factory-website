@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.49.0**. 115 operations across 22 groups.
+Surface version **1.58.0**. 121 operations across 23 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -28,7 +28,7 @@ Each operation below states the LOWEST scope that admits it. A key below that li
 
 ## Operations
 
-[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
+[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Kaizen](#kaizen) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
 
 ### Debug
 
@@ -1308,6 +1308,22 @@ Submit findings against the captured screenshots and dispatch a fixer. The findi
 
 ### Environments
 
+#### List the environment connections this workspace holds
+
+`GET /api/v1/environments/connections`
+
+Minimum scope: `admin`.
+
+Every registered environment handler, with the provision type it serves, the engine and backend kind behind it, its endpoint and the secret KEYS it holds, never their values. The read half of the connect call, and the half that was missing: a deployment that registers its handlers programmatically (the documented path for a multi-tenant deployment) had no way for a headless caller to confirm the registration landed, so “the backend accepts our credential” and “this workspace has a handler for that backend” collapsed into one unanswerable question. It reports every engine, including a handler for an environment backend the deployment registered in code, so `engine` and `backendKind` are open strings rather than a fixed set.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 #### Connect the workspace to the cluster its environments deploy onto
 
 `POST /api/v1/environments/connections`
@@ -1566,6 +1582,82 @@ Server-sent events for a headless job run: `progress` frames until a terminal `d
 | --- | --- | --- |
 | `200` | `string` (`text/event-stream`) | An event stream of job updates |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+
+### Kaizen
+
+#### List the workspace's Kaizen entries
+
+`GET /api/v1/kaizen/entries`
+
+Minimum scope: `read`.
+
+Every post-run grading the workspace has produced, newest first and keyset-paginated, with no run or task named up front. A Kaizen entry is the platform grading its OWN work: after a run finishes, each completed agent step is judged on how smooth or chaotic the interaction was (1..5) and what would make it better, keyed by the `(agentKind, model, promptVersion)` combo it ran. Each entry carries the context a follow-up needs (the run and step it came from, the agent kind, the resolved model, the prompt version, the board task and its service, and where the combo stands in its verification streak), so acting on one does not mean opening the app first. Filter with `acknowledged=false&settled=true` for the drainable backlog (every entry in it is one the acknowledge route accepts; `acknowledged=false` alone also returns gradings still in flight, which that route refuses with `409`), `settled=true` for everything the grader has finished with whatever it concluded (a `failed` grading names a deployment problem, such as prompt recording being off, and is worth acting on), `status` for one exact grading state, `agentKind` for one role, and `since` for an incremental sweep. A task deleted since the run reports `task: null` rather than a blank title.
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `limit` | `integer` | no | 1 to 100, pattern `^\d+$` |
+| `cursor` | `string` | no | 1 to 200 characters |
+| `acknowledged` | `"true"` \| `"false"` | no |  |
+| `settled` | `"true"` \| `"false"` | no |  |
+| `status` | `"scheduled"` \| `"running"` \| `"complete"` \| `"failed"` | no |  |
+| `agentKind` | `string` | no | 1 to 120 characters |
+| `since` | `integer` | no | min 0, pattern `^\d+$` |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicKaizenEntryList`](#publickaizenentrylist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Get one Kaizen entry
+
+`GET /api/v1/kaizen/entries/{entryId}`
+
+Minimum scope: `read`.
+
+The same entry addressed by its own id, for a caller that stored one (on a ticket it filed, say) and wants the current grade, recommendations and triage state without re-paging the list. Scoped to the calling key’s workspace.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `entryId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicKaizenEntry`](#publickaizenentry) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Acknowledge a Kaizen entry
+
+`POST /api/v1/kaizen/entries/{entryId}/acknowledge`
+
+Minimum scope: `write`.
+
+Record that this entry has been triaged, optionally with a note (a ticket id, why it was dismissed), and take it out of the `acknowledged=false` backlog. Send `{"acknowledged": false}` to undo. A `write` key, not an `admin` one: acknowledging starts nothing and merges nothing. Acknowledging twice is a no-op that returns the row unchanged, so `acknowledgedAt` keeps naming the FIRST triage rather than the last retry. An entry whose grading has not settled yet is refused `409` with `details.reason: "kaizen_entry_not_settled"` (there are no recommendations to have read), and an unknown id is `404` with `details.reason: "kaizen_entry_not_found"`.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `entryId` | `string` | yes |  |
+
+**Request body** (required): [`AcknowledgeKaizenEntry`](#acknowledgekaizenentry) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicKaizenEntry`](#publickaizenentry) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
 ### Keys
 
@@ -1933,6 +2025,36 @@ Link a repository the connection can reach, by `owner` and `name`, so a service 
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+#### Read one file out of a linked repository
+
+`GET /api/v1/repos/{owner}/{name}/contents`
+
+Minimum scope: `admin`.
+
+Read a single file, decoded as UTF-8, from a repository this workspace has LINKED, at a branch, tag or commit sha (omit `ref` for the default branch; the response says which was used). It exists to answer what a run actually COMMITTED, which nothing else on this surface could: the repos reads list rows and reachability, the service-spec read serves only the `spec/` tree, and everything else was the agent’s own prose, so a caller wanting a real answer had to hold a second source-control credential of its own. `path` is a query parameter rather than the rest of the URL because a repo-relative path contains slashes and an OpenAPI path segment cannot. One file only: there is deliberately no directory listing. A repository this workspace has not adopted is a 404 with `details.reason: repo_not_linked`, a path the ref does not hold is a 404 with `file_not_found`, and a file past the size this read serves is a 422 with `file_too_large` plus its `size` and `limit`: refused rather than truncated, because a shortened answer reads exactly like a shorter file.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `owner` | `string` | yes |  |
+| `name` | `string` | yes |  |
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `path` | `string` | yes | 1 to 1000 characters |
+| `ref` | `string` | no | 1 to 255 characters |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Risk policies
 
 #### List the workspace’s risk policies
@@ -2010,6 +2132,28 @@ Change a service’s authored fields, and declare its `provisioning`: where the 
 | Status | Body | Meaning |
 | --- | --- | --- |
 | `200` | [`PublicService`](#publicservice) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Delete a service and everything under it
+
+`DELETE /api/v1/services/{serviceId}`
+
+Minimum scope: `admin`.
+
+Delete a board service, its modules and tasks, and the run history recorded under them. The inverse of the create, and the one board write with no headless counterpart before it: a key authenticates on `/api/v1` only, so a caller that provisions services (an environment rebuilt per test pass, a repository retired, a frame raised against the wrong repository) had to ask a person to clean them up. Any run still going under the frame is stopped and its container killed first, so nothing is left idling. A service holding UNFINISHED tasks is refused with `422 service_has_unfinished_tasks` rather than discarding work in flight: delete those tasks first (`DELETE /api/v1/tasks/{taskId}`) if that is what you mean. An ARCHIVED service is not addressable here, exactly as it is absent from `GET /api/v1/services`. Requires an `admin` key.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `serviceId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `204` | empty | No content |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -2672,7 +2816,7 @@ Deregister this endpoint; its deliveries stop and the workspace's other endpoint
 
 The payload shapes the operations above reference. Field names, types and constraints are the contract; the narrative for what each one means lives on the page that owns the feature.
 
-[`AcceptanceCriterion`](#acceptancecriterion) · [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) · [`CreatePublicJob`](#createpublicjob) · [`CreatePublicTask`](#createpublictask) · [`CreatedPublicApiKey`](#createdpublicapikey) · [`DocumentFreshness`](#documentfreshness) · [`DomainRule`](#domainrule) · [`ErrorResponse`](#errorresponse) · [`Notification`](#notification) · [`NotificationWebhook`](#notificationwebhook) · [`PrReportCheck`](#prreportcheck) · [`PrReportCi`](#prreportci) · [`PrReportContext`](#prreportcontext) · [`PrReportContextDocument`](#prreportcontextdocument) · [`PrReportEnvironments`](#prreportenvironments) · [`PrReportIssue`](#prreportissue) · [`PrReportJudge`](#prreportjudge) · [`PrReportJudges`](#prreportjudges) · [`PrReportMerge`](#prreportmerge) · [`PrReportObservability`](#prreportobservability) · [`PrReportReproduction`](#prreportreproduction) · [`PrReportRequirements`](#prreportrequirements) · [`PrReportRun`](#prreportrun) · [`PrReportStep`](#prreportstep) · [`PrReportTestConcern`](#prreporttestconcern) · [`PrReportTestOutcome`](#prreporttestoutcome) · [`PrReportTests`](#prreporttests) · [`PrReportValidation`](#prreportvalidation) · [`PrReportValidationCommand`](#prreportvalidationcommand) · [`PrVerificationReport`](#prverificationreport) · [`PublicAgentDecision`](#publicagentdecision) · [`PublicAnswerFollowUp`](#publicanswerfollowup) · [`PublicAnswerInterview`](#publicanswerinterview) · [`PublicApiKey`](#publicapikey) · [`PublicApiKeyList`](#publicapikeylist) · [`PublicApprovalGateDecision`](#publicapprovalgatedecision) · [`PublicApproveStep`](#publicapprovestep) · [`PublicBrainstormDecision`](#publicbrainstormdecision) · [`PublicChallengePrReviewFinding`](#publicchallengeprreviewfinding) · [`PublicChooseFork`](#publicchoosefork) · [`PublicClarityDecision`](#publicclaritydecision) · [`PublicDecision`](#publicdecision) · [`PublicDecisionList`](#publicdecisionlist) · [`PublicFollowUpItem`](#publicfollowupitem) · [`PublicFollowUpsDecision`](#publicfollowupsdecision) · [`PublicForkDecision`](#publicforkdecision) · [`PublicHumanTestDecision`](#publichumantestdecision) · [`PublicHumanTestEnvironment`](#publichumantestenvironment) · [`PublicIdentity`](#publicidentity) · [`PublicIncorporate`](#publicincorporate) · [`PublicInputGateDecision`](#publicinputgatedecision) · [`PublicInterviewDecision`](#publicinterviewdecision) · [`PublicInterviewQuestion`](#publicinterviewquestion) · [`PublicJob`](#publicjob) · [`PublicJobAccepted`](#publicjobaccepted) · [`PublicNotificationList`](#publicnotificationlist) · [`PublicNotificationWebhook`](#publicnotificationwebhook) · [`PublicNotificationWebhookList`](#publicnotificationwebhooklist) · [`PublicPipeline`](#publicpipeline) · [`PublicPipelineList`](#publicpipelinelist) · [`PublicPrReviewDecision`](#publicprreviewdecision) · [`PublicRejectStep`](#publicrejectstep) · [`PublicReplyFinding`](#publicreplyfinding) · [`PublicRequestGateFix`](#publicrequestgatefix) · [`PublicRequestStepChanges`](#publicrequeststepchanges) · [`PublicRequirementsDecision`](#publicrequirementsdecision) · [`PublicResolveAgentDecision`](#publicresolveagentdecision) · [`PublicResolveExceeded`](#publicresolveexceeded) · [`PublicResolveInputGate`](#publicresolveinputgate) · [`PublicResolvePrReview`](#publicresolveprreview) · [`PublicReviewFinding`](#publicreviewfinding) · [`PublicRun`](#publicrun) · [`PublicRunArtifact`](#publicrunartifact) · [`PublicRunArtifactList`](#publicrunartifactlist) · [`PublicRunSpec`](#publicrunspec) · [`PublicService`](#publicservice) · [`PublicServiceList`](#publicservicelist) · [`PublicServiceSpec`](#publicservicespec) · [`PublicSetFindingStatus`](#publicsetfindingstatus) · [`PublicSpecFeatureFile`](#publicspecfeaturefile) · [`PublicSpecProvenance`](#publicspecprovenance) · [`PublicSpecTruncation`](#publicspectruncation) · [`PublicSpend`](#publicspend) · [`PublicSpendRow`](#publicspendrow) · [`PublicSpendTotals`](#publicspendtotals) · [`PublicTask`](#publictask) · [`PublicTaskDocument`](#publictaskdocument) · [`PublicTaskList`](#publictasklist) · [`PublicTaskSourceDocument`](#publictasksourcedocument) · [`PublicTaskTicket`](#publictaskticket) · [`PublicTaskUploadedDocument`](#publictaskuploadeddocument) · [`PublicUnanswerableWait`](#publicunanswerablewait) · [`PublicUsage`](#publicusage) · [`PublicUsageBudget`](#publicusagebudget) · [`PublicUsageRow`](#publicusagerow) · [`PublicVisualConfirmDecision`](#publicvisualconfirmdecision) · [`PutNotificationWebhook`](#putnotificationwebhook) · [`RequirementGroup`](#requirementgroup) · [`RequirementItem`](#requirementitem) · [`SpecDoc`](#specdoc) · [`SpecModule`](#specmodule) · [`SpecReadIssue`](#specreadissue) · [`StartPublicTask`](#startpublictask) · [`UpdatePublicTask`](#updatepublictask)
+[`AcceptanceCriterion`](#acceptancecriterion) · [`AcknowledgeKaizenEntry`](#acknowledgekaizenentry) · [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) · [`CreatePublicJob`](#createpublicjob) · [`CreatePublicTask`](#createpublictask) · [`CreatedPublicApiKey`](#createdpublicapikey) · [`DocumentFreshness`](#documentfreshness) · [`DomainRule`](#domainrule) · [`ErrorResponse`](#errorresponse) · [`Notification`](#notification) · [`NotificationWebhook`](#notificationwebhook) · [`PrReportCheck`](#prreportcheck) · [`PrReportCi`](#prreportci) · [`PrReportContext`](#prreportcontext) · [`PrReportContextDocument`](#prreportcontextdocument) · [`PrReportEnvironments`](#prreportenvironments) · [`PrReportIssue`](#prreportissue) · [`PrReportJudge`](#prreportjudge) · [`PrReportJudges`](#prreportjudges) · [`PrReportMerge`](#prreportmerge) · [`PrReportObservability`](#prreportobservability) · [`PrReportReproduction`](#prreportreproduction) · [`PrReportRequirements`](#prreportrequirements) · [`PrReportRun`](#prreportrun) · [`PrReportStep`](#prreportstep) · [`PrReportTestConcern`](#prreporttestconcern) · [`PrReportTestOutcome`](#prreporttestoutcome) · [`PrReportTests`](#prreporttests) · [`PrReportValidation`](#prreportvalidation) · [`PrReportValidationCommand`](#prreportvalidationcommand) · [`PrVerificationReport`](#prverificationreport) · [`PublicAgentDecision`](#publicagentdecision) · [`PublicAnswerFollowUp`](#publicanswerfollowup) · [`PublicAnswerInterview`](#publicanswerinterview) · [`PublicApiKey`](#publicapikey) · [`PublicApiKeyList`](#publicapikeylist) · [`PublicApprovalGateDecision`](#publicapprovalgatedecision) · [`PublicApproveStep`](#publicapprovestep) · [`PublicBrainstormDecision`](#publicbrainstormdecision) · [`PublicChallengePrReviewFinding`](#publicchallengeprreviewfinding) · [`PublicChooseFork`](#publicchoosefork) · [`PublicClarityDecision`](#publicclaritydecision) · [`PublicDecision`](#publicdecision) · [`PublicDecisionList`](#publicdecisionlist) · [`PublicFollowUpItem`](#publicfollowupitem) · [`PublicFollowUpsDecision`](#publicfollowupsdecision) · [`PublicForkDecision`](#publicforkdecision) · [`PublicHumanTestDecision`](#publichumantestdecision) · [`PublicHumanTestEnvironment`](#publichumantestenvironment) · [`PublicIdentity`](#publicidentity) · [`PublicIncorporate`](#publicincorporate) · [`PublicInputGateDecision`](#publicinputgatedecision) · [`PublicInterviewDecision`](#publicinterviewdecision) · [`PublicInterviewQuestion`](#publicinterviewquestion) · [`PublicJob`](#publicjob) · [`PublicJobAccepted`](#publicjobaccepted) · [`PublicKaizenEntry`](#publickaizenentry) · [`PublicKaizenEntryCombo`](#publickaizenentrycombo) · [`PublicKaizenEntryList`](#publickaizenentrylist) · [`PublicKaizenEntryTask`](#publickaizenentrytask) · [`PublicNotificationList`](#publicnotificationlist) · [`PublicNotificationWebhook`](#publicnotificationwebhook) · [`PublicNotificationWebhookList`](#publicnotificationwebhooklist) · [`PublicPipeline`](#publicpipeline) · [`PublicPipelineList`](#publicpipelinelist) · [`PublicPrReviewDecision`](#publicprreviewdecision) · [`PublicRejectStep`](#publicrejectstep) · [`PublicReplyFinding`](#publicreplyfinding) · [`PublicRequestGateFix`](#publicrequestgatefix) · [`PublicRequestStepChanges`](#publicrequeststepchanges) · [`PublicRequirementsDecision`](#publicrequirementsdecision) · [`PublicResolveAgentDecision`](#publicresolveagentdecision) · [`PublicResolveExceeded`](#publicresolveexceeded) · [`PublicResolveInputGate`](#publicresolveinputgate) · [`PublicResolvePrReview`](#publicresolveprreview) · [`PublicReviewFinding`](#publicreviewfinding) · [`PublicRun`](#publicrun) · [`PublicRunArtifact`](#publicrunartifact) · [`PublicRunArtifactList`](#publicrunartifactlist) · [`PublicRunSpec`](#publicrunspec) · [`PublicService`](#publicservice) · [`PublicServiceList`](#publicservicelist) · [`PublicServiceSpec`](#publicservicespec) · [`PublicSetFindingStatus`](#publicsetfindingstatus) · [`PublicSpecFeatureFile`](#publicspecfeaturefile) · [`PublicSpecProvenance`](#publicspecprovenance) · [`PublicSpecTruncation`](#publicspectruncation) · [`PublicSpend`](#publicspend) · [`PublicSpendRow`](#publicspendrow) · [`PublicSpendTotals`](#publicspendtotals) · [`PublicTask`](#publictask) · [`PublicTaskDocument`](#publictaskdocument) · [`PublicTaskList`](#publictasklist) · [`PublicTaskSourceDocument`](#publictasksourcedocument) · [`PublicTaskTicket`](#publictaskticket) · [`PublicTaskUploadedDocument`](#publictaskuploadeddocument) · [`PublicUnanswerableWait`](#publicunanswerablewait) · [`PublicUsage`](#publicusage) · [`PublicUsageBudget`](#publicusagebudget) · [`PublicUsageRow`](#publicusagerow) · [`PublicVisualConfirmDecision`](#publicvisualconfirmdecision) · [`PutNotificationWebhook`](#putnotificationwebhook) · [`RequirementGroup`](#requirementgroup) · [`RequirementItem`](#requirementitem) · [`SpecDoc`](#specdoc) · [`SpecModule`](#specmodule) · [`SpecReadIssue`](#specreadissue) · [`StartPublicTask`](#startpublictask) · [`UpdatePublicTask`](#updatepublictask)
 
 ### `AcceptanceCriterion`
 
@@ -2682,6 +2826,13 @@ The payload shapes the operations above reference. Field names, types and constr
 | `id` | `string` | yes | 1 to 200 characters |
 | `outcome` | `string` | yes | max 2000 characters |
 | `when` | `string` | yes | max 2000 characters |
+
+### `AcknowledgeKaizenEntry`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `acknowledged` | `boolean` | no |  |
+| `note` | `string` \| `null` | no |  |
 
 ### `CreateHeadlessPublicApiKey`
 
@@ -2707,8 +2858,9 @@ The payload shapes the operations above reference. Field names, types and constr
 | `documents` | array of [`PublicTaskDocument`](#publictaskdocument) | no |  |
 | `fields` | map of `string` \| array of `string` \| `boolean` \| `number` | no |  |
 | `modelPresetId` | `string` | no | 1 to 120 characters |
+| `pipelineId` | `string` | no | 1 to 120 characters |
 | `riskPolicyId` | `string` | no | 1 to 120 characters |
-| `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `string` | no |  |
+| `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `string` | no |  |
 | `ticket` | [`PublicTaskTicket`](#publictaskticket) | no |  |
 | `title` | `string` | yes | 1 to 200 characters |
 
@@ -2777,7 +2929,7 @@ One of 3 shapes.
 | `severity` | `"normal"` \| `"urgent"` | no |  |
 | `status` | `"open"` \| `"acted"` \| `"dismissed"` | yes |  |
 | `title` | `string` | yes |  |
-| `type` | `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
+| `type` | `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
 
 ### `NotificationWebhook`
 
@@ -2789,7 +2941,7 @@ One of 3 shapes.
 | `id` | `string` | yes |  |
 | `name` | `string` | yes |  |
 | `runEvents` | array of `"run.started"` \| `"run.completed"` \| `"run.failed"` | yes |  |
-| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
+| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
 | `updatedAt` | `number` | yes |  |
 | `url` | `string` | yes |  |
 
@@ -3101,6 +3253,7 @@ One of 3 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `approvalId` | `string` | yes |  |
+| `blockingFindings` | array of object | yes |  |
 | `exceeded` | `boolean` | yes |  |
 | `feedback` | `string` \| `null` | yes |  |
 | `kind` | `"approval-gate"` | yes |  |
@@ -3359,6 +3512,57 @@ One of 13 shapes.
 | `links.self` | `string` | yes |  |
 | `status` | `"running"` \| `"succeeded"` \| `"failed"` | yes |  |
 
+### `PublicKaizenEntry`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `acknowledged` | `boolean` | yes |  |
+| `acknowledgedAt` | `number` \| `null` | yes |  |
+| `acknowledgedBy` | `string` \| `null` | yes |  |
+| `acknowledgementNote` | `string` \| `null` | yes |  |
+| `agentKind` | `string` | yes |  |
+| `combo` | [`PublicKaizenEntryCombo`](#publickaizenentrycombo) \| `null` | yes |  |
+| `comboKey` | `string` | yes |  |
+| `createdAt` | `number` | yes |  |
+| `entryId` | `string` | yes |  |
+| `error` | `string` \| `null` | yes |  |
+| `grade` | `number` \| `null` | yes |  |
+| `graderModel` | `string` \| `null` | yes |  |
+| `model` | `string` | yes |  |
+| `promptVersion` | `number` | yes |  |
+| `recommendations` | array of `string` | yes |  |
+| `runId` | `string` | yes |  |
+| `status` | `"scheduled"` \| `"running"` \| `"complete"` \| `"failed"` | yes |  |
+| `stepIndex` | `number` | yes |  |
+| `summary` | `string` | yes |  |
+| `task` | [`PublicKaizenEntryTask`](#publickaizenentrytask) \| `null` | yes |  |
+| `taskId` | `string` | yes |  |
+| `updatedAt` | `number` | yes |  |
+
+### `PublicKaizenEntryCombo`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `consecutiveHighGrades` | `number` | yes |  |
+| `verified` | `boolean` | yes |  |
+| `verifiedAt` | `number` \| `null` | yes |  |
+
+### `PublicKaizenEntryList`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `entries` | array of [`PublicKaizenEntry`](#publickaizenentry) | yes |  |
+| `nextCursor` | `string` \| `null` | yes |  |
+
+### `PublicKaizenEntryTask`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `serviceId` | `string` \| `null` | yes |  |
+| `serviceTitle` | `string` \| `null` | yes |  |
+| `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
+| `title` | `string` | yes |  |
+
 ### `PublicNotificationList`
 
 | Field | Type | Required | Notes |
@@ -3386,12 +3590,14 @@ One of 13 shapes.
 | `pipelineId` | `string` | yes |  |
 | `public` | `boolean` | yes |  |
 | `steps` | array of `string` | yes |  |
+| `unattendedDefault` | `boolean` | yes |  |
 
 ### `PublicPipelineList`
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `pipelines` | array of [`PublicPipeline`](#publicpipeline) | yes |  |
+| `unattendedDefaultPipelineId` | `string` \| `null` | yes |  |
 
 ### `PublicPrReviewDecision`
 
@@ -3503,7 +3709,7 @@ One of 13 shapes.
 | `contentType` | `string` | yes |  |
 | `createdAt` | `number` | yes |  |
 | `hash` | `string` | yes |  |
-| `kind` | `"screenshot"` \| `"reference"` | yes |  |
+| `kind` | `"screenshot"` \| `"reference"` \| `"asset"` | yes |  |
 | `scope` | `"run"` \| `"task"` | yes |  |
 | `view` | `string` \| `null` | yes |  |
 
@@ -3530,7 +3736,7 @@ One of 13 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `description` | `string` | yes |  |
-| `provisioning` | object | no |  |
+| `provisioning` | object \| object | no |  |
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `title` | `string` | yes |  |
@@ -3642,7 +3848,7 @@ One of 13 shapes.
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `taskId` | `string` | yes |  |
-| `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"recurring"` \| `string` | yes |  |
+| `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `"recurring"` \| `string` | yes |  |
 | `title` | `string` | yes |  |
 
 ### `PublicTaskDocument`
@@ -3748,7 +3954,7 @@ One of 2 shapes.
 | `name` | `string` | no | 1 to 100 characters |
 | `runEvents` | array of `"run.started"` \| `"run.completed"` \| `"run.failed"` | no |  |
 | `secret` | `string` | no | 16 to 200 characters |
-| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | no |  |
+| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | no |  |
 | `url` | `string` (uri) | no | max 2000 characters, pattern `^https://` |
 
 ### `RequirementGroup`
