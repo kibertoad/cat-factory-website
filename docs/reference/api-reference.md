@@ -1591,7 +1591,7 @@ Server-sent events for a headless job run: `progress` frames until a terminal `d
 
 Minimum scope: `read`.
 
-Every post-run grading the workspace has produced, newest first and keyset-paginated, with no run or task named up front. A Kaizen entry is the platform grading its OWN work: after a run finishes, each completed agent step is judged on how smooth or chaotic the interaction was (1..5) and what would make it better, keyed by the `(agentKind, model, promptVersion)` combo it ran. Each entry carries the context a follow-up needs (the run and step it came from, the agent kind, the resolved model, the prompt version, the board task and its service, and where the combo stands in its verification streak), so acting on one does not mean opening the app first. Filter with `acknowledged=false` for the untriaged backlog, `status` for what has settled (a `failed` grading names a deployment problem, such as prompt recording being off), `agentKind` for one role, and `since` for an incremental sweep. A task deleted since the run reports `task: null` rather than a blank title.
+Every post-run grading the workspace has produced, newest first and keyset-paginated, with no run or task named up front. A Kaizen entry is the platform grading its OWN work: after a run finishes, each completed agent step is judged on how smooth or chaotic the interaction was (1..5) and what would make it better, keyed by the `(agentKind, model, promptVersion)` combo it ran. Each entry carries the context a follow-up needs (the run and step it came from, the agent kind, the resolved model, the prompt version, the board task and its service, and where the combo stands in its verification streak), so acting on one does not mean opening the app first. Filter with `acknowledged=false&settled=true` for the drainable backlog (every entry in it is one the acknowledge route accepts; `acknowledged=false` alone also returns gradings still in flight, which that route refuses with `409`), `settled=true` for everything the grader has finished with whatever it concluded (a `failed` grading names a deployment problem, such as prompt recording being off, and is worth acting on), `status` for one exact grading state, `agentKind` for one role, and `since` for an incremental sweep. A task deleted since the run reports `task: null` rather than a blank title.
 
 **Query parameters**
 
@@ -1600,6 +1600,7 @@ Every post-run grading the workspace has produced, newest first and keyset-pagin
 | `limit` | `integer` | no | 1 to 100, pattern `^\d+$` |
 | `cursor` | `string` | no | 1 to 200 characters |
 | `acknowledged` | `"true"` \| `"false"` | no |  |
+| `settled` | `"true"` \| `"false"` | no |  |
 | `status` | `"scheduled"` \| `"running"` \| `"complete"` \| `"failed"` | no |  |
 | `agentKind` | `string` | no | 1 to 120 characters |
 | `since` | `integer` | no | min 0, pattern `^\d+$` |

@@ -806,8 +806,14 @@ gradings are a screen you browse. Over the API they are a **backlog you drain**.
 
 The list takes no run or task id, which is the point: an improvement loop is asking which runs
 produced recommendations, so it cannot name one first. Filter with `acknowledged=false` for what
-nobody has looked at, `status` for what has settled, `agentKind` for one role, and `since` for an
-incremental sweep. They compose.
+nobody has looked at, `settled=true` for what the grader has finished with, `status` for one exact
+grading state, `agentKind` for one role, and `since` for an incremental sweep. They compose.
+
+**`?acknowledged=false&settled=true` is the query to poll.** It is the backlog you can actually
+drain: every entry it returns is one the acknowledge route accepts. `acknowledged=false` on its own
+also returns gradings still in flight, which that route refuses with a `409`, and narrowing with
+`status=complete` instead would drop the `failed` entries, which are the ones worth acting on
+soonest.
 
 Each entry carries the context a follow-up needs, so acting on one does not mean opening the app:
 the run and step index it came from, the agent kind, the model as resolved at dispatch, the prompt
@@ -815,7 +821,9 @@ version, the combination key and where that combination stands in its verificati
 grade, the grader's summary and recommendations, which model graded it, and the board task plus its
 service. A task deleted since the run reports `task: null` rather than a blank title, and the `runId`
 joins straight onto [run debugging](#run-debugging) when a low grade deserves a look at the calls
-behind it.
+behind it. `task.serviceId` is the same id `GET /api/v1/services/{serviceId}` answers for, resolved
+the same way the task endpoints resolve it, and it comes with `task.serviceTitle` or not at all: you
+never receive an id that endpoint cannot resolve.
 
 A `failed` entry is a real entry rather than a hidden one, and usually names something about the
 deployment rather than about the run: no grader model is configured, or prompt recording is off so
@@ -823,8 +831,8 @@ there was no telemetry to judge. Those are worth acknowledging too, which is why
 allowed on them.
 
 ```sh
-# The untriaged backlog, most recent first.
-curl -s -H "$AUTH" "$BASE/api/v1/kaizen/entries?acknowledged=false&status=complete&limit=50"
+# The drainable backlog, most recent first.
+curl -s -H "$AUTH" "$BASE/api/v1/kaizen/entries?acknowledged=false&settled=true&limit=50"
 
 # Act on one, then take it off the backlog with a note for whoever reads it next.
 curl -s -X POST -H "$AUTH" -H 'content-type: application/json' \
@@ -834,7 +842,9 @@ curl -s -X POST -H "$AUTH" -H 'content-type: application/json' \
 
 Acknowledging is idempotent: a repeat returns the entry unchanged, so `acknowledgedAt` keeps naming
 when it was first triaged rather than when a retrying client last repeated itself. Send
-`{"acknowledged": false}` to undo one. The entry records who did it, as the user id when the key was
+`{"acknowledged": false}` to undo one. An acknowledgement moves the entry's `updatedAt`, so that
+field works as a change watermark; a repeat, and an undo where nothing was acknowledged, leave it
+where it stood. The entry records who did it, as the user id when the key was
 minted onto a person and the key id otherwise.
 
 Acknowledgement is `write` rather than `admin` because it starts nothing and merges nothing. An
