@@ -268,6 +268,14 @@ LANGFUSE_SECRET_KEY=sk-lf-...
 All four take effect together: the sink stays off unless `LANGFUSE_ENABLED=true` and both keys are
 set. Point `LANGFUSE_BASE_URL` at your own instance for self-hosted Langfuse.
 
+::: warning Self-hosted Langfuse needs v3.22.0 or newer
+Traces are sent over Langfuse's OpenTelemetry endpoint (`/api/public/otel`), which self-hosted
+Langfuse serves from v3.22.0. Cat Factory used to speak the older batch ingestion API instead; that
+API is deprecated, is sunset on Langfuse Cloud on **16 November 2026**, and does not carry traces,
+spans or generations on the v4 data model at all. Langfuse Cloud needs nothing from you. An
+instance older than v3.22.0 must be upgraded, or the sink has nowhere to deliver to.
+:::
+
 The sink respects `LLM_RECORD_PROMPTS`: with prompts disabled, traces carry only numeric telemetry.
 
 ::: tip Where to set these
