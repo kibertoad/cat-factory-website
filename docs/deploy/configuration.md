@@ -153,6 +153,13 @@ merges through a real merge request, and users can sign in with a GitLab PAT. Se
 | `GITLAB_WEBHOOK_SECRET` | Optional. Verifies inbound GitLab webhook payloads (merge request, issue, push, pipeline). |
 | `GITLAB_CONNECTION_ID` | Optional. Logical id for the GitLab connection. Defaults to `gitlab`. |
 
+`GITLAB_API_BASE` also decides which host agent containers clone from, so a self-managed instance
+needs it set even when nothing else about the deployment does. On Cloudflare the platform hands that
+host to each container. If you run a [self-hosted runner pool](../operate/runner-pools.md), set
+`GITHUB_ALLOWED_HOSTS` to your GitLab host on the executor-harness container as well: it is the
+harness's allow-list of hosts it will send a clone credential to, it defaults to github.com, and
+without your host on it every GitLab clone is refused.
+
 ## LLM providers
 
 Direct provider API keys (OpenAI, Anthropic, Qwen, DeepSeek, Moonshot, xAI, OpenRouter, Bifrost,

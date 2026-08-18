@@ -21,18 +21,26 @@ need to resolve to the right connection.
   [Configuration → GitLab](../deploy/configuration.md#gitlab-source-control).
 
 Each provider's API base also decides the **web host** the app links repositories, merge and pull
-requests, and issues to. A base that names no recognisable host makes the app withhold those links
-rather than point at the provider's public instance, where the same namespace path is very likely
-somebody else's project.
+requests, and issues to, and the host agent containers clone from. A base that names no recognisable
+host makes the app withhold those links rather than point at the provider's public instance, where
+the same namespace path is very likely somebody else's project, and a run refuses to dispatch rather
+than checking out whatever lives at that path.
+
+On Cloudflare the platform passes the GitLab host to each agent container for you. On a
+[self-hosted runner pool](../operate/runner-pools.md) the harness is yours to configure: set
+`GITHUB_ALLOWED_HOSTS` to your GitLab host on the executor-harness container, or every clone is
+refused. That variable is the harness's allow-list of hosts it will send a clone credential to, and
+it defaults to github.com.
 
 ## Feature parity
 
 | Capability | GitHub | GitLab |
 | --- | --- | --- |
-| Credential model | App installation: one credential scope per workspace | A single shared token (group, personal, or OAuth PAT) per deployment |
-| Multi-tenant credential isolation | Per-installation token | One token for the whole deployment, mirroring local mode's PAT model |
+| Credential model | App installation: one credential scope per workspace | A per-workspace personal access token for browsing, linking and syncing repositories, over a single shared deployment token (group, personal, or OAuth PAT) that the engine itself uses |
+| Multi-tenant credential isolation | Per-installation token | Isolated for repository browsing and linking; the engine's own work (clone, CI, merge) still runs on the one deployment token |
 | Self-managed or on-prem instance | Yes (GitHub Enterprise Server, via a configurable API base) | Yes (`GITLAB_API_BASE`, any self-managed instance) |
 | Repository and branch reads | Yes | Yes |
+| Where agent containers clone from | github.com, or your GitHub Enterprise Server host | The instance your `GITLAB_API_BASE` names, including a self-managed one served under a path prefix. On a [self-hosted runner pool](../operate/runner-pools.md) the harness also needs that host allow-listed, see below |
 | File and directory reads | Yes | Yes |
 | Branch, commit, and pull/merge request writes | Yes | Yes |
 | Merging a pull/merge request | Yes | Yes |
@@ -47,12 +55,14 @@ somebody else's project.
 | Issues: read, create, close, comment | Yes | Yes |
 | Issue search | Yes | Yes |
 | Sub-issues (parent to child) | Yes | No native concept; callers degrade gracefully |
-| Issues as a [task source](../guide/issue-sources.md) | Full | Imports, searches, diagnoses, and backs both the recurring bug intake and the bug hunt. Issue type does not narrow the search (GitLab has no "bug" type, so use labels). Push intake and writeback are still open |
+| Issues as a [task source](../guide/issue-sources.md) | Full | Imports, searches, diagnoses, backs both the recurring bug intake and the bug hunt, receives webhook push intake and in-ticket replies, and writes back (pull-request notices, the pickup claim, a parked review's questions, acknowledgements). Issue type does not narrow the search (GitLab has no "bug" type, so use labels) |
+| Filing a NEW issue from the tech-debt `tracker` step | Yes | Not yet. Pick GitHub Issues, Jira, or Linear as the workspace's filing tracker |
 | Code search | Yes | No. It needs GitLab Advanced Search, and the basic API cannot supply a usable repository and URL per hit |
 | Webhooks: request, issue, push, CI status | HMAC-signed | Token-header verified |
 | Webhooks: connection lifecycle (removed or suspended) | Yes | Not mapped: a removed or suspended connection is not pushed live |
 | Periodic reconciliation (catches missed webhooks) | Yes | Yes, on the same provider-neutral path |
 | Repository provisioning | Two-app tier, with permissions introspected before the create | Single token, optimistic: the capability is discovered by attempting the create |
+| Bootstrapping a new repository with an agent | Yes | Local mode only. On Cloudflare and Node the bootstrap capability reports itself unavailable rather than running against the wrong host |
 | Sign-in with a pasted PAT | Yes | Yes |
 | Sign-in with an OAuth browser flow | Yes | No, PAT only |
 | Sign-in allow-list by login or email domain | Yes | Yes |
@@ -63,9 +73,10 @@ somebody else's project.
 
 Three rows decide most deployments:
 
-- **Credential isolation.** On GitHub each workspace gets its own installation scope. On GitLab one
-  deployment-wide token serves every workspace, so a multi-tenant GitLab deployment cannot isolate
-  one team's repositories from another's at the credential layer.
+- **Credential isolation.** On GitHub each workspace gets its own installation scope. On GitLab a
+  workspace connects its own token for browsing and linking repositories, but the engine's own work
+  (cloning, gating on CI, merging) runs on the one deployment-wide token, so a multi-tenant GitLab
+  deployment cannot yet isolate one team's repositories from another's where it matters most.
 - **Code search.** Several agent kinds search code to orient themselves. On GitLab those searches
   return nothing rather than failing, so agents fall back on reading the checkout.
 - **Connection-lifecycle webhooks.** On GitLab, revoking access is not pushed to the platform. The
