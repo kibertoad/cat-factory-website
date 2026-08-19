@@ -312,6 +312,23 @@ number against the service's own repo. Only a positive "no such pull request" re
 revoked token, or a rate limit answers "unknown" and the task is created. The task inspector links
 through to the pull request it targets.
 
+### Queueing specialist review skills
+
+Beyond the focus text, a review task can carry a **queue of review skills**: the specialist
+playbooks your team authored for a performance pass, a security audit, an accessibility check.
+Pick them under **Review skills** in the add-task form, in the order you want them applied, and the
+reviewer applies each on top of its standing role, routing it to the parts of the diff it bears on.
+
+Only skills whose `SKILL.md` declares `group: review` are offered, and a review carries at most
+eight (every queued playbook rides the reviewer's context for the whole review). Authoring and
+grouping them is covered in [Run a Claude Skill](./skills.md#grouping-skills). If a queued skill
+has since left the catalog, the run fails and names it rather than reviewing without the lens you
+asked for.
+
+This is what lets one review pipeline serve both a routine change and one that needs a security
+pass: which lenses a pull request earns is a per-review decision you make when you file the task,
+not a pipeline you clone per lens. The task inspector shows the queue, in order.
+
 The **PR Reviewer** agent clones the repo, fetches the PR head, and for a large diff **slices it into
 cohesive chunks** (a refactor with its call sites and tests) and reviews the chunks in parallel, up to
 five at a time, so it scales to hundreds of files without turning one pull request into dozens of

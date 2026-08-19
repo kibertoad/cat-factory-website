@@ -1,9 +1,10 @@
-# Run a Claude Skill as a Step
+# Run a Claude Skill
 
 For a team with a procedure it wants run the same way every time. A **Claude Skill** is a procedural
-playbook your team authors in a repository and runs against a task as a pipeline step. Where [prompt fragments](./prompt-fragments.md) are passive guidance folded into
-every code-aware agent, a skill is an executable step you pick per pipeline: it clones the repo, does
-what the playbook prescribes, and commits the result.
+playbook your team authors in a repository and hands to an agent. Where [prompt fragments](./prompt-fragments.md) are passive guidance folded into
+every code-aware agent, a skill is a procedure you point at work: as a **pipeline step** that clones
+the repo, does what the playbook prescribes and commits the result, or as a **review skill** queued
+onto a review task, where the reviewer applies it as an extra lens on the pull request.
 
 ## Authoring a skill
 
@@ -12,6 +13,44 @@ frontmatter (`name` and `description`) and a Markdown body of instructions. Alon
 resource files the instructions reference: templates, checklists, scripts. The conventional home is
 `.claude/skills/<skill>/` in the repo, but a source can point at any directory. The whole directory is
 the sync unit, not just the `SKILL.md`.
+
+## Grouping skills
+
+A skill can say what kind of work its playbook does, with a `group` in the frontmatter:
+
+```markdown
+---
+name: Security review
+description: Audit a change for auth, input handling, and secret exposure
+group: review
+---
+```
+
+The groups are **build**, **review**, **test**, **write**, **plan**, **operate**, and **other**.
+A skill that declares none is filed under Other.
+
+The group is what lets a surface offer the part of your catalog that fits it. A review task's skill
+queue (below) offers your `review` skills and nothing else, so a release-notes writer never turns up
+in a picker for a security audit. Each skill in **Account settings → Skills** shows its group; if a
+manifest declares a group this version does not know, the skill is filed under Other and the screen
+says which value it declared, so you can fix the frontmatter.
+
+## Queueing review skills on a review task
+
+A [Review task](./pull-requests.md#deep-reviewing-an-existing-pull-request) can carry a queue of
+specialist review playbooks: a Performance Review, a Security Review, an Accessibility Review,
+whatever your team has written down. Pick them under **Review skills** in the add-task form, in the
+order you want them applied. Only `review`-group skills are offered, and a review carries at most
+eight.
+
+At run time the PR Reviewer applies them on top of its standing role, routing each one to the parts
+of the diff it bears on rather than to every chunk. This is per-review: the same pipeline serves a
+routine change and one that needs a security pass, and you decide which lenses that pull request
+earns when you file it.
+
+If a queued skill has since left the catalog (its directory was renamed, or its source was
+unlinked), the run FAILS and names it rather than reviewing without it. Edit the task's skills and
+pick a current one.
 
 ## Linking a skill source
 
