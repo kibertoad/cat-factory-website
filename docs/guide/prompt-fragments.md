@@ -5,7 +5,7 @@ version-controlled guidelines that agents pull into their prompts at run time: e
 once - coding conventions, review checklists, security rules - and apply them everywhere.
 
 For a procedural playbook that runs as its own pipeline step rather than passive guidance folded into
-every agent, see [Run a Claude Skill as a Step](./skills.md).
+every agent, see [Run a Claude Skill](./skills.md).
 
 ![The prompt-fragment library's Resolved catalog listing built-in fragments such as backend acceptance tests, acceptance scenarios, and design context, with This board, Documents, and Repo sources tabs](/images/app/context-fragments.webp)
 
@@ -166,5 +166,5 @@ add workspace fragments only where a specific board needs to differ.
 
 ---
 
-Next: run a playbook as its own step with [Run a Claude Skill as a Step](./skills.md), or try a
+Next: run a playbook as its own step with [Run a Claude Skill](./skills.md), or try a
 fragment against real fixtures in [Compare Prompts and Models in the Sandbox](./sandbox.md).
