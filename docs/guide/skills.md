@@ -35,13 +35,17 @@ in a picker for a security audit. Each skill in **Account settings → Skills** 
 manifest declares a group this version does not know, the skill is filed under Other and the screen
 says which value it declared, so you can fix the frontmatter.
 
+Skills already in your catalog are filed under Other until their `SKILL.md` is next edited. That is
+the same edit that gives a skill its group, so adding the `group` line is all it takes: a sync
+re-reads a skill when its file changes, and the group arrives with it.
+
 ## Queueing review skills on a review task
 
 A [Review task](./pull-requests.md#deep-reviewing-an-existing-pull-request) can carry a queue of
 specialist review playbooks: a Performance Review, a Security Review, an Accessibility Review,
 whatever your team has written down. Pick them under **Review skills** in the add-task form, in the
-order you want them applied. Only `review`-group skills are offered, and a review carries at most
-eight.
+order you want them applied, and change the queue afterwards under **Under review** in the task
+inspector. Only `review`-group skills are offered, and a review carries at most eight.
 
 At run time the PR Reviewer applies them on top of its standing role, routing each one to the parts
 of the diff it bears on rather than to every chunk. This is per-review: the same pipeline serves a
@@ -49,8 +53,9 @@ routine change and one that needs a security pass, and you decide which lenses t
 earns when you file it.
 
 If a queued skill has since left the catalog (its directory was renamed, or its source was
-unlinked), the run FAILS and names it rather than reviewing without it. Edit the task's skills and
-pick a current one.
+unlinked), the run FAILS and names it rather than reviewing without it. Open the task, drop that
+skill from **Under review** (pick a current one in its place if the lens still applies), and start
+the run again.
 
 ## Linking a skill source
 

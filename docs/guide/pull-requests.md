@@ -327,7 +327,9 @@ asked for.
 
 This is what lets one review pipeline serve both a routine change and one that needs a security
 pass: which lenses a pull request earns is a per-review decision you make when you file the task,
-not a pipeline you clone per lens. The task inspector shows the queue, in order.
+not a pipeline you clone per lens. The task inspector's **Under review** panel shows the queue in
+order and lets you change it, which is also how you clear a run that failed on a skill the catalog
+no longer holds.
 
 The **PR Reviewer** agent clones the repo, fetches the PR head, and for a large diff **slices it into
 cohesive chunks** (a refactor with its call sites and tests) and reviews the chunks in parallel, up to
