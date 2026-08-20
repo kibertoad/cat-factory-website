@@ -102,6 +102,7 @@ const EXTEND = [
   '/extend/manifests.md',
   '/extend/tool-servers.md',
   '/extend/reusable-operations.md',
+  '/extend/inline-use-cases.md',
   '/extend/initiative-presets.md',
   '/extend/public-api.md',
   '/extend/sdks.md',
