@@ -765,6 +765,66 @@ uses the same mapping, so it always agrees with the field it filters on.
 
 Headless jobs emit no run-lifecycle webhooks; the job read and its SSE stream already serve them.
 
+## Inline use cases
+
+The non-container half of the surface: named units of model work this deployment registered, which
+take a small form, run ONE model call and answer with text. No task, no repository, no pipeline, no
+container, no run. Authoring one is [Package an Inline Use Case](./inline-use-cases.md); this is the
+caller's side.
+
+| Method | Path | Scope | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/use-cases` | read | The catalog: what this deployment will generate, on which models, from which parameters. |
+| `GET` | `/api/v1/use-cases/{useCaseId}` | read | One use case, for a caller that already holds the id. |
+| `POST` | `/api/v1/use-cases/{useCaseId}/invocations` | write | Run it and answer with the text. |
+
+The invocation is SYNCHRONOUS, unlike a headless job: it is a single model call, so there is no job
+to poll and no SSE stream to open.
+
+```
+POST /api/v1/use-cases/acme:scene-prose/invocations
+Authorization: Bearer cf_live_<keyId>.<secret>
+Content-Type: application/json
+
+{
+  "model": "magnum",
+  "parameters": { "beats": "They meet at dusk. She lies.", "tone": "grim" },
+  "temperature": 1.2
+}
+```
+
+The response carries `text`, the `model` it actually ran on, `finishReason`, `truncated` and
+`usage`. Read `truncated` before you store the text: `finishReason: "length"` means the reply hit
+the output budget, so what you have is a prefix rather than an answer.
+
+Each use case NARROWS the models it may run on, and the catalog says whether each can be served
+right now. An unavailable model is listed with its cause rather than hidden, so a picker shows what
+the use case offers instead of an empty list: `provider_unavailable` (this deployment has not
+configured the provider) or `container_only` (the model runs only through a coding-subscription
+harness inside a per-run container, which this surface has none of).
+
+Refusals, all carrying `error.details.reason`:
+
+| Status | `reason` | Means |
+| --- | --- | --- |
+| `404` | `use_case_not_found` | Re-read the catalog; this deployment no longer registers the id. |
+| `422` | `use_case_parameters_invalid` | `details.problems` names every problem at once. |
+| `422` | `use_case_model_not_allowed` | `details.allowed` names what this use case does carry. |
+| `422` | `use_case_generation_out_of_range` | A knob outside the published bounds. Nothing is clamped. |
+| `429` | `budget_exhausted` | The workspace has spent its model budget; nothing reached a vendor. |
+| `503` | `use_case_model_unavailable` | `details.cause` is one of the two above. |
+| `503` | `use_case_models_unconfigured` | This deployment wired no model provider at all. |
+| `503` | `use_case_empty_reply` | The model answered with nothing usable. |
+
+Two of those are deliberate and worth counting on. A model outside the list, and one this deployment
+cannot serve, are both refused rather than swapped for another: a narrowed list that substitutes
+silently is not a narrowing, and you would have no way to see it happened. And a `200` never carries
+an empty string, because a model that answered with nothing is not an answer worth saving.
+
+An invocation answers to the workspace budget, for the same reason a run does: it is a billable
+model call. Discovery does not, and never 404s: a deployment that registered nothing answers an
+empty list, and one with no model provider answers the full catalog with every model unavailable.
+
 ## Usage and budget
 
 | Method | Path | Scope | Purpose |

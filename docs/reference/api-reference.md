@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.58.0**. 121 operations across 23 groups.
+Surface version **1.59.0**. 124 operations across 24 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -28,7 +28,7 @@ Each operation below states the LOWEST scope that admits it. A key below that li
 
 ## Operations
 
-[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Kaizen](#kaizen) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [VCS](#vcs) · [Webhook](#webhook)
+[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Kaizen](#kaizen) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [Use cases](#use-cases) · [VCS](#vcs) · [Webhook](#webhook)
 
 ### Debug
 
@@ -2653,6 +2653,70 @@ Group the board’s spend over a window (`24h`, `7d`, `30d`, `90d`) by ONE dimen
 | Status | Body | Meaning |
 | --- | --- | --- |
 | `200` | [`PublicSpend`](#publicspend) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+### Use cases
+
+#### List the deployment's inline use cases
+
+`GET /api/v1/use-cases`
+
+Minimum scope: `read`.
+
+List the non-container model operations this deployment has registered: what each generates, the models it may run on, the parameters it accepts, and the temperature / output bounds an invocation may steer within. Each model carries whether it can be served right now, and an unavailable one says which of the two causes it is: `provider_unavailable` (nothing here resolves it, so an operator configures the provider) or `container_only` (it runs only through a subscription harness inside a per-run container, which this surface has none of). An empty list means this deployment registered no use cases, not that the surface is missing.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Get one use case
+
+`GET /api/v1/use-cases/{useCaseId}`
+
+Minimum scope: `read`.
+
+Read one registered use case by id: the same projection the catalog returns, for a caller that already holds the id and wants the current parameters and model availability without paging the catalog.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `useCaseId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Run a use case
+
+`POST /api/v1/use-cases/{useCaseId}/invocations`
+
+Minimum scope: `write`.
+
+Run one use case and answer with the generated text. Synchronous: this is a single inline model call with no repository, no container and no run, so there is no job to poll. The parameters are validated against the use case’s own descriptors (`422 use_case_parameters_invalid`, naming every problem at once); a model outside the use case’s declared list is refused (`422 use_case_model_not_allowed`) rather than substituted, and so is one this deployment cannot serve inline (`503 use_case_model_unavailable`). An exhausted workspace budget is `429 budget_exhausted`, and a model that answers with no usable text is `503 use_case_empty_reply` rather than a 200 carrying an empty string. `finishReason: "length"` (with `truncated: true`) means the reply hit the output budget, so the text is a prefix rather than an answer. Requires a `write` key.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `useCaseId` | `string` | yes |  |
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
