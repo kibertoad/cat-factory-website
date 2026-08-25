@@ -30,6 +30,7 @@ on task size.
 | Step | What it does |
 | --- | --- |
 | **Task Estimator** | Scores the task on complexity, risk, and impact so the gated steps have something to read. |
+| **Task Reassessor** | Optional, and in no preset: re-scores those axes after the change lands, from the diff the run actually produced. See [re-scoring the task](#re-scoring-the-task-after-the-work-lands). |
 | **Architect** | Designs the approach. |
 | **Architect Reviewer** | The Architect's companion. Rates the design and loops it back below threshold. |
 | **Coder** | Clones the repo and writes the implementation. |
@@ -453,7 +454,9 @@ bytes.
 
 The **Task Estimator** is an agent kind you can add early in a pipeline. After requirements are
 clarified, it scores the task on three 0–100% axes (**complexity**, **risk**, and **impact**) and
-shows them as a small estimate badge in the task inspector, with the model's rationale.
+shows them as a small estimate badge in the task inspector, with the model's rationale. The badge
+says which reading it is showing, because a forecast and a measurement of the same three axes are
+not the same fact: this one is labelled "forecast before the work started".
 
 That estimate lets you **gate** expensive steps so they run only when the work warrants it. Open a
 step's gate controls and set minimum thresholds on any of the axes; the step then runs only when the
@@ -464,12 +467,41 @@ Architect, Tester, and Human Review on per task.
 Gatability is a per-kind capability, so the controls appear on any step whose kind declares it, not
 only on companions. Three rules bind a gated step:
 
-- It needs a **Task Estimator** earlier in the same pipeline to have an estimate to consult.
+- It needs a step that PRODUCES an estimate earlier in the same pipeline (a **Task Estimator**, or
+  the **Task Reassessor** below) to have something to consult.
 - It must set at least one threshold, otherwise it would always skip.
 - It may not also carry a human approval gate. Pick one.
 
 A companion cascades with its producer: skipping the Architect skips its reviewer too, without a
 second threshold to keep in sync.
+
+### Re-scoring the task after the work lands
+
+The estimate above is a forecast, made before anyone had written a line. The **Task Reassessor** is
+the other end of it: place it after the Coder and it reads the change the run actually made (the
+pull request's diff, read-only, in a container) and scores the same three axes against it.
+
+It does two jobs, and which one you get depends only on what came before it in the pipeline:
+
+- **It corrects a forecast.** With a Task Estimator earlier in the pipeline, the task keeps ONE set
+  of ratings, now labelled "measured from the change that landed", with the forecast it replaced
+  shown beside each axis. That is what makes a run's estimate reviewable after the fact: a task
+  forecast at 30% complexity and measured at 90% is worth reading, and worth remembering the next
+  time something similar is described the same way.
+- **It produces the ratings a pipeline never had.** On a preset with no Task Estimator (Simple
+  build, or a bug-fix pipeline), it is the only step that rates the task at all, so the ratings
+  arrive after the fact rather than not at all.
+
+The Reassessor is not in any shipped preset: it costs an extra read-only container run per task, so
+you add it in the builder where you want it. It is itself gatable, which is usually how you want it
+configured: measure the tasks the forecast called large, skip the rest.
+
+Two limits worth knowing. It needs the run's pull request, and refuses to run without one rather
+than scoring an empty diff, so it has no use in a pipeline that opens none. And on a task that
+changed several connected repositories it reads the primary repository's change and says so in its
+rationale, rather than implying it weighed the whole set. It is never told the earlier forecast:
+an assessment handed the number it is revising anchors on it, and the movement between the two is
+arithmetic the platform does itself.
 
 ## Multi-model consensus
 

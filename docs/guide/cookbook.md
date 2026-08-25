@@ -258,7 +258,7 @@ Strategies are specialist panel, debate (1 to 5 rounds), and ranked voting. Deta
 
 | What it says | What to do |
 | --- | --- |
-| A gated step needs a Task Estimator before it | Add a **Task Estimator** earlier, or clear the step's estimate thresholds. |
+| A gated step needs an estimate before it | Add a **Task Estimator** earlier (or a **Task Reassessor**, if the step you are gating runs after the change lands), or clear the step's estimate thresholds. |
 | A Skill step needs a skill selected before you can save | Pick a skill on the step, or remove the step. |
 | This skill is no longer in the catalog; pick another | The skill's directory was renamed or unlinked. Pick the current one. |
 | This purpose writes no code and runs no tests, but the pipeline still has implementation or testing steps | Remove those steps, or set **Purpose** back to **Build**. |
