@@ -164,12 +164,44 @@ For each item you can:
 
 - **File** a follow-up as a tracker issue (it records the issue link).
 - **Send it back** to the Coder to handle now (it folds into the Coder's next loop-back as rework).
-- **Answer** a question (the Q&A folds into the next loop-back).
+- **Answer & send back** a question (the Q&A folds into the next loop-back).
+- **Answer & close** a question (your reply is recorded as a ruling, and no further pass is spent).
 - **Dismiss** it as not worth acting on.
 
 Once everything is decided, the Coder loops once more for any sent-back follow-ups and answered
 questions, then the pipeline advances. The companion is **on per Coder step** and can be disabled for
 a step in the pipeline builder.
+
+### Answering a question, and ruling on one
+
+The two answer buttons do different things, and picking the right one is what keeps a run from
+circling.
+
+**Answer & send back** promises the Coder there is something new in your reply to apply, and buys it
+another pass to do so. **Answer & close** says your reply settles the question without giving it
+anything to act on: nobody has the fact it asked for, or it asked to widen scope and the answer is no.
+A closed question clears the gate exactly as an answer does, costs nothing, and rides into every later
+pass under a heading that tells the Coder the topic is settled and must not be re-argued in the code or
+the commit message.
+
+Reach for **close** whenever your reply is a standing policy rather than a fact ("build exactly what
+the task specifies", "we don't have that information here"). Answered instead, a Coder that finds
+nothing to apply will write its uncertainty into a comment, reword it on the next pass, and re-raise
+the same question under a new title until the send-back budget runs out.
+
+Headless callers get the same choice: `POST …/follow-ups/items/:itemId/answer` takes an optional
+`resolution` of `answered` (the default) or `closed`. See the
+[SDK reference](../extend/sdks.md).
+
+### When a decision arrives too late
+
+The send-back loop is **budgeted**: the Coder re-runs a bounded number of times per step. If you decide
+an item after that budget is spent, the run advances without the Coder ever receiving it, and the
+platform says so rather than leaving it looking applied. The item is marked **Never sent to the
+Coder** in the follow-up window, and the run's
+[verification report](./pull-requests.md#the-verification-report-on-the-pull-request) leads its
+follow-ups section with how many decisions were dropped and the budget that ran out. Deciding such an
+item again clears the mark and queues it for the next pass, when the step still has one.
 
 On a run nobody is watching, undecided items are **dismissed** by policy rather than held, so the run
 finishes inside the brief it was given. Each dismissal is stamped as the policy's, and every item keeps
