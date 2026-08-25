@@ -245,6 +245,12 @@ The report carries:
 
 - **Run**: the task, the linked tracker issues, the repo and provider, the pipeline, and each step's
   agent kind with the model that actually ran it, plus a deep link into the run's observability panel.
+- **Coder follow-ups**: what the Coder flagged mid-run and what was decided about each item (see
+  [Coder follow-ups](./running-pipelines.md#coder-follow-ups)). You are the person best placed to act
+  on a loose end the build noticed and the worst placed to discover one, so three dispositions are
+  called out above the table rather than left to be read off a status column: a question **ruled on**
+  rather than answered, a decision that **never reached the Coder** because the send-back budget was
+  already spent, and an item **dismissed by the run's autonomy policy** because nobody was watching.
 - **Continuous integration**: the CI gate's aggregated verdict, per-check-run names and conclusions,
   and how many times the CI fixer tried.
 - **Pre-PR validation**: each [check command](#pre-pr-validation) the harness ran against the exact
