@@ -426,10 +426,12 @@ PATCH /api/v1/services/{serviceId}
 `provisioning` is a tagged union whose non-matching branches are ignored, so read it back off the
 response rather than trusting the `200`: a wrong-shaped patch is accepted and stored as something the
 deploy step later reads as "no manifests". An omitted `provisioning` leaves the stored one alone, so
-correcting a title cannot silently un-deploy a service. Send `provisioning: null` to **clear** the
-pin: the service is left with no environment to provision, and reads back with no `provisioning` at
-all. Clearing removes the whole stored configuration rather than the published half of it, which is
-what taking a pin back means; to narrow a pin instead, send the member you want.
+correcting a title cannot silently un-deploy a service. Send `{ "type": "infraless" }` to **take the
+pin back**: the service is left with no environment to provision, and reads back with no
+`provisioning` at all, because a service that stands nothing up and one that was never pinned are
+the same thing here. Taking a pin back removes the whole stored configuration rather than the
+published half of it, leftovers from the engine you are leaving included; to narrow a pin instead,
+send the member you want, and that patch overlays what is stored.
 
 A deployment that ships its own environment backend pins by `manifestId` instead, and **nothing
 checks that id when you write it**: it is validated as a string and matched to a handler only when a

@@ -2133,7 +2133,7 @@ Create a board service, optionally backed by a repository from `GET /api/v1/repo
 
 Minimum scope: `admin`.
 
-Change a service’s authored fields, and declare its `provisioning`: where the manifests for a per-run environment are read from. That second half is what a connected cluster alone cannot supply, because the platform keeps “which cluster” (one per workspace) apart from “which manifests” (one set per service). An omitted `provisioning` leaves the stored one alone rather than clearing it, so correcting a title cannot un-deploy a service; send `provisioning: null` to CLEAR the pin, which leaves the service with no environment to provision. Board coordinates are deliberately absent, as they are on service creation.
+Change a service’s authored fields, and declare its `provisioning`: where the manifests for a per-run environment are read from. That second half is what a connected cluster alone cannot supply, because the platform keeps “which cluster” (one per workspace) apart from “which manifests” (one set per service). An omitted `provisioning` leaves the stored one alone rather than clearing it, so correcting a title cannot un-deploy a service; send `provisioning: { "type": "infraless" }` to take the pin BACK, which leaves the service with no environment to provision and reads back with no `provisioning` at all. Board coordinates are deliberately absent, as they are on service creation.
 
 **Path parameters**
 
@@ -3828,7 +3828,7 @@ One of 13 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `description` | `string` | yes |  |
-| `provisioning` | object \| object | no |  |
+| `provisioning` | object \| object \| object | no |  |
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `title` | `string` | yes |  |
