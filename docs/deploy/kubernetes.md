@@ -67,7 +67,7 @@ repo's own manifests into a fresh namespace, then tearing it down when the run f
 | --- | --- |
 | **Label** | Human name for the connection. |
 | **API server URL**, **API token**, **CA certificate**, **Skip TLS verify** | Reach and authenticate to the cluster, same as above. |
-| **Namespace template** | Per-PR namespace name, e.g. `cf-env-{{pullNumber}}`. |
+| **Namespace template** | Per-PR namespace name, e.g. `cf-env-pr{{pullNumber}}`. Only correct alongside the URL source: see [Wildcard-DNS hosts](#wildcard-dns-hosts). |
 | **Manifest source** | Where the manifests live (see below). |
 | **URL source** | How the preview's live URL is derived (see below). |
 | **Image template** | Optional. The CI-built image tag to roll out, e.g. a branch or SHA tag. |
@@ -145,6 +145,42 @@ has to be: the rendered host template is also the Ingress `spec.rules[].host` yo
 and Kubernetes rejects a `host` carrying a port. So a cluster whose ingress controller answers on
 anything but the scheme's default port sets `port` and leaves the template portless. Left empty it
 means the scheme default, which is what every connection without it already meant.
+
+Build the host from **`{{namespace}}`** rather than `{{branch}}`. A branch is
+`cat-factory/<taskId>`: the `/` ends the host and turns everything after it into a path, so the URL
+names the bare host `cat-factory` and the Ingress declaring that `host` is refused by the apiserver.
+The namespace is already sanitized to a single DNS label.
+
+### Wildcard-DNS hosts
+
+`nip.io` and `sslip.io` let a local cluster serve real hostnames with no DNS to administer, because
+the address is written into the name: `app.127.0.0.1.nip.io` answers 127.0.0.1. What is easy to miss
+is HOW they find that address. They take the **leftmost** run of four octets in the name, and they
+treat `-` and `.` as the same separator. So a namespace ending in a separator plus digits contributes
+an address of its own, and being further left, it wins:
+
+```
+cf-env-catalog-api-5.127.0.0.1.nip.io    ->  5.127.0.0     (somebody else's network)
+cf-env-catalog-api-pr5.127.0.0.1.nip.io  ->  127.0.0.1     (one character's difference)
+```
+
+**The namespace template and the URL source are therefore only correct together.** Neither half is
+wrong on its own, and nothing downstream catches the pair: the workloads roll out, the environment
+reports ready (readiness is workload readiness, not an HTTP probe), and the first thing to notice is
+a test step failing with a connection error against an address that was never your cluster.
+
+Cat Factory refuses a provision whose URL would resolve elsewhere, before it creates the namespace.
+The environment fails immediately with `config_incomplete`, naming both addresses and the fix, and
+nothing is left behind on the cluster. Three ways to make a name carry one address:
+
+- **End the namespace with a letter**: `cf-env-pr{{pullNumber}}` renders `pr5`, which is not an
+  octet, where `cf-env-{{pullNumber}}` renders `5`, which is. This is what the shipped defaults do.
+- **Spell the address with the separator the prefix does not join on**: a four-octet run has to use
+  one separator throughout, so `…-5.127-0-0-1.nip.io` and `…-5-127.0.0.1.nip.io` both carry a single
+  address. Writing the address with dashes is not on its own a fix: a dashed prefix extends a dashed
+  address exactly as a dotted prefix extends a dotted one.
+- **Serve environments from a host you control**, where the address lives in a DNS record rather
+  than in the name.
 
 ## Amazon EKS
 
@@ -310,9 +346,10 @@ Docker). On Windows it also needs k3d installed first, which is
 rights, the cluster, and back to this form.
 
 Selecting the **Local k3s** preset by hand (without the CLI) pre-fills the Kubernetes environment
-form with local defaults: a `cf-env-{{pullNumber}}` namespace, a `{{branch}}.127.0.0.1.nip.io` host
-(nip.io wildcard DNS, no local setup), and skipped TLS verification for the cluster's self-signed
-cert.
+form with local defaults: a `cf-env-pr{{pullNumber}}` namespace, a `{{namespace}}.127.0.0.1.nip.io`
+host (nip.io wildcard DNS, no local setup), and skipped TLS verification for the cluster's
+self-signed cert. The two are chosen to compose: see
+[Wildcard-DNS hosts](#wildcard-dns-hosts) before you change either.
 
 ---
 
