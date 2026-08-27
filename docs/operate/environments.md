@@ -37,6 +37,28 @@ place a Deployer before it. Cat Factory checks this at start:
 
 An `infraless` service (or a task that declares no infra) stands nothing up and runs directly.
 
+## Waiting for the environment to actually come up
+
+Most real backends accept a provision request and finish building afterwards: the create call
+returns in a second or two with the environment still coming up and no URL yet. The Deployer step
+does not finish there. It parks and re-reads your provider's status endpoint until one of three
+things happens:
+
+- the environment reports **ready**, and the run continues with the URL your provider published;
+- the environment reaches a state it will never leave (failed, expired, torn down under the run),
+  and the step fails with your provider's own reason;
+- **20 minutes** pass with the environment still building, and the step fails as a readiness
+  timeout naming how long it waited.
+
+The wait is visible while it happens: the Deployer step shows the environment spinning up in its
+Environment panel, and the run stays parked rather than looking idle. A provider that returns a
+live environment synchronously (Docker Compose, for instance) never waits at all.
+
+The ceiling is deliberately generous. A per-PR environment that takes five or six minutes from
+create to online is ordinary, and failing a healthy environment early is the more expensive
+mistake. If yours legitimately needs longer than 20 minutes, that is worth
+[raising as an issue](https://github.com/kibertoad/cat-factory/issues).
+
 ## What the Tester receives
 
 When a Tester (or `playwright`) step runs against an ephemeral environment, its prompt carries the
@@ -47,6 +69,13 @@ three forms: a bearer token, HTTP Basic username/password, or a custom header na
 These are the credentials that reach the endpoint (an ingress token or basic-auth pair), treated as
 non-sensitive test-environment data and rendered directly into the prompt. They are not application
 login accounts, and you should not wire real or production secrets through them.
+
+A Tester is never dispatched without an address. If a step that runs against an ephemeral
+environment reaches its turn with no reachable URL, the step fails instead, naming which of the two
+cases it is: the environment exists but is not reachable, or the run provisioned none at all (a
+pipeline reaching a Tester on a provisioned service with no Deployer ahead of it). An agent handed
+"test the environment" and "URL: (pending)" in the same prompt has no good move, and the one it
+tends to take is to test something else and report success.
 
 ## Sealed test credentials
 
@@ -309,14 +338,17 @@ loudly rather than skipping them silently.
 The generic HTTP manifest provider spins environments up by calling your management API. During a run:
 
 1. The deployer agent calls your provider endpoints to spin up an isolated environment.
-2. The tester (and `playwright`) agents run against the preview instance.
-3. The environment is cleaned up automatically on run completion or timeout.
+2. If the environment comes back still building, the deployer polls your `status` endpoint until it
+   is ready (see [Waiting for the environment to actually come up](#waiting-for-the-environment-to-actually-come-up)).
+3. The tester (and `playwright`) agents run against the preview instance.
+4. The environment is cleaned up automatically on run completion or timeout.
 
 ```
 Run starts
    └─ deployer agent → provision environment (your HTTP API)
-        └─ tester / playwright → run against preview
-             └─ run completes or times out → environment torn down
+        └─ poll status until ready (or fail: never ready / timed out)
+             └─ tester / playwright → run against preview
+                  └─ run completes or times out → environment torn down
 ```
 
 ## Registering an HTTP manifest provider
