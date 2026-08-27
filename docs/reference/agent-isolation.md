@@ -17,7 +17,10 @@ A per-run container holds two distinct programs, and the distinction is the whol
 - The **harness** is a small, fixed TypeScript wrapper baked into the container image. It is trusted
   code: the same wrapper on every run, auditable in the open-source repo, never written per agent.
   It clones the repo, launches the model, commits what the model changed, pushes a branch, and opens
-  the pull request.
+  the pull request. It also holds one port inside the container, `27182`, for the job API the
+  backend dispatches to and polls. Anything a run starts for itself (a service under test, a preview
+  server) must listen on some other port: the harness answers requests on its own, so a health check
+  aimed at it would pass without the service under test ever having run.
 - The **model** is the agent CLI the harness launches (for example the Pi coding agent). It is the
   untrusted part: it runs whatever the language model decides to do. Its only durable output is edits
   to files in the checkout.
