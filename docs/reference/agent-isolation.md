@@ -20,7 +20,12 @@ A per-run container holds two distinct programs, and the distinction is the whol
   the pull request. It also holds one port inside the container, `27182`, for the job API the
   backend dispatches to and polls. Anything a run starts for itself (a service under test, a preview
   server) must listen on some other port: the harness answers requests on its own, so a health check
-  aimed at it would pass without the service under test ever having run.
+  aimed at it would pass without the service under test ever having run. Two things keep that from
+  happening by accident. The harness does not pass its own `PORT` down to anything it starts in the
+  checkout, so a service written as `listen(process.env.PORT)` picks its own default rather than the
+  harness's port. And a frontend frame configured to serve on the port the harness holds is refused
+  with that named as the reason, instead of being served, failing to bind, and then being graded
+  against the harness's reply.
 - The **model** is the agent CLI the harness launches (for example the Pi coding agent). It is the
   untrusted part: it runs whatever the language model decides to do. Its only durable output is edits
   to files in the checkout.
