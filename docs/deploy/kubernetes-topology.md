@@ -75,7 +75,7 @@ the run no longer needs it.
    re-attach, so a later step or a replayed workflow lands on the pod that is already up rather than
    creating a second one.
 3. It waits for the pod to become ready, then posts the job spec to the harness through the
-   pod-proxy (`.../pods/<name>:8080/proxy/jobs` by default).
+   pod-proxy (`.../pods/<name>:27182/proxy/jobs` by default).
 4. The pod clones the repository and starts the agent. Model calls go to the in-cluster proxy, which
    forwards them to the vendor with the real key and records what they cost.
 5. The engine polls the job through the same pod-proxy every few seconds and turns the harness's
