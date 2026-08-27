@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.59.0**. 124 operations across 24 groups.
+Surface version **1.61.0**. 125 operations across 24 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -1360,6 +1360,22 @@ Reach the apiserver with the supplied credentials and report what came back, per
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+#### List the custom manifest types a service can pin
+
+`GET /api/v1/environments/manifest-types`
+
+Minimum scope: `admin`.
+
+Every custom-manifest-type id a service’s `custom` provisioning may name, with the label and default manifest path of each, and whether the deployment registered it in code (`registered`) or the workspace defined it (`workspace`). Those two are fixed by different people, which is why the source is reported. The read exists because a pin is checked against no registry on the way in: an id no handler serves is accepted and fails at the `deployer` step of a run already paid for, so a caller lists first and refuses before it spends.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | object (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Evidence
 
 What a run PROVED: the engine’s own verification report (the same bundle it writes onto the pull request) and the binary artifacts the run captured, bytes included. The surface for a consumer that has to judge a run (accept the change, score the fleet) rather than debug one. Read-only (`read` scope).
@@ -2117,7 +2133,7 @@ Create a board service, optionally backed by a repository from `GET /api/v1/repo
 
 Minimum scope: `admin`.
 
-Change a service’s authored fields, and declare its `provisioning`: where the manifests for a per-run environment are read from. That second half is what a connected cluster alone cannot supply, because the platform keeps “which cluster” (one per workspace) apart from “which manifests” (one set per service). An omitted `provisioning` leaves the stored one alone rather than clearing it. Board coordinates are deliberately absent, as they are on service creation.
+Change a service’s authored fields, and declare its `provisioning`: where the manifests for a per-run environment are read from. That second half is what a connected cluster alone cannot supply, because the platform keeps “which cluster” (one per workspace) apart from “which manifests” (one set per service). An omitted `provisioning` leaves the stored one alone rather than clearing it, so correcting a title cannot un-deploy a service; send `provisioning: { "type": "infraless" }` to take the pin BACK, which leaves the service with no environment to provision and reads back with no `provisioning` at all. Board coordinates are deliberately absent, as they are on service creation.
 
 **Path parameters**
 
@@ -2702,7 +2718,7 @@ Read one registered use case by id: the same projection the catalog returns, for
 
 Minimum scope: `write`.
 
-Run one use case and answer with the generated text. Synchronous: this is a single inline model call with no repository, no container and no run, so there is no job to poll. The parameters are validated against the use case’s own descriptors (`422 use_case_parameters_invalid`, naming every problem at once); a model outside the use case’s declared list is refused (`422 use_case_model_not_allowed`) rather than substituted, and so is one this deployment cannot serve inline (`503 use_case_model_unavailable`). An exhausted workspace budget is `429 budget_exhausted`, and a model that answers with no usable text is `503 use_case_empty_reply` rather than a 200 carrying an empty string. `finishReason: "length"` (with `truncated: true`) means the reply hit the output budget, so the text is a prefix rather than an answer. Requires a `write` key.
+Run one use case and answer with the generated text. Synchronous: this is a single inline model call with no repository, no container and no run, so there is no job to poll. The parameters are validated against the use case’s own descriptors (`422 use_case_parameters_invalid`, naming every problem at once); a model outside the use case’s declared list is refused (`422 use_case_model_not_allowed`) rather than substituted, and so is one this deployment cannot serve inline (`503 use_case_model_unavailable`). An exhausted budget is `429 budget_exhausted`, and a model that answers with no usable text is `503 use_case_empty_reply` rather than a 200 carrying an empty string. A call the vendor did not complete is `503 use_case_generation_failed`, or `503 use_case_generation_timeout` when it did not answer inside the deployment’s per-invocation deadline: separate, because a failure is worth surfacing to whoever asked while a timeout is worth retrying with a smaller `maxOutputTokens`. `finishReason: "length"` (with `truncated: true`) means the reply hit the output budget, so the text is a prefix rather than an answer. Requires a `write` key.
 
 **Path parameters**
 
@@ -3249,6 +3265,16 @@ One of 3 shapes.
 | `ci` | [`PrReportCi`](#prreportci) | yes |  |
 | `context` | [`PrReportContext`](#prreportcontext) | yes |  |
 | `environments` | [`PrReportEnvironments`](#prreportenvironments) | yes |  |
+| `followUps` | object | yes |  |
+| `followUps.dismissedByPolicy` | `number` | yes |  |
+| `followUps.dropped` | `number` | yes |  |
+| `followUps.droppedBudget` | object \| `null` | yes |  |
+| `followUps.entries` | array of object | yes |  |
+| `followUps.loops` | `number` | yes |  |
+| `followUps.maxLoops` | `number` | yes |  |
+| `followUps.note` | `string` \| `null` | no |  |
+| `followUps.status` | `"reported"` \| `"absent"` | yes |  |
+| `followUps.total` | `number` | yes |  |
 | `generatedAt` | `number` | yes |  |
 | `judges` | [`PrReportJudges`](#prreportjudges) | yes |  |
 | `merge` | [`PrReportMerge`](#prreportmerge) | yes |  |
@@ -3281,6 +3307,7 @@ One of 3 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `answer` | `string` | yes | 1 to 4000 characters |
+| `resolution` | `"answered"` \| `"closed"` | no |  |
 
 ### `PublicAnswerInterview`
 
@@ -3460,7 +3487,8 @@ One of 13 shapes.
 | `detail` | `string` | yes |  |
 | `itemId` | `string` | yes |  |
 | `kind` | `"follow_up"` \| `"question"` | yes |  |
-| `status` | `"pending"` \| `"filed"` \| `"queued"` \| `"answered"` \| `"dismissed"` | yes |  |
+| `sendBackDropped` | `boolean` | yes |  |
+| `status` | `"pending"` \| `"filed"` \| `"queued"` \| `"answered"` \| `"closed"` \| `"dismissed"` | yes |  |
 | `suggestedAction` | `string` \| `null` | yes |  |
 | `ticketExternalId` | `string` \| `null` | yes |  |
 | `ticketUrl` | `string` \| `null` | yes |  |
@@ -3800,7 +3828,7 @@ One of 13 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `description` | `string` | yes |  |
-| `provisioning` | object \| object | no |  |
+| `provisioning` | object \| object \| object | no |  |
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `title` | `string` | yes |  |

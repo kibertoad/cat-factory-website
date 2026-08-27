@@ -55,6 +55,23 @@ the caller rather than convenient:
   enum, because new codes appear without a major version.
 - **Only idempotent requests are retried.** Starting a run costs real model work, and a transport
   failure with no response says nothing about whether the server acted.
+- **A connection failure names the cause instead of blaming the deployment.** "Failed to reach the
+  deployment" is a verdict about reachability, and it is the wrong one when the deployment answered
+  nine calls a moment ago and then restarted. Each client classifies what actually happened
+  (a refusal, a reset, a name that does not resolve, an untrusted or expired certificate, a
+  handshake that never got that far, a request rejected before a socket was opened) and states only
+  what that cause supports, followed by what this client had already seen from the origin:
+
+  ```text
+  POST /api/v1/tasks failed: https://cat-factory.example.com reset the connection before
+  answering. This client had answered 9 calls against https://cat-factory.example.com, the last
+  0.2s ago. (read ECONNRESET)
+  ```
+
+  A reset after nine answered calls is a deployment that restarted; a refusal with nothing answered
+  yet is an address with nothing behind it, and the two send you to different places entirely. The
+  runtime's own error is kept verbatim at the end and on the exception's cause, and an unrecognised
+  failure is reported as itself rather than guessed at.
 - **Streams are never auto-reconnected.** A reconnect replays the event stream from its start, and
   only you know which events you have already acted on.
 - **The client deadline bounds the response, not a stream.** On an ordinary request it covers the
