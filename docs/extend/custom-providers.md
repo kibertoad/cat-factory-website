@@ -308,13 +308,38 @@ function ttlSeconds(manifest: EnvironmentManifest): number | undefined {
 | Method | When it's called | Return |
 | --- | --- | --- |
 | `provision` | The **deployer** agent, once. | A handle. Async platforms return `provisioning`; the URL can be null here. |
-| `status` | Polled until the env is `ready` (or fails / times out). | The current handle. Map your platform's status; surface the URL once it exists. |
+| `status` | Polled until the env is `ready` (or fails / times out). | The current handle. Map your platform's status; surface the URL once it exists, and set `statusNote` while it has not. |
 | `teardown` | On run completion or TTL expiry. | `{ status: 'torn_down' }`. Must be idempotent. |
 
 `provisionContext` gives you typed git/PR/repo facts (`branch`, `pullNumber`, `repoOwner`,
 `repoName`, `pullUrl`), and the same values are mirrored into `inputs` as strings. `fields` you return
 from `provision` are persisted and handed back to `status`/`teardown` as `provisionFields`, so stash
 anything you need to re-address the environment (its id, a region, a sub-resource).
+
+### Say why an environment is not ready yet
+
+The Deployer waits on your `status()` answers for up to **20 minutes** before it records the frame
+failed. `statusNote` is one sentence, on any handle, saying where the environment is:
+
+```ts
+return { externalId: id, url: null, status: 'provisioning', expiresAt: null, access: null, fields,
+         statusNote: 'the deploy job is queued behind 3 others' }
+```
+
+It is not the `error` field. `error` is read only on `status: 'failed'` and cleared on every other
+status, so without a note the platform's whole account of a twenty-minute wait is that it waited
+twenty minutes, and the only way to explain a stuck environment is to report it `failed` early:
+a truthful lifecycle state traded for an explainable one.
+
+- **Say what distinguishes this poll from the last one.** "the deploy job has not started" and "the
+  deploy succeeded and no target is healthy yet" are both `provisioning`, and which one it is
+  decides who looks at what. A note that repeats the status word adds nothing.
+- **It is the current account, not a log.** It is re-read from you and rewritten every poll, so a
+  note you stop returning stops being shown. Nothing accumulates behind an environment.
+- **Leaving it out changes nothing.** A backend that never sets it behaves exactly as before.
+
+The note appears on the step's Environment panel while the run waits, on the run's outcome card,
+and in the failure message if the twenty minutes run out.
 
 ### Proving a teardown
 
