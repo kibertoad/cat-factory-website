@@ -65,7 +65,9 @@ mistake. If yours legitimately needs longer than 20 minutes, that is worth
 the moment an environment reports ready it opens one short TCP connection to the environment's own
 name, and then to each address the provider stated for it (see
 [addresses](../extend/manifests.md#addresses-the-half-a-url-cannot-express)), stopping at the first
-that answers. It is a connection, not a request, deliberately: a load balancer answering 503 over a
+that answers. Where a provider states a balancer by NAME rather than by address, the platform
+resolves that name at this moment and dials what it answered with, so what it stores is your stable
+identity and what it proves is a live address. It is a connection, not a request, deliberately: a load balancer answering 503 over a
 route that works perfectly is a live route with a sick application behind it, and those are
 different problems for different people.
 
