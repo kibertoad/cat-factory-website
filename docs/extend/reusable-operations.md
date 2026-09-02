@@ -218,7 +218,7 @@ the registration, a **warning** only where the platform structurally cannot see 
 
 The fragment check is the one warning because both causes are live: a typo, or an account- or
 workspace-tier id that merges per workspace at run time and is invisible at boot. The message names
-both.
+both, and there is one warning per unresolved id rather than one per declaration.
 
 **A deployment that knows the second cause cannot apply to it can say so**, rather than the
 platform guessing which kind of deployment this is:
@@ -230,10 +230,35 @@ start({
 ```
 
 An escalated problem joins the aggregated boot failure with the genuine errors: one report, every
-problem at once. The predicate takes the whole problem, so you can escalate one code, a family, or
+problem at once. The predicate takes the whole warning, so you can escalate one code, a family, or
 everything, and a warning added in a later release is covered by a predicate that never mentioned
 it. Set the same predicate on every boot entry point you use: a laptop is the cheapest place to
 learn about a typo.
+
+### Escalating one id and sparing another
+
+A warning carries the id it is about as a field, so the predicate can be finer than the deployment.
+That matters when a single `defaultFragmentIds` array holds both tiers, which the
+[standing-context rules](#standing-context) allow:
+
+```ts
+start({
+  // Fail boot on an id this deployment registers itself, keep the warning on a fragment source's
+  // late-bound id, from one predicate.
+  escalateRegistrationWarning: (p) =>
+    p.code === 'task_type_unknown_fragment' && !p.subject.startsWith('src:'),
+})
+```
+
+`subject` is the one registered thing the warning is about: the fragment id here, an agent kind or
+a tool-server id for the capability warnings. It is required, and it is singular, so a warning
+about several ids arrives as several warnings.
+
+**Cat Factory itself never classifies an id by its shape**, and neither should a predicate you
+intend to be exhaustive. An account-tier fragment you authored in the library carries a plain slug,
+and a repo-sourced file that pins an explicit `id:` in its frontmatter carries one too, so
+"no `src:` prefix" is not evidence of a typo. It is evidence about **your** naming, which is why
+this is your predicate to write and not our severity to raise.
 
 ## Registering from your composition root
 
@@ -250,7 +275,7 @@ import {
   promptFragmentRegistryWithBuiltins,
   startLocal,
   type CustomTaskType,
-  type RegistrationProblem,
+  type RegistrationWarning,
 } from '@cat-factory/local-server'
 
 const agentKindRegistry = defaultAgentKindRegistry()
@@ -271,7 +296,7 @@ startLocal({
   pipelineRegistry,
   taskTypeRegistry,
   promptFragmentRegistry,
-  escalateRegistrationWarning: (p: RegistrationProblem) => p.code === 'task_type_unknown_fragment',
+  escalateRegistrationWarning: (p: RegistrationWarning) => p.code === 'task_type_unknown_fragment',
   // …plus this deployment's ordinary boot options (port, database URL, and the rest).
 })
 ```
