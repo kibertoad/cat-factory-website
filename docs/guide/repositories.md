@@ -75,6 +75,29 @@ into the privileged App tier, which creates the repo programmatically; see
 
 Every new service starts from a consistent, known-good baseline.
 
+### The reference architecture's own repository has to be reachable too
+
+The App needs access to two repositories, not one: the target it pushes into, and the repository the
+reference architecture names, which the run clones to copy from. A reference architecture is just an
+`owner/name` somebody typed, so a private template the App was never granted, or a typo in the
+entry, leaves the run with nothing to clone.
+
+Cat Factory checks this before it starts. If the workspace's source-control connection cannot see
+the reference architecture's repository, the launch is refused on the spot and **nothing is
+created**: no run, no service frame on the board, nothing to clean up. The dialog names the
+repository it could not see and offers to open that reference architecture for editing, and the
+rest of the form is kept, so correcting the entry and launching again is two clicks.
+
+Two things fix it, and which one you want depends on why it failed:
+
+- The entry names the wrong repository: correct **Owner** and **Repository** on the reference
+  architecture.
+- The repository is right but the App has never been granted it: add it to the App's repository
+  access, the same step the target repository needs.
+
+Where the check cannot reach GitHub at all, the launch is refused too, but as an outage rather than
+as a mistake in your configuration: nothing to change, try again once the connection recovers.
+
 ## Repository types
 
 When you add a service from a repo or bootstrap a new one, you pick a **repository type** that shapes
