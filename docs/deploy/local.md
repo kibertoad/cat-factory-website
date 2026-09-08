@@ -74,6 +74,32 @@ cd <dir>/local && npm install && npm run db:up && npm start     # backend on :87
 cd ../frontend && npm install && npm run dev                    # SPA on :3000
 ```
 
+### One Compose project per deployment
+
+`local/docker-compose.yml` declares its Compose project `name:`, derived from the deployment
+directory (`--dir`, or the project name when you omit it) plus a `-local` suffix: scaffolding into
+`~/deploy-a` gives the project `deploy-a-local`. That name keys the PostgreSQL container and its
+`deploy-a-local_cat-factory-pg` volume, so `npm run db:up` in one deployment can never bring up
+another one's database, and `docker compose -p deploy-a-local ps` inspects it from anywhere.
+
+Compose's own default project name is the compose file's directory, which is `local/` in every
+scaffolded deployment. That is the collision the declared name removes: without it the second
+deployment you scaffold migrates and serves the first one's data, with nothing in either log to say
+so. Two deployment directories that share a basename still land in one project, so give each
+deployment its own directory name.
+
+Re-scaffolding with `--force` after renaming the deployment directory moves it to a new project. The
+old container and volume stay behind under the old name, out of reach of `npm run db:down`, and
+while that container runs it holds the published PostgreSQL port, so the CLI prints the project it
+left behind and the command that stops it:
+
+```bash
+docker compose -p <old-project> down     # add -v to delete that database as well
+```
+
+`npm run db:up` then brings up a fresh, empty database under the new project. A deployment scaffolded
+by a CLI release that declared no name ran under the project `local`.
+
 ### Generating just the `.env`
 
 If you already have a deployment directory (a scaffolded project, or a `deploy/local` clone) and only
@@ -135,7 +161,10 @@ end.
 
 ## Quick start (from the repo)
 
-To run from a clone of the `deploy/local` example directory instead:
+To run from a clone of the `deploy/local` example directory instead. Its compose file declares the
+project `cat-factory-monorepo`, so this stack's container and database volume stay separate from any
+deployment the CLI scaffolds ([One Compose project per
+deployment](#one-compose-project-per-deployment)):
 
 ```bash
 # 1. Start PostgreSQL (and the bundled SearXNG for web search)
