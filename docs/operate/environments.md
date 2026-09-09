@@ -103,6 +103,10 @@ box, saved on the service, and every Tester run for that service is handed its c
 word. So is the agent dry run a service's environment self-test can dispatch, which is what lets a
 dry run predict what a real Tester will be able to do here.
 
+Briefing a service is a once-per-service job, so the empty box is part of the **Advanced** interface
+(the tier switch in the sidebar). Once a service has one, its text shows in the inspector at either
+tier: what your Testers are being told is never hidden from the people reading their reports.
+
 Write the standing knowledge that neither a credential nor a repository read supplies: which flows
 matter and which are noise, which test accounts exist and how to sign in as one, what the seeded
 data means, and what to leave alone (a billing flow that charges a real card, a mailer that emails
