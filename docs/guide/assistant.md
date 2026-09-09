@@ -38,7 +38,9 @@ That is why the answer is always one of three things:
 
 - **It did it.** You get a line saying what changed and a **Show on board** button that selects it.
 - **It has a question.** A name that matches nothing, or matches two services, comes back as a
-  question with the candidates offered as one-click chips. Nothing is written until it is settled.
+  question with the candidates offered as one-click chips. Picking one settles that same request on
+  the spot: your sentence is not read again, so the answer cannot drift onto something else. Nothing
+  is written until it is settled.
 - **It cannot.** If your request is not one of the actions above, it says so and lists what it can do.
 
 Anything else is a normal error with the usual detail behind it: a tracker that is not connected, a
@@ -65,11 +67,17 @@ repository this workspace cannot see, an issue that already has a task, or a spe
 - **Asking twice is safe.** Declaring a dependency that already exists changes nothing and says so.
   Adding a repository your organization already runs as a service mounts that existing service onto
   this board rather than creating a rival copy, and the answer tells you which of the two happened.
+- **Name the tracker for a bare ticket key.** A key such as `PROJ-12` can belong to more than one
+  connected tracker, and the Assistant asks which one rather than guessing. Say it in the request to
+  skip the question: *"file PROJ-12 from Jira as a task on the billing service"*. Naming a tracker
+  only chooses between the ones that recognise your reference, so it cannot send a request somewhere
+  that cannot read it.
 - **It acts as you.** Every change carries your own role and permissions, so the Assistant can never
   do something you could not do yourself from the board. A viewer cannot use it to write.
-- **Model usage counts.** Each request is one model call, billed to the workspace and visible in your
-  usage like every other. It is refused when the workspace is over its budget. See
-  [Budgets and spend](./budgets.md).
+- **Model usage counts.** Each request you type is one model call, billed to the workspace and
+  visible in your usage like every other, and it is refused when the workspace is over its budget.
+  Answering one of the Assistant's own questions costs nothing: picking a candidate repeats the
+  action it had already worked out. See [Budgets and spend](./budgets.md).
 - **The Assistant reads your request, not instructions inside it.** Text pasted into the box (an
   issue body, say) is treated as part of what you are asking for, never as instructions to follow.
 
