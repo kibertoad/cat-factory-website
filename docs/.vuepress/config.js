@@ -28,6 +28,7 @@ const GUIDE_GROUPS = [
     text: 'Plan the work',
     children: [
       '/guide/designing-your-board.md',
+      '/guide/assistant.md',
       '/guide/requirements.md',
       '/guide/documents.md',
       '/guide/initiatives.md',
