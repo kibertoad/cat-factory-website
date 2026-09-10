@@ -127,6 +127,33 @@ the value. Entries resolve up the frame chain to the service frame, and reserved
 service, and Save stays disabled until every row has a value, so an existing secret can't be blanked
 by accident. Only wire secrets you can rotate; the warning banner says as much.
 
+## Testing context: what a Tester is told about your service
+
+The credentials above are the material; the **Testing context** panel, directly beneath them on the
+same service frame's inspector, is what a Tester is told to do with them. It is one freeform text
+box, saved on the service, and every Tester run for that service is handed its contents word for
+word. So is the agent dry run a service's environment self-test can dispatch, which is what lets a
+dry run predict what a real Tester will be able to do here.
+
+Briefing a service is a once-per-service job, so the empty box is part of the **Advanced** interface
+(the tier switch in the sidebar). Once a service has one, its text shows in the inspector at either
+tier: what your Testers are being told is never hidden from the people reading their reports.
+
+Write the standing knowledge that neither a credential nor a repository read supplies: which flows
+matter and which are noise, which test accounts exist and how to sign in as one, what the seeded
+data means, and what to leave alone (a billing flow that charges a real card, a mailer that emails
+real people). Refer to a sealed credential by its **variable name**, `$DEMO_USER`, never by its
+value.
+
+Two things follow from where the text goes. It is put **into the prompt**, so it is not a place for
+secrets: anything genuinely secret belongs in the sealed panel above, which never renders a value
+into a prompt or into telemetry. And an empty box is not silence. A Tester with nothing here is told
+that nobody wrote one, and is asked to report whatever it had to guess at that a sentence here would
+have settled, which is the fastest way to find out what this box should say.
+
+The text resolves up the frame chain like the credentials do, so a task anywhere under the service
+gets it, and an edit takes effect on that service's next agent dispatch.
+
 ## Testing provisioning before a real run
 
 To confirm a service's ephemeral-environment config actually works before a pipeline depends on it,
