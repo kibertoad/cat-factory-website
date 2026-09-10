@@ -517,18 +517,25 @@ A few refusals are worth planning for:
   `write` key is refused at admission with `403 pipeline_requires_decide_scope`, and the message
   names which of the pipeline's park surfaces the API can answer and which it cannot.
 
-A pipeline counts as parking in any of three ways:
+A pipeline counts as parking in any of six ways:
 
 - an **approval gate** on an enabled step;
 - an inline **review or brainstorm** kind (`requirements-review`, `clarity-review`, and the two
   brainstorms), which sets the run `blocked` awaiting an answer;
 - an unbounded **human-wait gate** (`human-review`), a gate step whose poll never times out because
-  it is waiting for a person to look at the PR.
+  it is waiting for a person to look at the PR;
+- an **interview gate**, a step that asks a batch of clarifying questions and waits (the planning
+  and document interviewers, plus any a deployment registers);
+- a **candidate comparison**, a generating step configured to render several candidates per subject
+  and wait for someone to keep the good ones;
+- a **curation gate**, a step whose completion parks the run so a person can pick which of what it
+  found is worth acting on: the pull-request reviewer and the bug-fishing expedition.
 
-The third case covers the shipped **Adaptive build** preset, which carries a risk-gated
-`human-review`, so a `write`-only key cannot start it. The unconditional presets (**Standard build**,
-**Simple build**) never park and stay `write`-startable. Parks raised dynamically mid-run (an
-agent-raised decision, a judge park) are not knowable in advance and do not gate the start.
+Between them those cover four shipped presets a `write`-only key cannot start: **Adaptive build**
+(a risk-gated `human-review`), **Generate media** (it ships the comparison on), **Review a pull
+request** and **Bug fishing expedition** (both curate). The unconditional presets (**Standard
+build**, **Simple build**) never park and stay `write`-startable. Parks raised dynamically mid-run
+(an agent-raised decision, a judge park) are not knowable in advance and do not gate the start.
 
 The inline-only restriction applies to headless jobs, not board tasks: a `decide` key may start
 container pipelines on board tasks.
@@ -710,12 +717,41 @@ controllers call, so the arbitration between the two surfaces is identical which
 | `POST` | `/requirements/resolve-exceeded` | decide | Resolve a review that hit its iteration cap. |
 | `POST` | `/fork/choose` | decide | Choose one of the proposed implementation approaches. |
 | `POST` | `/judge/resolve` | decide | Resolve a judge step's parked verdict. |
+| `POST` | `/pr-review/resolve` | decide | Resolve a parked pull-request review with the findings you kept. |
+| `POST` | `/pr-review/findings/{findingId}/dismiss` | decide | Drop one finding from the review. |
+| `POST` | `/pr-review/findings/{findingId}/challenge` | decide | Have an investigator re-examine one finding. |
+| `POST` | `/pr-review/resume` | decide | Re-dispatch a review that stalled part-way through. |
 
 Every route returns the refreshed decision list, so you can drive the loop without a separate poll.
+The rest of the parks a run can stop on (the human-verdict gates, follow-up triage, the interview
+gates) answer under the same prefix; the
+[API Endpoint Reference](../reference/api-reference.md#operations) has them all.
 
 A parked run waits for a human **indefinitely** by design, and it holds one of the workspace's
 in-flight slots while it waits. `POST /api/v1/jobs/{id}/cancel` (`write`) is there so the cap stays a
 recoverable `429` rather than a wall with no door.
+
+### Reviewing a pull request over the API
+
+The deep review of an existing GitHub or GitLab pull request is drivable end to end with a `decide`
+key, which is what an integration that renders findings in its own UI needs. Create a task with
+`taskType: "review"` and the PR's URL in `fields`, start it (the task is pinned to the review
+pipeline, so the start body can be empty), then poll `GET /api/v1/runs/{runId}/decisions` until the
+`pr-review` entry reports `awaiting_selection`.
+
+That entry is what you render: the findings ordered blocker-first, each with a stable id, its file
+and line, its severity and category, and the fix the reviewer suggested, grouped under the slices of
+the diff it reasoned in. Curate them one call at a time, then resolve: `finish` records the
+selection and nothing more, `fix` hands the kept findings to an agent that commits onto the PR's own
+branch, and `post` publishes them as inline comments on the pull request.
+
+**`post` is asynchronous, so read `postReport` before you conclude it worked.** A post that partly
+or wholly fails puts the review back in the list looking exactly as it did before you resolved, and
+the report is what tells those apart: how many comments were attempted and how many landed, how many
+findings were moved into the summary comment because their line is not part of the diff (or because
+the branch moved after the review started), and the provider's own error for each one that failed.
+Retrying is the same `post` call with the same selection: what has already landed is recorded, so
+nothing is commented twice.
 
 ### Learning that a run parked
 
