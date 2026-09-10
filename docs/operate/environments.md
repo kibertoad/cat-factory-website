@@ -59,6 +59,38 @@ create to online is ordinary, and failing a healthy environment early is the mor
 mistake. If yours legitimately needs longer than 20 minutes, that is worth
 [raising as an issue](https://github.com/kibertoad/cat-factory/issues).
 
+## Proving the route, once
+
+"Ready" is your provider's word for it. Before the run moves on, the platform checks the claim: at
+the moment an environment reports ready it opens one short TCP connection to the environment's own
+name, and then to each address the provider stated for it (see
+[addresses](../extend/manifests.md#addresses-the-half-a-url-cannot-express)), stopping at the first
+that answers. It is a connection, not a request, deliberately: a load balancer answering 503 over a
+route that works perfectly is a live route with a sick application behind it, and those are
+different problems for different people.
+
+Three outcomes, and only one of them stops a run:
+
+- **Reached.** The run continues. The address that carried is what a container is later given, and
+  the Tester's prompt says which layer was already ruled out.
+- **Not reached.** Nothing the platform can dial answered, so the Deployer step fails in about two
+  minutes naming the layer (a name that resolves nowhere, a route that does not carry, a port with
+  nothing listening) and listing every target it tried. The alternative is what this replaced: a
+  Tester spending ten minutes and a model budget on connection errors and reporting your
+  environment as dead when the fault was DNS.
+- **Inconclusive.** The probe could not complete, or there was nothing to dial (an environment
+  that legitimately publishes no URL). **The run continues.** A diagnostic that cannot tell must
+  never become a second way for a healthy deploy to fail, so the agent is simply told the check was
+  inconclusive and to treat a connection failure as unexplained.
+
+A deployment whose runtime cannot open sockets probes nothing, and nothing changes for it: no
+check, no failure, no line in any prompt.
+
+The check runs from the **platform's** network position, which is not the agent container's. A
+deployment whose backend egress differs from its runners' can see a route an agent cannot, or miss
+one it has. That is why every attempt is recorded on the environment: the verdict is legible and
+arguable rather than a bare "unreachable".
+
 ## What the Tester receives
 
 When a Tester (or `playwright`) step runs against an ephemeral environment, its prompt carries the

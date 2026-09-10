@@ -152,6 +152,8 @@ environment before its TTL.
   // Map YOUR response shape onto the canonical handle via dot-paths.
   "response": {
     "urlPath": "data.url",
+    // Optional: addresses that carry traffic for urlPath's host. See "Addresses" below.
+    "addressesPath": "data.balancers",
     "statusPath": "data.state",
     "statusMap": [
       { "from": "running", "to": "ready" },
@@ -175,6 +177,50 @@ and `torn_down`.
 `response.access` is worth separating from `auth` in your head: `auth` is how the platform calls
 **your management API**, while `access` is how the **tester agent** reaches the environment that
 was just provisioned. The tester's prompt names the scheme, never the token.
+
+### Addresses: the half a URL cannot express
+
+`response.addressesPath` is optional and most manifests never need it. Supply it when your
+per-environment DNS record lives somewhere the platform cannot see: an internal view, a split
+horizon, a zone only your cluster resolves. The name in `urlPath` then resolves nowhere from the
+platform and nowhere from inside an agent's container, while the load balancers fronting it are
+perfectly reachable and your ingress routes on the `Host` header. The only missing piece is a
+name-to-address mapping, and this is how you supply one:
+
+```jsonc
+"response": {
+  "urlPath": "data.url",                // https://pr-14.preview.acme.internal
+  "addressesPath": "data.balancers",     // ["10.4.19.22", "10.4.19.23"]
+}
+```
+
+Three shapes are accepted, so you rarely have to reshape your API: a single address string, an
+array of strings, or an array of `{ "address": "…", "label": "…" }` objects. A `label` ("internal
+ALB", "public ALB") is for the human reading a diagnostic and is never matched on.
+
+What the platform does with them:
+
+- **Order is yours, the choice is not.** When an environment reports `ready`, the platform dials
+  its name first and then each address you stated, in the order you stated them, stopping at the
+  first that opens a TCP connection. What it publishes downstream is the one that CARRIED, never
+  the first you listed: an address nobody proved would be recorded as a working route while the
+  agent still failed.
+- **The agent's container is given the mapping**, as a `--add-host` entry or a pod `hostAliases`
+  entry, so a request to the original URL keeps the `Host` header your ingress routes on.
+- **Addresses only, never names.** A name here would just be the lookup that already failed.
+- **Some addresses are refused.** Loopback, link-local, the cloud metadata endpoints and
+  non-canonical spellings of any of them are never dialled and never installed: inside a container,
+  loopback is the container's own namespace. Private ranges (`10.x`, `172.16-31.x`, `192.168.x`)
+  are allowed, because an internal balancer is the whole reason this field exists. A refused
+  address is reported on the environment rather than silently dropped.
+- **State them once.** If your create response carries the addresses and your status endpoint does
+  not, that is fine: the platform keeps what you last stated. It only replaces the list when a
+  response actually carries the field.
+
+An environment the platform cannot reach by name or by any stated address fails its Deployer step
+naming the layer that failed, instead of a Tester spending its whole step on connection errors and
+reporting your environment as down. If the probe itself cannot complete, the run continues and the
+agent is told the check was inconclusive; "we could not tell" never fails a deploy.
 
 ### Template variables
 
