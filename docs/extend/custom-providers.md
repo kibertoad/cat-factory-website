@@ -373,6 +373,64 @@ type TeardownProbe =
 The probe is bounded in wall-clock time (it is awaited inline on an on-demand teardown and on the
 TTL sweep), so an unresponsive one costs the confirmation and never the teardown itself.
 
+### Diagnosing an environment that never came up
+
+A fifth, optional pair. `status()` answers "how is my environment doing" in one word, because that
+is what a readiness judgement needs, so every backend reduces a rich control-plane answer to one
+of a handful of statuses and throws the rest away. When the environment then fails to come up, that
+discarded detail is exactly what a person would have read first:
+
+```ts
+diagnostics?: {
+  describe(req: EnvironmentStatusRequest): Promise<EnvironmentDiagnosis>
+  supportedActions?: readonly ProviderRemediationAction[]   // today: 'restart'
+  remediate?(req: EnvironmentRemediationRequest): Promise<EnvironmentRemediationOutcome>
+}
+
+interface EnvironmentDiagnosis {
+  facts: { key: string; value: string; healthy?: boolean }[]
+  logs?: { source: string; text: string; truncated?: boolean }[]
+  gaps?: { read: string; reason: string; permanent?: boolean }[]
+}
+```
+
+When a provision fails for a cause no edit in the repository could fix, cat-factory reads this,
+puts it beside the evidence it holds itself (the environment record, every field your `provision`
+captured, and the run's own provisioning timeline), and asks a model where the fault is. The model
+picks one action from a list the platform computed first; the platform performs it and then
+**re-checks the environment**. Whether the remedy worked is decided by that re-check, never by what
+the model said.
+
+- **Return facts as pairs, not sentences.** `{ key: 'jobs[0].vm.status', value: 'offline' }` beside
+  `{ key: 'environment.status', value: 'online' }` is an argument a reader can make; "the VM is
+  offline" is a conclusion you already reached for them. The failure this was built for turned
+  entirely on two of your own fields contradicting a third.
+- **`healthy` is your verdict, and leaving it out means you have none.** Absent is read as UNKNOWN,
+  which is not the same as healthy and is never rendered as one.
+- **Name every read you could not make.** A diagnosis missing its log section reads exactly like
+  one whose logs were clean, and a reader that cannot tell those apart concludes the workload
+  started fine. Set `permanent: true` when re-asking will answer identically forever (a missing
+  grant, an endpoint you do not serve) and leave it off for a timeout or a 503: the two want
+  opposite reactions.
+- **Redact your own logs and fields.** You are the only party that knows which of them carry
+  credentials, and the excerpt reaches a model prompt. Cap them too; the platform caps again on
+  its own side, and states the cut so a truncated log is never read as one that ended there.
+- **`supportedActions` is a promise.** Declare `restart` only if `remediate` will actually do
+  something; the platform offers the model exactly what you declared, so a remedy that silently
+  no-ops is reported to an operator as a repair that was tried. A backend that declares actions
+  without implementing `remediate` is treated as read-only.
+- **Report `applied: false` when there was nothing to do**, rather than a success. The platform
+  re-probes after a remedy, and an untouched environment answering the same way reads as a remedy
+  that did not help.
+
+Standing an environment up again and tearing one down are things the platform already knows how to
+do with the methods you have, so it never asks you for those. `restart` is the one action that
+needs you, because only you know what "in place" means on your platform.
+
+**Leaving the whole thing out changes nothing.** The diagnosis then runs on the platform's own
+evidence, which is what it would have had anyway, and it says so rather than presenting the absence
+of your facts as an absence of problems.
+
 ### Wire it in
 
 A provider is not injected as a deployment-wide singleton. You register a **backend** under a `kind`
