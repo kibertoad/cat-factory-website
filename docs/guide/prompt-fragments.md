@@ -52,6 +52,19 @@ Structure), and the service inspector. Click the **+** to open it, click fragmen
 fragments show below as chips you can remove. The picker also links straight to the board's fragment
 library and to account fragments, so you can author or edit one without leaving the step.
 
+### Picking standards over the API
+
+An integration filing work through the [public API](../extend/public-api.md) picks the same way.
+`GET /api/v1/prompt-fragments` lists what the board resolves, merged across all three tiers, with
+each entry's title, category, one-line summary, tags and the tier it came from; the guidance text
+itself is not served, because naming a standard needs its id rather than its content. Send the ids
+you want as `fragmentIds` on the task create, and read them back on the task. An id the board does
+not hold is refused rather than quietly dropped, so a typo fails on the create instead of producing
+a run that followed nothing.
+
+Leave `fragmentIds` off and the task inherits its service's standards, which is the same default the
+add-task form opens with. Send an empty list to pin nothing at all.
+
 Fragments fold into **code-aware** agent kinds (such as the coder, CI fixer, fixer, reviewer,
 and architect) and into the **document-authoring** kinds (see [Author a Document](./documents.md)). A
 code-style or review-checklist fragment reaches the coding steps automatically; a writing-style
@@ -76,9 +89,9 @@ default is for **document** tasks: two **writing-style** fragments (*Avoid LLM t
 actionable*) are pinned on every new document task. A deployment can register its own custom fragments
 as the default for any task type (feature, bug, review, and so on) at startup with
 `registerPromptFragments(...)` and `registerTaskTypeDefaultFragments(taskType, ids)`; registered ids
-augment the built-in document defaults rather than replacing them. This seeding is server-side, so it
-applies even to tasks created through the [public API](../extend/public-api.md), which has no
-picker. It is a deployment-level seam, not a UI setting.
+augment the built-in document defaults rather than replacing them. This seeding is server-side, so a
+task created through the API carries its type's defaults whether or not the caller named any
+standards of its own. It is a deployment-level seam, not a UI setting.
 
 ## Link an external document as a living fragment
 
