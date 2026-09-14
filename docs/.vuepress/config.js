@@ -97,6 +97,7 @@ const OPERATE = [
 const EXTEND = [
   '/extend/custom-agents.md',
   '/extend/custom-gates.md',
+  '/extend/delegated-executors.md',
   '/extend/custom-providers.md',
   '/extend/frontend-extensions.md',
   '/extend/manifests.md',
