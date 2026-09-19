@@ -183,6 +183,7 @@ await start({ foundationalServiceRegistry })
 | --- | --- |
 | `defaultAgentKindRegistry()` | [Custom agent kinds](../extend/custom-agents.md), their traits, bundled skills, and MCP tool servers. |
 | `defaultGateRegistry()` (from `@cat-factory/kernel`) | [Custom gates](../extend/custom-gates.md). Install the built-in polling gates onto it with `registerBuiltinGates()` from [`@cat-factory/gates`](../reference/packages.md). |
+| `defaultDelegatedExecutorRegistry()` | [Delegated executors](../extend/delegated-executors.md): systems you already operate that a step can run on. |
 | `defaultPipelineRegistry()` | Predefined pipelines. |
 | `defaultTaskTypeRegistry()` | Namespaced [custom task types](../extend/frontend-extensions.md#custom-task-types). |
 | `defaultInitiativePresetRegistry()` | [Initiative presets](../extend/initiative-presets.md). |
