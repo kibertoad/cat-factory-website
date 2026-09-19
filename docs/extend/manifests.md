@@ -152,8 +152,9 @@ environment before its TTL.
   // Map YOUR response shape onto the canonical handle via dot-paths.
   "response": {
     "urlPath": "data.url",
-    // Optional: addresses that carry traffic for urlPath's host. See "Addresses" below.
+    // Optional: addresses (or names) that carry traffic for urlPath's host. See "Addresses" below.
     "addressesPath": "data.balancers",
+    "hostsPath": "data.balancer_names",
     "statusPath": "data.state",
     "statusMap": [
       { "from": "running", "to": "ready" },
@@ -198,6 +199,36 @@ Three shapes are accepted, so you rarely have to reshape your API: a single addr
 array of strings, or an array of `{ "address": "…", "label": "…" }` objects. A `label` ("internal
 ALB", "public ALB") is for the human reading a diagnostic and is never matched on.
 
+#### When your balancer's stable identity is a NAME
+
+Use `response.hostsPath` instead, or beside it. A managed load balancer is usually addressed by
+name rather than by address, and its vendor says so: an AWS ALB's addresses change as it scales or
+gains an availability zone, and the DNS name is the thing a client is documented to use. Pinning
+today's addresses into your response mapping means re-pinning them on every poll, and the value you
+pinned can be stale by the time anything dials it.
+
+```jsonc
+"response": {
+  "urlPath": "data.url",              // https://pr-14.preview.acme.internal (resolves nowhere here)
+  "hostsPath": "data.balancer_names", // ["alb-4.eu-central-1.elb.amazonaws.com"]
+}
+```
+
+The same three shapes are accepted, with `{ "host": "…", "label": "…" }` for the object form. The
+platform resolves each name at the moment it dials, expands it into the addresses it answered with,
+and grades every one of them by the rules below exactly as if you had stated it yourself. Nothing
+downstream ever sees the name: what a container is given is still an address the platform proved.
+
+Declare both paths when your API publishes both kinds. Every address is then tried ahead of every
+name. If you want a different order between the two, state them all through `addressesPath` as
+`{ "address": "…" }` and `{ "host": "…" }` objects, which is the one shape that can interleave
+them. An entry naming both, or neither, is skipped: there is no way to tell which one you meant.
+
+A bare string means an ADDRESS under `addressesPath` and a NAME under `hostsPath`, and the
+platform never guesses from the value itself. That is deliberate rather than fussy: the rules below
+refuse a non-canonical address spelling like `2130706433` precisely because it is loopback wearing
+a disguise, and a resolver handed the same string answers loopback quite happily.
+
 What the platform does with them:
 
 - **Order is yours, the choice is not.** When an environment reports `ready`, the platform dials
@@ -207,7 +238,10 @@ What the platform does with them:
   agent still failed.
 - **The agent's container is given the mapping**, as a `--add-host` entry or a pod `hostAliases`
   entry, so a request to the original URL keeps the `Host` header your ingress routes on.
-- **Addresses only, never names.** A name here would just be the lookup that already failed.
+- **A name resolves at proof time, and only where you said one.** `addressesPath` never resolves
+  anything: a name there would just be the lookup that already failed, since it is your
+  environment's own record. `hostsPath` is a different name in a different zone, and resolving it
+  is the whole point.
 - **Some addresses are refused.** Loopback, link-local, the cloud metadata endpoints and
   non-canonical spellings of any of them are never dialled and never installed: inside a container,
   loopback is the container's own namespace. Private ranges (`10.x`, `172.16-31.x`, `192.168.x`)
@@ -216,6 +250,14 @@ What the platform does with them:
 - **State them once.** If your create response carries the addresses and your status endpoint does
   not, that is fine: the platform keeps what you last stated. It only replaces the list when a
   response actually carries the field.
+- **A name you keep stating keeps its proof.** When a balancer scales or gains a zone it answers
+  with a different address set, which says nothing about whether the proved route still carries, so
+  the platform holds the verdict it took through that name rather than re-probing on every poll. It
+  drops the proof when you stop stating the name.
+- **A name nothing can resolve is reported, not guessed at.** If one of your names answers with
+  nothing, that candidate is a dead end and the platform moves to the next one. If the platform
+  itself has no way to resolve names, it says so on the environment and settles nothing either way,
+  rather than reporting your environment as unreachable.
 
 An environment the platform cannot reach by name or by any stated address fails its Deployer step
 naming the layer that failed, instead of a Tester spending its whole step on connection errors and
