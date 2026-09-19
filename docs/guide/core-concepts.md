@@ -113,6 +113,18 @@ include repository bootstrap, platform observability, [Reports](./budgets.md#rep
 health, and [foundational services](./foundational-services.md). Nothing is removed from the board by
 the tier: a live schedule still badges its task card, and an initiative is still a block.
 
+## Colour mode
+
+The app renders in light or dark. Pick one from the **Appearance** control at the bottom of the
+sidebar, beside the language picker: **System** follows your operating system, **Light** and
+**Dark** fix it. The default is System; a browser that reports no preference gets dark. The choice
+is stored per browser, like the language, and the browser's own chrome (the address bar on a phone)
+takes the app's colour, not the operating system's.
+
+Every colour in the app is a theme token, so both modes render from the same screens. Status colours
+keep their meaning across modes (amber is still attention, rose still an error); the shade adapts to
+the surface it sits on.
+
 ## Tutorials
 
 Guided tours run inside the live app. A shared coach-mark overlay anchors each step to a real
