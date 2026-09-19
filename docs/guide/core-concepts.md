@@ -125,6 +125,19 @@ Every colour in the app is a theme token, so both modes render from the same scr
 keep their meaning across modes (amber is still attention, rose still an error); the shade adapts to
 the surface it sits on.
 
+## Themes
+
+The same **Appearance** control also picks a theme. A theme sets the palette (the brand colour, the
+neutral greys, the status colours), the corner radius and the fonts; the colour mode picks light or
+dark within it, so every theme has both. Two ship with the app:
+
+- **Cat Factory**, the default: indigo on slate.
+- **Mono**: black on a pure grey, rounder corners, the Geist typeface.
+
+A theme is a [Nuxt UI theme editor](https://ui.nuxt.com/theme) document, the same format that page
+edits and shares. The pick is stored per browser, and the loading screen wears it from the second
+load on.
+
 ## Tutorials
 
 Guided tours run inside the live app. A shared coach-mark overlay anchors each step to a real
