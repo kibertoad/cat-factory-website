@@ -490,9 +490,9 @@ on the surface, including the ones no narrative here reaches for.
 | Method | Path | Scope | Purpose |
 | --- | --- | --- | --- |
 | `GET` | `/api/v1/services` | read | List the workspace's services. |
-| `POST` | `/api/v1/services/{serviceId}/tasks` | write | Create a task. Body `{ title, description?, taskType?, ticket?, modelPresetId?, riskPolicyId? }`; `taskType` is one of `feature`, `bug`, `document`, `spike`, `review`, `ralph` (default `feature`). See [Filing a task from a tracker ticket](#filing-a-task-from-a-tracker-ticket) and [Pinning a model preset and a risk policy](#pinning-a-model-preset-and-a-risk-policy). |
+| `POST` | `/api/v1/services/{serviceId}/tasks` | write | Create a task. Body `{ title, description?, taskType?, ticket?, fragmentIds?, modelPresetId?, riskPolicyId? }`; `taskType` is one of `feature`, `bug`, `document`, `spike`, `review`, `ralph` (default `feature`). See [Filing a task from a tracker ticket](#filing-a-task-from-a-tracker-ticket), [Pinning a model preset and a risk policy](#pinning-a-model-preset-and-a-risk-policy) and [Picking standards over the API](../guide/prompt-fragments.md#picking-standards-over-the-api). |
 | `GET` | `/api/v1/services/{serviceId}/tasks` | read | List a service's tasks (its whole subtree), newest first. Paged; see [Paging](#paging). Filter with `?status=`. |
-| `GET` | `/api/v1/tasks/{taskId}` | read | Get a task's status projection: `{ taskId, serviceId, title, description, taskType, status, progress, runId, pullRequestUrl, modelPresetId, riskPolicyId }`. |
+| `GET` | `/api/v1/tasks/{taskId}` | read | Get a task's status projection: `{ taskId, serviceId, title, description, taskType, status, progress, runId, pullRequestUrl, fragmentIds, modelPresetId, riskPolicyId }`. |
 | `PATCH` | `/api/v1/tasks/{taskId}` | write | Edit the task's title or description, or correct either pin. |
 | `POST` | `/api/v1/tasks/{taskId}/start` | write | Start the task's pipeline. Body `{ pipelineId? }`, falling back to the task's pinned pipeline. |
 | `POST` | `/api/v1/tasks/{taskId}/stop` | write | Stop the in-flight run (idempotent; the run stays retryable). |
@@ -501,6 +501,7 @@ on the surface, including the ones no narrative here reaches for.
 | `GET` | `/api/v1/tasks/{taskId}/run` | read | Rich run projection: per-step state, progress, subtasks, failure, and the PR URL and branch. |
 | `GET` | `/api/v1/tasks/{taskId}/events` | read | Stream the run as Server-Sent Events (`progress`, `done`, `error`, `timeout`), for up to five minutes. |
 | `GET` | `/api/v1/pipelines` | read | Discover pipelines: each entry is `{ pipelineId, name, steps, public, headlessStartable }`. Use it to find a valid `pipelineId` and confirm a pipeline can start headlessly. |
+| `GET` | `/api/v1/prompt-fragments` | read | Discover the board's [best-practice standards](../guide/prompt-fragments.md): each entry is `{ fragmentId, title, category, summary, version, tier, tags, appliesTo? }`. The `fragmentId`s are what a create names in `fragmentIds`. |
 
 `taskType` also accepts a namespaced custom task type (`<namespace>:<name>`) the deployment
 [registered](./frontend-extensions.md#custom-task-types), so an "incident" or
