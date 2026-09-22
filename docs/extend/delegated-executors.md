@@ -44,13 +44,13 @@ executorRegistry.register({
   // YOUR system's cadence, not a platform default (see "The poll cadence is yours" below).
   poll: { intervalMs: 60_000, maxDurationMs: 3 * 60 * 60_000 },
   telemetry: 'not-reported',
+  // Who creates the work branch your run checks out (see "Who creates the work branch").
+  workBranch: 'platform-creates',
   create: (deps) =>
     githubActionsDelegatedExecutor(
       {
-        owner: 'acme',
-        repo: 'automation',
-        workflowFile: 'implement.yml',
-        ref: 'main',
+        // One location, or a function of the dispatch when the workflow lives in each repo.
+        workflow: { owner: 'acme', repo: 'automation', workflowFile: 'implement.yml', ref: 'main' },
         inputs: (brief) => ({
           task: brief.task.title,
           prompt: brief.userPrompt,
@@ -157,6 +157,29 @@ cross-origin redirect drops the body and the credential headers. An executor rea
 host needs that host allowed the same way an
 [outbound notification webhook](../operate/notifications.md) does.
 
+## Who creates the work branch
+
+Every step of one task's pipeline works on the same branch, `cat-factory/<taskId>`, and the brief
+names it. Your registration says who brings it into existence, because both answers are wrong for
+half the executors there are:
+
+```ts
+workBranch: 'platform-creates' // or 'executor-creates'
+```
+
+- **`platform-creates`**: the platform creates the branch at the base branch's head just before
+  your `start` is called, and does nothing when it is already there. Choose this when your system
+  CHECKS OUT the branch it is given, which is every CI runner: `actions/checkout` on a branch that
+  does not exist fails the job before your work begins. Worse, a runner that quietly switches to a
+  branch of its own instead SUCCEEDS, pushes to a branch this platform never recorded, and the task
+  then shows a run that produced nothing over a pull request nothing links to.
+- **`executor-creates`**: your system creates the branch itself when it pushes. The platform
+  writes nothing, so a run whose work never landed leaves no empty branch behind.
+
+`platform-creates` needs a repository connection the deployment can write through. A deployment
+with none refuses to start with the executor registered, rather than accepting the registration and
+failing every run of it later.
+
 ## The poll cadence is yours
 
 ```ts
@@ -215,8 +238,14 @@ notifications, and every gate and policy the rest of the pipeline declares.
   refused rather than recorded: a step parked on a job nothing can settle fails hours later as a
   timeout, naming the wrong thing.
 - **Your executor's repository is usually not the work's repository.** A central automation repo
-  dispatching against many product repos is the ordinary shape, so read what a run produced from
+  dispatching against many product repos is one ordinary shape, so read what a run produced from
   the repository and branch the HANDLE carries, not from your own configuration.
+- **A workflow committed to each onboarded repository is the other ordinary shape**, and then the
+  dispatch target varies per task. Pass `workflow` as a function: it is handed the work repository,
+  the workspace, the run, the agent kind and the correlation key, which is exactly the set both a
+  dispatch and every later poll can name. Nothing a poll cannot see is offered, because a resolver
+  that dispatched into one repository and polled another would report a live run as one that never
+  appeared.
 - **Say what you cannot do.** A missing `cancel`, an unknown token count, an unreadable result: all
   three are reported as what they are. A silent empty answer reads to everyone downstream as a
   clean one.
