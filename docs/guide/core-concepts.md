@@ -138,6 +138,20 @@ A theme is a [Nuxt UI theme editor](https://ui.nuxt.com/theme) document, the sam
 edits and shares. The pick is stored per browser, and the loading screen wears it from the second
 load on.
 
+### Bringing your own theme
+
+Build a theme in the [Nuxt UI theme editor](https://ui.nuxt.com/theme), copy its share link, then
+open **Appearance** and choose **Import a Nuxt UI theme**. Paste the link (or the theme's JSON), give
+it a name, and it is applied and stored in this browser. Remove it from the same menu. A link that
+names one of the editor's presets without any change imports too.
+
+Two things to know:
+
+- A name another theme already uses is saved with a number, "Mono (2)", and the dialog shows the
+  name it will use while you type.
+- A font the theme names is used only if your device or your deployment provides it. The two
+  built-in themes ship their fonts; an imported one falls back to the browser's default otherwise.
+
 ## Tutorials
 
 Guided tours run inside the live app. A shared coach-mark overlay anchors each step to a real
