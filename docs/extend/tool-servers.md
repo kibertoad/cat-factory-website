@@ -62,7 +62,7 @@ Which transports each agent CLI can reach is a fact about the CLI:
 | --- | --- | --- | --- |
 | `claude-code` | yes | yes | Config rides a per-run file, so runs on a developer's own CLI login are served too. |
 | `codex` | yes | no | Stdio-only client. An ambient Codex run has no per-run config home, so it is not served at all. |
-| `pi` | no | no | Pi has no MCP client, by design. Tool servers never apply on Pi runs. |
+| `pi` | yes | yes | Pi's built-in MCP client, from runner image 1.162.0 (Pi 0.99). An older image refuses a Pi run that carries tool servers rather than running it blind; see the handshake below. |
 
 A definition's `harnesses` field may NARROW this (a server that only makes sense under one CLI) and
 never widen it. Narrowing to a combination no harness can serve, such as an `http` server on
@@ -86,7 +86,7 @@ different fix.
 
 | Reason | What happened | The fix |
 | --- | --- | --- |
-| `harness_unsupported` | This CLI speaks no MCP (Pi), the definition's `harnesses` excludes it, or it is an ambient Codex run with no per-run config home | The run's harness, the `harnesses` list, or a leased credential instead of the developer's own CLI login |
+| `harness_unsupported` | The definition's `harnesses` excludes this CLI, or it is an ambient Codex run with no per-run config home | The `harnesses` list, or a leased credential instead of the developer's own CLI login |
 | `transport_unsupported` | The CLI speaks MCP but cannot reach this transport (Codex is stdio-only) | A second declaration for the other transport |
 | `missing_secret` | A `required` credential did not resolve | Set the variable, or store the workspace value |
 | `reserved_secret` | The credential's LOOKUP key names a platform configuration variable | The DECLARATION. Setting the variable must not help |
@@ -103,8 +103,8 @@ looking.
 
 On `claude-code` the step also carries what the CLI itself reported at startup, which is the only
 evidence that a wired server actually connected rather than merely being handed over. Codex
-publishes no such report, so a Codex run records the platform's half alone. That is shown as
-absent, never as healthy.
+publishes no such report, and neither does Pi, so their runs record the platform's half alone.
+That is shown as absent, never as healthy.
 
 ## What the agent may call
 
@@ -115,7 +115,8 @@ absent, never as healthy.
   registration and dropped again at dispatch.
 - **It is SCOPING, not a security boundary.** It is always stated in the prompt and additionally
   passed to claude-code's `--allowedTools`, but whether that CLI list gates depends on the run's
-  permission mode, and Codex cannot express a per-tool restriction at all. If an agent kind must
+  permission mode, and Codex cannot express a per-tool restriction at all. Pi is the one CLI that
+  enforces it: the server's other tools are registered but cannot be called. If an agent kind must
   never reach a server's other tools, do not wire that server for that kind, and take the
   capability away at the vendor as well.
 
@@ -378,11 +379,15 @@ Worth knowing before you adopt, so the ceiling comes from this page rather than 
 - **No per-workspace or per-step server selection.** A registered server applies to every
   workspace's runs of the kinds it is declared on. Only the credential half is per-workspace today,
   and capability credentials are app-only, absent from the public API.
-- **Only the claude-code harness reports what it reached.** Codex publishes no startup report, so a
-  Codex run records the platform's half alone. It is stated as absent rather than as healthy, and a
+- **Only the claude-code harness reports what it reached.** Codex and Pi publish no startup report,
+  so their runs record the platform's half alone. It is stated as absent rather than as healthy, and a
   wired-but-broken server is still diagnosed with the Test button.
-- **Pi has no MCP client.** A deployment whose model provisioning resolves to Pi gets no tool
-  servers there, reported per run as `harness_unsupported`.
+- **Pi runs need runner image 1.162.0 or later.** An older image reports that it cannot wire Pi's
+  tool servers, so a Pi step that carries any is refused at dispatch with the image named, not run
+  with tools the prompt promises and nothing serves. Update the pool, or narrow the server's
+  `harnesses` to the subscription CLIs until you do.
+- **On Pi, a server that offers MCP resources also brings Pi's resource tools** (`list_mcp_resources`,
+  `read_mcp_resource`), unless `allowedTools` narrows that server.
 - **`http` means streamable HTTP.** The legacy HTTP+SSE transport is not supported, so an SSE-only
   server is unreachable.
 - **Tools only.** MCP resources, prompts, elicitation and progress notifications are not consumed.
