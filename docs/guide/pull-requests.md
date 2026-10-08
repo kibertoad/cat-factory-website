@@ -292,6 +292,9 @@ task's work branch on GitHub, so you can jump straight from a board task to its 
 Because the work is a real PR in your repository, all your existing branch protections, required
 checks, and review rules apply unchanged.
 
+For a pull request you did not write, [guided review](./guided-review.md) explains the change, answers
+your questions about it in threads, and drafts review comments you post yourself.
+
 To make a human code review a required step rather than an after-the-fact check, add the **Human
 Review** gate: the run waits for the PR to meet GitHub's required approvals with no unresolved
 threads, and loops the Fixer to address review comments in between. See

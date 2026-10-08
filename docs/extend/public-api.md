@@ -199,6 +199,13 @@ never on `message`. Two families appear:
 | `notification_not_actionable` | 409 | `POST /notifications/:id/act` on a card with no automated action |
 | `kaizen_entry_not_found` | 404 | Kaizen entry reads and `POST /kaizen/entries/:entryId/acknowledge` with an id this workspace does not hold |
 | `kaizen_entry_not_settled` | 409 | `POST /kaizen/entries/:entryId/acknowledge` on an entry whose grading is still queued or running. `details.status` names where it is; retry once it settles |
+| `thread_busy` | 409 | Asking in, or requesting drafts from, a guided review thread that is still waiting for its previous answer. Other threads are unaffected; ask there or wait |
+| `draft_conflict` | 409 | `PATCH /guided-reviews/{sessionId}/comment-drafts/{draftId}` with a stale `rev`, or on a draft already posted, discarded or being posted. Reload the session and decide again |
+| `session_stale` | 409 | `POST /guided-reviews/{sessionId}/comment-drafts/post` after the pull request gained commits past `reviewedHeadSha`. `POST .../refresh`, check the drafts, then post |
+| `draft_anchor_outside_diff` | 422 | Moving a draft to a line that is not inside the pull request's diff on that side |
+| `not_session_owner` | 403 | Changing a guided review the calling identity did not open |
+| `repo_not_linked` | 404 | Opening a guided review on a repository this workspace has not connected |
+| `pr_not_found` | 404 | Opening a guided review on a pull request the host does not know |
 
 ## Setting a workspace up
 
@@ -970,6 +977,64 @@ minted onto a person and the key id otherwise.
 Acknowledgement is `write` rather than `admin` because it starts nothing and merges nothing. An
 entry whose grading has not settled yet is refused with `409 kaizen_entry_not_settled`: there are no
 recommendations to have read.
+
+## Guided PR review
+
+The sessions behind the app's [guided review](../guide/guided-review.md), so another UI (an IDE
+plugin, a browser extension on the host's pull request page) can offer the same experience. A
+session explains one pull request and holds independent question threads; a thread can turn its
+conclusions into comment drafts, which you post when you choose.
+
+| Method | Path | Scope | Purpose |
+| --- | --- | --- | --- |
+| `POST` | `/api/v1/guided-reviews` | write | Open a review of `{ owner, repo, prNumber }`, or return the caller's existing one. |
+| `GET` | `/api/v1/guided-reviews` | read | List reviews, narrowed by `repoId`, `prNumber` or `mine=true`. |
+| `GET` | `/api/v1/guided-reviews/{sessionId}` | read | The overview, the thread summaries and the drafts. |
+| `DELETE` | `/api/v1/guided-reviews/{sessionId}` | write | Delete a review. Nothing on the pull request changes. |
+| `POST` | `/api/v1/guided-reviews/{sessionId}/refresh` | write | Prepare the overview again at the PR's current head. |
+| `POST` | `/api/v1/guided-reviews/{sessionId}/threads` | write | Open a thread, optionally asking its first `question`. |
+| `GET` | `/api/v1/guided-reviews/{sessionId}/threads/{threadId}` | read | A thread's messages in order. |
+| `POST` | `/api/v1/guided-reviews/{sessionId}/threads/{threadId}/messages` | write | Ask a question; `depth: "deep"` answers from a checkout. |
+| `POST` | `/api/v1/guided-reviews/{sessionId}/threads/{threadId}/comment-drafts` | write | Draft comments from the thread's conclusions. |
+| `PATCH` | `/api/v1/guided-reviews/{sessionId}/comment-drafts/{draftId}` | write | Edit, move or discard a draft, naming the `rev` you loaded. |
+| `POST` | `/api/v1/guided-reviews/{sessionId}/comment-drafts/post` | write | Post the named drafts on the pull request. |
+| `GET` | `/api/v1/guided-reviews/{sessionId}/events` | read | Server-sent events: the session view whenever it changes. |
+
+**Writes answer at once; the work completes later.** Opening a review returns it with its overview
+`pending`, and asking returns your question beside an assistant message that is `pending` or
+`running` until it settles `complete` (markdown `content` plus the `citations` it rests on) or
+`failed` with a `failure.reason`. Follow `GET .../events`, whose `state` frame carries the same body
+as `GET /api/v1/guided-reviews/{sessionId}`: a thread whose `pendingMessageId` clears has an answer
+to fetch. The stream closes with `timeout` after five minutes; reconnect to keep following.
+
+**Who a review belongs to.** A key bound to a person acts as that person: the review is theirs, the
+pull request is read with their credentials where the workspace allows it, and posted comments come
+from them. A key bound to nobody owns its own reviews and runs on the deployment's credentials. Only
+the owner may change a review; any key on the workspace may read it.
+
+**`write`, not `admin`.** Opening, asking and drafting spend model budget; posting publishes plain
+review comments. Nothing here approves, merges or requests changes.
+
+**Posting is safe to retry.** Each draft is claimed before its comment is sent, so posting the same
+drafts twice never posts a comment twice. The result counts what `posted` and `failed` (a failed
+draft keeps the host's reason in `postError` and can be posted again) and lists in `skipped` the
+drafts another call already handled.
+
+```bash
+# Open a review, ask about the change in a thread of its own, and follow the session.
+SESSION=$(curl -s -X POST -H "$AUTH" -H 'content-type: application/json' \
+  -d '{"owner":"acme","repo":"payments","prNumber":42}' \
+  "$BASE/api/v1/guided-reviews" | jq -r .session.id)
+
+curl -s -X POST -H "$AUTH" -H 'content-type: application/json' \
+  -d '{"question":{"content":"Is the new retry loop bounded?"}}' \
+  "$BASE/api/v1/guided-reviews/$SESSION/threads"
+
+curl -N -H "$AUTH" "$BASE/api/v1/guided-reviews/$SESSION/events"
+```
+
+The four SDKs expose all of it as the `guidedReviews` group, and the MCP server as tools (the stream
+excepted: a tool call has no channel to stream over, so re-read the session instead).
 
 ## Streaming
 

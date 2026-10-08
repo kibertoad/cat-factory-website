@@ -41,6 +41,7 @@ const GUIDE_GROUPS = [
       '/guide/running-pipelines.md',
       '/guide/recurring-pipelines.md',
       '/guide/pull-requests.md',
+      '/guide/guided-review.md',
       '/guide/budgets.md',
     ],
   },
