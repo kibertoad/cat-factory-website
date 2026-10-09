@@ -933,6 +933,33 @@ paginated like the other lists.
 Because they reach prompt and response bodies, treat a key that can call them as sensitive even
 though it is only `read`.
 
+## Keeping a copy of the directory in sync
+
+Six `read` endpoints under `/api/v1/directory/*` let another system rely on Cat Factory for an
+account's workspaces, users, account memberships, workspace memberships, and linked repositories.
+They are account-scoped, so the `x-cat-factory-workspace` header is not read.
+
+- **Snapshots**: `GET /api/v1/directory/workspaces`, `/users`, `/account-memberships`,
+  `/workspace-memberships`, and `/repos`. Keyset-paged with `cursor` and `limit` (up to 100). Every
+  page of one walk reports the same `asOfSeq`, the feed position taken before the first page.
+- **Change feed**: `GET /api/v1/directory/changes?after=<seq>` returns
+  `{ changes, nextAfter, headSeq }`. Each change names an entity and carries its **current** state
+  in `entity`, or `null` once the entity is gone or out of your key's reach, which is how a deletion
+  arrives. Store `nextAfter` and send it back as `after`; `nextAfter === headSeq` means caught up.
+
+A sync loop is three steps:
+
+1. **Bootstrap**: walk each snapshot to its last page, then replay the feed from the `asOfSeq` it
+   reported. That picks up anything that changed while you were paging.
+2. **Follow**: poll the feed from your stored cursor. Applying changes in order converges on the
+   source even when you read one long after it happened, because each carries today's state.
+3. **Recover**: the feed keeps changes for `DIRECTORY_CHANGE_RETENTION_DAYS` (30 by default). A
+   cursor older than that is refused with `409 cursor_expired`; go back to step 1.
+
+A key limited to some workspaces sees workspace, workspace-membership, and repository entities of
+those workspaces only, and is refused users and account memberships (`403 account_scope_required`).
+Mint an account-wide key for a full directory copy.
+
 ## Kaizen entries: the platform's own improvement backlog
 
 After a run finishes, Cat Factory grades its own work: each completed agent step is scored 1 to 5 on
