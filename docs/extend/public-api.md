@@ -960,6 +960,30 @@ A key limited to some workspaces sees workspace, workspace-membership, and repos
 those workspaces only, and is refused users and account memberships (`403 account_scope_required`).
 Mint an account-wide key for a full directory copy.
 
+### Getting changes pushed instead of polling
+
+Register a **directory webhook** and Cat Factory pushes the same pages to you every couple of
+minutes. It takes an `admin` key that reaches every workspace:
+
+| Method & path | What it does |
+| --- | --- |
+| `GET /api/v1/directory/webhooks` | List your endpoints and the feed position each was delivered through. |
+| `PUT /api/v1/directory/webhooks/:webhookId` | Register or edit one. Body `{ "url": "https://…", "secret": "…", "enabled": true }`; omitted fields keep their value. At most 10 per account. |
+| `DELETE /api/v1/directory/webhooks/:webhookId` | Stop pushing to it. |
+
+A new endpoint starts at the current end of the feed, so bootstrap the past from the snapshots.
+Each push is a signed JSON body, verified exactly like the notification webhooks (see
+[outbound webhooks](../operate/notifications.md#outbound-webhooks)):
+
+- `directory.changed`: `{ deliveryId, sentAt, accountId, event, changes, nextAfter, headSeq }`,
+  with `changes` shaped as the feed serves them.
+- `directory.resync_required`: the endpoint fell further behind than the feed keeps. Reconcile
+  from the snapshots.
+
+Pushes are at-least-once: a push you did not acknowledge with a 2xx is sent again with the same
+`deliveryId`, so dedupe on it. Keep polling the feed now and then as well. A push is a fast path,
+and the feed is what guarantees you saw everything.
+
 ## Kaizen entries: the platform's own improvement backlog
 
 After a run finishes, Cat Factory grades its own work: each completed agent step is scored 1 to 5 on
