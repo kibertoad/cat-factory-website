@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.80.0**. 149 operations across 27 groups.
+Surface version **1.81.0**. 152 operations across 27 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -1536,6 +1536,68 @@ A keyset-paged snapshot of every user holding a membership in the account. Accou
 | Status | Body | Meaning |
 | --- | --- | --- |
 | `200` | [`DirectoryUserPage`](#directoryuserpage) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### List the account's directory webhooks
+
+`GET /api/v1/directory/webhooks`
+
+Minimum scope: `admin`.
+
+The endpoints the directory change feed is pushed to, each with the feed position delivered through. The signing secret is write-only: `hasSecret` says whether one is set. Requires an `admin` key that reaches every workspace (`403` with `reason: "account_scope_required"` otherwise), because an endpoint receives every change in the account.
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`DirectoryWebhookList`](#directorywebhooklist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Register or edit a directory webhook
+
+`PUT /api/v1/directory/webhooks/{webhookId}`
+
+Minimum scope: `admin`.
+
+Register an endpoint the directory change feed is pushed to, or edit one; an omitted field keeps its stored value, and `url` is required only when registering. A new endpoint starts at the feed head: it is pushed what changes from now on, and its receiver bootstraps the past from the snapshots. Pushes run every couple of minutes, signed like the notification webhooks, each a `DirectoryWebhookDelivery`. An account holds at most 10 (`409` with `reason: "webhook_limit_reached"`).
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `webhookId` | `string` | yes |  |
+
+**Request body** (required): [`PutDirectoryWebhook`](#putdirectorywebhook) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`DirectoryWebhook`](#directorywebhook) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Remove a directory webhook
+
+`DELETE /api/v1/directory/webhooks/{webhookId}`
+
+Minimum scope: `admin`.
+
+Stop pushing to an endpoint. Idempotent.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `webhookId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `204` | empty | No content |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -3454,7 +3516,7 @@ Deregister this endpoint; its deliveries stop and the workspace's other endpoint
 
 The payload shapes the operations above reference. Field names, types and constraints are the contract; the narrative for what each one means lives on the page that owns the feature.
 
-[`AcceptanceCriterion`](#acceptancecriterion) · [`AcknowledgeKaizenEntry`](#acknowledgekaizenentry) · [`AskGuidedReview`](#askguidedreview) · [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) · [`CreatePublicJob`](#createpublicjob) · [`CreatePublicTask`](#createpublictask) · [`CreatedPublicApiKey`](#createdpublicapikey) · [`DirectoryAccountMembership`](#directoryaccountmembership) · [`DirectoryAccountMembershipPage`](#directoryaccountmembershippage) · [`DirectoryChange`](#directorychange) · [`DirectoryChangePage`](#directorychangepage) · [`DirectoryRepo`](#directoryrepo) · [`DirectoryRepoPage`](#directoryrepopage) · [`DirectoryUser`](#directoryuser) · [`DirectoryUserPage`](#directoryuserpage) · [`DirectoryWorkspace`](#directoryworkspace) · [`DirectoryWorkspaceMembership`](#directoryworkspacemembership) · [`DirectoryWorkspaceMembershipPage`](#directoryworkspacemembershippage) · [`DirectoryWorkspacePage`](#directoryworkspacepage) · [`DocumentFreshness`](#documentfreshness) · [`DomainRule`](#domainrule) · [`EditGuidedReviewDraft`](#editguidedreviewdraft) · [`ErrorResponse`](#errorresponse) · [`GuidedReviewAnchor`](#guidedreviewanchor) · [`GuidedReviewCommentDraft`](#guidedreviewcommentdraft) · [`GuidedReviewDraftReport`](#guidedreviewdraftreport) · [`GuidedReviewExchange`](#guidedreviewexchange) · [`GuidedReviewFailure`](#guidedreviewfailure) · [`GuidedReviewMessage`](#guidedreviewmessage) · [`GuidedReviewOverview`](#guidedreviewoverview) · [`GuidedReviewOverviewContent`](#guidedreviewoverviewcontent) · [`GuidedReviewPostResult`](#guidedreviewpostresult) · [`GuidedReviewSession`](#guidedreviewsession) · [`GuidedReviewSessionView`](#guidedreviewsessionview) · [`GuidedReviewThread`](#guidedreviewthread) · [`GuidedReviewThreadSummary`](#guidedreviewthreadsummary) · [`GuidedReviewThreadView`](#guidedreviewthreadview) · [`Notification`](#notification) · [`NotificationWebhook`](#notificationwebhook) · [`OpenGuidedReview`](#openguidedreview) · [`OpenGuidedReviewThread`](#openguidedreviewthread) · [`PostGuidedReviewDrafts`](#postguidedreviewdrafts) · [`PrReportCheck`](#prreportcheck) · [`PrReportCi`](#prreportci) · [`PrReportContext`](#prreportcontext) · [`PrReportContextDocument`](#prreportcontextdocument) · [`PrReportEnvironments`](#prreportenvironments) · [`PrReportIssue`](#prreportissue) · [`PrReportJudge`](#prreportjudge) · [`PrReportJudges`](#prreportjudges) · [`PrReportMerge`](#prreportmerge) · [`PrReportObservability`](#prreportobservability) · [`PrReportReproduction`](#prreportreproduction) · [`PrReportRequirements`](#prreportrequirements) · [`PrReportRun`](#prreportrun) · [`PrReportStep`](#prreportstep) · [`PrReportTestConcern`](#prreporttestconcern) · [`PrReportTestOutcome`](#prreporttestoutcome) · [`PrReportTests`](#prreporttests) · [`PrReportValidation`](#prreportvalidation) · [`PrReportValidationCommand`](#prreportvalidationcommand) · [`PrVerificationReport`](#prverificationreport) · [`PublicAgentDecision`](#publicagentdecision) · [`PublicAnswerFollowUp`](#publicanswerfollowup) · [`PublicAnswerInterview`](#publicanswerinterview) · [`PublicApiKey`](#publicapikey) · [`PublicApiKeyList`](#publicapikeylist) · [`PublicApprovalGateDecision`](#publicapprovalgatedecision) · [`PublicApproveStep`](#publicapprovestep) · [`PublicBrainstormDecision`](#publicbrainstormdecision) · [`PublicBugFishingDecision`](#publicbugfishingdecision) · [`PublicBugFishingFinding`](#publicbugfishingfinding) · [`PublicBugFishingPhase`](#publicbugfishingphase) · [`PublicBugFishingPlan`](#publicbugfishingplan) · [`PublicBugFishingSpawn`](#publicbugfishingspawn) · [`PublicBugFishingUnfishedCell`](#publicbugfishingunfishedcell) · [`PublicChallengePrReviewFinding`](#publicchallengeprreviewfinding) · [`PublicChooseFork`](#publicchoosefork) · [`PublicClarityDecision`](#publicclaritydecision) · [`PublicDecision`](#publicdecision) · [`PublicDecisionList`](#publicdecisionlist) · [`PublicFollowUpItem`](#publicfollowupitem) · [`PublicFollowUpsDecision`](#publicfollowupsdecision) · [`PublicForkDecision`](#publicforkdecision) · [`PublicGuidedReviewList`](#publicguidedreviewlist) · [`PublicHumanTestDecision`](#publichumantestdecision) · [`PublicHumanTestEnvironment`](#publichumantestenvironment) · [`PublicIdentity`](#publicidentity) · [`PublicIncorporate`](#publicincorporate) · [`PublicInputGateDecision`](#publicinputgatedecision) · [`PublicInterviewDecision`](#publicinterviewdecision) · [`PublicInterviewQuestion`](#publicinterviewquestion) · [`PublicJob`](#publicjob) · [`PublicJobAccepted`](#publicjobaccepted) · [`PublicKaizenEntry`](#publickaizenentry) · [`PublicKaizenEntryCombo`](#publickaizenentrycombo) · [`PublicKaizenEntryList`](#publickaizenentrylist) · [`PublicKaizenEntryTask`](#publickaizenentrytask) · [`PublicNotificationList`](#publicnotificationlist) · [`PublicNotificationWebhook`](#publicnotificationwebhook) · [`PublicNotificationWebhookList`](#publicnotificationwebhooklist) · [`PublicPipeline`](#publicpipeline) · [`PublicPipelineList`](#publicpipelinelist) · [`PublicPrReviewDecision`](#publicprreviewdecision) · [`PublicPromptFragment`](#publicpromptfragment) · [`PublicPromptFragmentList`](#publicpromptfragmentlist) · [`PublicRejectStep`](#publicrejectstep) · [`PublicReplyFinding`](#publicreplyfinding) · [`PublicRequestGateFix`](#publicrequestgatefix) · [`PublicRequestStepChanges`](#publicrequeststepchanges) · [`PublicRequirementsDecision`](#publicrequirementsdecision) · [`PublicResolveAgentDecision`](#publicresolveagentdecision) · [`PublicResolveExceeded`](#publicresolveexceeded) · [`PublicResolveInputGate`](#publicresolveinputgate) · [`PublicResolvePrReview`](#publicresolveprreview) · [`PublicReviewFinding`](#publicreviewfinding) · [`PublicRun`](#publicrun) · [`PublicRunArtifact`](#publicrunartifact) · [`PublicRunArtifactList`](#publicrunartifactlist) · [`PublicRunSpec`](#publicrunspec) · [`PublicService`](#publicservice) · [`PublicServiceList`](#publicservicelist) · [`PublicServiceSpec`](#publicservicespec) · [`PublicSetFindingStatus`](#publicsetfindingstatus) · [`PublicSpecFeatureFile`](#publicspecfeaturefile) · [`PublicSpecProvenance`](#publicspecprovenance) · [`PublicSpecTruncation`](#publicspectruncation) · [`PublicSpend`](#publicspend) · [`PublicSpendRow`](#publicspendrow) · [`PublicSpendTotals`](#publicspendtotals) · [`PublicTask`](#publictask) · [`PublicTaskDocument`](#publictaskdocument) · [`PublicTaskList`](#publictasklist) · [`PublicTaskSourceDocument`](#publictasksourcedocument) · [`PublicTaskTicket`](#publictaskticket) · [`PublicTaskUploadedDocument`](#publictaskuploadeddocument) · [`PublicUnanswerableWait`](#publicunanswerablewait) · [`PublicUsage`](#publicusage) · [`PublicUsageBudget`](#publicusagebudget) · [`PublicUsageRow`](#publicusagerow) · [`PublicVisualConfirmDecision`](#publicvisualconfirmdecision) · [`PutNotificationWebhook`](#putnotificationwebhook) · [`RequestGuidedReviewDrafts`](#requestguidedreviewdrafts) · [`RequirementGroup`](#requirementgroup) · [`RequirementItem`](#requirementitem) · [`SpecDoc`](#specdoc) · [`SpecModule`](#specmodule) · [`SpecReadIssue`](#specreadissue) · [`StartPublicTask`](#startpublictask) · [`UpdatePublicTask`](#updatepublictask)
+[`AcceptanceCriterion`](#acceptancecriterion) · [`AcknowledgeKaizenEntry`](#acknowledgekaizenentry) · [`AskGuidedReview`](#askguidedreview) · [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) · [`CreatePublicJob`](#createpublicjob) · [`CreatePublicTask`](#createpublictask) · [`CreatedPublicApiKey`](#createdpublicapikey) · [`DirectoryAccountMembership`](#directoryaccountmembership) · [`DirectoryAccountMembershipPage`](#directoryaccountmembershippage) · [`DirectoryChange`](#directorychange) · [`DirectoryChangePage`](#directorychangepage) · [`DirectoryRepo`](#directoryrepo) · [`DirectoryRepoPage`](#directoryrepopage) · [`DirectoryUser`](#directoryuser) · [`DirectoryUserPage`](#directoryuserpage) · [`DirectoryWebhook`](#directorywebhook) · [`DirectoryWebhookDelivery`](#directorywebhookdelivery) · [`DirectoryWebhookList`](#directorywebhooklist) · [`DirectoryWorkspace`](#directoryworkspace) · [`DirectoryWorkspaceMembership`](#directoryworkspacemembership) · [`DirectoryWorkspaceMembershipPage`](#directoryworkspacemembershippage) · [`DirectoryWorkspacePage`](#directoryworkspacepage) · [`DocumentFreshness`](#documentfreshness) · [`DomainRule`](#domainrule) · [`EditGuidedReviewDraft`](#editguidedreviewdraft) · [`ErrorResponse`](#errorresponse) · [`GuidedReviewAnchor`](#guidedreviewanchor) · [`GuidedReviewCommentDraft`](#guidedreviewcommentdraft) · [`GuidedReviewDraftReport`](#guidedreviewdraftreport) · [`GuidedReviewExchange`](#guidedreviewexchange) · [`GuidedReviewFailure`](#guidedreviewfailure) · [`GuidedReviewMessage`](#guidedreviewmessage) · [`GuidedReviewOverview`](#guidedreviewoverview) · [`GuidedReviewOverviewContent`](#guidedreviewoverviewcontent) · [`GuidedReviewPostResult`](#guidedreviewpostresult) · [`GuidedReviewSession`](#guidedreviewsession) · [`GuidedReviewSessionView`](#guidedreviewsessionview) · [`GuidedReviewThread`](#guidedreviewthread) · [`GuidedReviewThreadSummary`](#guidedreviewthreadsummary) · [`GuidedReviewThreadView`](#guidedreviewthreadview) · [`Notification`](#notification) · [`NotificationWebhook`](#notificationwebhook) · [`OpenGuidedReview`](#openguidedreview) · [`OpenGuidedReviewThread`](#openguidedreviewthread) · [`PostGuidedReviewDrafts`](#postguidedreviewdrafts) · [`PrReportCheck`](#prreportcheck) · [`PrReportCi`](#prreportci) · [`PrReportContext`](#prreportcontext) · [`PrReportContextDocument`](#prreportcontextdocument) · [`PrReportEnvironments`](#prreportenvironments) · [`PrReportIssue`](#prreportissue) · [`PrReportJudge`](#prreportjudge) · [`PrReportJudges`](#prreportjudges) · [`PrReportMerge`](#prreportmerge) · [`PrReportObservability`](#prreportobservability) · [`PrReportReproduction`](#prreportreproduction) · [`PrReportRequirements`](#prreportrequirements) · [`PrReportRun`](#prreportrun) · [`PrReportStep`](#prreportstep) · [`PrReportTestConcern`](#prreporttestconcern) · [`PrReportTestOutcome`](#prreporttestoutcome) · [`PrReportTests`](#prreporttests) · [`PrReportValidation`](#prreportvalidation) · [`PrReportValidationCommand`](#prreportvalidationcommand) · [`PrVerificationReport`](#prverificationreport) · [`PublicAgentDecision`](#publicagentdecision) · [`PublicAnswerFollowUp`](#publicanswerfollowup) · [`PublicAnswerInterview`](#publicanswerinterview) · [`PublicApiKey`](#publicapikey) · [`PublicApiKeyList`](#publicapikeylist) · [`PublicApprovalGateDecision`](#publicapprovalgatedecision) · [`PublicApproveStep`](#publicapprovestep) · [`PublicBrainstormDecision`](#publicbrainstormdecision) · [`PublicBugFishingDecision`](#publicbugfishingdecision) · [`PublicBugFishingFinding`](#publicbugfishingfinding) · [`PublicBugFishingPhase`](#publicbugfishingphase) · [`PublicBugFishingPlan`](#publicbugfishingplan) · [`PublicBugFishingSpawn`](#publicbugfishingspawn) · [`PublicBugFishingUnfishedCell`](#publicbugfishingunfishedcell) · [`PublicChallengePrReviewFinding`](#publicchallengeprreviewfinding) · [`PublicChooseFork`](#publicchoosefork) · [`PublicClarityDecision`](#publicclaritydecision) · [`PublicDecision`](#publicdecision) · [`PublicDecisionList`](#publicdecisionlist) · [`PublicFollowUpItem`](#publicfollowupitem) · [`PublicFollowUpsDecision`](#publicfollowupsdecision) · [`PublicForkDecision`](#publicforkdecision) · [`PublicGuidedReviewList`](#publicguidedreviewlist) · [`PublicHumanTestDecision`](#publichumantestdecision) · [`PublicHumanTestEnvironment`](#publichumantestenvironment) · [`PublicIdentity`](#publicidentity) · [`PublicIncorporate`](#publicincorporate) · [`PublicInputGateDecision`](#publicinputgatedecision) · [`PublicInterviewDecision`](#publicinterviewdecision) · [`PublicInterviewQuestion`](#publicinterviewquestion) · [`PublicJob`](#publicjob) · [`PublicJobAccepted`](#publicjobaccepted) · [`PublicKaizenEntry`](#publickaizenentry) · [`PublicKaizenEntryCombo`](#publickaizenentrycombo) · [`PublicKaizenEntryList`](#publickaizenentrylist) · [`PublicKaizenEntryTask`](#publickaizenentrytask) · [`PublicNotificationList`](#publicnotificationlist) · [`PublicNotificationWebhook`](#publicnotificationwebhook) · [`PublicNotificationWebhookList`](#publicnotificationwebhooklist) · [`PublicPipeline`](#publicpipeline) · [`PublicPipelineList`](#publicpipelinelist) · [`PublicPrReviewDecision`](#publicprreviewdecision) · [`PublicPromptFragment`](#publicpromptfragment) · [`PublicPromptFragmentList`](#publicpromptfragmentlist) · [`PublicRejectStep`](#publicrejectstep) · [`PublicReplyFinding`](#publicreplyfinding) · [`PublicRequestGateFix`](#publicrequestgatefix) · [`PublicRequestStepChanges`](#publicrequeststepchanges) · [`PublicRequirementsDecision`](#publicrequirementsdecision) · [`PublicResolveAgentDecision`](#publicresolveagentdecision) · [`PublicResolveExceeded`](#publicresolveexceeded) · [`PublicResolveInputGate`](#publicresolveinputgate) · [`PublicResolvePrReview`](#publicresolveprreview) · [`PublicReviewFinding`](#publicreviewfinding) · [`PublicRun`](#publicrun) · [`PublicRunArtifact`](#publicrunartifact) · [`PublicRunArtifactList`](#publicrunartifactlist) · [`PublicRunSpec`](#publicrunspec) · [`PublicService`](#publicservice) · [`PublicServiceList`](#publicservicelist) · [`PublicServiceSpec`](#publicservicespec) · [`PublicSetFindingStatus`](#publicsetfindingstatus) · [`PublicSpecFeatureFile`](#publicspecfeaturefile) · [`PublicSpecProvenance`](#publicspecprovenance) · [`PublicSpecTruncation`](#publicspectruncation) · [`PublicSpend`](#publicspend) · [`PublicSpendRow`](#publicspendrow) · [`PublicSpendTotals`](#publicspendtotals) · [`PublicTask`](#publictask) · [`PublicTaskDocument`](#publictaskdocument) · [`PublicTaskList`](#publictasklist) · [`PublicTaskSourceDocument`](#publictasksourcedocument) · [`PublicTaskTicket`](#publictaskticket) · [`PublicTaskUploadedDocument`](#publictaskuploadeddocument) · [`PublicUnanswerableWait`](#publicunanswerablewait) · [`PublicUsage`](#publicusage) · [`PublicUsageBudget`](#publicusagebudget) · [`PublicUsageRow`](#publicusagerow) · [`PublicVisualConfirmDecision`](#publicvisualconfirmdecision) · [`PutDirectoryWebhook`](#putdirectorywebhook) · [`PutNotificationWebhook`](#putnotificationwebhook) · [`RequestGuidedReviewDrafts`](#requestguidedreviewdrafts) · [`RequirementGroup`](#requirementgroup) · [`RequirementItem`](#requirementitem) · [`SpecDoc`](#specdoc) · [`SpecModule`](#specmodule) · [`SpecReadIssue`](#specreadissue) · [`StartPublicTask`](#startpublictask) · [`UpdatePublicTask`](#updatepublictask)
 
 ### `AcceptanceCriterion`
 
@@ -3638,6 +3700,49 @@ One of 5 shapes.
 | `asOfSeq` | `number` | yes |  |
 | `items` | array of [`DirectoryUser`](#directoryuser) | yes |  |
 | `nextCursor` | `string` \| `null` | yes |  |
+
+### `DirectoryWebhook`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `deliveredSeq` | `number` | yes |  |
+| `enabled` | `boolean` | yes |  |
+| `hasSecret` | `boolean` | yes |  |
+| `id` | `string` | yes |  |
+| `updatedAt` | `number` | yes |  |
+| `url` | `string` | yes |  |
+
+### `DirectoryWebhookDelivery`
+
+One of 2 shapes.
+
+**`event: "directory.changed"`**
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `accountId` | `string` | yes |  |
+| `changes` | array of [`DirectoryChange`](#directorychange) | yes |  |
+| `deliveryId` | `string` | yes |  |
+| `event` | `"directory.changed"` | yes |  |
+| `headSeq` | `number` | yes |  |
+| `nextAfter` | `number` | yes |  |
+| `sentAt` | `number` | yes |  |
+
+**`event: "directory.resync_required"`**
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `accountId` | `string` | yes |  |
+| `deliveryId` | `string` | yes |  |
+| `event` | `"directory.resync_required"` | yes |  |
+| `headSeq` | `number` | yes |  |
+| `sentAt` | `number` | yes |  |
+
+### `DirectoryWebhookList`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `webhooks` | array of [`DirectoryWebhook`](#directorywebhook) | yes |  |
 
 ### `DirectoryWorkspace`
 
@@ -5081,6 +5186,14 @@ One of 2 shapes.
 | `maxAttempts` | `number` | yes |  |
 | `pairs` | array of object | yes |  |
 | `phase` | `"awaiting_human"` \| `"fixing"` \| `"approved"` | yes |  |
+
+### `PutDirectoryWebhook`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | no |  |
+| `secret` | `string` | no | 16 to 200 characters |
+| `url` | `string` (uri) | no | max 2000 characters, pattern `^https://` |
 
 ### `PutNotificationWebhook`
 
