@@ -984,6 +984,32 @@ Pushes are at-least-once: a push you did not acknowledge with a 2xx is sent agai
 `deliveryId`, so dedupe on it. Keep polling the feed now and then as well. A push is a fast path,
 and the feed is what guarantees you saw everything.
 
+### The Node package does the loop for you
+
+`@cat-factory/directory-sync` runs the bootstrap, follow, recover loop and the push handling over
+storage you provide; `@cat-factory/webhooks` is the signature check on its own, for any other
+receiver.
+
+```ts
+import { CatFactoryClient } from '@cat-factory/sdk'
+import { DirectorySyncer } from '@cat-factory/directory-sync'
+
+const syncer = new DirectorySyncer({
+  client: new CatFactoryClient({ baseUrl, apiKey }),
+  store: myStore,
+  webhookSecret: process.env.DIRECTORY_WEBHOOK_SECRET,
+})
+
+await syncer.catchUp() // bootstraps from the snapshots on first use
+setInterval(() => syncer.catchUp(), 5 * 60_000)
+setInterval(() => syncer.reconcile(), 24 * 60 * 60_000)
+app.post('/cat-factory/directory', (request) => syncer.handleRequest(request))
+```
+
+`myStore` implements four methods (`getCursor`, `setCursor`, `apply`, `listKeys`). The one rule
+that makes it correct: skip a record only when you already hold a strictly newer `seq` for its key,
+and keep deletions as tombstones. `MemoryDirectoryStore` in the package is a complete reference.
+
 ## Kaizen entries: the platform's own improvement backlog
 
 After a run finishes, Cat Factory grades its own work: each completed agent step is scored 1 to 5 on
