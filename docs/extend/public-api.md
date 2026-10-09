@@ -54,9 +54,28 @@ Authorization: Bearer cf_live_<keyId>.<secret>
 
 The server stores only a one-way hash of the secret (`HMAC-SHA256` under `ENCRYPTION_KEY`), never
 the secret itself, so a key is shown in full exactly once when you create it. The `<keyId>` is a
-non-secret `pak_…` identifier embedded in the key. A key is scoped to one account and workspace;
-every call it makes is bound to that workspace. An unknown or absent key fails closed as `401`; a
-valid key whose scope is too low for the operation returns `403 insufficient_scope`.
+non-secret `pak_…` identifier embedded in the key. An unknown or absent key fails closed as `401`;
+a valid key whose scope is too low for the operation returns `403 insufficient_scope`.
+
+### Which workspace a call acts on
+
+A key belongs to one account. It reaches either every workspace in that account (including ones
+created later) or a list of them you choose when minting it. Each workspace-scoped call acts on one
+workspace, named in a request header:
+
+```
+x-cat-factory-workspace: <workspaceId>
+```
+
+A key that reaches exactly one workspace may leave the header out, so a key minted for a single
+workspace works exactly as before. A key reaching several workspaces that sends no header gets
+`422` with `details.reason: workspace_required`. A workspace that does not exist and one outside
+the key's reach both answer `404 workspace_not_found`, so a key cannot discover workspaces it was
+not given. `GET /api/v1/me` reports the key's reach as `workspaceIds` (`null` meaning every
+workspace) and the workspace the call acted on as `workspaceId`.
+
+Every official client takes the workspace once, when you build it: `workspaceId` in TypeScript,
+`workspace_id` in Python, `WorkspaceID` in Go and `.workspaceId(…)` on the Java builder.
 
 ## Scopes
 
@@ -125,14 +144,18 @@ the **Development** group, and manage keys there:
 
 - **Create a token**: enter a label (for example "CI pipeline"), pick a scope (Read only, Read and
   write, Decide, or Full access; Read and write is the default), and pick **Runs as** (this
-  workspace, or you — see [Who a key runs as](#who-a-key-runs-as)). The secret is revealed once on a
-  "Copy your token now" panel and cannot be recovered afterward.
+  workspace, or you; see [Who a key runs as](#who-a-key-runs-as)). An account admin in advanced
+  mode also sees **Workspaces**: this workspace only (the default), every workspace in the account,
+  or a chosen set. The secret is revealed once on a "Copy your token now" panel and cannot be
+  recovered afterward.
 - **Active tokens** lists each key with its label, scope badge, creation date, last-used time, and
   who created it. A personal token also carries a "Your subscription" badge, so you can tell at a
-  glance which of your tokens reaches your own credentials. Revoke a key from its row (you confirm
-  first). To rotate a key, revoke it and mint a new one; there is no edit-in-place.
+  glance which of your tokens reaches your own credentials, and a key reaching more than this
+  workspace carries a badge saying how many (or "All workspaces"). The list shows every key that
+  reaches this workspace, including account-wide ones minted elsewhere. Revoke a key from its row
+  (you confirm first). To rotate a key, revoke it and mint a new one; there is no edit-in-place.
 
-A workspace may hold up to 50 live keys.
+An account may hold up to 200 live keys.
 
 The same operations are available on session-authenticated endpoints (called with the app's own
 session, guarded by the `secrets.manage` permission) for scripting key management:
@@ -140,8 +163,8 @@ session, guarded by the `secrets.manage` permission) for scripting key managemen
 | Method & path | What it does |
 | --- | --- |
 | `GET /workspaces/:workspaceId/public-api-keys` | List live keys (metadata only: id, label, scope, creator, timestamps). |
-| `POST /workspaces/:workspaceId/public-api-keys` | Mint a key. Body `{ "label": "…", "scope": "read\|write\|admin", "actsAsSelf": false }` (both optional; scope defaults to `write`, `actsAsSelf` to `false`, a [system token](#who-a-key-runs-as)). Returns `{ key, secret }`; the raw secret is shown once and is not recoverable. |
-| `DELETE /workspaces/:workspaceId/public-api-keys/:id` | Revoke a key (idempotent). |
+| `POST /workspaces/:workspaceId/public-api-keys` | Mint a key. Body `{ "label": "…", "scope": "read\|write\|admin", "actsAsSelf": false, "workspaceIds": [ … ] }` (all but `label` optional; scope defaults to `write`, `actsAsSelf` to `false`, a [system token](#who-a-key-runs-as)). `workspaceIds` omitted means this workspace only; `null` means every workspace in the account; anything wider than this workspace needs an account admin (`403 account_admin_required`). Returns `{ key, secret }`; the raw secret is shown once and is not recoverable. |
+| `DELETE /workspaces/:workspaceId/public-api-keys/:id` | Revoke a key (idempotent). A key reaching past this workspace needs an account admin. |
 
 These inbound `public-api-keys` are distinct from the outbound `api-keys` provider-key pool that
 [custom providers](./custom-providers.md) draw on.
