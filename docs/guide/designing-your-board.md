@@ -77,6 +77,14 @@ feels like it spans several PRs, split it into sibling leaves.
   3D models, audio) rather than code, so it opens no pull request. A deployment can
   [add task types of its own](../extend/frontend-extensions.md#custom-task-types), an "incident" or a
   "compliance-audit", which then appear in the picker and as a badge on the card like any built-in.
+- **Describe new work** (Create → Describe new work, the command bar, or the queue view's header)
+  files a Feature or a Bug from one sentence and a service. The first sentence becomes the title,
+  shown before you submit, and the whole text becomes the description the agents read. The pipeline
+  sits behind **Change how this runs**, which names the default it would use; in the advanced tier
+  the risk policy and model preset are there too. **More kinds** and **Attach context** open the
+  full **Add task** form with your text and choices in it, for every other type and for context
+  attachments.
+  Closing the dialog with text in it asks first.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
