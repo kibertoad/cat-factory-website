@@ -243,6 +243,12 @@ ephemeral environments, the agent executor (self-hosted runner pool, remote Node
 [content storage](#content-storage-binary-artifacts) is undefined. Each banner can be dismissed for
 the session or permanently per user.
 
+A banner goes only to the people who can close the gap: a board admin for the environment provider
+and the runner pool, an account admin for content storage. Everyone else, and anyone using the
+designer view, sees one line instead when the gap stops every run (no runner pool), and that line
+names who can fix it. When the deployment gives an account admin no storage backend to select,
+storage is yours to fix as the operator, and nobody in the app gets a banner for it.
+
 ## Content storage (binary artifacts)
 
 The Tester's screenshots for the [Visual Confirmation](../guide/choosing-a-pipeline.md#visual-confirmation)

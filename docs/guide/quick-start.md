@@ -35,7 +35,8 @@ one if your organization already has them.
 
 A fresh workspace opens on an empty board. The left navbar groups everything you do (Create,
 Repositories, Integrations, Infrastructure, Configuration), and setup banners point you at the
-few things a first run needs.
+few things a first run needs. The banners go to board admins. If you joined someone else's board,
+you see one line instead when agents cannot run yet, and it tells you who can fix it.
 
 ## 2. Create your board structure
 
