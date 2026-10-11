@@ -249,6 +249,10 @@ designer view, sees one line instead when the gap stops every run (no runner poo
 names who can fix it. When the deployment gives an account admin no storage backend to select,
 storage is yours to fix as the operator, and nobody in the app gets a banner for it.
 
+The same gaps, with the model and source control, are listed together under **Configuration → Setup
+checklist**, which follows the same rule: a row shows its fix only to someone who can save it, and
+names who can to everyone else.
+
 ## Content storage (binary artifacts)
 
 The Tester's screenshots for the [Visual Confirmation](../guide/choosing-a-pipeline.md#visual-confirmation)

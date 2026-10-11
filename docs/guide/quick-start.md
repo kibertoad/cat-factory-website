@@ -41,6 +41,11 @@ everything you do (Create, Repositories, Integrations, Infrastructure, Configura
 banners point you at the few things a first run needs. The banners go to board admins. If you joined someone else's board,
 you see one line instead when agents cannot run yet, and it tells you who can fix it.
 
+To see every prerequisite at once, open **Configuration → Setup checklist** (or search the command
+palette for it). It lists the model, source control, where agents run, test environments and
+screenshot storage, each with its state, why it needs attention, and a button to the screen that
+fixes it. A row you cannot fix yourself names who can instead.
+
 ## 2. Create your board structure
 
 Switch to the **Board** view, then on the canvas:
