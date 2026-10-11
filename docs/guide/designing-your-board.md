@@ -82,7 +82,8 @@ feels like it spans several PRs, split it into sibling leaves.
   shown before you submit, and the whole text becomes the description the agents read. The pipeline
   sits behind **Change how this runs**, which names the default it would use; in the advanced tier
   the risk policy and model preset are there too. **More kinds** and **Attach context** open the
-  full **Add task** form with your text in it, for every other type and for context attachments.
+  full **Add task** form with your text and choices in it, for every other type and for context
+  attachments.
   Closing the dialog with text in it asks first.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
