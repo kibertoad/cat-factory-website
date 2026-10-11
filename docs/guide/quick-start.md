@@ -33,9 +33,12 @@ one if your organization already has them.
 
 ![An empty Cat Factory board with the left navbar and first-run setup banners](/images/app/board-empty.webp)
 
-A fresh workspace opens on an empty board. The left navbar groups everything you do (Create,
-Repositories, Integrations, Infrastructure, Configuration), and setup banners point you at the
-few things a first run needs. The banners go to board admins. If you joined someone else's board,
+The first time, you land on the **queue**, which lists what needs you across every service. On a
+fresh workspace it is empty. The sidebar's **Views** section switches to the **board**, the canvas
+shown above, and the app opens on the view you used last (see
+[Queue and board views](./core-concepts.md#queue-and-board-views)). The left navbar groups
+everything you do (Create, Repositories, Integrations, Infrastructure, Configuration), and setup
+banners point you at the few things a first run needs. The banners go to board admins. If you joined someone else's board,
 you see one line instead when agents cannot run yet, and it tells you who can fix it.
 
 To see every prerequisite at once, open **Configuration → Setup checklist** (or search the command
@@ -45,7 +48,7 @@ fixes it. A row you cannot fix yourself names who can instead.
 
 ## 2. Create your board structure
 
-On the canvas:
+Switch to the **Board** view, then on the canvas:
 
 1. Add a **service frame** for the system you're building.
 2. Add **modules** (subframes) inside it for major areas.
