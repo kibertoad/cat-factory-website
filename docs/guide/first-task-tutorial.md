@@ -27,7 +27,8 @@ A task cannot run on its own. It resolves the repository it works in by walking 
 frame** that contains it, and there is deliberately no "just use the first repository" fallback, so
 this step is not optional.
 
-1. On the board, add a **service frame** and name it after the system you are changing.
+1. Switch to the **Board** view from the sidebar's Views section. On the board, add a **service
+   frame** and name it after the system you are changing.
 2. Open it and link your repository. For a monorepo, set the directory too.
 
 You now have an empty frame linked to real code. Cards you drop inside it inherit that link.
