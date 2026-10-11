@@ -56,6 +56,22 @@ subtree, its linked repository, its runs, and its sync. A **workspace** mounts t
 cares about, and the same service can be mounted onto several boards in an org as **one shared
 copy** rather than duplicated. See [Share Services Across Workspaces](./shared-services.md).
 
+## Queue and board views
+
+The board has two views, and the sidebar's **Views** section switches between them.
+
+- The **queue** lists every task across every service in the column that says what it needs:
+  **Needs you** (a decision, an approval, a failed run), **In flight** (with the tasks not started
+  under it) and **Ready to merge**. Each card says why the task is there and carries the one action
+  its state implies, such as Answer, Start or Merge. Its title opens the task beside the queue.
+- The **board** is the canvas of services, modules and tasks, where you design the work and draw
+  dependencies.
+
+Both views read the same task states, so a task never shows one status in the queue and another on
+the board. The app opens on the view you used last in this browser. Someone who has not chosen yet
+lands on the queue. The command palette and a link with `?view=queue` or `?view=board` also switch
+views, and on the board the decision counter in the toolbar opens the queue.
+
 ## Runs
 
 A **run** is an immutable execution record created when you start a pipeline on a block. Runs are
@@ -167,7 +183,8 @@ A tour whose control your role, tier, or deployment does not show skips that ste
 so one tour serves every deployment shape. A tour that cannot run at all states what it is waiting on,
 which is a different thing from having no applicable step. When you finish a tour, the card hands off
 to whichever walkthrough your last action just made available, and a contextual offer catches a tour
-whose requirements have just been met.
+whose requirements have just been met. Tours walk the board, so starting one from the queue switches
+to the board view. The Board basics tour points at the Views switcher.
 
 ## Decision prompts
 
