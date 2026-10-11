@@ -196,7 +196,7 @@ nothing fails the deployment at startup rather than a dispatch months later. Tha
 reason to register in code.
 :::
 
-Two options seed **stored** rows rather than adding a tier, because they describe infrastructure a
+Three options seed **stored** rows rather than adding a tier, because they describe infrastructure a
 workspace then owns and edits:
 
 ```ts
@@ -206,10 +206,12 @@ await start({
   seedEnvironmentHandlers: [{ provisionType: 'k8s', manifestId: 'acme-eks' }],
   // The stacks a provisioned environment composes on top of.
   seedSharedStacks: [{ name: 'shared-postgres', layers: [{ source: { kind: 'inline', body: composeYaml } }] }],
+  // A new board can run an agent with no Infrastructure → Runner pool step.
+  seedRunnerPool: { config: poolConfig, secrets: { apiToken: process.env.AGENT_POOL_TOKEN! } },
 })
 ```
 
-Both are idempotent and fault-tolerant per seed: they run at boot across every existing workspace as
+All three are idempotent and fault-tolerant per seed: they run at boot across every existing workspace as
 a best-effort backfill, and again whenever a workspace is created. A compose layer is a bare in-repo
 path, an inline document, or a file in another repository, so a stack that lives outside the repo
 being provisioned still composes.

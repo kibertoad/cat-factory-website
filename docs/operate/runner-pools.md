@@ -89,6 +89,34 @@ manifest, fill the write-only secrets sub-form, and run a test dispatch. The edi
 the same wire contract the backend enforces. The **Test environments** tab in the same window
 registers an [environment provider](./environments.md); a single pool can back both jobs.
 
+### Declaring the pool from the deployment
+
+A pool is registered per workspace, so on a deployment where it is the only executor, every new
+board starts unable to run an agent until someone fills this form. A deployment that already knows
+its pool can declare it once instead. Pass `seedRunnerPool` to `start()` or `startLocal()`, with the
+same `config` and write-only `secrets` the form takes:
+
+```ts
+start({
+  seedRunnerPool: {
+    config: {
+      kind: 'kubernetes',
+      kubernetes: {
+        label: 'Agents',
+        apiServerUrl: 'https://k8s.internal:6443',
+        namespace: 'cat-factory',
+        image: 'ghcr.io/kibertoad/cat-factory-executor:<tag>',
+      },
+    },
+    secrets: { apiToken: process.env.AGENT_POOL_TOKEN! },
+  },
+})
+```
+
+The server registers it on every existing workspace at boot and on each new one. It never replaces
+a pool a workspace already has, so an admin can still point one board at a different pool. A seed
+that fails to register is logged and skipped, and the next boot tries again.
+
 ### Native Kubernetes backend
 
 If your compute is a Kubernetes cluster, you don't need a manifest at all. Select the **Kubernetes**
