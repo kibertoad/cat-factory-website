@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.81.0**. 152 operations across 27 groups.
+Surface version **1.83.0**. 152 operations across 27 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -1476,7 +1476,7 @@ A keyset-paged snapshot of the account’s memberships, each with the member’s
 
 Minimum scope: `read`.
 
-The account’s directory changes after `after`, in `seq` order, each carrying the CURRENT state of the entity it names, or `null` once that entity no longer exists or is outside the key’s reach. Store `nextAfter` and pass it back as `after`; it can move past the last change served, since changes the key cannot see are skipped. `nextAfter === headSeq` means caught up. A cursor whose following changes were pruned (see `DIRECTORY_CHANGE_RETENTION_DAYS`), or one ahead of the feed, is refused with `409` and `reason: "cursor_expired"`: reconcile from the snapshot endpoints and replay from their `asOfSeq`. Account-scoped: no `x-cat-factory-workspace` header is read. A key limited to some workspaces sees only workspace, workspace-membership and repository changes of those workspaces.
+The account’s directory changes after `after`, in `seq` order, each carrying the CURRENT state of the entity it names, or `null` once that entity no longer exists or is outside the key’s reach. Store `nextAfter` and pass it back as `after`; it can move past the last change served, since changes the key cannot see are skipped. `nextAfter === headSeq` means caught up. A cursor whose following changes were pruned (see `DIRECTORY_CHANGE_RETENTION_DAYS`), or one ahead of the feed, is refused with `409` and `reason: "cursor_expired"`: reconcile from the snapshot endpoints and replay from their `asOfSeq`. Account-scoped: no `x-cat-factory-workspace` header is read. A key limited to some workspaces sees only workspace, workspace-membership and repository changes of those workspaces, plus the `workspace` change (with `entity: null`) of every deleted workspace in the account, since deleting a board also drops the key’s grant on it. Treat that change as the removal of the workspace and of every membership and repository under it.
 
 **Query parameters**
 
@@ -3569,7 +3569,7 @@ The payload shapes the operations above reference. Field names, types and constr
 | `modelPresetId` | `string` | no | 1 to 120 characters |
 | `pipelineId` | `string` | no | 1 to 120 characters |
 | `riskPolicyId` | `string` | no | 1 to 120 characters |
-| `taskType` | `"feature"` \| `"bug"` \| `"bug-fishing"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `string` | no |  |
+| `taskType` | `"feature"` \| `"bug"` \| `"bug-fishing"` \| `"document"` \| `"spike"` \| `"review"` \| `"resolve-conflicts"` \| `"ralph"` \| `"media"` \| `string` | no |  |
 | `ticket` | [`PublicTaskTicket`](#publictaskticket) | no |  |
 | `title` | `string` | yes | 1 to 200 characters |
 
@@ -3688,6 +3688,7 @@ One of 5 shapes.
 
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
+| `accounts` | array of object | yes |  |
 | `avatarUrl` | `string` \| `null` | yes |  |
 | `email` | `string` \| `null` | yes |  |
 | `id` | `string` | yes |  |
@@ -5117,7 +5118,7 @@ One of 14 shapes.
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `taskId` | `string` | yes |  |
-| `taskType` | `"feature"` \| `"bug"` \| `"bug-fishing"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `"recurring"` \| `string` | yes |  |
+| `taskType` | `"feature"` \| `"bug"` \| `"bug-fishing"` \| `"document"` \| `"spike"` \| `"review"` \| `"resolve-conflicts"` \| `"ralph"` \| `"media"` \| `"recurring"` \| `string` | yes |  |
 | `title` | `string` | yes |  |
 
 ### `PublicTaskDocument`

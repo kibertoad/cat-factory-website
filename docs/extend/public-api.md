@@ -960,6 +960,13 @@ A key limited to some workspaces sees workspace, workspace-membership, and repos
 those workspaces only, and is refused users and account memberships (`403 account_scope_required`).
 Mint an account-wide key for a full directory copy.
 
+A user carries `accounts`: the GitHub and GitLab accounts they signed in with, each
+`{ provider, id, login }`, where `id` is the host's numeric user id. Match people on that rather
+than on `email`, which a GitHub sign-in often leaves `null`. `login` is the handle recorded when the
+account was linked and does not follow a rename on the host, so use it for display only. Linking an
+account to a user, or moving it to another user, arrives on the feed as a `user` change for each
+user involved. Password, Google and OIDC sign-ins are not listed.
+
 ### Getting changes pushed instead of polling
 
 Register a **directory webhook** and Cat Factory pushes the same pages to you every couple of
