@@ -64,10 +64,11 @@ Each key carries one scope on an inclusive ladder, so a higher scope also grants
 
 | Scope | Grants |
 | --- | --- |
-| **Read only** (`read`) | Reads and streams: list services, tasks, jobs, pipelines, and notifications; list a run's parked decisions; poll a job or run; open an SSE stream; read the workspace's [usage and budget](#usage-and-budget); the whole [run-debugging surface](#run-debugging). |
-| **Read and write** (`write`) | Everything `read` can do, plus non-destructive mutations: create a task, edit its title/description, start, stop, retry, or cancel a run, break down an initiative, and dismiss a notification. This is the default for a new key. |
+| **Read** (`read`) | Reads and streams: list services, tasks, jobs, pipelines, and notifications; list a run's parked decisions; poll a job or run; open an SSE stream; read the workspace's [usage and budget](#usage-and-budget); the whole [run-debugging surface](#run-debugging). |
+| **Webhooks** (`webhooks`) | Everything `read` can do, plus registering and removing push endpoints: the workspace's [outbound webhooks](../operate/notifications.md) and, for a key that reaches every workspace, the account's directory webhooks. Nothing on the board changes, so an integration that only follows changes needs no rung that can author or delete work. |
+| **Write** (`write`) | Everything `webhooks` can do, plus non-destructive mutations: create a task, edit its title/description, start, stop, retry, or cancel a run, break down an initiative, and dismiss a notification. This is the default for a new key. |
 | **Decide** (`decide`) | Everything `write` can do, plus answering a run's [parked decisions](#answering-a-parked-run), and therefore starting a run on a pipeline that can park at all. |
-| **Full access** (`admin`) | Everything `decide` can do, plus destructive and merge-adjacent actions: delete a task and its run history, and act on a notification (which can perform a real merge). |
+| **Admin** (`admin`) | Everything `decide` can do, plus destructive and merge-adjacent actions: delete a task and its run history, and act on a notification (which can perform a real merge). |
 
 `decide` is a deliberate rung of its own. Answering a decision injects caller-supplied prose into the
 requirements every downstream agent then implements, and un-parks the run. A plain `write` key sees
@@ -123,9 +124,12 @@ so nobody can mint a token onto a colleague's subscription, and a token minted t
 Create and revoke keys from the app. Open the **Integrations** hub, find **API access tokens** under
 the **Development** group, and manage keys there:
 
-- **Create a token**: enter a label (for example "CI pipeline"), pick a scope (Read only, Read and
-  write, Decide, or Full access; Read and write is the default), and pick **Runs as** (this
-  workspace, or you — see [Who a key runs as](#who-a-key-runs-as)). The secret is revealed once on a
+- **Create a token**: enter a label (for example "CI pipeline"), pick a scope (Read, Webhooks,
+  Write, Decide or Admin; Write is the default), and pick **Runs as** (this
+  workspace, or you: see [Who a key runs as](#who-a-key-runs-as)). **Workspaces** sets which
+  workspaces the key reaches: this one, every workspace in the account, or a chosen set. Only an
+  account admin can widen it past this workspace, and a directory webhook needs a key that reaches
+  every workspace. The secret is revealed once on a
   "Copy your token now" panel and cannot be recovered afterward.
 - **Active tokens** lists each key with its label, scope badge, creation date, last-used time, and
   who created it. A personal token also carries a "Your subscription" badge, so you can tell at a
@@ -140,7 +144,7 @@ session, guarded by the `secrets.manage` permission) for scripting key managemen
 | Method & path | What it does |
 | --- | --- |
 | `GET /workspaces/:workspaceId/public-api-keys` | List live keys (metadata only: id, label, scope, creator, timestamps). |
-| `POST /workspaces/:workspaceId/public-api-keys` | Mint a key. Body `{ "label": "…", "scope": "read\|write\|admin", "actsAsSelf": false }` (both optional; scope defaults to `write`, `actsAsSelf` to `false`, a [system token](#who-a-key-runs-as)). Returns `{ key, secret }`; the raw secret is shown once and is not recoverable. |
+| `POST /workspaces/:workspaceId/public-api-keys` | Mint a key. Body `{ "label": "…", "scope": "read\|webhooks\|write\|decide\|admin", "actsAsSelf": false }` (both optional; scope defaults to `write`, `actsAsSelf` to `false`, a [system token](#who-a-key-runs-as)). Returns `{ key, secret }`; the raw secret is shown once and is not recoverable. |
 | `DELETE /workspaces/:workspaceId/public-api-keys/:id` | Revoke a key (idempotent). |
 
 These inbound `public-api-keys` are distinct from the outbound `api-keys` provider-key pool that
