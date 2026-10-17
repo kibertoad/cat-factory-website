@@ -91,14 +91,15 @@ registers an [environment provider](./environments.md); a single pool can back b
 
 ### Declaring the pool from the deployment
 
-A pool is registered per workspace, so on a deployment where it is the only executor, every new
-board starts unable to run an agent until someone fills this form. A deployment that already knows
-its pool can declare it once instead. Pass `seedRunnerPool` to `start()` or `startLocal()`, with the
-same `config` and write-only `secrets` the form takes:
+A pool registered in this window belongs to one workspace. On a deployment where a pool is the only
+executor, every new board starts unable to run an agent until someone fills the form. A Node
+deployment that already knows its pools can declare one per account instead. Pass
+`seedAccountRunnerPool` to `start()`: a function that gets the account and returns the same `config`
+and write-only `secrets` the form takes, or `undefined` for no pool:
 
 ```ts
 start({
-  seedRunnerPool: {
+  seedAccountRunnerPool: (account) => ({
     config: {
       kind: 'kubernetes',
       kubernetes: {
@@ -109,13 +110,23 @@ start({
       },
     },
     secrets: { apiToken: process.env.AGENT_POOL_TOKEN! },
-  },
+  }),
 })
 ```
 
-The server registers it on every existing workspace at boot and on each new one. It never replaces
-a pool a workspace already has, so an admin can still point one board at a different pool. A seed
-that fails to register is logged and skipped, and the next boot tries again.
+The function is called for personal and organization accounts. Every board of the account that has
+no pool of its own uses the account's pool. A board created before accounts existed gets nothing and
+keeps its own registration.
+
+The server stores the account's pool at boot and when a board of an account with no pool is
+created. At boot it also compares each stored pool with what the function returns now, and replaces
+it when the config or the secrets changed, so a rotated token reaches every account on the next
+restart. A pool that is not valid is logged as an error naming the account, and the next boot tries
+again.
+
+A board stops using the account's pool when its `inheritAccountRunnerPool` setting is `false`.
+Removing a board's own pool sets that setting, unless the request passes `fallBackToAccount=true`.
+`startLocal()` does not take this option.
 
 ### Native Kubernetes backend
 
