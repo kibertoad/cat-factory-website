@@ -29,8 +29,8 @@ anything you had to read the source to find.
    and any migration path on the public surface.
 2. **Mirror the runner image into your own registry under a fresh, immutable tag.** This is the step
    that most often goes wrong. The project publishes the executor-harness image and declares the
-   supported tag, but a deployment pulls from its own registry, and **reusing an existing tag does
-   not roll out**: the nodes keep the layer they already have. The symptom of getting this wrong is
+   supported tag, but a deployment pulls from its own registry. **Reusing an existing tag does not
+   roll out**: the nodes keep the layer they already have. The symptom of getting this wrong is
    `Container dispatch failed (HTTP 404)` on every run.
 3. **Let migrations run at boot.** The Node facade runs them before it starts taking work, so a
    migration failure is a clean boot failure rather than a half-migrated deployment serving traffic.
@@ -80,7 +80,7 @@ Two windows deserve a second look before you tune them:
 - **Model-call telemetry defaults to 14 days because a shorter window expires the record before most
   investigations start.** A run that failed over a weekend is the case that matters. The heavy half
   is the captured bodies, and those are double-gated (a deployment switch plus a per-workspace
-  toggle), so a deployment that stores bodies and wants a smaller footprint can shorten this window
+  toggle). So a deployment that stores bodies and wants a smaller footprint can shorten this window
   without losing the numeric telemetry.
 - **Durable cost attribution has no retention window at all**, deliberately. A total-cost-of-
   ownership table that expires is a slower ledger, not a smaller one.

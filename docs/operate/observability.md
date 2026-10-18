@@ -7,9 +7,11 @@ redirectFrom:
 
 For the operator answering "what did that run actually do, and what did it cost". Cat Factory
 records every model call so you can see what agents are doing, what they cost, and where runs slow
-down or fail. There are three layers: a built-in dashboard that always runs, the telemetry
-and provisioning data it draws on (kept in an isolated store you configure), and an optional Langfuse
-trace sink for teams that already centralize LLM observability.
+down or fail. There are three layers:
+
+- a built-in dashboard that always runs
+- the telemetry and provisioning data it draws on, kept in an isolated store you configure
+- an optional Langfuse trace sink, for teams that already centralize LLM observability
 
 ## The built-in dashboard
 
@@ -55,19 +57,23 @@ ride the workspace realtime stream (the Cloudflare deployment today); every runt
 same calls, so the panel is accurate on open everywhere.
 
 Subscription-harness calls are metered too. The **Claude Code** and **Codex** harnesses talk directly
-to the vendor and bypass the LLM proxy, so their per-call metrics are lifted off each CLI's event
-stream and recorded into the same store: they appear in Model activity alongside proxy-metered calls,
-on failed runs as well as successful ones. Claude Code reports full request/response bodies and
-per-turn tokens; Codex reports assistant text and per-turn tokens but no request transcript (a CLI
-limitation), and neither CLI exposes per-HTTP timing. Captured bodies are credential-scrubbed and
+to the vendor and bypass the LLM proxy. So their per-call metrics are lifted off each CLI's event
+stream and recorded into the same store. They appear in Model activity alongside proxy-metered
+calls, on failed runs as well as successful ones.
+
+- Claude Code reports full request/response bodies and per-turn tokens.
+- Codex reports assistant text and per-turn tokens, but no request transcript (a CLI limitation).
+- Neither CLI exposes per-HTTP timing.
+
+Captured bodies are credential-scrubbed and
 honour `LLM_RECORD_PROMPTS`.
 
 ### Web search queries
 
-When a run's agents use [web search](../deploy/configuration.md#web-search), the observability panel's **Web
-search** tab shows what they searched: a header saying whether search was available to the run's
-containers and which provider served it (Brave or SearXNG), then each query with the agent kind that
-issued it, the provider, and the result count. Queries land in a dedicated `agent_search_queries`
+When a run's agents use [web search](../deploy/configuration.md#web-search), the observability
+panel's **Web search** tab shows what they searched. A header says whether search was available to
+the run's containers, and which provider served it (Brave or SearXNG). Then each query is listed,
+with the agent kind that issued it, the provider, and the result count. Queries land in a dedicated `agent_search_queries`
 telemetry table and are pruned on the same window as agent-context snapshots.
 
 Recording the query text is gated the same way as agent context: both the deployment-wide
@@ -88,9 +94,10 @@ transactional domain. It lives in its own store, physically separate from the ma
 The store holds two tables: `llm_call_metrics` (the per-call telemetry the dashboard reads) and
 `agent_context_snapshots` (described below).
 
-`TELEMETRY_DB` is required on Cloudflare. The worker fails fast when it is unbound: both the
-per-request container build and the daily retention cron resolve it through one guard that throws a
-clear error (`TELEMETRY_DB binding is required …`) instead of failing deep inside a repository. Add a
+`TELEMETRY_DB` is required on Cloudflare. The worker fails fast when it is unbound. Both the
+per-request container build and the daily retention cron resolve it through one guard. The guard
+throws a clear error (`TELEMETRY_DB binding is required …`), instead of failing deep inside a
+repository. Add a
 `[[d1_databases]]` entry with `binding = "TELEMETRY_DB"` to `wrangler.toml`:
 
 ```toml
@@ -103,10 +110,14 @@ migrations_dir = "telemetry-migrations"
 ### Captured agent context
 
 Beyond the per-call telemetry, Cat Factory can capture the **full context** each container agent was
-provided for a dispatch: the composed system and user prompts, the bodies of any best-practice prompt
-fragments folded in, and the full content of the files injected into the container (the
-`.cat-context/*` files the agent reads through its tools, which never reach proxy telemetry). This
-lands in the `agent_context_snapshots` table and renders on demand in the **Provided context** view
+provided for a dispatch:
+
+- the composed system and user prompts
+- the bodies of any best-practice prompt fragments folded in
+- the full content of the files injected into the container: the `.cat-context/*` files the agent
+  reads through its tools, which never reach proxy telemetry
+
+This lands in the `agent_context_snapshots` table and renders on demand in the **Provided context** view
 when you expand a run in the observability panel.
 
 Capture is gated twice and must pass both: the deployment-wide `LLM_RECORD_PROMPTS` switch (on by
@@ -114,14 +125,19 @@ default) AND a per-workspace **store agent context** setting (on by default). Wi
 off, nothing is captured.
 
 The snapshot is a redacted allow-list projection: it never copies a token or a credential-bearing
-URL. Every stored body (both composed prompts, each fragment body, each injected file's content, and
-the free-text decisions and revision-feedback bag) is run through the secret scrubber before the size
-budget is applied, so truncation can never split a secret across the cap. It strips `user:pass@`
-userinfo from any URL and matches PEM-armored private keys plus the usual token shapes, and it drops
-the whole body of a context file whose name marks it a raw credential store (`.env`, `*.pem`, SSH
-keys, `.npmrc`), since a bare key dump has no scaffolding for the shape rules. Each snapshot is also
-size-bounded (a shared 4 MiB budget, consumed prompts-first) so a dispatch that injects many large
-files cannot produce an oversized row.
+URL. Every stored body is run through the secret scrubber before the size budget is applied, so
+truncation can never split a secret across the cap. "Every stored body" means both composed prompts, each
+fragment body, each injected file's content, and the free-text decisions and revision-feedback bag.
+
+The scrubber does the following:
+
+- strips `user:pass@` userinfo from any URL
+- matches PEM-armored private keys plus the usual token shapes
+- drops the whole body of a context file whose name marks it a raw credential store (`.env`,
+  `*.pem`, SSH keys, `.npmrc`), since a bare key dump has no scaffolding for the shape rules
+
+Each snapshot is also size-bounded (a shared 4 MiB budget, consumed prompts-first), so a dispatch
+that injects many large files cannot produce an oversized row.
 
 ## The provisioning event log
 
@@ -142,10 +158,16 @@ database:
   migrator creates it.
 
 The verbatim error and the structured detail are scrubbed for credentials at the single recorder
-choke point before they are persisted or served: bearer/basic tokens, `Authorization` and
-`x-api-key` header echoes, credentialed URLs, secret-ish query and JSON params, and recognizable
-token shapes (OpenAI `sk-…`, GitHub `ghp_…` / `github_pat_…`, AWS `AKIA…`, Slack `xox…`, JWTs). The
-field name, URL host, and token scheme are kept so the row stays diagnostic; only the secret itself
+choke point, before they are persisted or served. The scrubber removes:
+
+- bearer/basic tokens
+- `Authorization` and `x-api-key` header echoes
+- credentialed URLs
+- secret-ish query and JSON params
+- recognizable token shapes (OpenAI `sk-…`, GitHub `ghp_…` / `github_pat_…`, AWS `AKIA…`, Slack
+  `xox…`, JWTs)
+
+The field name, URL host, and token scheme are kept so the row stays diagnostic; only the secret itself
 is dropped.
 
 ## Run and step diagnostics
@@ -154,27 +176,28 @@ Beyond the metered call data, a run's own UI surfaces what its containers and en
 so a slow or broken step is diagnosable without reading logs:
 
 - **Container lifecycle**: each agent step shows its container status (starting, up, errored, or
-  destroyed), and while it is up, the live phase (for example "Preparing workspace" or "Running agent
-  call"), the container id, and a clickable container URL when there is one.
+  destroyed). While the container is up, the step also shows the live phase (for example "Preparing
+  workspace" or "Running agent call"), the container id, and a clickable container URL when there is
+  one.
 - **Spin-up failures**: a container or environment that never comes up is reported on the step as a
   provisioning failure with the verbatim provider error, rather than a generic run failure. The same
   attempts are in the [provisioning event log](#the-provisioning-event-log). Runner-backend,
-  runner-pool, and Datadog failures carry a **UI-first remedy** (which settings screen to re-test or
-  reconnect), and a dispatch `404` names a stale executor-harness image.
+  runner-pool, and Datadog failures carry a **UI-first remedy**: which settings screen to re-test or
+  reconnect. A dispatch `404` names a stale executor-harness image.
 - **Container eviction**: a container that dies mid-run is classified as a **crash** or a
-  **transient** eviction rather than a bare "evicted or crashed" string, so a retryable blip reads
+  **transient** eviction, rather than a bare "evicted or crashed" string. So a retryable blip reads
   differently from a real failure. It also leaves a post-mortem on the step: the container's exit
-  state (an OOM kill is named as one) plus a tail of its own logs, so you can tell "the machine ran out
-  of memory" from "the agent errored" without reconstructing it from the runtime.
+  state (an OOM kill is named as one) plus a tail of its own logs. With that, you can tell "the
+  machine ran out of memory" from "the agent errored" without reconstructing it from the runtime.
 - **Live call telemetry**: per-model-call metrics stream onto the step as the agent's CLI yields them,
   including subagent calls, rather than arriving only with the terminal result. A run that dies 18
   minutes in still reports the calls and tokens it actually spent instead of zero. Re-recording a call
   is a no-op, so the live stream and the terminal list never double-count.
 - **Infrastructure attempts, live**: while a run is active, the **Infrastructure attempts** drawer
-  live-tracks each container spin-up and tear-down as it happens, re-polling quietly in the background
-  so attempts appear with their timestamps and no refresh spinner flickers. Auto-polling stops once the
-  run is terminal (with one final poll to catch the last tear-down), and a manual refresh stays
-  available to refetch a row that landed late.
+  live-tracks each container spin-up and tear-down as it happens. It re-polls quietly in the
+  background, so attempts appear with their timestamps and no refresh spinner flickers. Auto-polling
+  stops once the run is terminal, with one final poll to catch the last tear-down. A manual refresh
+  stays available to refetch a row that landed late.
 - **Tester stand-up**: when the Tester stands its dependencies up with docker-compose, the test report
   shows whether `docker compose up --wait` succeeded, the compose file, how long it took, and the
   captured (redacted) logs. A readiness banner announces when all infrastructure is up and testing can
@@ -201,14 +224,21 @@ Everything above is reachable over HTTP as well, under `/api/v1/debug/*` with an
 [public API key](../extend/public-api.md#run-debugging). It exists for a caller with a fixed
 context budget rather than a scrollbar, so an agent asked "why did this run fail" can use it.
 
-It is a two-level drill-down: a keyset-paginated run index, a per-run overview built purely from SQL
-aggregates (steps, per-sink availability and counts, LLM rollups, and precomputed diagnostic signals),
-then bounded pages over the run's model calls, agent-context dispatches, performed searches, and
-provisioning events.
+It is a two-level drill-down:
 
-Size discipline is enforced in the query rather than in the response: fan-out lists carry sizes rather
-than bodies, bodies are opt-in and byte-budgeted, slicing and filtering happen in SQL so an
-un-previewed page reads no body bytes at all, and every truncation reports what it left out.
+1. a keyset-paginated run index
+2. a per-run overview built purely from SQL aggregates: steps, per-sink availability and counts, LLM
+   rollups, and precomputed diagnostic signals
+
+Under them are bounded pages over the run's model calls, agent-context dispatches, performed
+searches, and provisioning events.
+
+Size discipline is enforced in the query rather than in the response:
+
+- Fan-out lists carry sizes rather than bodies.
+- Bodies are opt-in and byte-budgeted.
+- Slicing and filtering happen in SQL, so an un-previewed page reads no body bytes at all.
+- Every truncation reports what it left out.
 
 ::: warning A read key reaches prompts
 These endpoints serve prompt and response bodies that the app gates behind workspace roles. Treat a
@@ -270,9 +300,9 @@ set. Point `LANGFUSE_BASE_URL` at your own instance for self-hosted Langfuse.
 
 ::: warning Self-hosted Langfuse needs v3.22.0 or newer
 Traces are sent over Langfuse's OpenTelemetry endpoint (`/api/public/otel`), which self-hosted
-Langfuse serves from v3.22.0. Cat Factory used to speak the older batch ingestion API instead; that
-API is deprecated, is sunset on Langfuse Cloud on **16 November 2026**, and does not carry traces,
-spans or generations on the v4 data model at all. Langfuse Cloud needs nothing from you. An
+Langfuse serves from v3.22.0. Cat Factory does not use the older batch ingestion API. That API is
+deprecated, and is sunset on Langfuse Cloud on **16 November 2026**. It does not carry traces, spans
+or generations on the v4 data model at all. Langfuse Cloud needs nothing from you. An
 instance older than v3.22.0 must be upgraded, or the sink has nowhere to deliver to.
 :::
 
@@ -321,9 +351,10 @@ Export is OTLP/HTTP with JSON encoding and DELTA metric temporality. It is best-
 a 10-second timeout and a non-2xx response or transport error is logged, never thrown, so a slow or
 unreachable backend never blocks a run.
 
-Every LLM call is exported as a span and metrics under the OpenTelemetry GenAI semantic conventions,
-with `gen_ai.system` (provider), `gen_ai.request.model`, token counts, and finish reason; the metrics
-are `gen_ai.client.token.usage` (a counter split by `input`/`output`) and
+Every LLM call is exported as a span and metrics under the OpenTelemetry GenAI semantic conventions.
+The export carries `gen_ai.system` (provider), `gen_ai.request.model`, token counts, and finish
+reason.
+The metrics are `gen_ai.client.token.usage` (a counter split by `input`/`output`) and
 `gen_ai.client.operation.duration` (a histogram in seconds). Prompt and completion bodies ride as span
 events only when `LLM_RECORD_PROMPTS` is on.
 
@@ -335,10 +366,10 @@ run  →  agent kind  →  generations + tool calls
 ```
 
 Every parent id is derived from the run id, so a stateless per-call emission can name a parent it has
-never seen and a durable replay re-derives the identical tree instead of a duplicate one. The parent
+never seen, and a durable replay re-derives the identical tree instead of a duplicate one. The parent
 spans are emitted once, when the run settles. The middle level's grain is the **agent kind** rather
-than the step index, because that is the finest thing a generation event can name; a slice that folds
-two steps of one kind reports its step count instead of passing them off as one.
+than the step index, because that is the finest thing a generation event can name. A slice that
+folds two steps of one kind reports its step count, instead of passing them off as one.
 
 With `OTEL_PLATFORM_METRICS=true`, a periodic sweep also exports per-account deployment gauges:
 `cat_factory.platform.runs` (split by run status), `run_success_rate`, `run_failures` (split by
@@ -435,11 +466,12 @@ PLATFORM_ALERTS=true
 | `PLATFORM_ALERTS_MAX_P99_MINUTES` | p99 run duration (minutes) at or above which an alert fires. | `60` |
 | `PLATFORM_ALERTS_MAX_BACKLOG` | Live backlog depth (running + blocked + paused + pending) at or above which an alert fires. | `50` |
 
-A periodic sweep evaluates each account against the thresholds and raises a **Platform health alert**
-card in the [notifications inbox](./notifications.md) naming the crossed conditions: elevated failure
-rate, slow p99, a growing backlog, stalled throughput, one failure kind dominating, or a degraded
-sweep. The card de-dupes on the set of crossed conditions, so a persistently-unhealthy deployment
-re-notifies only when that set changes, and it clears automatically when the account recovers. The
+A periodic sweep evaluates each account against the thresholds. It raises a **Platform health
+alert** card in the [notifications inbox](./notifications.md) naming the crossed conditions:
+elevated failure rate, slow p99, a growing backlog, stalled throughput, one failure kind dominating,
+or a degraded sweep. The card de-dupes on the set of crossed conditions. So a persistently-unhealthy
+deployment re-notifies only when that set changes. The card clears automatically when the account
+recovers. The
 failure-rate check is gated by `PLATFORM_ALERTS_MIN_RUNS`, so a single failure on a quiet deployment
 stays quiet. The card deep-links to the failing runs it aggregated. From the inbox the alert routes on
 through your normal [notification channels](./notifications.md) (Slack, and the rest).
@@ -451,9 +483,10 @@ meaning zero.
 ## Post-run grading (Kaizen)
 
 The **Kaizen** agent grades how well each agent step actually went. After a run reaches a terminal
-state, a background sweep (a Cloudflare cron, a Node interval) grades each completed step on how
-smooth and efficient versus confused and chaotic the interaction was, reading the context and prompt
-the step was given plus its [per-call interaction telemetry](#the-telemetry-store). Each grading is a
+state, a background sweep (a Cloudflare cron, a Node interval) grades each completed step. The grade
+says how smooth and efficient, versus confused and chaotic, the interaction was. The sweep reads the
+context and prompt the step was given, plus its
+[per-call interaction telemetry](#the-telemetry-store). Each grading is a
 **1–5 grade with recommendations**, recorded for later review. Kaizen never appears in the pipeline
 builder; it runs only after the fact.
 
@@ -463,9 +496,9 @@ You read the results two ways:
 - Inside a run window, each step shows its grading status (scheduled, running, or complete) with the
   result.
 
-To stop re-grading a combination that has proven itself, a `(prompt version, agent kind, model)`
-combo that grades **high** (a 4 or 5 with no recommendations) **five times running** is marked
-**verified** and is no longer graded. Any lower grade, or a grade that still carries a
+A combo is a `(prompt version, agent kind, model)` triple. To stop re-grading a combo that has proven
+itself, one that grades **high** (a 4 or 5 with no recommendations) **five times running** is
+marked **verified** and is no longer graded. Any lower grade, or a grade that still carries a
 recommendation, resets the streak.
 
 Kaizen is a **per-workspace** setting, **on by default** (turn it off in workspace settings). The
@@ -475,9 +508,9 @@ skipped rather than failing.
 
 ## Post-release health and Agent-On-Call
 
-When a deployment connects an **observability provider** (Datadog today, through a pluggable adapter),
-a pipeline can carry a **post-release-health** gate that watches production after a PR merges, and
-escalates to an on-call agent if the release looks bad. It turns a "merged" state into "merged and
+When a deployment connects an **observability provider** (Datadog today, through a pluggable
+adapter), a pipeline can carry a **post-release-health** gate. The gate watches production after a
+PR merges, and escalates to an on-call agent if the release looks bad. It turns a "merged" state into "merged and
 verified healthy" without a human babysitting the dashboard.
 
 ### How the gate works

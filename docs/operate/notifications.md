@@ -54,8 +54,8 @@ Slack messages can @-mention by audience so the right people see the right event
 - The task's creator is always mentioned.
 
 Map your members to those audiences in the workspace's Slack settings. Each mapping row needs both a
-user id and a Slack member id: a half-filled row blocks the save with a warning rather than being
-silently dropped, so remove the row or complete it before saving.
+user id and a Slack member id. A half-filled row blocks the save with a warning, rather than being
+silently dropped. Remove the row or complete it before saving.
 
 ## Outbound webhooks
 
@@ -114,7 +114,7 @@ A lifecycle delivery POSTs `{ deliveryId, sentAt, workspaceId, event, run }`, wh
 `pullRequestUrl`, and (on `run.failed`) `failure`. `deliveryId` is `<runId>:<event>`.
 
 Dedupe on `deliveryId`, never on the body. `run.started` is exactly-once per run by construction, but
-the terminal events are at-least-once: a durable replay can re-emit a settled run, and a replay
+the terminal events are at-least-once. A durable replay can re-emit a settled run, and a replay
 re-stamps `sentAt` and `occurredAt`, so two deliveries of one transition are not byte-identical. One
 id comparison collapses them. A retry or restart mints a fresh run id and announces it as a new
 `run.started`. Headless [public-API](../extend/public-api.md#headless-jobs) jobs emit no lifecycle

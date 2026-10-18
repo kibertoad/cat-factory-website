@@ -22,9 +22,10 @@ The workspace owns the second by mapping each type to a **handler** on the **Tes
 There is no per-task `local` vs `ephemeral` toggle: a service declares a type and the workspace says
 how that type is handled.
 
-A single **Deployer** step provisions the environment. Every step that runs *against* a live system,
-the API and UI Testers, the `playwright` acceptance runner, and the human-test gate, consumes what
-the Deployer stood up: it reads the environment's coordinates and never provisions its own. So a
+A single **Deployer** step provisions the environment. Every step that runs *against* a live system
+consumes what the Deployer stood up. These steps are the API and UI Testers, the `playwright` acceptance
+runner, and the human-test gate. Each reads the environment's coordinates and never provisions its
+own. So a
 pipeline that reaches one of those steps on a `docker-compose`/`kubernetes`/`custom` service must
 place a Deployer before it. Cat Factory checks this at start:
 
@@ -61,29 +62,33 @@ mistake. If yours legitimately needs longer than 20 minutes, that is worth
 
 ## Proving the route, once
 
-"Ready" is your provider's word for it. Before the run moves on, the platform checks the claim: at
-the moment an environment reports ready it opens one short TCP connection to the environment's own
-name, and then to each address the provider stated for it (see
+"Ready" is your provider's word for it. Before the run moves on, the platform checks the claim. At
+the moment an environment reports ready, it opens one short TCP connection to the environment's own
+name. Then it tries each address the provider stated for it (see
 [addresses](../extend/manifests.md#addresses-the-half-a-url-cannot-express)), stopping at the first
-that answers. Where a provider states a balancer by NAME rather than by address, the platform
-resolves that name at this moment and dials what it answered with, so what it stores is your stable
-identity and what it proves is a live address. It is a connection, not a request, deliberately: a load balancer answering 503 over a
-route that works perfectly is a live route with a sick application behind it, and those are
-different problems for different people.
+that answers.
+
+Where a provider states a balancer by NAME rather than by address, the platform resolves that name
+at this moment and dials what it answered with. As a result, what it stores is your stable identity, and what
+it proves is a live address.
+
+It is a connection, not a request, deliberately. A load balancer answering 503 over a route that
+works perfectly is a live route with a sick application behind it. Those are different problems for
+different people.
 
 Three outcomes, and only one of them stops a run:
 
 - **Reached.** The run continues. The address that carried is what a container is later given, and
   the Tester's prompt says which layer was already ruled out.
 - **Not reached.** Nothing the platform can dial answered, so the Deployer step fails in about two
-  minutes naming the layer (a name that resolves nowhere, a route that does not carry, a port with
-  nothing listening) and listing every target it tried. The alternative is what this replaced: a
-  Tester spending ten minutes and a model budget on connection errors and reporting your
-  environment as dead when the fault was DNS.
+  minutes. It names the layer (a name that resolves nowhere, a route that does not carry, a port
+  with nothing listening) and lists every target it tried. Without this check, a Tester would spend
+  ten minutes and a model budget on connection errors. It would report your environment as dead
+  when the fault was DNS.
 - **Inconclusive.** The probe could not complete, or there was nothing to dial (an environment
   that legitimately publishes no URL). **The run continues.** A diagnostic that cannot tell must
-  never become a second way for a healthy deploy to fail, so the agent is simply told the check was
-  inconclusive and to treat a connection failure as unexplained.
+  never become a second way for a healthy deploy to fail. So the agent is simply told the check was
+  inconclusive, and to treat a connection failure as unexplained.
 
 A deployment whose runtime cannot open sockets probes nothing, and nothing changes for it: no
 check, no failure, no line in any prompt.
@@ -105,25 +110,29 @@ non-sensitive test-environment data and rendered directly into the prompt. They 
 login accounts, and you should not wire real or production secrets through them.
 
 A Tester is never dispatched without an address. If a step that runs against an ephemeral
-environment reaches its turn with no reachable URL, the step fails instead, naming which of the two
-cases it is: the environment exists but is not reachable, or the run provisioned none at all (a
-pipeline reaching a Tester on a provisioned service with no Deployer ahead of it). An agent handed
-"test the environment" and "URL: (pending)" in the same prompt has no good move, and the one it
-tends to take is to test something else and report success.
+environment reaches its turn with no reachable URL, the step fails instead. The failure names which
+of two cases it is:
+
+- The environment exists but is not reachable.
+- The run provisioned none at all: a pipeline reached a Tester on a provisioned service with no
+  Deployer ahead of it.
+
+An agent handed "test the environment" and "URL: (pending)" in the same prompt has no good move. The
+one it tends to take is to test something else and report success.
 
 ## Sealed test credentials
 
-For the real secrets a test genuinely needs (an API key a suite calls out with, a seeded login), use
-the **Test credentials (sensitive)** panel on a **service frame's inspector** rather than the
-environment-access handles above. It is a per-service, write-only editor: add named entries of a
+Some tests genuinely need real secrets, such as an API key a suite calls out with, or a seeded
+login. For those, use the **Test credentials (sensitive)** panel on a **service frame's inspector**,
+rather than the environment-access handles above. It is a per-service, write-only editor: add named entries of a
 **variable name**, a **description**, and a **value**, then **Save credentials**. Values are
 encrypted at rest under [`ENCRYPTION_KEY`](../deploy/configuration.md#credential-encryption) and never read
 back (only the name and description return), so the panel hides itself entirely on a deployment with
 no encryption key set.
 
-The point is that these secrets reach the Tester **out of band**: at dispatch they are decrypted and
-injected into the Tester container as **environment variables** (the agent reads `$YOUR_VAR`), while
-the agent's prompt and the run's telemetry only ever see the variable **name and description**, never
+The point is that these secrets reach the Tester **out of band**. At dispatch they are decrypted and
+injected into the Tester container as **environment variables** (the agent reads `$YOUR_VAR`). The
+agent's prompt and the run's telemetry only ever see the variable **name and description**, never
 the value. Entries resolve up the frame chain to the service frame, and reserved toolchain names
 (`PATH`, `NODE_OPTIONS`, `npm_config_*`, …) are refused. Saving **replaces the whole set** for the
 service, and Save stays disabled until every row has a value, so an existing secret can't be blanked
@@ -141,17 +150,21 @@ Briefing a service is a once-per-service job, so the empty box is part of the **
 (the tier switch in the sidebar). Once a service has one, its text shows in the inspector at either
 tier: what your Testers are being told is never hidden from the people reading their reports.
 
-Write the standing knowledge that neither a credential nor a repository read supplies: which flows
-matter and which are noise, which test accounts exist and how to sign in as one, what the seeded
-data means, and what to leave alone (a billing flow that charges a real card, a mailer that emails
-real people). Refer to a sealed credential by its **variable name**, `$DEMO_USER`, never by its
-value.
+Write the standing knowledge that neither a credential nor a repository read supplies:
+
+- which flows matter and which are noise
+- which test accounts exist, and how to sign in as one
+- what the seeded data means
+- what to leave alone, such as a billing flow that charges a real card, or a mailer that emails
+  real people
+
+Refer to a sealed credential by its **variable name**, `$DEMO_USER`, never by its value.
 
 Two things follow from where the text goes. It is put **into the prompt**, so it is not a place for
 secrets: anything genuinely secret belongs in the sealed panel above, which never renders a value
 into a prompt or into telemetry. And an empty box is not silence. A Tester with nothing here is told
-that nobody wrote one, and is asked to report whatever it had to guess at that a sentence here would
-have settled, which is the fastest way to find out what this box should say.
+that nobody wrote one. It is asked to report whatever it had to guess at that a sentence here would
+have settled. That is the fastest way to find out what this box should say.
 
 The text resolves up the frame chain like the credentials do, so a task anywhere under the service
 gets it, and an edit takes effect on that service's next agent dispatch.
@@ -160,9 +173,9 @@ gets it, and an edit takes effect on that service's next agent dispatch.
 
 To confirm a service's ephemeral-environment config actually works before a pipeline depends on it,
 open the service's inspector and click **Test environment creation** in the environment-provisioning
-section. It runs the whole lifecycle against a throwaway branch, streaming each stage live
-(**creating branch → provisioning environment → tearing down environment → deleting branch → done**),
-and the button turns into **Stop** while it runs. It reports **Test passed** in green when the
+section. It runs the whole lifecycle against a throwaway branch, and streams each stage live:
+**creating branch → provisioning environment → tearing down environment → deleting branch → done**.
+The button turns into **Stop** while it runs. It reports **Test passed** in green when the
 environment came up and tore down cleanly and the branch was deleted, or **Test failed** in red
 naming the failing stage. The button is disabled on an `infraless` service (there is nothing to
 provision) with a hint to configure a provision type first.
@@ -177,16 +190,16 @@ The test proves the environment actually stood up, not merely that the create ca
   until it reaches ready** and only then tears down. A terminal not-ready status fails the test with
   the provider's reported reason rather than a generic "provisioning failed".
 - A service whose provision type resolves to no workspace handler fails with a specific remedy
-  (nothing configured, versus an ambiguous match) and a **Configure infrastructure** button that opens
-  **Infrastructure → Test environments**.
-- A dispatch failure is attributed to the provisioning stage rather than mislabelled as branch
-  creation, and is logged server-side with the workspace, run, stage, and the underlying error, so a
+  (nothing configured, versus an ambiguous match). The failure shows a **Configure infrastructure** button
+  that opens **Infrastructure → Test environments**.
+- A dispatch failure is attributed to the provisioning stage, rather than mislabelled as branch
+  creation. It is logged server-side with the workspace, run, stage, and the underlying error, so a
   provider throw leaves a trace beyond the run record.
 
 ## Configured but dead
 
 Asking whether a connection row exists cannot tell a healthy provider from one that was set up and has
-since died, which is how an outage sits unnoticed for a day while every testing agent fails and the
+since died. That is how an outage sits unnoticed for a day, while every testing agent fails and the
 board reports a perfectly healthy setup.
 
 A periodic reachability sweep probes each configured provider and reports **unreachable** as its own
@@ -213,11 +226,15 @@ start({
 })
 ```
 
-Each entry takes a `provisionType`, its `config` and write-only `secrets`, an optional `manifestId`
-(for a `custom` type keyed to a specific manifest), and an optional `backendKind` to pin a specific
-backend that rides a shared engine. Seeding is idempotent by `(provisionType, manifestId)`: the server
-ensures each handler exists for every existing workspace at boot and for each newly-created workspace,
-and one failing seed never blocks the others. An operator can still edit a seeded handler in the UI.
+Each entry takes:
+
+- a `provisionType`, its `config` and write-only `secrets`
+- an optional `manifestId`, for a `custom` type keyed to a specific manifest
+- an optional `backendKind`, to pin a specific backend that rides a shared engine
+
+Seeding is idempotent by `(provisionType, manifestId)`. The server ensures each handler exists for
+every existing workspace at boot, and for each newly-created workspace. One failing seed never blocks
+the others. An operator can still edit a seeded handler in the UI.
 
 ## Choosing a backend
 
@@ -302,9 +319,15 @@ Like the rest of Compose, build mode needs a host Docker daemon and is local-mod
 For anything past a single compose file with published images, configure the compose handler through
 the **environment setup wizard** rather than the raw form. Reach it from the sidebar
 (**Environment setup**) or the nudge on a docker-compose service's inspector. It walks a service
-frame through: **detect** (read the repo and prefill a recipe), an optional **deep analysis** pass,
-**preflight** checks, **save** (registers the workspace's `docker-compose` handler and writes the
-recipe onto the frame), and an optional **trial provision** you watch live. Nothing detected or
+frame through these stages:
+
+1. **Detect**: read the repo and prefill a recipe.
+2. **Deep analysis** (optional): run the analyst pass.
+3. **Preflight**: run the checks.
+4. **Save**: register the workspace's `docker-compose` handler and write the recipe onto the frame.
+5. **Trial provision** (optional): provision once while you watch live.
+
+Nothing detected or
 drafted is applied until you save it, so the wizard only ever proposes.
 
 ## Stack recipes
@@ -326,9 +349,14 @@ with any of:
 | **Prerequisites** | [Preflight checks](#preflight-checks) re-run at provision start. |
 
 Detection reads the repo checkout-free (no clone, no host daemon) and produces a **non-binding**
-recommendation: it layers `*.override.yml`, points `external: true` networks at a shared-stack nudge,
-turns `*-dist`/`.example` templates into env-file entries, and flags `*.sql` seed dumps and a
-`Makefile`/`bin/*console*` CLI hint. It can only ever suggest more; you accept, change, or drop each
+recommendation. It does the following:
+
+- layers `*.override.yml`
+- points `external: true` networks at a shared-stack nudge
+- turns `*-dist`/`.example` templates into env-file entries
+- flags `*.sql` seed dumps and a `Makefile`/`bin/*console*` CLI hint
+
+It can only ever suggest more; you accept, change, or drop each
 candidate. A deployment can extend detection with house conventions through
 `ENVIRONMENTS_DETECTION_CONVENTIONS` (a JSON env var).
 
@@ -340,27 +368,29 @@ a failing step tears the half-up stack down and surfaces its tail as the environ
 
 Detection is deterministic and never parses shell, so it can't see a bring-up that lives in a
 `Makefile` or a `bin/` script. The wizard's **deep analysis** step runs an **environment analyst**
-agent that clones the repo read-only, reads the README, Makefile, and setup scripts, and returns a
+agent. It clones the repo read-only and reads the README, Makefile, and setup scripts. It returns a
 **draft recipe**, setup steps, prerequisites, and a health gate, each grounded in a source citation.
 It is opt-in (the deterministic detector is the only thing that runs unprompted) and needs the frame
-to have a linked repo. The draft is merged **detector-wins**: where both produce a field, the
-deterministic reading of the compose files wins; the analyst fills the gaps, and each field is
-tagged with where it came from so you can review provenance before saving.
+to have a linked repo. The draft is merged **detector-wins**. Where both produce a field, the
+deterministic reading of the compose files wins, and the analyst fills the gaps. Each field is
+tagged with where it came from, so you can review provenance before saving.
 
 ## Shared stacks
 
-A **shared stack** is long-lived infrastructure that runs once and that per-PR previews attach to,
-the compose analogue of shared cluster infra: a database, a message broker, an auth service that is
-wasteful to stand up fresh per run. You define one in the **Shared stacks** panel of the
-Infrastructure window (an **Autodetect** button prefills its compose files, managed networks, and
-profiles from the repo). It uses the same recipe vocabulary and runs its committed compose files as
+A **shared stack** is long-lived infrastructure that runs once and that per-PR previews attach to.
+It is the compose analogue of shared cluster infra: a database, a message broker, an auth service
+that is wasteful to stand up fresh per run. You define one in the **Shared stacks** panel of the
+Infrastructure window. An **Autodetect** button prefills its compose files, managed networks, and
+profiles from the repo. It uses the same recipe vocabulary and runs its committed compose files as
 authored, with host ports kept, since it is trusted operator infra rather than an isolated preview.
 
-Bring-up (`ensure up`) is idempotent and coalesces concurrent callers; teardown is explicit and never
-swept with a run or reaped on a timer, and its managed networks outlive it so attached consumers keep
-working. A per-PR compose recipe references shared stacks by id in its **shared stack refs**: at
-provision the Deployer brings each referenced stack up first (in order), then attaches the per-PR
-project to the union of the recipe's external networks and the stacks' managed networks. Like the
+Bring-up (`ensure up`) is idempotent and coalesces concurrent callers. Teardown is explicit, and never
+swept with a run or reaped on a timer. A stack's managed networks outlive its teardown, so attached consumers keep
+working.
+
+A per-PR compose recipe references shared stacks by id in its **shared stack refs**. At provision,
+the Deployer brings each referenced stack up first, in order. Then it attaches the per-PR project to
+the union of the recipe's external networks and the stacks' managed networks. Like the
 compose provider, shared stacks are local-mode only.
 
 ### Where a compose layer comes from
@@ -386,10 +416,17 @@ enumeration at boot and again for each newly-created workspace. See
 
 ## Preflight checks
 
-A recipe or shared stack can declare **prerequisites**, mechanical checks that run first, at the top
-of provisioning and live in the wizard. Built-in checks cover the Docker daemon, disk space, memory,
-registry auth, TCP/HTTP reachability, a local mkcert CA, `/etc/hosts` entries, and an env-secrets
-marker. Each carries operator-authored remediation text. A failing **required** check fails the
+A recipe or shared stack can declare **prerequisites**: mechanical checks that run first, at the top
+of provisioning and live in the wizard. Built-in checks cover:
+
+- the Docker daemon, disk space and memory
+- registry auth
+- TCP/HTTP reachability
+- a local mkcert CA
+- `/etc/hosts` entries
+- an env-secrets marker
+
+Each carries operator-authored remediation text. A failing **required** check fails the
 provision fast with its remediation instead of a stuck attempt; a non-required one degrades to a
 warning. A recipe that declares prerequisites on a deployment with no host-probe runtime fails
 loudly rather than skipping them silently.
@@ -432,10 +469,15 @@ through the **Environment provider manifest** feature toggle. See
 [Configuration → Feature Toggles](../deploy/configuration.md#feature-toggles).
 
 You register, test, and rotate the provider entirely in-app. The top-level **Infrastructure** window
-has two tabs, **Agent containers** (the [runner pool](./runner-pools.md)) and **Test environments**
-(this provider); open the **Test environments** tab, select the **HTTP manifest** backend, and use the
-in-app JSON manifest editor to paste or edit the manifest, fill the write-only secrets sub-form, and
-run a test connection. The editor validates against the same wire contract the backend enforces, so a
+has two tabs: **Agent containers** (the [runner pool](./runner-pools.md)) and **Test environments**
+(this provider). To register it:
+
+1. Open the **Test environments** tab, and select the **HTTP manifest** backend.
+2. Paste or edit the manifest in the in-app JSON manifest editor.
+3. Fill the write-only secrets sub-form.
+4. Run a test connection.
+
+The editor validates against the same wire contract the backend enforces, so a
 malformed manifest is caught before you save. In [local mode](../deploy/local.md), the delegation toggles sit
 at the top of the same window.
 
@@ -461,10 +503,10 @@ reachable by the runner pool, and vice versa.
 
 ## When the manifest isn't enough
 
-If your platform's API can't be expressed as request/response templates (asynchronous provisioning,
-a live URL buried in a dynamic response shape, a status vocabulary of its own, or a non-HTTP
-protocol), implement the `EnvironmentProvider` port in code instead and inject it when you build the
-container. See [Add a Custom Provider](../extend/custom-providers.md) for a worked example,
+If your platform's API can't be expressed as request/response templates, implement the
+`EnvironmentProvider` port in code instead, and inject it when you build the container. Templates
+cannot express asynchronous provisioning, a live URL buried in a dynamic response shape, a status
+vocabulary of its own, or a non-HTTP protocol. See [Add a Custom Provider](../extend/custom-providers.md) for a worked example,
 per-workspace configuration via `providerConfig`, and the gotchas (status mapping, async provision,
 idempotent teardown).
 
@@ -480,8 +522,8 @@ instead of failing the first run:
 - **Bootstrap**: the adapter generates the config file from variables you supply in the UI; the engine
   commits it (idempotently, optionally as a PR) and re-validates.
 - **Agent repair**: when the mechanical generation can't produce a valid config, the engine dispatches
-  a coding agent that clones the repo at the write branch, fixes the config file in place, pushes the
-  fix onto the same branch, and the connection re-validates. The agent only edits an existing repo; it
+  a coding agent. It clones the repo at the write branch, fixes the config file in place, and pushes
+  the fix onto the same branch. Then the connection re-validates. The agent only edits an existing repo; it
   never re-initialises history or force-pushes.
 
 All repo I/O goes through the same VCS-neutral file abstraction the rest of the platform uses, so the
