@@ -61,9 +61,9 @@ await start({ initiativePresetRegistry })
 The Worker takes the same registry as `createApp({ overrides: { initiativePresetRegistry } })`, and
 local mode as `startLocal({ initiativePresetRegistry })`.
 
-A preset carries **code** (`detect` and `seedPlan` run in your backend, read repositories, and steer
-agents), so it is exactly as trusted as a custom agent kind and registers the same way, from your
-composition root. There is deliberately no UI or config path for defining one.
+A preset carries **code**: `detect` and `seedPlan` run in your backend, read repositories, and steer
+agents. It is therefore exactly as trusted as a custom agent kind, and registers the same way, from
+your composition root. There is deliberately no UI or config path for defining one.
 
 ## The four parts
 
@@ -89,8 +89,8 @@ it with no per-preset frontend code:
 - `showWhen: { key, equals? | includes? }`: single-condition visibility, for a field that only
   applies when another is set.
 
-What the user fills in is validated against your descriptor at create (unknown keys, type mismatches,
-missing required visible fields, options membership, path safety), reduced to the declared and
+What the user fills in is validated against your descriptor at create: unknown keys, type mismatches,
+missing required visible fields, options membership, path safety. It is reduced to the declared and
 currently-visible fields, and then **frozen** on the initiative. Later planning records deviations as
 decisions; it never rewrites the inputs, so what the initiative was asked for stays readable months
 later.
@@ -116,8 +116,8 @@ phaseTemplate: {
 
 Two generic mechanisms enforce it, and neither knows your preset exists. The planner's prompt gains a
 "required plan shape" section stating the phase ids verbatim, their titles, goals, order and whether
-extras are allowed. Then at ingest the draft is matched to the template by phase id, reordered into
-template order, and **refused** if a required phase is missing or a disallowed extra appeared, which
+extras are allowed. Then at ingest, the draft is matched to the template by phase id, and reordered into
+template order. It is **refused** if a required phase is missing or a disallowed extra appeared, which
 surfaces as a planner retry or a fix at the plan-approval gate.
 
 ::: warning Shape is the template's job; decoration is `seedPlan`'s
@@ -134,12 +134,12 @@ naming the cause.
 ## Decorating what the initiative spawns
 
 `seedPlan` runs after the shape check and turns planned items into first-class typed tasks. It sets
-each item's pipeline, its task type and fields, its prompt fragments, and its per-run gate overrides,
-so an item arrives on the board as the kind of task your organization would have created by hand
-rather than a bare description.
+each item's pipeline, its task type and fields, its prompt fragments, and its per-run gate
+overrides. So an item arrives on the board as the kind of task your organization would have created
+by hand, rather than a bare description.
 
 Human review is one of those decorations. It is a per-run gate override rather than a second
-gated pipeline: your form's "review each change" answer becomes a boolean array parallel to the
+gated pipeline. Your form's "review each change" answer becomes a boolean array parallel to the
 target pipeline's own steps, so an entry genuinely turns one gate on or off. Derive the position from
 the pipeline's own steps (find the merge step's index) rather than hard-coding one, or the override
 silently gates the wrong step when the pipeline gains one.
@@ -155,10 +155,11 @@ which blocks the item and halts the phase.
 
 If a later phase's agents need to READ what an earlier phase produced, the artifact has to reach the
 **default branch**, because that is what their containers clone. That means the producing phase runs
-a pipeline with a merge tail and its producer is a code-writing agent kind, not a read-only one: only
-a step that opens a pull request records one, and only a recorded pull request is what the CI gate and
-the merger act on. A read-only producer that commits through a post-op lands on a branch nothing ever
-merges, which is fine for a terminal report and wrong for an input to the next phase.
+a pipeline with a merge tail, and its producer is a code-writing agent kind, not a read-only one.
+That is because only a step that opens a pull request records one, and only a recorded pull request
+is what the CI gate and the merger act on. A read-only producer that commits through a post-op lands
+on a branch nothing ever merges, which is fine for a terminal report and wrong for an input to the
+next phase.
 
 ## Prefilling from the repository
 

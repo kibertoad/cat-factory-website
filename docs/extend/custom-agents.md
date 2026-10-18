@@ -215,8 +215,8 @@ client reads a documented variable name inside a reserved prefix, split the two:
 `{ key: 'ACME_GITHUB_TOKEN', envName: 'GITHUB_PERSONAL_ACCESS_TOKEN' }`. A secret that does not
 resolve drops the whole server, with a note in the prompt, unless you mark it `required: false`.
 
-`allowedTools` is scoping, not a security boundary. It is always stated in the prompt and passed to
-the claude-code CLI's `--allowedTools`, but the run's permission mode decides whether the CLI treats
+`allowedTools` is scoping, not a security boundary. It is always stated in the prompt, and passed to
+the claude-code CLI's `--allowedTools`. But the run's permission mode decides whether the CLI treats
 it as a gate, and some harnesses cannot express a per-tool restriction. A server whose other tools a
 kind must genuinely never reach should not be wired for that kind at all. A server the run's harness
 cannot serve is stated to the agent as unavailable rather than silently dropped.
@@ -235,8 +235,8 @@ Boot validation errors on an unresolved skill or tool-server id.
 
 A variant is an alternate prompt for an existing kind, selected per step through
 `stepOptions.agentVariantId`. Register one with `agentKindRegistry.registerVariant(definition)`. A
-variant is not a kind: it never appears in the palette as its own entry, never answers a lookup by
-kind, and never changes a behavioural answer such as whether the step needs a container. Use it when
+variant is not a kind. It never appears in the palette as its own entry, and never answers a lookup
+by kind. It never changes a behavioural answer, such as whether the step needs a container. Use it when
 the job is the same and only the instructions differ.
 
 #### Interface tier
@@ -261,11 +261,11 @@ Your own registrations sit beside it on the same registry. Two things follow fro
 
 - **An injected registry replaces the shipped set rather than adding to it.** Build yours from
   `binaryGeneratorRegistryWithBuiltins()` (exported from every facade) unless dropping `nano-banana`
-  is what you mean, because the shipped Media pipeline selects it by id and would otherwise be
-  refused at run start for naming an integration nothing answers to.
+  is what you mean. The shipped Media pipeline selects it by id, so without it that pipeline
+  is refused at run start for naming an integration nothing answers to.
 - **`defineBinaryGenerator` validates a definition at import**, running the same rules the boot check
-  does, so a malformed endpoint or a contract the agent could not read fails your test suite instead
-  of your next deployment. Use it in place of a bare object literal:
+  does. So a malformed endpoint, or a contract the agent could not read, fails your test suite
+  instead of your next deployment. Use it in place of a bare object literal:
 
 ```ts
 import { defineBinaryGenerator, openApiContract } from '@cat-factory/node-server'
@@ -307,7 +307,7 @@ refuse correctly-configured steps.
 `modalities` and `mediaTypes` say what an integration makes. `capabilities` says what it will
 accept while making it, and the image APIs you are most likely to register agree on almost none of
 it. A step that hands a reference image to an endpoint with no image input does not get a worse
-picture: it gets an error at the end of a paid run, or a picture that silently ignored the one
+picture. It gets an error at the end of a paid run, or a picture that silently ignored the one
 input that made the output correct.
 
 ```ts
@@ -319,14 +319,18 @@ The vocabulary is closed: `reference-image`, `multi-reference`, `instruction-edi
 `transparent-background`, `tileable`. Each one unlocks a control in the pipeline builder, a
 paragraph in the agent's brief, and a requirement the platform checks before the run starts.
 
-A capability answers one question only: **can the request carry this at all**. Declare `seed` when
-the API has a seed parameter, `exact-size` when it takes a width and a height, `aspect-ratio` when
-it takes a shape (a ratio, or a bucket like `square | portrait | landscape`). An endpoint that does
-something adjacent without a parameter for it declares nothing: an upscale endpoint that enlarges
-at a ratio it fixes itself has no factor to be handed, so declaring `upscale` would admit a step
-asking for 4x and hand back an unknown multiple. Say what it does in `guidance` instead. Steps
-asking for that option are then refused, which is visible and fixable, rather than served an
-artifact that passes every check and is wrong.
+A capability answers one question only: **can the request carry this at all**. For example:
+
+- Declare `seed` when the API has a seed parameter.
+- Declare `exact-size` when it takes a width and a height.
+- Declare `aspect-ratio` when it takes a shape: a ratio, or a bucket like
+  `square | portrait | landscape`.
+
+An endpoint that does something adjacent without a parameter for it declares nothing. An upscale
+endpoint that enlarges at a ratio it fixes itself has no factor to be handed. Declaring `upscale`
+would admit a step asking for 4x and hand back an unknown multiple. Say what it does in `guidance`
+instead. Steps asking for that option are then refused, which is visible and fixable, rather than
+served an artifact that passes every check and is wrong.
 
 Declaring nothing at all is also a real answer, and the honest one for an endpoint nobody has
 audited: option requirements against it are reported as unverifiable rather than refused, and every
@@ -365,11 +369,11 @@ it is what turns "a step asking for 96×96 is admitted and served a 1024×1024 d
 refusal that names the size.
 
 Declare a set only where the endpoint genuinely has one, since a set is a refusal. An API that
-renders any size you hand it, inside limits no list can enumerate (a megapixel cap, dimensions in
-multiples of 32, a range that moves with the style), declares the capability, omits the set, and
-puts the limits in `guidance`. There is no way to express a range or a minimum, deliberately:
-ratios and sizes are checkable facts, and a constraint language would not be. Ratios are compared
-in lowest terms, so `1920:1080` matches a declared `16:9`.
+renders any size you hand it has limits no list can enumerate: a megapixel cap, dimensions in
+multiples of 32, a range that moves with the style. Such an API declares the capability, omits the
+set, and puts the limits in `guidance`. There is deliberately no way to express a range or a
+minimum, because ratios and sizes are checkable facts and a constraint language would not be. Ratios
+are compared in lowest terms, so `1920:1080` matches a declared `16:9`.
 
 ##### Vendors that authenticate with more than one value
 
@@ -385,31 +389,32 @@ credentials: [
 ```
 
 Each entry becomes its own row on the workspace credential checklist, so the form an operator fills
-in matches the values their vendor console issues, and either half can be rotated on its own. Two
-entries may not arrive as the same environment variable (the same `envName`, or one entry's
-`envName` colliding with another's `key`); that is refused at boot, because the job body is keyed by
-variable name and a collision would silently deliver one value and drop the other. Names are
+in matches the values their vendor console issues, and either half can be rotated on its own.
+
+Two entries may not arrive as the same environment variable: the same `envName`, or one entry's
+`envName` colliding with another's `key`. That is refused at boot, because the job body is keyed by
+variable name. A collision would silently deliver one value and drop the other. Names are
 compared ignoring case, since `ACME_KEY` and `acme_key` are one variable on any host whose
 environment ignores it. What is injected is the spelling you wrote.
 
 That refusal reaches across your registrations too, with one exception. Two integrations on the same
-vendor account may share a variable, and often should: register both with the same lookup `key` and
+vendor account may share a variable, and often should. Register both with the same lookup `key`, and
 whichever runs first sets the variable to exactly the value the other wanted. What is refused is two
 integrations that mean **different** values by one variable name, because nothing downstream can
 serve both. The agent would be told to read that variable for each of them and would authenticate
 one vendor with the other's key. Give one of them a distinct `envName`.
 
 A step's brief is written from these entries, so a `required: false` credential is worth declaring
-honestly: the agent is told to call the integration anyway when that value is missing, while a
-missing required one means the integration must not be called at all.
+honestly. When that value is missing, the agent is told to call the integration anyway. A missing
+required one means the integration must not be called at all.
 
 The platform names values and never assembles the request: there is no auth-scheme field, and
 nothing base64-encodes or builds a header for you. Say how to present each value in `usage` and the
 agent does the rest.
 
-The pipeline builder's picker and the run-admission check read the same registration, so a step
-configured from the picker is never refused at start as an unknown integration, even on a split
-deployment whose processes are on different builds.
+The pipeline builder's picker and the run-admission check read the same registration. So a step
+configured from the picker is never refused at start as an unknown integration. That holds even on a
+split deployment whose processes are on different builds.
 
 A `container-*` surface implies a checkout automatically, so you don't also set `requiresContainer`.
 `presentation.resultView` is a typed picklist (`generic-structured`, `gate`, `tester`, and the rest
@@ -482,7 +487,7 @@ type SecurityAssessment = ReturnType<typeof securityAssessment.parse>
 The schema replaces the hand-written `shapeHint` string plus a separate lenient coercer. Build it
 from `v.fallback` / `v.optional` so `safeParse` degrades a present-but-invalid field to its default
 rather than dropping the whole assessment. Override the auto-derived hint with the `shapeHint` option
-when the schema walker's output is worse than a hand-written one, and set `failOnUnusableFinal: true`
+when the schema walker's output is worse than a hand-written one. Set `failOnUnusableFinal: true`
 for a kind whose deliverable IS the JSON (fail the run loudly on a truncated final answer rather than
 laundering it through repair).
 
@@ -589,7 +594,7 @@ agentKindRegistry.register({
 })
 ```
 
-Setting `resultView: 'generic-structured'` gives the kind a usable result window for free: the
+Setting `resultView: 'generic-structured'` gives the kind a usable result window for free. The
 agent's `result.custom` JSON renders read-only in the shared structured viewer, so a custom agent
 gets a real result screen with no frontend work.
 
@@ -783,7 +788,7 @@ artifact (skips the commit), and a noisy field that `safeParse` degrades to its 
 - **Custom kinds run alongside the built-ins.** This is the supported extension path and is covered
   by the cross-runtime conformance suite, so a kind behaves identically on Cloudflare, Node, and
   local. Built-in agent kinds (architect, coder, and the rest) keep their prompts in the platform's
-  own prompt catalog rather than being registered by a deployment, but a registered kind gets the
+  own prompt catalog, rather than being registered by a deployment. But a registered kind gets the
   same prompt guardrails and result-view wiring a built-in does, and a registered id that collides
   with a built-in track reuses that track's prompt.
 

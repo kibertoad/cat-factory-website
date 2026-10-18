@@ -6,12 +6,15 @@ executor of one pipeline step. Cat Factory stays the top-level orchestrator (wha
 which repository, against which standards, gated by which policy, followed by which merge and
 which notification) and your system supplies only the middle.
 
-Everything after the step settles is the engine that was already there. The pull request your
-system opened lands on the board's task, the auto-inserted `ci` gate polls its real checks, the
-`merger` step applies the workspace's
-[risk policy](../guide/pull-requests.md#conflicts-ci-and-the-merger) and merges for real,
-and the run's notifications and tracker writeback go out as they do for any other run. That is the
-whole reason the seam is one STEP rather than a whole pipeline.
+Everything after the step settles is the engine that was already there:
+
+- The pull request your system opened lands on the board's task.
+- The auto-inserted `ci` gate polls its real checks.
+- The `merger` step applies the workspace's
+  [risk policy](../guide/pull-requests.md#conflicts-ci-and-the-merger) and merges for real.
+- The run's notifications and tracker writeback go out as they do for any other run.
+
+That is the whole reason the seam is one STEP rather than a whole pipeline.
 
 This is the third executor class, beside the inline model call and the container agent. It is code
 you register from your own [deployment repository](../deploy/deployment-repository.md), with no
@@ -22,7 +25,7 @@ fork and no harness rebuild, exactly like a [custom agent kind](./custom-agents.
 - **Use it** when the work already runs somewhere you operate and you want Cat Factory's intake,
   standards, gates, merge policy and reporting around it.
 - **Use a [custom agent kind](./custom-agents.md)** when the work is an LLM over a checkout and you
-  want the platform to run it: you get the harness, the tool servers, the telemetry and the
+  want the platform to run it. You get the harness, the tool servers, the telemetry and the
   per-call spend for free, none of which a delegated step has.
 - **Use a [runner pool](../operate/runner-pools.md)** when you only want the platform's agent to
   run on your own hardware. That is a machine choice; this is a "somebody else's agent" choice.
@@ -121,9 +124,9 @@ Your half is to recognise your own run: look for it by the correlation key first
 when there is none.
 
 If your system returns nothing identifying at start (GitHub's `workflow_dispatch` answers `204`
-with no run id), `@cat-factory/delegation-github-actions` solves it for you: your caller workflow
-renders the key into its own `run-name:`, and the run becomes findable by a string the platform
-chose.
+with no run id), `@cat-factory/delegation-github-actions` solves it for you. Your caller
+workflow renders the key into its own `run-name:`, and the run becomes findable by a string the
+platform chose.
 
 ```yaml
 # .github/workflows/implement.yml
@@ -141,7 +144,7 @@ run-name: cat-factory[${{ inputs.correlation }}]
 ```
 
 On a repository that fires a very high volume of `workflow_dispatch` runs, raise
-`correlationScanSize` on the description: the lookup reads a bounded page of recent runs, and a run
+`correlationScanSize` on the description. The lookup reads a bounded page of recent runs, and a run
 pushed off the end of that page is one the idempotency check cannot see.
 
 ### Credentials
@@ -152,7 +155,7 @@ snapshot. Resolution happens **once per dispatch and once per poll**, never cach
 can run hours after the dispatch and a GitHub App token lives one.
 
 Your executor's outbound calls go through a fetch the platform has already held to the deployment's
-outbound-URL policy: scheme and host are checked on the first URL and on every redirect hop, and a
+outbound-URL policy. Scheme and host are checked on the first URL and on every redirect hop, and a
 cross-origin redirect drops the body and the credential headers. An executor reaching an internal
 host needs that host allowed the same way an
 [outbound notification webhook](../operate/notifications.md) does.
@@ -169,10 +172,10 @@ workBranch: 'platform-creates' // or 'executor-creates'
 
 - **`platform-creates`**: the platform creates the branch at the base branch's head just before
   your `start` is called, and does nothing when it is already there. Choose this when your system
-  CHECKS OUT the branch it is given, which is every CI runner: `actions/checkout` on a branch that
+  CHECKS OUT the branch it is given, which is every CI runner. `actions/checkout` on a branch that
   does not exist fails the job before your work begins. Worse, a runner that quietly switches to a
-  branch of its own instead SUCCEEDS, pushes to a branch this platform never recorded, and the task
-  then shows a run that produced nothing over a pull request nothing links to.
+  branch of its own instead SUCCEEDS, and pushes to a branch this platform never recorded. The task
+  then shows a run that produced nothing, over a pull request nothing links to.
 - **`executor-creates`**: your system creates the branch itself when it pushes. The platform
   writes nothing, so a run whose work never landed leaves no empty branch behind.
 
@@ -225,9 +228,14 @@ If your system knows its own token usage, return it on the completed result and 
 deployment's budget gate, because the tokens were spent on your account. Per-call prompts and tool
 trajectories have no ingest route yet.
 
-What a delegated step DOES get, unchanged: the run card, the live step status with your run's link
-and phase, the attempt log across retries, the verification report on the pull request, the
-notifications, and every gate and policy the rest of the pipeline declares.
+What a delegated step DOES get, unchanged:
+
+- the run card
+- the live step status, with your run's link and phase
+- the attempt log across retries
+- the verification report on the pull request
+- the notifications
+- every gate and policy the rest of the pipeline declares
 
 ## Gotchas
 
@@ -235,14 +243,14 @@ notifications, and every gate and policy the rest of the pipeline declares.
   composition module, and the losing side dispatches into the other company's system with nothing
   reporting a conflict.
 - **Return an external id from `start`, or recover one.** A dispatch the platform cannot poll is
-  refused rather than recorded: a step parked on a job nothing can settle fails hours later as a
-  timeout, naming the wrong thing.
+  refused rather than recorded, because a step parked on a job nothing can settle fails hours later
+  as a timeout, naming the wrong thing.
 - **Your executor's repository is usually not the work's repository.** A central automation repo
-  dispatching against many product repos is one ordinary shape, so read what a run produced from
+  dispatching against many product repos is one ordinary shape. So read what a run produced from
   the repository and branch the HANDLE carries, not from your own configuration.
 - **A workflow committed to each onboarded repository is the other ordinary shape**, and then the
-  dispatch target varies per task. Pass `workflow` as a function: it is handed the work repository,
-  the workspace, the run, the agent kind and the correlation key, which is exactly the set both a
+  dispatch target varies per task. Pass `workflow` as a function. It is handed the work repository,
+  the workspace, the run, the agent kind and the correlation key. Those five values are exactly the set both a
   dispatch and every later poll can name. Nothing a poll cannot see is offered, because a resolver
   that dispatched into one repository and polled another would report a live run as one that never
   appeared.

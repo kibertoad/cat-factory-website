@@ -6,7 +6,7 @@ is no repository to check out, no pull request to open, and nothing belongs on t
 
 An **inline use case** packages that: a named unit of model work, the narrowed list of models it
 may run on, the small form it accepts, and the bounds a caller may steer within. Cat Factory
-publishes what you registered at `GET /api/v1/use-cases` and runs one at
+publishes what you registered at `GET /api/v1/use-cases`. It runs one at
 `POST /api/v1/use-cases/{useCaseId}/invocations`, so your editor generates through this
 deployment's own model credentials, workspace budget and call telemetry instead of holding its own
 vendor keys beside them.
@@ -86,9 +86,9 @@ import the registry constructor from the facade package you boot through rather 
 
 ## Narrowing the models
 
-`models` is the reason the feature exists. A creative-writing tool wants prose models for prose and
-a cheap general model for bulk work, and it wants that choice made once by the person who
-understands the models, not per request by whatever the client happens to send.
+`models` is the reason the feature exists. A creative-writing tool wants prose models for prose, and
+a cheap general model for bulk work. It wants that choice made once by the person who understands
+the models, not per request by whatever the client happens to send.
 
 Each option names ONE of two sources:
 
@@ -107,8 +107,8 @@ a general-purpose model would store prose in the wrong register with nothing say
 therefore publishes each model's availability, and an unavailable one says which of two things it
 is:
 
-- **`provider_unavailable`** — nothing here resolves it. You configure the provider.
-- **`container_only`** — it resolves only through a coding-subscription harness that runs inside a
+- **`provider_unavailable`**: nothing here resolves it. You configure the provider.
+- **`container_only`**: it resolves only through a coding-subscription harness that runs inside a
   per-run container, which this surface has none of. No configuration changes that; the caller picks
   another model. (Local mode is the exception: an ambient `claude` or `codex` login can serve one
   inline, and says so.)
@@ -195,12 +195,12 @@ run and no history of generated text. Your editor owns what it keeps.
 
 `GET /api/v1/use-cases` never 404s and never 503s.
 
-- A deployment that registered nothing answers an EMPTY list, because "nobody registered a use case"
-  and "this deployment has no such surface" are different facts and your client should be able to
-  tell them apart.
-- A deployment with no model provider answers the full catalog with every model marked unavailable,
-  so your picker shows what the use case offers, greyed out, rather than looking like a use case with
-  no models.
+- A deployment that registered nothing answers an EMPTY list. That is because "nobody registered a use case"
+  and "this deployment has no such surface" are different facts, and your client should be able to tell
+  them apart.
+- A deployment with no model provider answers the full catalog, with every model marked
+  unavailable. Your picker then shows what the use case offers, greyed out, rather than looking like
+  a use case with no models.
 
 Only the invocation refuses in that second state.
 

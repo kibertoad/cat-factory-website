@@ -1,10 +1,10 @@
 # Package a Reusable Operation
 
 For the deployment author whose organization performs the same shaped piece of work again and
-again, with different particulars each time: "introduce an API on top of existing system
-functionality", run once for `Order` and again for the refund flow. Every invocation leans on the
-same standing context (the org's API guidelines, its auth requirements, its shared-services map)
-and differs only in a small form filled at creation.
+again, with different particulars each time. An example is "introduce an API on top of existing
+system functionality", run once for `Order` and again for the refund flow. Every invocation leans on
+the same standing context (the org's API guidelines, its auth requirements, its shared-services
+map). It differs only in a small form filled at creation.
 
 A **reusable operation** packages that: a create-time form, the standing context, and the pipeline
 that delivers the outcome, registered as one named thing your users pick from the create-task
@@ -102,30 +102,36 @@ Five rules shape what you can author:
   agents need a credential declares it by name against the capability-credential store, where the
   value never reaches a prompt. See [Add a Custom Agent](./custom-agents.md).
 - **A declared bound binds the server**, not only the input. `maxLength`, the option lists and
-  `path` safety (no `..`, no absolute path, no backslash) are enforced where the value is frozen,
-  because a form is not the only door: the public API, an initiative spawn and a tracker import all
-  reach the same place.
+  `path` safety (no `..`, no absolute path, no backslash) are enforced where the value is frozen.
+  That is because a form is not the only door: the public API, an initiative spawn and a tracker
+  import all reach the same place.
 - **A condition states `equals` or `includes`, and deliberately nothing else.** One predicate over
   one other field covers a picker and a toggle, which is what a per-case brief branches on. So
   "include the data-governance standard whenever the free-text `sensitiveData` answer is filled" is
-  expressed by asking the question the branch actually turns on: a condition keyed on whether prose
+  expressed by asking the question the branch actually turns on. A condition keyed on whether prose
   is non-empty fires on "n/a" and on a stray space.
 - **A declared default is applied at the door**, not in the form, so a headless caller need not
   restate a value the deployment already declared. Only absent keys are filled, so an explicit
-  value always wins, including a `false` on a default-on checkbox, which is the opt-out. A default
+  value always wins. That includes a `false` on a default-on checkbox, which is the opt-out. A default
   outside its own `select` options is a boot error, since it would otherwise refuse every creation
   of the type.
 
 ### What validation refuses
 
-Creation checks the submitted values against the descriptor: unknown keys refused, required
-*visible* fields present, values type-checked, `select` and `checkbox-group` values drawn from the
-declared options, `path` values inside the repository. A failure comes back as one error carrying
-every problem at once, so a caller fixing one field per round trip is never the experience.
+Creation checks the submitted values against the descriptor. It checks that:
+
+- no unknown keys are present
+- required *visible* fields are present
+- values have the right type
+- `select` and `checkbox-group` values are drawn from the declared options
+- `path` values are inside the repository
+
+A failure comes back as one error carrying every problem at once, so a caller never has to fix one
+field per round trip.
 
 Two behaviours worth knowing before you author a form. An **absent** value bag is checked against
-an empty one, so a required field is unanswered whether the caller sent an empty bag or none at
-all: anything creating a task of an operation with required fields must fill them. And an unfilled
+an empty one. So a required field is unanswered whether the caller sent an empty bag or none at all,
+and anything creating a task of an operation with required fields must fill them. And an unfilled
 value is **dropped rather than frozen**, the single exception being an explicit `false` on a
 checkbox, which absence cannot express.
 
@@ -147,7 +153,7 @@ repository-backed fragment source. See [Reuse Prompt Fragments](../guide/prompt-
   values. That is what lets one operation collecting `protocol: rest | graphql` seed the GraphQL
   standard only for a GraphQL case, instead of paying for every branch on every run.
 - **Seeding states an unregistered type.** A task created on a process whose package lacks the
-  registration is accepted, gets none of the operation's fragments, and is logged as such rather
+  registration is accepted, and gets none of the operation's fragments. It is logged as such, rather
   than contributing nothing in silence. A later build does not go back for it, because only the id
   set freezes at creation.
 
@@ -255,8 +261,8 @@ a tool-server id for the capability warnings. It is required, and it is singular
 about several ids arrives as several warnings.
 
 **Cat Factory itself never classifies an id by its shape**, and neither should a predicate you
-intend to be exhaustive. An account-tier fragment you authored in the library carries a plain slug,
-and a repo-sourced file that pins an explicit `id:` in its frontmatter carries one too, so
+intend to be exhaustive. An account-tier fragment you authored in the library carries a plain slug.
+A repo-sourced file that pins an explicit `id:` in its frontmatter carries one too. So
 "no `src:` prefix" is not evidence of a typo. It is evidence about **your** naming, which is why
 this is your predicate to write and not our severity to raise.
 
@@ -312,9 +318,12 @@ registries everywhere rather than a half-wired deployment.
 ### Two rules that bite
 
 **Your package's only Cat Factory runtime dependency is the facade it boots through.** Each facade
-re-exports the constructors and the types for every seam it lets you inject: the registries and
-their `default…()` / `…WithBuiltins()` builders, the authoring vocabulary, the descriptor-field
-helpers and the problem type.
+re-exports the constructors and the types for every seam it lets you inject:
+
+- the registries and their `default…()` / `…WithBuiltins()` builders
+- the authoring vocabulary
+- the descriptor-field helpers
+- the problem type
 
 That is not ergonomics. Every published package pins at an exact version, so a package that depends
 on an internal one directly, and floats the range onto a newer patch than its facade pins, resolves
@@ -323,9 +332,9 @@ copy the facade reads, and does not survive it otherwise. The symptom is agents 
 with no error anywhere.
 
 **An injected registry replaces the pool; it never merges.** So `promptFragmentRegistryWithBuiltins()`
-is what you want unless you mean the opposite, and a bare `defaultPromptFragmentRegistry()` is a
+is what you want unless you mean the opposite. A bare `defaultPromptFragmentRegistry()` is a
 deployment whose agents fold its own standards and none of the platform's. The same holds for
-`gateRegistryWithBuiltins()` against `defaultGateRegistry()`, where the empty one silently drops
+`gateRegistryWithBuiltins()` against `defaultGateRegistry()`. There, the empty one silently drops
 `ci`, `conflicts` and `post-release-health` from every pipeline naming them. Both are legitimate,
 which is why both are exported and neither is inferred.
 
@@ -348,9 +357,9 @@ which is why both are exported and neither is inferred.
 
 The collected answers reach every agent in the run as a `## Task parameters` section appended after
 the block context, so the requester's own title and description stay the primary statement of what
-is wanted. Values are authoritative and the descriptor only enriches them: an answer whose field
-was renamed since the task was created still renders, under its raw key, because the alternative
-would silently delete the per-case brief the operation was invoked with.
+is wanted. Values are authoritative, and the descriptor only enriches them. An answer whose field
+was renamed since the task was created still renders, under its raw key, because the alternative would
+silently delete the per-case brief the operation was invoked with.
 
 ## Hiding an operation from one board
 
@@ -358,13 +367,13 @@ A deployment registers its operations process-wide, so every board in the organi
 one of them. Twenty operations is a realistic catalog and a flooded picker for a team that runs
 three, so a workspace admin can hide the ones that board does not use, from the workspace settings.
 
-Hiding is a tombstone and restoring deletes it, so absence is the default: a newly registered
-operation is offered everywhere until somebody hides it, which is the only direction that cannot
-silently withhold a capability from every existing board at once.
+Hiding is a tombstone and restoring deletes it, so absence is the default. A newly registered
+operation is offered everywhere until somebody hides it. Offered-by-default is the only direction
+that cannot silently withhold a capability from every existing board at once.
 
 The hiding is real rather than cosmetic: creating a task of a hidden type is refused, not merely
-un-offered, because the internal API, the public API, an initiative spawn and a tracker import all
-create tasks without ever seeing the picker.
+un-offered. That is because the internal API, the public API, an initiative spawn and a tracker
+import all create tasks without ever seeing the picker.
 
 Built-in types are not suppressible. They carry hardcoded creation affordances, so hiding one would
 remove a capability with no descriptor stating what was lost.

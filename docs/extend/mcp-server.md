@@ -1,11 +1,11 @@
 # MCP Server
 
 Cat Factory's [public API](./public-api.md) is also available as a
-[Model Context Protocol](https://modelcontextprotocol.io) server, so an MCP host (Claude Desktop, an
-IDE, an agent framework) can plan work on a board, start and watch runs, answer parked decisions,
-and read a run's telemetry.
+[Model Context Protocol](https://modelcontextprotocol.io) server. An MCP host (Claude Desktop, an
+IDE, an agent framework) can then plan work on a board, start and watch runs, answer parked
+decisions, and read a run's telemetry.
 
-It is a facade rather than a separate product: every tool is one call on the
+It is a facade rather than a separate product. Every tool is one call on the
 [TypeScript SDK](./sdks.md), and the tool table is generated from the same OpenAPI spec, so a tool
 cannot describe a request shape the deployment would reject.
 
@@ -17,8 +17,8 @@ Both serve the same tools.
   and let it connect over OAuth, or hand it a key. Reach for this first if your host speaks HTTP
   MCP.
 - **The `@cat-factory/mcp-server` package**, over stdio. It needs no deployment of your own beyond
-  the one you are calling, it is the only path for a host that cannot speak HTTP MCP, and it is the
-  only one with per-host tool filters.
+  the one you are calling. It is the only path for a host that cannot speak HTTP MCP, and the only
+  one with per-host tool filters.
 
 A deployment mounts the hosted endpoint from that same package, so the tool table, the instructions,
 and the result rendering are identical on both paths.
@@ -26,9 +26,9 @@ and the result rendering are identical on both paths.
 ## Connecting a host over OAuth
 
 The hosted endpoint accepts a key, and it also speaks the MCP authorization spec, so a host can
-connect the way it connects to any other remote MCP server: you press Connect in the host, a browser
-opens, you choose what it may have, and the host gets its own credential. Nothing is pasted anywhere,
-and no long-lived key sits in a config file on disk.
+connect the way it connects to any other remote MCP server. You press Connect in the host, a browser
+opens, you choose what it may have, and the host gets its own credential. Nothing is pasted
+anywhere, and no long-lived key sits in a config file on disk.
 
 Hosts that discover authorization themselves (claude.ai, Claude Desktop, the IDE clients, the MCP
 Inspector) need only the URL:
@@ -46,10 +46,10 @@ What happens, and what you are deciding:
    provider here.
 3. You pick the **board** the host may act on and **what it may do** (`read`, `write`, `decide` or
    `admin`, the same ladder every API key carries). The screen names the host and the address your
-   browser will be sent back to; that address was matched against what the host registered, so it
+   browser will be sent back to. That address was matched against what the host registered, so it
    is the fact worth reading. What is preselected is `read and write`, never whatever the host asked
-   for: any host can register itself and ask for full access, so an ask above the default is shown
-   to you as a note and raising the grant stays something you do deliberately.
+   for, because any host can register itself and ask for full access. So an ask above the default is
+   shown to you as a note, and raising the grant stays something you do deliberately.
 4. The host receives an API key scoped to exactly that. It appears in the board's API-key settings
    as `MCP: <host name>`, and **revoking it there disconnects the host**.
 
@@ -188,13 +188,15 @@ The server reports the live count on startup and lists the tools over the protoc
 place the list cannot go stale.
 
 **Three operations are deliberately absent**, and the server says so rather than leaving a model to
-conclude the platform cannot do it. The two event streams have no home here (a tool call returns one
-result over no streaming channel), so poll `jobs_get` and `tasks_get_run` instead, or consume the
-streams through an SDK; a bounded "wait for the run" tool would not fix this, because a run parked
-on a human decision waits indefinitely by design, so any such tool is a timeout dressed up as an
-answer. The artifact byte download is the third: a tool result is text or a declared content block,
-not an arbitrary byte stream, so list the artifacts with `evidence_list_artifacts` and fetch the
-bytes over HTTP or an SDK with the same key.
+conclude the platform cannot do it:
+
+- **The two event streams** have no home here, because a tool call returns one result over no
+  streaming channel. Poll `jobs_get` and `tasks_get_run` instead, or consume the streams through an
+  SDK. A bounded "wait for the run" tool would not fix this, because a run parked on a human
+  decision waits indefinitely by design. So any such tool is a timeout dressed up as an answer.
+- **The artifact byte download** has no home here either, because a tool result is text or a
+  declared content block, not an arbitrary byte stream. List the artifacts with
+  `evidence_list_artifacts`, and fetch the bytes over HTTP or an SDK with the same key.
 
 ## A worked flow
 
@@ -223,13 +225,13 @@ For a run against a supplied brief with no board card and nothing pushed to a re
   The hosted endpoint runs this the other way round: it derives read-only from the key's scope, and
   says so, which prompts a model to ask for a wider key rather than a config edit.
 - **A result that does not fit is refused, not truncated.** The message names the size, the limit,
-  and the ways out from either side: `limit` and `cursor` on the list operations, `offset` on the
-  debug reads, or a bigger ceiling. Half an object cannot satisfy the schema it was cut out of.
+  and the ways out from either side. Those are `limit` and `cursor` on the list operations, `offset`
+  on the debug reads, or a bigger ceiling. Half an object cannot satisfy the schema it was cut out of.
 - **A failure is tool content, not a protocol error.** A validation failure carries the code, the
-  machine-readable reason, and the per-field issues, and is passed through verbatim rather than
+  machine-readable reason, and the per-field issues. It is passed through verbatim rather than
   re-worded, because that is the most actionable thing this layer ever returns.
 - **The output schema is deliberately looser than the API's own.** Hosts validate results against
-  it and the API is additive forever, so the published schema asserts nothing that a newer
+  it, and the API is additive forever. So the published schema asserts nothing that a newer
   deployment's honest answer could violate.
 
 ---
