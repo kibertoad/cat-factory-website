@@ -42,9 +42,9 @@ dialog:
 - **Technological migration**: swap a load-bearing technology (a database engine, a framework major,
   a runtime, or a load-bearing library) behind a behaviour-preservation safety net.
 
-A preset can also fold **standing per-kind guidance** into the prompts of the tasks it spawns (a
-coding convention for every coder it launches, a validation methodology for its testers), so its
-discipline reaches the spawned runs, not just the planning run.
+A preset can also fold **standing per-kind guidance** into the prompts of the tasks it spawns, so
+its discipline reaches the spawned runs, not just the planning run. For example, it can give every
+coder it launches a coding convention, or its testers a validation methodology.
 
 Beyond the three built-ins, a deployment can **register its own initiative presets** in code, the same
 way it registers custom agent kinds and gates. A custom preset carries its own create-time form,
@@ -56,17 +56,26 @@ custom kind.
 ### Documentation refresh
 
 The **Documentation refresh** preset turns the initiative into a documentation sweep. Its create form
-asks what to refresh (README files, architecture and flow diagrams, in-source code comments, business
-rules and domain constraints), where docs live (a single root tree or per-service in a monorepo), the
-docs root and per-type directories, an optional scope note, and the writing-style guidance to apply.
+asks for:
+
+- what to refresh: README files, architecture and flow diagrams, in-source code comments, business
+  rules and domain constraints
+- where docs live: a single root tree, or per-service in a monorepo
+- the docs root and per-type directories
+- an optional scope note
+- the writing-style guidance to apply
+
 It **autodetects** the repo's docs layout to prefill those paths; your edits win.
 
-It skips the planning interview (the form is the interview) and plans a phase per documentation type
-you selected, each running a lean documentation pipeline: README and diagram work through the quick
-document pipeline, in-source comments through a dedicated **code-commenter** agent, business rules
-through the business-documenter. Documentation PRs auto-merge on green CI. Turn on **Review each
-documentation change before it merges** and each spawned task instead pauses for your approval at its
-merge step.
+It skips the planning interview (the form is the interview). It plans a phase per documentation type
+you selected, and each phase runs a lean documentation pipeline:
+
+- README and diagram work runs through the quick document pipeline.
+- In-source comments run through a dedicated **code-commenter** agent.
+- Business rules run through the business-documenter.
+
+Documentation PRs auto-merge on green CI. Turn on **Review each documentation change before it
+merges** and each spawned task instead pauses for your approval at its merge step.
 
 ### Technological migration
 
@@ -81,18 +90,18 @@ challenge and approve its evidence before the swap proceeds.
 
 ## Planning: analyze, interview, approve
 
-Start planning from the initiative's **inspector** or directly from its **board card**, which carries
-a **Run planning** button and, once the interview parks for answers, an **Answer planning questions**
-button (the card pulses while it waits). Both open the same **Plan initiative** pipeline, which runs
-in three stages before it asks for your approval:
+Start planning from the initiative's **inspector**, or directly from its **board card**. The card
+carries a **Run planning** button. Once the interview parks for answers, the card also carries an
+**Answer planning questions** button, and pulses while it waits. Both buttons open the same **Plan
+initiative** pipeline, which runs in three stages before it asks for your approval:
 
 1. **Analyze.** An analyst reads the repository and writes a short codebase analysis that grounds
    everything after it in how the code actually looks today. It closes its report with the open
    questions only a person can answer.
 2. **Interview.** The interviewer parks the run and opens a **planning window** with clarifying
-   questions about scope, constraints, and priorities. It has already read the analysis and is barred
-   from re-asking anything the analysis settles, so its bounded rounds are spent on what only you
-   know rather than on asking you to describe your own codebase. Answer the questions, then either
+   questions about scope, constraints, and priorities. It has already read the analysis, and is barred
+   from re-asking anything the analysis settles. So its bounded rounds are spent on what only you
+   know, rather than on asking you to describe your own codebase. Answer the questions, then either
    **Continue** (it may ask a follow-up round) or **Proceed to plan** to converge on what you have
    given it. Your answers are stored on the initiative.
 3. **Plan.** The planner emits a structured multi-phase plan: a goal, constraints, non-goals, and a
@@ -108,8 +117,8 @@ of sections, with the same layout the step reader uses. Approve to arm execution
 to send it back for another planning round with your comments attached.
 
 The planning run is an ordinary run of ordinary agent steps, so an initiative block gets the surfaces
-a task does: the inspector's execution panel with its step list, live phases, and step-detail
-drill-down, plus **Stop** and **Discard run** and the Focus view. Only the way a run starts differs:
+a task does. These are the inspector's execution panel (with its step list, live phases, and
+step-detail drill-down), **Stop**, **Discard run**, and the Focus view. Only the way a run starts differs:
 an initiative keeps its single **Run planning** control instead of a pipeline picker.
 
 Run metadata is shown on the planning windows, and **Delete initiative** names its real cascade: the
@@ -120,8 +129,8 @@ plan goes, and tasks it already spawned stay on the board with only their member
 Once approved, the initiative status becomes **Executing** and it works the plan on its own. The
 execution loop:
 
-- **Spawns tasks just in time.** An item becomes a real board task only when it is about to start,
-  respecting each item's dependencies and the policy's **max concurrent** cap, so the board isn't
+- **Spawns tasks just in time.** An item becomes a real board task only when it is about to start.
+  This respects each item's dependencies and the policy's **max concurrent** cap, so the board isn't
   flooded with tasks that can't run yet.
 - **Picks each task's pipeline from its estimate.** The initiative carries ordered **pipeline rules**
   that match an item's complexity, risk, or impact against a pipeline (first match wins), falling back
@@ -145,17 +154,21 @@ transition-design work.
 You review a checkpoint from the **Initiative tracker**. A checkpoint phase shows a badge that reads
 **Checkpoint** while it is upcoming, **Awaiting review** while the initiative is paused at it, and
 **Reviewed** once cleared. When it pauses, an amber **Paused for review** banner names the completed
-phase with inline **Resume** and **Cancel** buttons: read the phase's merged PRs and committed
-artifacts, then **Resume** to let the next phase spawn or **Cancel** to stop. A checkpoint fires once
+phase, with inline **Resume** and **Cancel** buttons. Read the phase's merged PRs and committed
+artifacts. Then **Resume** to let the next phase spawn, or **Cancel** to stop. A checkpoint fires once
 and never re-pauses after you clear it, and a checkpoint phase with no items never pauses at all. You
 also get a notification when the initiative parks at a checkpoint.
 
 ## The tracker
 
-Open **Initiative tracker** to see the whole plan in one window: a progress bar and item count, the
-**Goal**, **Constraints**, and **Non-goals**, the codebase analysis, each phase's items (with their
-status and PR), the execution policy, and running logs of **Decisions**, **Deviations**,
-**Follow-ups**, and **Known caveats**.
+Open **Initiative tracker** to see the whole plan in one window:
+
+- a progress bar and item count
+- the **Goal**, **Constraints**, and **Non-goals**
+- the codebase analysis
+- each phase's items, with their status and PR
+- the execution policy
+- running logs of **Decisions**, **Deviations**, **Follow-ups**, and **Known caveats**
 
 When the workspace has GitHub connected, the tracker is also mirrored into the target repository under
 `docs/initiatives/<slug>/` as `initiative.json` (the machine-readable projection), `tracker.md` (a

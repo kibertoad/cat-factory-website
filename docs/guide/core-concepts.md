@@ -19,9 +19,9 @@ Each block has a title, description, and status, and can carry a chosen pipeline
 can be **reparented** by dragging them to a new parent. Deleting a block cascades to its children.
 
 A task also has a **type** chosen when you create it: **Feature**, **Bug**, **Document**, **Spike**,
-**Review**, or **Ralph loop**. The type tailors the task form (a Bug captures severity and repro
-steps, a Spike a time-box, a Review the pull request to audit, a Ralph loop its validation command)
-and lets a workspace cap how many tasks of each type run at once under a service. A **Review** task
+**Review**, or **Ralph loop**. The type tailors the task form: a Bug captures severity and repro
+steps, a Spike a time-box, a Review the pull request to audit, a Ralph loop its validation command.
+It also lets a workspace cap how many tasks of each type run at once under a service. A **Review** task
 [deep-reviews an existing open pull request](./pull-requests.md#deep-reviewing-an-existing-pull-request);
 a **Ralph loop** task runs a [persistent retry-until-done coding loop](./choosing-a-pipeline.md#the-ralph-loop).
 
@@ -41,7 +41,7 @@ Two relationships sit on top of the parent/child hierarchy:
 - An **epic** groups related tasks that may live in different services or modules. Membership is a
   tag on each task, so deleting an epic clears the grouping but keeps the tasks. Importing a Jira
   epic or a GitHub parent issue can spawn the epic and all its children in one step.
-- A **dependency edge** ("blocked by" / "depends on") sequences work, and it is **enforced**: a task
+- A **dependency edge** ("blocked by" / "depends on") sequences work, and it is **enforced**. A task
   refuses to start while any dependency is still unfinished, and Cat Factory rejects an edge that
   would close a cycle. A task can also be set to **auto-start its dependents** when it merges, so a
   chain advances on its own (steps on an individual-usage model are skipped, since they can't unlock
@@ -60,9 +60,9 @@ copy** rather than duplicated. See [Share Services Across Workspaces](./shared-s
 
 The board has two views, and the sidebar's **Views** section switches between them.
 
-- The **queue** lists every task across every service in the column that says what it needs:
-  **Needs you** (a decision, an approval, a failed run), **In flight** (with the tasks not started
-  under it) and **Ready to merge**. Each card says why the task is there and carries the one action
+- The **queue** lists every task across every service in the column that says what it needs. The
+  columns are **Needs you** (a decision, an approval, a failed run), **In flight** (with the tasks
+  not started under it) and **Ready to merge**. Each card says why the task is there and carries the one action
   its state implies, such as Answer, Start or Merge. Its title opens the task beside the queue.
 - The **board** is the canvas of services, modules and tasks, where you design the work and draw
   dependencies.
@@ -97,13 +97,16 @@ Architect → Architect Reviewer → Coder → Reviewer → Deployer → Tester
 **Adaptive build** puts a **Task Estimator** first and switches the Architect, the Tester, and a
 human review on the PR on only when the estimate warrants them.
 
-The closing steps are engine automation: the **Conflicts Gate** keeps the PR mergeable with its base,
-the **CI Gate** gates it on green CI (looping a fixer agent on failure), and the **Merger** scores the
-PR and either auto-merges within the task's thresholds or raises a review notification.
+The closing steps are engine automation:
 
-Steps the presets leave out stay available in the builder, including the **Requirements Reviewer**
-(which pauses for human approval), the **Spec Writer** and its reviewer, the **Researcher**, the
-**Blueprinter**, the **Mock Builder**, and the documentation kinds. Other agent kinds include the
+- The **Conflicts Gate** keeps the PR mergeable with its base.
+- The **CI Gate** gates the PR on green CI, looping a fixer agent on failure.
+- The **Merger** scores the PR and either auto-merges within the task's thresholds or raises a
+  review notification.
+
+Steps the presets leave out stay available in the builder. These include the **Requirements
+Reviewer** (which pauses for human approval), the **Spec Writer** and its reviewer, the
+**Researcher**, the **Blueprinter**, the **Mock Builder**, and the documentation kinds. Other agent kinds include the
 **Acceptance Author**, **Acceptance Test Author**, **Documenter**, the **Fixer**, a tech-debt analysis
 step, and an issue/ticket tracker step. Agent kinds are an **open set**: a deployment can
 [register custom kinds](../extend/custom-agents.md). You choose the pipeline (cloning a

@@ -21,8 +21,8 @@ higher ones:
 | **Workspace** | A single board | Per-project customization. |
 
 You can also source fragments from a repository so they live under version control alongside
-your code. The library is **on by default** on every runtime, with no secrets to set: fragments
-aren't secrets and their tables ship in the base migrations, so a stock deployment can curate and
+your code. The library is **on by default** on every runtime, with no secrets to set. Fragments
+aren't secrets, and their tables ship in the base migrations, so a stock deployment can curate and
 link fragments out of the box. Turn it off with
 [`PROMPT_LIBRARY_ENABLED=false`](../deploy/configuration.md#feature-toggles). When it is off, the
 fragment screens show a plain "not enabled for this deployment" notice instead of forms that error.
@@ -40,7 +40,7 @@ from the content with an inline model call. Existing fragments edit in place in 
 
 Fragments are assigned on a **service** and pinned per **task**. On a service inspector's **Service
 best practices** you pick the standards for the whole service, and every run on it applies them. A new
-task is seeded from its service's list, but from then the **task owns its selection**: pin an extra
+task is seeded from its service's list, but from then the **task owns its selection**. Pin an extra
 fragment or drop an inherited one just for that task, and its agents follow exactly the task's own
 list. Removing a fragment on a task really drops it for that task, and later changes to the service's
 list don't rewrite tasks that already exist. Only a service-level run folds in the service's own
@@ -55,8 +55,8 @@ library and to account fragments, so you can author or edit one without leaving 
 ### Picking standards over the API
 
 An integration filing work through the [public API](../extend/public-api.md) picks the same way.
-`GET /api/v1/prompt-fragments` lists what the board resolves, merged across all three tiers, with
-each entry's title, category, one-line summary, tags and the tier it came from; the guidance text
+`GET /api/v1/prompt-fragments` lists what the board resolves, merged across all three tiers. Each
+entry has its title, category, one-line summary, tags and the tier it came from. The guidance text
 itself is not served, because naming a standard needs its id rather than its content. Send the ids
 you want as `fragmentIds` on the task create, and read them back on the task. An id the board does
 not hold is refused rather than quietly dropped, so a typo fails on the create instead of producing
@@ -77,20 +77,21 @@ citations ("No raw SQL in controllers" beats "Rules 3").
 ### Adherence reports
 
 Because the standards arrive labelled, the code reviewer and the PR reviewer score the change against
-each one. Their result windows carry a **Best-practice adherence** section: per standard, a score out
-of ten and the findings related to it, or an explicit "none reachable" when a standard could not be
-judged from the diff. It tells you which of your standards the change actually honoured, instead of a
+each one. Their result windows carry a **Best-practice adherence** section. For each standard, the
+section gives a score out of ten and the related findings. When a standard could not be judged from
+the diff, it says "none reachable" explicitly. It tells you which of your standards the change actually honoured, instead of a
 single overall verdict.
 
 ### Per-task-type defaults
 
 A new task of a given type can start with a default set of fragments already pinned. The only built-in
 default is for **document** tasks: two **writing-style** fragments (*Avoid LLM tells* and *Concise and
-actionable*) are pinned on every new document task. A deployment can register its own custom fragments
-as the default for any task type (feature, bug, review, and so on) at startup with
-`registerPromptFragments(...)` and `registerTaskTypeDefaultFragments(taskType, ids)`; registered ids
-augment the built-in document defaults rather than replacing them. This seeding is server-side, so a
-task created through the API carries its type's defaults whether or not the caller named any
+actionable*) are pinned on every new document task.
+
+At startup, a deployment can register its own custom fragments as the default for any task type
+(feature, bug, review, and so on). It does this with `registerPromptFragments(...)` and
+`registerTaskTypeDefaultFragments(taskType, ids)`. Registered ids augment the built-in document
+defaults rather than replacing them. This seeding is server-side, so a task created through the API carries its type's defaults whether or not the caller named any
 standards of its own. It is a deployment-level seam, not a UI setting.
 
 ## Link an external document as a living fragment
@@ -119,9 +120,9 @@ shows a **Changes available** badge (otherwise **Up to date**); resync to pull t
 check reads only the current head commit of the source, so it is cheap, and fragment bodies are
 cached locally, so a run never re-fetches from GitHub.
 
-Unlinking a source is a confirmed action: it asks you to confirm, naming the repo and warning that the
-guideline fragments it synced will be removed (you can re-link it later), so a synced source isn't
-dropped by a stray click.
+Unlinking a source is a confirmed action, so a synced source isn't dropped by a stray click. The
+confirmation names the repo, and warns that the guideline fragments it synced will be removed. You
+can re-link it later.
 
 The body is cached as a last-resolved snapshot and refreshed on a short TTL (5 minutes by default). If
 the source is unreachable at run time, the run falls back to the cached body, so resolution never
@@ -147,7 +148,7 @@ issues attached to a block, plus any imported reference its description or incor
 names) reaches the agent a different way.
 
 For a container agent (one that works in a checkout), the engine writes the full text of each linked
-document and issue into a `.cat-context/` directory in the checkout and lists them as a short summary
+document and issue into a `.cat-context/` directory in the checkout. It lists them as a short summary
 index in the prompt. The agent opens a file on demand instead of working from a short excerpt. These
 files are kept out of commits through a local git exclude, so they never land in a PR. For an inline
 agent (no checkout), the budgeted body is injected into the prompt directly.
