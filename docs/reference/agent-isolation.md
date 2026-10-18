@@ -1,8 +1,8 @@
 # Agent Isolation Model
 
-For anyone who has to answer "what can that model actually reach" — a security reviewer, or an
-operator deciding what to connect. An agent run is a language model doing work on a checkout of one
-repository. This page describes the boundary around that model: what it can reach, what it never
+For a security reviewer, an operator deciding what to connect, or anyone else who has to answer
+"what can that model actually reach". An agent run is a language model doing work on a checkout of
+one repository. This page describes the boundary around that model: what it can reach, what it never
 gets, and what mediates each pathway.
 
 The short version: the model never holds the credentials to your own systems, never connects to your
@@ -19,13 +19,13 @@ A per-run container holds two distinct programs, and the distinction is the whol
   It clones the repo, launches the model, commits what the model changed, pushes a branch, and opens
   the pull request. It also holds one port inside the container, `27182`, for the job API the
   backend dispatches to and polls. Anything a run starts for itself (a service under test, a preview
-  server) must listen on some other port: the harness answers requests on its own, so a health check
-  aimed at it would pass without the service under test ever having run. Two things keep that from
-  happening by accident. The harness does not pass its own `PORT` down to anything it starts in the
-  checkout, so a service written as `listen(process.env.PORT)` picks its own default rather than the
-  harness's port. And a frontend frame configured to serve on the port the harness holds is refused
-  with that named as the reason, instead of being served, failing to bind, and then being graded
-  against the harness's reply.
+  server) must listen on some other port, because the harness answers requests on its own. A health
+  check aimed at the harness would pass without the service under test ever having run. Two things
+  keep that from happening by accident. The harness does not pass its own `PORT` down to anything it
+  starts in the checkout, so a service written as `listen(process.env.PORT)` picks its own default
+  rather than the harness's port. And a frontend frame configured to serve on the port the harness
+  holds is refused, with that named as the reason. Otherwise it would be served, fail to bind, and
+  be graded against the harness's reply.
 - The **model** is the agent CLI the harness launches (for example the Pi coding agent). It is the
   untrusted part: it runs whatever the language model decides to do. Its only durable output is edits
   to files in the checkout.
@@ -106,35 +106,39 @@ shape:
 | GitLab, any shape | A per-workspace PAT, sealed at rest and unsealed server-side per use | Whatever the person who created the PAT granted | The PAT's own |
 
 **The run initiator's stored personal PAT outranks all of those, unless the workspace refuses it.**
-Where the per-user secret store is wired, a run whose initiator has stored a personal GitHub PAT uses
-that token instead of the deployment's own, for the clone and push and for the engine's own calls
-(the CI gate, mergeability, the merge itself). The purpose is attribution: pushes and pull requests
-come from the person who started the run rather than from a bot.
+Where the per-user secret store is wired, a run whose initiator has stored a personal GitHub PAT
+uses that token instead of the deployment's own. That covers the clone and push, and the engine's
+own calls (the CI gate, mergeability, the merge itself). The purpose is attribution: pushes and pull
+requests come from the person who started the run rather than from a bot.
 
-The security consequence is that the bound is then the PAT's scope, not the installation's, and a
+The security consequence is that the bound is then the PAT's scope, not the installation's. A
 classic-scope personal PAT is broader than any installation, reaching repositories the platform was
 never installed on. So who started a run bounds its blast radius as much as how the operator scoped
 the deployment does. Treat "who may start runs" and "what tokens those members store" as one
 question.
 
-**Allow runs to use the initiator's PAT** is the enforced control, a per-workspace setting that is on
-by default. Turned off, every run authenticates as the App installation (or, in local mode, the
-deployment's own token) and the initiator's PAT is never decrypted, so the blast radius goes back to
-being a property of the deployment. It is a mechanism, not advice: every mint site routes through one
-decision, and an unreadable settings row fails closed to the App token. It does not touch a member
-using their own token on their own behalf in the app, such as browsing their own repositories in the
-picker.
+**Allow runs to use the initiator's PAT** is the enforced control, a per-workspace setting that is
+on by default. Turned off, every run authenticates as the App installation (or, in local mode, the
+deployment's own token), and the initiator's PAT is never decrypted. The blast radius is then a
+property of the deployment again. The setting is a mechanism, not advice: every mint site routes
+through one decision, and an unreadable settings row fails closed to the App token. It does not
+touch a member using their own token on their own behalf in the app, such as browsing their own
+repositories in the picker.
 
-When you test or save a GitHub PAT, the app states its breadth: a classic token carrying `repo` is
-called out, unused scopes are flagged, and a token whose scopes GitHub does not report is reported as
-unknown rather than passing as narrow. Use a fine-grained PAT restricted to the repositories the
-deployment works on.
+When you test or save a GitHub PAT, the app states its breadth:
+
+- A classic token carrying `repo` is called out.
+- Unused scopes are flagged.
+- A token whose scopes GitHub does not report is reported as unknown, rather than passing as narrow.
+
+Use a fine-grained PAT restricted to the repositories the deployment works on.
 
 ::: warning Branch protection is yours to configure
 The credential carries write access for the whole repository, and a GitHub App token cannot be
 branch-scoped. Nothing platform-side stops a stolen token from pushing directly to an unprotected
-default branch, or from merging an open pull request through the host's merge API, which needs no more
-permission than the push already had. Branch protection on the host is the control for both.
+default branch. Nor does anything platform-side stop it from merging an open pull request through
+the host's merge API, which needs no more permission than the push already had. Branch protection
+on the host is the control for both.
 
 A **branch-protection preflight** probes each linked repository's default branch on demand and reports
 three states, never two: protected, unprotected, and could-not-determine. Run it from the repository
@@ -194,9 +198,9 @@ To be precise about where the boundary actually sits:
   own [runner pool](../operate/runner-pools.md), the pool you operate. A self-hosted pool is the one
   place a leased subscription token leaves the backend to reach your runner.
 
-The model itself is treated as untrusted throughout, which is the point: even a fully compromised
-agent run cannot read the credentials to your systems, reach your linked systems, or change anything
-beyond a branch you review before it merges.
+The model itself is treated as untrusted throughout, which is the point. Even a fully compromised
+agent run cannot read the credentials to your systems or reach your linked systems. It cannot change
+anything beyond a branch you review before it merges.
 
 ---
 

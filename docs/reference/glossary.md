@@ -21,8 +21,8 @@ surface's catalog is offered.
 
 ## B
 
-**Block.** The unit on the board. A block is both plan and work item, at one of four levels: an
-epic, a service frame, a module inside a frame, or a task leaf. "Card" is the same thing as it is
+**Block.** The unit on the board. A block is both plan and work item. It is at one of four levels:
+an epic, a service frame, a module inside a frame, or a task leaf. "Card" is the same thing as it is
 drawn on the board.
 
 **Board.** The pannable canvas a workspace's blocks live on. See

@@ -12,19 +12,19 @@ actions:
     type: secondary
 features:
   - title: From ticket to reviewed pull request
-    details: Import an issue from Jira, Linear, or GitHub Issues, or write the task on the board. An ordered agent chain (Architect → Coder → Reviewer → Tester → Acceptance) plans it, writes the code against a real repository checkout, reviews and tests it, opens the pull request, and comments the outcome back on the ticket.
+    details: Import an issue from Jira, Linear, or GitHub Issues, or write the task on the board. An ordered agent chain (Architect → Coder → Reviewer → Tester → Acceptance) plans it and writes the code against a real repository checkout. The chain reviews and tests it, opens the pull request, and comments the outcome back on the ticket.
   - title: Watch it all happen on one canvas
-    details: Zoom out for the whole system; zoom into a running task and its card opens into the live pipeline, its steps, and what it has spent. Runs in flight, failures, and decisions waiting on you appear where the work sits, and you answer a gate or retry a step right there instead of tailing logs.
+    details: Zoom out for the whole system. Zoom into a running task and its card opens into the live pipeline, its steps, and what it has spent. Runs in flight, failures, and decisions waiting on you appear where the work sits. You answer a gate or retry a step right there instead of tailing logs.
   - title: 100% free and open source
-    details: MIT licensed, no paid tier, no open-core holdback, nothing behind a license key. Everything on this page ships in the version you self-host, and your code, data, and model credentials never leave your own infrastructure.
+    details: MIT licensed, no paid tier, no open-core holdback, nothing behind a license key. Everything on this page ships in the version you self-host. Your code, data, and model credentials never leave your own infrastructure.
   - title: You decide what agents may land
-    details: Per-task risk policies set what merges without a human, through score ceilings, rules per change class (a migration is not a test-only diff), narrowing by workspace role, retry budgets, and human decision gates you can place anywhere in a pipeline.
+    details: Per-task risk policies set what merges without a human. They use score ceilings, rules per change class (a migration is not a test-only diff), narrowing by workspace role, retry budgets, and human decision gates you can place anywhere in a pipeline.
   - title: Scales from one engineer to a whole org
-    details: One person on a laptop and an engineering organization running every team's agent flows share the same build. Start with a model provider and nothing else; grow into directory SSO with group gating, an org-wide monthly LLM cap that meters spend and auto-pauses at the ceiling, and an audit log kept to outlive every other record. At either size, every step, decision, failure, and dollar streams live to the board, with traces exportable to OpenTelemetry or Langfuse.
+    details: One person on a laptop and an engineering organization running every team's agent flows share the same build. Start with a model provider and nothing else. Then grow into directory SSO with group gating, an org-wide monthly LLM cap that meters spend and auto-pauses at the ceiling, and an audit log kept to outlive every other record. At either size, every step, decision, failure, and dollar streams live to the board, with traces exportable to OpenTelemetry or Langfuse.
   - title: A public API you can build on
-    details: "A key-authenticated HTTP surface under /api/v1 covers the whole board, so a deployment can provision and run itself with nobody opening the app: link or bootstrap repositories, connect a cluster, file tasks from Jira, Linear, or GitHub tickets, start, stop, and retry runs, answer parked human decisions, read the workspace's spend, and drill into a finished run's model calls. It ships as an OpenAPI 3.1 document with official TypeScript, Python, Go, and Java/Kotlin clients generated from it, an MCP server over the same operations, and a stability contract: changes are additive, and a breaking one is served beside the old shape instead of replacing it."
+    details: "A key-authenticated HTTP surface under /api/v1 covers the whole board, so a deployment can provision and run itself with nobody opening the app. It can link or bootstrap repositories, connect a cluster, and file tasks from Jira, Linear, or GitHub tickets. It can start, stop, and retry runs, answer parked human decisions, read the workspace's spend, and drill into a finished run's model calls. It ships as an OpenAPI 3.1 document, with official TypeScript, Python, Go, and Java/Kotlin clients generated from it, and an MCP server over the same operations. The API also has a stability contract: changes are additive, and a breaking one is served beside the old shape instead of replacing it."
   - title: Headless from ticket to merged PR
-    details: "Runs started over the API execute exactly as board runs and show up on the board, with keyset-paged lists, per-run Server-Sent Events, and an outbound webhook that pushes anything needing an answer to your own endpoint. Set a run's risk policy to unattended and it takes the documented answer to each judgement call and records that it did, so a scheduled or CI-started run reaches a pull request instead of parking forever, while the gates you placed on purpose still stop it for a person."
+    details: "Runs started over the API execute exactly as board runs and show up on the board. The API adds keyset-paged lists, per-run Server-Sent Events, and an outbound webhook that pushes anything needing an answer to your own endpoint. Set a run's risk policy to unattended, and it takes the documented answer to each judgement call and records that it did. Because of this, a scheduled or CI-started run reaches a pull request instead of parking forever, while the gates you placed on purpose still stop it for a person."
   - title: Run it and extend it your way
     details: One machine, Cloudflare Workers, or self-hosted Node, on the coding subscriptions you already pay for instead of metered API spend. Add your own agents, gates, task types, and integrations through a manifest model and the published @cat-factory/* packages.
 footer: MIT Licensed | Copyright © Igor Savin
@@ -50,7 +50,7 @@ will follow in the navigation.
 <div class="next-grid">
 <div class="next-card">
 
-**Start** — new here?
+**Start**: new here?
 
 Read the [Introduction](/guide/introduction.html) and
 [Core Concepts](/guide/core-concepts.html), then take the
@@ -59,7 +59,7 @@ Read the [Introduction](/guide/introduction.html) and
 </div>
 <div class="next-card">
 
-**Guides** — using it day to day?
+**Guides**: using it day to day?
 
 [Design your board](/guide/designing-your-board.html),
 [run a pipeline](/guide/running-pipelines.html), or change a flow you already
@@ -68,16 +68,16 @@ run with a short recipe from the [Cookbook](/guide/cookbook.html).
 </div>
 <div class="next-card">
 
-**Deploy** — want it running?
+**Deploy**: want it running?
 
-Pick a runtime — [local](/deploy/local.html), [Cloudflare](/deploy/cloudflare.html),
-or [Node.js](/deploy/nodejs.html) — and sign people in through your directory with
+Pick a runtime ([local](/deploy/local.html), [Cloudflare](/deploy/cloudflare.html),
+or [Node.js](/deploy/nodejs.html)), and sign people in through your directory with
 [enterprise SSO](/deploy/sso.html).
 
 </div>
 <div class="next-card">
 
-**Operate** — running it in production?
+**Operate**: running it in production?
 
 Set up [observability](/operate/observability.html), keep
 [Troubleshooting](/operate/troubleshooting.html) within reach, and walk the
@@ -86,7 +86,7 @@ Set up [observability](/operate/observability.html), keep
 </div>
 <div class="next-card">
 
-**Extend** — building on it?
+**Extend**: building on it?
 
 Write an [integration manifest](/extend/manifests.html), build against the
 [SDKs](/extend/sdks.html), or
@@ -95,7 +95,7 @@ Write an [integration manifest](/extend/manifests.html), build against the
 </div>
 <div class="next-card">
 
-**Reference** — looking something up?
+**Reference**: looking something up?
 
 The [architecture](/reference/architecture.html),
 [environment variables](/reference/environment-variables.html), and the
@@ -124,29 +124,29 @@ See [Connect Issue & Document Sources](/guide/issue-sources.html) and
 
 **Build & review**
 
-- **Multi-stage agent pipelines** — ordered chains with per-agent models and human decision gates.
-- **Requirements & spec** — a reviewer agent flags gaps and risks per task; the Spec Writer keeps a unified, in-repo spec with Gherkin acceptance scenarios.
-- **Visual confirmation** (experimental) — a UI Tester screenshots each screen, then a gate parks for you to compare them against reference designs.
-- **Custom agents & gates** — extend the pipeline through a manifest model and the published `@cat-factory/*` packages.
+- **Multi-stage agent pipelines**: ordered chains with per-agent models and human decision gates.
+- **Requirements & spec**: a reviewer agent flags gaps and risks per task; the Spec Writer keeps a unified, in-repo spec with Gherkin acceptance scenarios.
+- **Visual confirmation** (experimental): a UI Tester screenshots each screen, then a gate parks for you to compare them against reference designs.
+- **Custom agents & gates**: extend the pipeline through a manifest model and the published `@cat-factory/*` packages.
 
 **Test & iterate**
 
-- **Sandbox** — test prompts and models side by side against graded fixtures, scored by a judge, before you commit to a preset.
-- **Ephemeral environments** — spin up a live preview per run for integration and end-to-end tests, then tear it down automatically.
-- **Recurring pipelines** — schedule dependency bumps and tech-debt passes to ship as reviewed PRs on a cadence, with no one kicking them off.
+- **Sandbox**: test prompts and models side by side against graded fixtures, scored by a judge, before you commit to a preset.
+- **Ephemeral environments**: spin up a live preview per run for integration and end-to-end tests, then tear it down automatically.
+- **Recurring pipelines**: schedule dependency bumps and tech-debt passes to ship as reviewed PRs on a cadence, with no one kicking them off.
 
 **Operate**
 
-- **Durable runs** — every run is checkpointed, survives interruptions, and resumes where it left off.
-- **Live observability** — watch each step, decision, failure, and spend update stream over WebSockets.
-- **Budgets & metering** — an org-wide monthly LLM cap with per-run metering, prompt caching, auto-pause, and rollover resumption.
-- **Runner pools** — provision agent containers across your own runners.
+- **Durable runs**: every run is checkpointed, survives interruptions, and resumes where it left off.
+- **Live observability**: watch each step, decision, failure, and spend update stream over WebSockets.
+- **Budgets & metering**: an org-wide monthly LLM cap with per-run metering, prompt caching, auto-pause, and rollover resumption.
+- **Runner pools**: provision agent containers across your own runners.
 
 **Collaborate**
 
-- **Shared services** — one account-owned service mounts onto many teams' boards as a single synced copy.
-- **Members, roles & invitations** — invite teammates into a shared organization with role-based access.
-- **Localized, mobile-friendly UI** — English, Spanish, French, Polish, and Ukrainian, with a responsive board shell (touch pan, pinch zoom, phone minimap).
+- **Shared services**: one account-owned service mounts onto many teams' boards as a single synced copy.
+- **Members, roles & invitations**: invite teammates into a shared organization with role-based access.
+- **Localized, mobile-friendly UI**: English, Spanish, French, Polish, and Ukrainian, with a responsive board shell (touch pan, pinch zoom, phone minimap).
 
 ## Deploy anywhere
 

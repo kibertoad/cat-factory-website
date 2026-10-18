@@ -22,9 +22,9 @@ need to resolve to the right connection.
 
 Each provider's API base also decides the **web host** the app links repositories, merge and pull
 requests, and issues to, and the host agent containers clone from. A base that names no recognisable
-host makes the app withhold those links rather than point at the provider's public instance, where
-the same namespace path is very likely somebody else's project, and a run refuses to dispatch rather
-than checking out whatever lives at that path.
+host makes the app withhold those links, rather than point at the provider's public instance. There,
+the same namespace path is very likely somebody else's project. In that case, a run also refuses to
+dispatch rather than check out whatever lives at that path.
 
 On Cloudflare the platform passes the GitLab host to each agent container for you. On a
 [self-hosted runner pool](../operate/runner-pools.md) the harness is yours to configure: set
@@ -74,8 +74,8 @@ it defaults to github.com.
 Three rows decide most deployments:
 
 - **Credential isolation.** On GitHub each workspace gets its own installation scope. On GitLab a
-  workspace connects its own token for browsing and linking repositories, but the engine's own work
-  (cloning, gating on CI, merging) runs on the one deployment-wide token, so a multi-tenant GitLab
+  workspace connects its own token for browsing and linking repositories. But the engine's own work
+  (cloning, gating on CI, merging) runs on the one deployment-wide token. So a multi-tenant GitLab
   deployment cannot yet isolate one team's repositories from another's where it matters most.
 - **Code search.** Several agent kinds search code to orient themselves. On GitLab those searches
   return nothing rather than failing, so agents fall back on reading the checkout.

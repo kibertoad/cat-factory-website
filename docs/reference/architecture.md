@@ -79,7 +79,7 @@ historical logs, and access to container/job logs.
 The agent that runs in a per-run container never holds your credentials, never connects to your
 linked systems, and never pushes to GitHub itself. It reads and edits a single checkout; trusted
 backend code does everything else. Outbound calls go through the backend, never the container
-directly: an LLM proxy meters every model call without a provider key entering the sandbox, and the
+directly. An LLM proxy meters every model call without a provider key entering the sandbox. The
 short-lived GitHub token a run uses lives in the harness, not the model.
 
 See [Agent Isolation Model](./agent-isolation.md) for the full treatment of the trust boundary, the
@@ -97,9 +97,10 @@ narrow pathways in and out, and what the model never gets.
 
 A service is account-owned and keyed independently of any one workspace, so the same service
 (its blocks, state, runs) is one shared copy that several workspaces in an org can
-[mount](../guide/shared-services.md). Two mechanisms keep shared boards consistent: a block's live
-events are fanned out to every workspace that mounts its service, and GitHub sync is
-deduplicated to once per repo per org, then distributed to each linked workspace.
+[mount](../guide/shared-services.md). Two mechanisms keep shared boards consistent:
+
+- A block's live events are fanned out to every workspace that mounts its service.
+- GitHub sync is deduplicated to once per repo per org, then distributed to each linked workspace.
 
 ---
 
