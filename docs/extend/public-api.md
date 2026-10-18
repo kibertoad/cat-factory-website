@@ -754,6 +754,15 @@ the branch moved after the review started), and the provider's own error for eac
 Retrying is the same `post` call with the same selection: what has already landed is recorded, so
 nothing is commented twice.
 
+**One `post` can also hand other findings to the fixer.** Add `fixFindingIds` to a `post`
+resolution and, once every comment has landed, the review moves to `fixing` and the agent commits
+onto the PR's branch for exactly those findings. The comments go first because they are anchored to
+the commit that was reviewed, which the fixer's pushes would move. The `pr-review` entry lists what
+is queued in `fixFindingIds`, a field that is always present, so its presence also tells you the
+deployment supports this. If the post partly fails, the review comes back with the queue cleared:
+send both lists again on the retry. `fixFindingIds` with any action other than `post` is refused
+with `409`.
+
 ### Learning that a run parked
 
 Polling is the fallback, not the design. Two pushes carry a park outward:
