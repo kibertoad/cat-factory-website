@@ -113,8 +113,8 @@ That is shown as absent, never as healthy.
 - **Each entry is a single tool NAME.** The harness joins the list into one argument with commas,
   so `['search_issues,get_issue']` is one malformed pattern, not two names. It is refused at
   registration and dropped again at dispatch.
-- **It is SCOPING, not a security boundary.** It is always stated in the prompt and additionally
-  passed to claude-code's `--allowedTools`, but whether that CLI list gates depends on the run's
+- **It is SCOPING, not a security boundary.** It is always stated in the prompt, and additionally
+  passed to claude-code's `--allowedTools`. But whether that CLI list gates depends on the run's
   permission mode, and Codex cannot express a per-tool restriction at all. Pi is the one CLI that
   enforces it: the server's other tools are registered but cannot be called. If an agent kind must
   never reach a server's other tools, do not wire that server for that kind, and take the
@@ -135,40 +135,43 @@ deployment environment.
   told it does not have.
 - **Give each credential a `usage` line.** It is shown beside the key in the operator's checklist,
   and the checklist can only say what your declaration says. A bare `SLACK_MCP_TOKEN` names neither
-  the token type nor the scopes it needs, so without a `usage` line the operator has to go and read
-  your source, which is the one trip the checklist exists to remove. One sentence, naming where to
+  the token type nor the scopes it needs, so without a `usage` line, the operator has to go and read
+  your source. That is the one trip the checklist exists to remove. One sentence, naming where to
   get the value, and naming no value.
 - **A credential may not be LOOKED UP BY a platform configuration variable.** A declaration names
-  both the key it wants and the endpoint that key is sent to, so `{ key: 'ENCRYPTION_KEY', header:
-  'Authorization' }` would boot clean and ship the deployment's master sealing key to a third
-  party. Every variable on the [Environment Variables](../reference/environment-variables.md)
-  reference is reserved, case-insensitively. Such a declaration is refused at boot and refused
-  again at dispatch, under its own `reserved_secret` reason rather than `missing_secret`, because
-  the two need opposite fixes and setting the variable is precisely what must not help.
+  both the key it wants and the endpoint that key is sent to. So
+  `{ key: 'ENCRYPTION_KEY', header: 'Authorization' }` would boot clean, and ship the deployment's
+  master sealing key to a third party. Every variable on the [Environment Variables](../reference/environment-variables.md)
+  reference is reserved, case-insensitively. Such a declaration is refused at boot, and refused
+  again at dispatch. It gets its own `reserved_secret` reason rather than `missing_secret`, because
+  the two need opposite fixes: setting the variable is precisely what must not help.
 - **Use `envName` when the server's own client insists on a specific variable.** The floor above
-  binds the LOOKUP key, not the variable the value is injected under inside the server's process,
-  which reads nothing on this side. That distinction is what keeps the floor affordable: GitHub's
-  MCP server reads `GITHUB_PERSONAL_ACCESS_TOKEN` and Slack's reads `SLACK_BOT_TOKEN`, and the
-  platform reads neither while reserving both families. So declare
+  binds the LOOKUP key, not the variable the value is injected under inside the server's process.
+  That process reads nothing on this side. The distinction is what keeps the floor affordable.
+  GitHub's MCP server reads `GITHUB_PERSONAL_ACCESS_TOKEN` and Slack's reads `SLACK_BOT_TOKEN`. The
+  platform reads neither, while reserving both families. So declare
   `{ key: 'ACME_GITHUB_TOKEN', envName: 'GITHUB_PERSONAL_ACCESS_TOKEN' }`: looked up under a name
-  of your own, injected under the one the vendor's SDK wants. `envName` has its own narrower rule
-  (not `PATH`, `NODE_OPTIONS`, `npm_config_*`, or anything else that would reconfigure the process
-  instead of authenticating a call).
+  of your own, injected under the one the vendor's SDK wants. `envName` has its own narrower rule:
+  not `PATH`, `NODE_OPTIONS`, `npm_config_*`, or anything else that would reconfigure the process
+  instead of authenticating a call.
 - **The transport decides where a credential goes, so declare the matching one.** A `stdio` server
-  is a child process with an environment and no request to put a header on; an `http` server is a
-  remote url with headers and no process to set a variable in. So a `stdio` credential is injected
-  as a variable (its key, or its `envName`), and an `http` credential rides the `header` it names,
-  with an optional `headerTemplate` such as `Bearer {value}` for the scheme. Naming the other one
-  fails boot, in both directions: a `header` on `stdio` is `unusable_credential_header`, and an
-  `http` credential with no `header` is `missing_credential_header`. They are errors rather than
-  warnings because such a declaration does not work at all. The value resolves, is folded into
-  nothing, and the server is wired, advertised to the agent, and started unauthenticated, with the
-  first evidence a failing tool call minutes into a run. Declaring an `envName` on an `http` server
-  that DOES name a header is the harmless case, and only warned about: the value still arrives as
-  the header, and the injection name is read by nothing.
+  is a child process with an environment, and no request to put a header on. An `http` server is a
+  remote url with headers, and no process to set a variable in. So a `stdio` credential is
+  injected as a variable (its key, or its `envName`). An `http` credential rides the `header` it
+  names, with an optional `headerTemplate` such as `Bearer {value}` for the scheme.
+
+  Naming the other one fails boot, in both directions. A `header` on `stdio` is
+  `unusable_credential_header`, and an `http` credential with no `header` is
+  `missing_credential_header`. They are errors rather than warnings, because such a declaration does
+  not work at all. The value resolves and is folded into nothing. The server is wired, advertised to
+  the agent, and started unauthenticated. The first evidence is a failing tool call minutes into a
+  run.
+
+  Declaring an `envName` on an `http` server that DOES name a header is the harmless case, and only
+  warned about. The value still arrives as the header, and the injection name is read by nothing.
 - **A workspace's own value wins over the deployment's.** The per-workspace credential store sits
-  in front of the environment, per key, so a tenant supplies its own vendor account and a workspace
-  that has stored nothing resolves exactly as it did before the store existed. The surface is a
+  in front of the environment, per key. So a tenant supplies its own vendor account, and a workspace
+  that has stored nothing resolves from the environment alone. The surface is a
   CHECKLIST rather than a blank form: Infrastructure → Capability credentials projects the
   credentials this deployment's registered capabilities declare, so nobody has to read the source
   to learn what to fill in. It appears only for someone holding `secrets.manage`.
@@ -206,9 +209,9 @@ registry.registerToolServer({
 registry.assignToolServers('coder', ['linear'])
 ```
 
-The split is the same one the static path has, one level up: a `secretKeys` declaration names a
-credential and the workspace supplies its VALUE, while an `oauth` declaration names a CLIENT and
-the workspace supplies its GRANT.
+The split is the same one the static path has, one level up. A `secretKeys` declaration names a
+credential, and the workspace supplies its VALUE. An `oauth` declaration names a CLIENT, and the
+workspace supplies its GRANT.
 
 **Two grants, and only one of them involves a person.**
 
@@ -245,20 +248,24 @@ it never drops a form body.
   `oauth_not_connected`.
 - **`MCP_OAUTH_REDIRECT_URL`**, for the interactive grant only: your deployment's public app url
   followed by `/mcp-oauth-callback`, and the same string registered as the client's redirect URI at
-  the vendor. It is operator-set rather than derived from the request, because a value derived from
-  the `Host` header differs behind every proxy and preview url, and the vendor then refuses the
-  exchange with `redirect_uri_mismatch`, which names nothing on this side. Unset, Connect refuses
+  the vendor. It is operator-set rather than derived from the request, because a `Host`-derived
+  value differs behind every proxy and preview url. The vendor then refuses the exchange
+  with `redirect_uri_mismatch`, which names nothing on this side. Unset, Connect refuses
   with a message naming the variable, before the browser leaves the app.
 - **The client secret**, when your client has one. It resolves through the same credential chain a
   `secretKeys` entry uses, so a tenant can bring its own OAuth client through the same checklist.
 
 ### What a board sees
 
-The tool-server row in Infrastructure → Capability credentials carries the connection: Connect,
-Reconnect, Disconnect, who granted it, the scopes the vendor actually granted, and, beside
-`connected` rather than instead of it, the last token renewal that failed. That pairing is the
-point: a grant that is on file and no longer producing tokens is exactly the state that reads as
-working and is not.
+The tool-server row in Infrastructure → Capability credentials carries the connection:
+
+- Connect, Reconnect and Disconnect
+- who granted it
+- the scopes the vendor actually granted
+- the last token renewal that failed, beside `connected` rather than instead of it
+
+That pairing is the point: a grant that is on file and no longer producing tokens is exactly the
+state that reads as working and is not.
 
 Three things worth knowing before you wire one:
 
@@ -272,7 +279,7 @@ Three things worth knowing before you wire one:
 ### Security notes specific to OAuth
 
 - **The vendor's redirect lands on the app, and the backend never receives one.** A redirect target
-  is reached by a top-level browser navigation that a third party triggers, and sessions here are
+  is reached by a top-level browser navigation that a third party triggers. Sessions here are
   bearer tokens, which such a navigation cannot carry. A backend route receiving the redirect
   directly would see no user on every request, and any "same user" check written there would be
   unreachable code that reads like protection. The callback page re-presents the code to ordinary
@@ -294,8 +301,8 @@ Three things worth knowing before you wire one:
 ## Test a server for real
 
 Boot validation rules on the declaration and a dispatch reports what it dropped. Neither can tell
-you whether a server that survives both actually answers, so a dead url, a rotated token or a
-mistyped tool name would otherwise surface only as an agent quietly working without a tool it was
+you whether a server that survives both actually answers. Without a test, a dead url, a rotated
+token or a mistyped tool name would surface only as an agent quietly working without a tool it was
 promised.
 
 Infrastructure → Capability credentials lists every registered server with a **Test** button. A
@@ -317,10 +324,12 @@ deployment's variable.
 | `not_probeable` | There is no vantage point to probe from | Verify from a run, or change the transport |
 
 Three declarations are refused by name instead of probed, because a probe from the backend would
-answer about the wrong process: a `stdio` server is a child of the harness inside the run
-container; a loopback url means "beside the agent, in its own container", and the backend's
-`127.0.0.1` is a different machine (a SUCCESS there would be the more misleading outcome); and a
-url that fails the transport rule is held to the same floor a dispatch holds it to.
+answer about the wrong process:
+
+- A `stdio` server is a child of the harness inside the run container.
+- A loopback url means "beside the agent, in its own container", and the backend's `127.0.0.1` is a
+  different machine. A SUCCESS there would be the more misleading outcome.
+- A url that fails the transport rule is held to the same floor a dispatch holds it to.
 
 A redirect is followed, but a credential stops at its own origin. Each hop is re-checked against
 the transport rule, and a hop that leaves the declared origin while a credential is riding is
@@ -342,11 +351,11 @@ everything about operating one:
   answer about the right process. Verify from a run instead: read the prompt's tool-server section,
   or the run's agent-context snapshot.
 - **An `npx`-launched server resolves and installs its package at CLI startup, on every run.** That
-  spends the run container's network and the registry's availability every time, and a resolution
-  failure surfaces from the CLI mid-run rather than through the platform's own vocabulary, which
+  spends the run container's network and the registry's availability every time. A resolution
+  failure surfaces from the CLI mid-run, rather than through the platform's own vocabulary, which
   has already said the server was wired. **Pin the package version in `args`**
-  (`@example-org/advisories-mcp@1.4.2`, never a bare name or a dist-tag), so every run executes the
-  same code and a vendor's bad publish cannot change agent behaviour mid-week.
+  (`@example-org/advisories-mcp@1.4.2`, never a bare name or a dist-tag). Then every run executes
+  the same code, and a vendor's bad publish cannot change agent behaviour mid-week.
 - **Pre-installing the package into your runner image** removes the cold start and the registry
   dependence, at the cost of an image-affecting change.
 - **Non-secret process config rides `transport.env`; anything secret rides `secretKeys`.** The
@@ -383,8 +392,8 @@ Worth knowing before you adopt, so the ceiling comes from this page rather than 
   so their runs record the platform's half alone. It is stated as absent rather than as healthy, and a
   wired-but-broken server is still diagnosed with the Test button.
 - **Pi runs need runner image 1.162.0 or later.** An older image reports that it cannot wire Pi's
-  tool servers, so a Pi step that carries any is refused at dispatch with the image named, not run
-  with tools the prompt promises and nothing serves. Update the pool, or narrow the server's
+  tool servers, so a Pi step that carries any is refused at dispatch with the image named. It is not
+  run with tools the prompt promises and nothing serves. Update the pool, or narrow the server's
   `harnesses` to the subscription CLIs until you do.
 - **On Pi, a server that offers MCP resources also brings Pi's resource tools** (`list_mcp_resources`,
   `read_mcp_resource`), unless `allowedTools` narrows that server.

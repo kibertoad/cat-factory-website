@@ -10,12 +10,16 @@ they own (a preview-environment platform or a runner scheduler) with a declarati
 [manifest](./manifests.md), and a single generic adapter drives it over HTTP. No code. Read this page
 only once that has run out.
 
-The manifest isn't enough when your platform speaks a protocol that doesn't map cleanly onto
-request/response templates, needs multi-step orchestration per operation, talks gRPC or a vendor
-SDK, or derives values (a URL, a status) from a response shape too dynamic for dot-paths. For those
-cases the backend exposes the same ports the built-in adapters implement as **code seams**, so you
-can ship your own adapter inside your [deployment repository](../deploy/deployment-repository.md) without
-forking the platform.
+The manifest isn't enough when your platform does any of these:
+
+- speaks a protocol that doesn't map cleanly onto request/response templates
+- needs multi-step orchestration per operation
+- talks gRPC or a vendor SDK
+- derives values (a URL, a status) from a response shape too dynamic for dot-paths
+
+For those cases, the backend exposes the same ports the built-in adapters implement as **code
+seams**, so you can ship your own adapter inside your
+[deployment repository](../deploy/deployment-repository.md) without forking the platform.
 
 This page shows how to implement and wire a custom **environment provider** and a custom **runner
 pool**, with a realistic (vendor-neutral) example for each, and the gotchas that bite.
@@ -97,10 +101,13 @@ function resolve(defaults: Defaults, manifest: EnvironmentManifest, resolveSecre
 
 ## Letting the UI configure your adapter
 
-The three lifecycle methods are all an adapter must implement. Implement three more optional methods
-and your native adapter gets a generated connect form under **Settings → Integrations**, a connection
-test before save, and a place in the unconfigured-provider banner, instead of asking operators to
-hand-author the connection manifest.
+The three lifecycle methods are all an adapter must implement. Implement three more optional methods,
+and your native adapter gets three things instead of asking operators to hand-author the connection
+manifest:
+
+- a generated connect form under **Settings → Integrations**
+- a connection test before save
+- a place in the unconfigured-provider banner
 
 | Method | Returns | What it gives you |
 | --- | --- | --- |
@@ -156,8 +163,8 @@ adapter still works, operators just configure it as a [manifest](./manifests.md)
 ### The unconfigured-provider banner
 
 When a provider is wired into the container but a workspace has not supplied every `required`
-field that has no `default`, Cat Factory shows a loud banner in **Settings → Integrations** listing
-exactly what is missing. The signal is computed server-side from the stored secret bundle plus the
+field that has no `default`, Cat Factory shows a loud banner in **Settings → Integrations**. The
+banner lists exactly what is missing. The signal is computed server-side from the stored secret bundle plus the
 manifest's `providerConfig` and `baseUrl`, so the connect form, the banner, and register-time
 validation read one source of truth. The banner clears itself once the last missing field is
 supplied. A `required` field that you back with a `default` never triggers the banner.
@@ -165,9 +172,9 @@ supplied. A `required` field that you back with a `default` never triggers the b
 ### Connection test
 
 If you implement `testConnection`, the connect form gains a test button that runs before save. The
-request carries the candidate config (`config` for a native adapter, the candidate `manifest` for a
-manifest provider) and a `resolveSecret` over the unpersisted secret values, so you can probe the
-real endpoint with the about-to-be-saved credentials:
+request carries the candidate config: `config` for a native adapter, the candidate `manifest` for a
+manifest provider. It also carries a `resolveSecret` over the unpersisted secret values. So you can
+probe the real endpoint with the about-to-be-saved credentials:
 
 ```ts
 async testConnection(req: EnvironmentConnectionTestRequest): Promise<ConnectionTestResult> {
@@ -187,7 +194,7 @@ operator. Omit the method entirely and the form shows nothing to test.
 ## Example: a custom environment provider
 
 Say your org runs an internal **Preview Platform** with a REST API the generic manifest can't quite
-model: creation is asynchronous, the live URL lives in a `endpoints[]` array you must filter by
+model. Creation is asynchronous, the live URL lives in a `endpoints[]` array you must filter by
 health, and its status vocabulary is its own.
 
 Imagine its API as:
@@ -327,13 +334,14 @@ return { externalId: id, url: null, status: 'provisioning', expiresAt: null, acc
 ```
 
 It is not the `error` field. `error` is read only on `status: 'failed'` and cleared on every other
-status, so without a note the platform's whole account of a twenty-minute wait is that it waited
-twenty minutes, and the only way to explain a stuck environment is to report it `failed` early:
+status, so without a note, the platform's whole account of a twenty-minute wait is that it waited
+twenty minutes. Without a note, the only way to explain a stuck environment is to report it `failed`
+early:
 a truthful lifecycle state traded for an explainable one.
 
 - **Say what distinguishes this poll from the last one.** "the deploy job has not started" and "the
-  deploy succeeded and no target is healthy yet" are both `provisioning`, and which one it is
-  decides who looks at what. A note that repeats the status word adds nothing.
+  deploy succeeded and no target is healthy yet" are both `provisioning`. Which one it is decides
+  who looks at what. A note that repeats the status word adds nothing.
 - **It is the current account, not a log.** It is re-read from you and rewritten every poll, so a
   note you stop returning stops being shown. Nothing accumulates behind an environment.
 - **Leaving it out changes nothing.** A backend that never sets it behaves exactly as before.
@@ -344,9 +352,9 @@ and in the failure message if the twenty minutes run out.
 ### Proving a teardown
 
 A fourth, optional method is the difference between a **reported** reclaim and a **proven** one.
-Nothing reads your `teardown()` returning cleanly as the environment's death, so a backend that
-does not implement this has every teardown recorded as `unverifiable`, and a deployment counting
-on auto-teardown to control spend has no evidence it happened:
+Nothing reads your `teardown()` returning cleanly as the environment's death. So a backend that
+does not implement this has every teardown recorded as `unverifiable`. A deployment counting on
+auto-teardown to control spend then has no evidence it happened:
 
 ```ts
 confirmTeardown?(req: EnvironmentTeardownRequest): Promise<TeardownProbe>
@@ -376,8 +384,8 @@ TTL sweep), so an unresponsive one costs the confirmation and never the teardown
 ### Diagnosing an environment that never came up
 
 A fifth, optional pair. `status()` answers "how is my environment doing" in one word, because that
-is what a readiness judgement needs, so every backend reduces a rich control-plane answer to one
-of a handful of statuses and throws the rest away. When the environment then fails to come up, that
+is what a readiness judgement needs. So every backend reduces a rich control-plane answer to one of
+a handful of statuses, and throws the rest away. When the environment then fails to come up, that
 discarded detail is exactly what a person would have read first:
 
 ```ts
@@ -394,29 +402,28 @@ interface EnvironmentDiagnosis {
 }
 ```
 
-When a provision fails for a cause no edit in the repository could fix, cat-factory reads this,
-puts it beside the evidence it holds itself (the environment record, every field your `provision`
-captured, and the run's own provisioning timeline), and asks a model where the fault is. The model
+When a provision fails for a cause no edit in the repository could fix, cat-factory reads this. It
+puts your diagnosis beside its own evidence: the environment record, every field your `provision`
+captured, and the run's own provisioning timeline. Then it asks a model where the fault is. The model
 picks one action from a list the platform computed first; the platform performs it and then
 **re-checks the environment**. Whether the remedy worked is decided by that re-check, never by what
 the model said.
 
 - **Return facts as pairs, not sentences.** `{ key: 'jobs[0].vm.status', value: 'offline' }` beside
-  `{ key: 'environment.status', value: 'online' }` is an argument a reader can make; "the VM is
+  `{ key: 'environment.status', value: 'online' }` is an argument a reader can make. "The VM is
   offline" is a conclusion you already reached for them. The failure this was built for turned
   entirely on two of your own fields contradicting a third.
 - **`healthy` is your verdict, and leaving it out means you have none.** Absent is read as UNKNOWN,
   which is not the same as healthy and is never rendered as one.
 - **Name every read you could not make.** A diagnosis missing its log section reads exactly like
-  one whose logs were clean, and a reader that cannot tell those apart concludes the workload
-  started fine. Set `permanent: true` when re-asking will answer identically forever (a missing
-  grant, an endpoint you do not serve) and leave it off for a timeout or a 503: the two want
-  opposite reactions.
+  one whose logs were clean. A reader that cannot tell those apart concludes the workload started
+  fine. Set `permanent: true` when re-asking will answer identically forever (a missing grant, an
+  endpoint you do not serve). Leave it off for a timeout or a 503: the two want opposite reactions.
 - **Redact your own logs and fields.** You are the only party that knows which of them carry
   credentials, and the excerpt reaches a model prompt. Cap them too; the platform caps again on
   its own side, and states the cut so a truncated log is never read as one that ended there.
 - **`supportedActions` is a promise.** Declare `restart` only if `remediate` will actually do
-  something; the platform offers the model exactly what you declared, so a remedy that silently
+  something. The platform offers the model exactly what you declared, so a remedy that silently
   no-ops is reported to an operator as a repair that was tried. A backend that declares actions
   without implementing `remediate` is treated as read-only.
 - **Report `applied: false` when there was nothing to do**, rather than a success. The platform
@@ -428,8 +435,8 @@ do with the methods you have, so it never asks you for those. `restart` is the o
 needs you, because only you know what "in place" means on your platform.
 
 **Leaving the whole thing out changes nothing.** The diagnosis then runs on the platform's own
-evidence, which is what it would have had anyway, and it says so rather than presenting the absence
-of your facts as an absence of problems.
+evidence, which is what it would have had anyway. It says so, rather than presenting the absence of
+your facts as an absence of problems.
 
 ### Wire it in
 
@@ -439,9 +446,14 @@ serve two workspaces on different platforms, and it is the same registry the bui
 `kubernetes` backends register on.
 
 The backend is a small wrapper around the provider you just wrote. It answers the questions the
-platform asks before a run: what to call your kind, which config keys are secrets, how a connect
-config maps to and from the stored manifest, whether a config is safe to accept, which infra engines
-you serve, and how to build the live provider:
+platform asks before a run:
+
+- what to call your kind
+- which config keys are secrets
+- how a connect config maps to and from the stored manifest
+- whether a config is safe to accept
+- which infra engines you serve
+- how to build the live provider
 
 ```ts
 // deploy/shared/src/preview-backend.ts  (a plain value, NOT a side-effect import)
@@ -503,9 +515,9 @@ local entry stays a one-liner. On local it is its own boot option; on Node it ri
 
 ::: warning Register by reference, and register on every process
 `createBackendRegistries()` news the instance; `register` mutates that instance. Never import a
-registry from `@cat-factory/kernel` or news a second one to register into, because a
-`workspace:*` dependency publishes as an exact version, so a consumer floating the range can
-resolve two physical copies and your registration lands in the one nothing reads. A
+registry from `@cat-factory/kernel` or news a second one to register into. This is because a
+`workspace:*` dependency publishes as an exact version, so a consumer floating the range can resolve two physical
+copies. Your registration then lands in the one nothing reads. A
 [mothership deployment](../deploy/deployment-repository.md) is two processes, so it registers
 in both entry points.
 :::
@@ -675,8 +687,8 @@ Import the seam from the facade you already depend on, and note four rules:
   is listed, joined, and pruned like any other row.
 - **Registering only offers the store.** An account selects it in the deployment settings panel,
   where each registered store appears beside the built-in ones. An account pointed at a store this
-  build does not register resolves to no storage and says so in the settings panel, in the settings
-  summary, and in a warning log, rather than failing silently at the first screenshot.
+  build does not register resolves to no storage. The platform says so in the settings panel, the settings
+  summary, and a warning log, rather than failing silently at the first screenshot.
 - **The registered id is stamped onto every artifact row**, so it has to stay stable across
   releases: it is what says which store to ask for those bytes later.
 - **Implement `delete`.** The retention sweep, the re-import reclaim, and the workspace purge all
@@ -686,12 +698,12 @@ Import the seam from the facade you already depend on, and note four rules:
 `create` may return `null` for "this deployment cannot serve the store right now" (an unset
 credential, an un-provisioned bucket). The resolver then reads as storage-unavailable, the same as a
 backend a runtime does not support, and logs which store declined. It is called once per account on
-a cache miss and memoised until that account's storage config changes, so the client you build there
-survives across requests.
+a cache miss, and memoised until that account's storage config changes, so the client you build
+there survives across requests.
 
 ::: warning Register on every process that HANDLES the bytes
 A store is a live client holding credentials, so it cannot be shared over a machine API the way a
-registered generator can: the process holding the bytes is the one that has to construct it. A
+registered generator can. The process holding the bytes is the one that has to construct it. A
 standalone deployment is one process and one registration. A **mothership deployment is two**: each
 node writes its artifacts through its own registry, and the mothership runs the artifact-retention
 sweep, which deletes through *its* registry. Register on `startLocal({ binaryStoreRegistry })` **and**
@@ -753,7 +765,7 @@ These are the ones that actually bite when adapting a real platform:
   it created; treat the platform's expiry as a backstop and don't rely on a TTL you can't verify
   round-trips.
 - **Watch the platform's input constraints.** Many "create" APIs accept exactly one of a set of
-  fields (a PR number *or* a branch *or* a commit), and reject more than one, or silently rewrite
+  fields: a PR number *or* a branch *or* a commit. They reject more than one, or silently rewrite
   one into another. Send the single most specific ref you have, and persist the *returned* id, not
   the one you sent, in `fields`.
 - **Resolve secrets per call; never construct-time, never logged.** The token arrives via
