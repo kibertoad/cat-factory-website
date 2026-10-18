@@ -18,8 +18,8 @@ local runner counts as a direct-flavour key for the initiating user), then Cloud
 are the right path for org-wide and programmatic access.
 
 ::: tip First-run setup
-A fresh workspace with no usable model source shows a **"No AI model configured"** banner and opens a
-**Set up an AI model provider** prompt that routes you to provider keys, OpenRouter, or a local
+A fresh workspace with no usable model source shows a **"No AI model configured"** banner. The workspace
+also opens a **Set up an AI model provider** prompt that routes you to provider keys, OpenRouter, or a local
 runner. If your default [preset](#model-presets) points at a model none of your connected sources can
 serve, the task inspector flags the mismatch so a run never silently falls back.
 :::
@@ -54,10 +54,10 @@ one and the model falls back to a subscription or Cloudflare. Because the keys a
 this is the supported path for **org-wide, programmatic, and unattended** access, including the
 Claude and GPT models that a personal subscription keeps per-user.
 
-Models served through OpenRouter, Bifrost, LiteLLM, and the other OpenAI-compatible direct providers back the
-**repo-operating container agents** (Coder, CI Fixer, and the repo bootstrap), not just the inline
-ones: the backend proxy forwards them the same way, so any connected provider is selectable for every
-agent kind.
+Models served through OpenRouter, Bifrost, LiteLLM, and the other OpenAI-compatible direct providers
+back the **repo-operating container agents** (Coder, CI Fixer, and the repo bootstrap), not just the
+inline ones. The backend proxy forwards them the same way, so any connected provider is selectable
+for every agent kind.
 
 The model picker tags each model with a **Prompt caching** or **No prompt caching** badge, derived
 from the provider that would actually serve it. A model on the Workers AI fallback shows no caching;
@@ -136,22 +136,24 @@ and user).
 ### Personal (individual-usage) subscriptions
 
 Claude, GLM, and ChatGPT/Codex are licensed for **individual use only**. Anthropic's consumer
-Claude (Pro/Max), Z.ai's GLM Coding Plan, and a ChatGPT/Codex seat are each tied to one person, and
-their terms forbid sharing one credential across a team, at every tier (a ChatGPT Team or Enterprise
-plan hands out more individual seats). Cat Factory honours that with a
+Claude (Pro/Max), Z.ai's GLM Coding Plan, and a ChatGPT/Codex seat are each tied to one person.
+Their terms forbid sharing one credential across a team, at every tier: a ChatGPT Team or Enterprise
+plan hands out more individual seats. Cat Factory honours that with a
 per-user mode rather than a workspace pool:
 
 - Each **user** connects their own credential, and only that user's runs can use it. Connecting (or
   disconnecting) one refreshes the model catalog, so the **"No AI model configured"** banner clears
   the moment the subscription makes a model usable, and a default-preset mismatch surfaces right away.
-  The **Connect** button stays disabled until the form is ready, and tells you why: it shows "Sign in
-  to connect a personal subscription" when you're signed out, "Enter your token to continue" with an
-  empty token, or "Enter a personal password of at least 6 characters" until the password is long
-  enough. The reason clears as soon as you satisfy it.
+  The **Connect** button stays disabled until the form is ready, and tells you why:
+  - "Sign in to connect a personal subscription" when you're signed out
+  - "Enter your token to continue" with an empty token
+  - "Enter a personal password of at least 6 characters" until the password is long enough
+
+  The reason clears as soon as you satisfy it.
 - These vendors are never poolable on any workspace, personal or org. The restriction is on
-  *sharing one subscription credential*: an organization that wants
-  every member to use Claude or GPT models sets a direct provider API key (`ANTHROPIC_API_KEY`,
-  `OPENAI_API_KEY`), which is the supported path for shared, org-wide access. The models stay
+  *sharing one subscription credential*. An organization that wants every member to use Claude or
+  GPT models sets a direct provider API key (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`). That is the
+  supported path for shared, org-wide access. The models stay
   available to the org; only pooling a personal subscription is off the table.
 
 ### Why a personal password
@@ -175,7 +177,7 @@ What the password actually buys is twofold:
   Ownership is enforced by construction: a run records who initiated it and the executor only ever
   leases that user's credential.
 - Underneath the system key, it is a second factor at rest. The one actor it guards against is a
-  holder of the system key (an operator or insider), and defending against that actor is an explicit
+  holder of the system key (an operator or insider). Defending against that actor is an explicit
   non-goal here, since anyone running the deployment could capture secrets regardless.
 
 ### How unlocking works in practice
@@ -185,9 +187,10 @@ browser, so starting, retrying, and approving from your side runs ride along wit
 again. The server never stores the password; it travels as a request header, never in a saved record.
 
 To keep a long pipeline from lapsing halfway through, the cache is checked against an **8-hour expiry
-buffer**: if a start, confirm, or retry finds less than eight hours of runway left on the cached
-password, it re-prompts you then, while you are present at the action, and refreshes the full window,
-rather than letting a nearly-expired credential fail on an asynchronous step while you are away.
+buffer**. A start, confirm, or retry might find less than eight hours of runway left on the cached
+password. If so, it re-prompts you then, while you are present at the action, and refreshes the full
+window. This stops a nearly-expired credential from failing on an asynchronous step while you are
+away.
 
 Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to
 that one run) so the asynchronous container steps can authenticate while you are away. That
@@ -218,9 +221,11 @@ above: you are present when it starts, so you can supply the password. It needs 
 Mint the API token with **Runs as: me** (Integrations → API access tokens). An ordinary token
 belongs to the workspace rather than to you, so it cannot reach anyone's personal subscription.
 `GET /api/v1/models` still lists such a model, and the row says which situation you are in:
-`personalSubscription: true` means it runs on a credential that belongs to a person, and
-`subscriptionConfigured: true` means that person does hold a live subscription for its vendor. A
-workspace token therefore reads `available: false` beside `subscriptionConfigured: true`, and both
+
+- `personalSubscription: true` means it runs on a credential that belongs to a person.
+- `subscriptionConfigured: true` means that person does hold a live subscription for its vendor.
+
+A workspace token therefore reads `available: false` beside `subscriptionConfigured: true`, and both
 are true at once: the model is wired, and this token may not spend it. The fix is a token that runs
 as you, not a provider key.
 
@@ -269,9 +274,9 @@ Private-LAN reach (RFC1918, IPv6 ULA, and mDNS `.local`) is an operator opt-in,
 because the endpoint is fetched server-side, so on a shared deployment LAN reach is an
 internal-network SSRF grant. [Local mode](../deploy/local.md) turns it on, being single-tenant.
 
-Redirects are followed one hop at a time and every hop is re-checked against the same policy, and URLs
-that embed credentials, a query string, or a fragment are refused, so a runner cannot bounce the
-backend to a public host or the metadata endpoint. On a cloud deployment the backend cannot reach a
+URLs that embed credentials, a query string, or a fragment are refused. Redirects are followed one
+hop at a time, and every hop is re-checked against the same policy. Together, these mean a runner
+cannot bounce the backend to a public host or the metadata endpoint. On a cloud deployment the backend cannot reach a
 runner on your laptop; local runners are intended for local mode or a self-hosted backend on the same
 network.
 :::
@@ -288,8 +293,8 @@ when you connect an OpenRouter key. The built-in presets target Claude Opus 5, s
 explicitly (or build a preset for it) when you want it.
 
 The curated `claude-opus` catalog entry always tracks Anthropic's current Opus, which is **Claude Opus
-5**: a 1M-context agentic coding model at the same price as Opus 4.8, served through the Claude Code
-harness on a connected subscription or pay-as-you-go through OpenRouter
+5**, a 1M-context agentic coding model at the same price as Opus 4.8. It is served through the
+Claude Code harness on a connected subscription, or pay-as-you-go through OpenRouter
 (`anthropic/claude-opus-5`). A task pinned to `claude-opus` picks up the new model with no migration.
 Earlier Opus versions are no longer curated entries; reach a specific one through the per-workspace
 OpenRouter catalog.
@@ -303,11 +308,14 @@ stronger model while everything else stays on the base). Exactly one preset is t
 **default**. Every new workspace seeds four built-ins, **Kimi K2.7**, **GLM-5.2**, **Claude Opus 5**
 and **GPT-5.6 Sol**, and you can add your own.
 
-The last two run on a subscription or through OpenRouter rather than on a key of their own: Claude
-Opus 5 on a connected Claude subscription, GPT-5.6 Sol on a ChatGPT subscription through Codex, and
-either of them pay-as-you-go through OpenRouter when no subscription is connected. So a workspace
-with only an OpenRouter key can still select them, and a connected subscription takes over
-automatically once it is there.
+The last two run on a subscription or through OpenRouter, rather than on a key of their own:
+
+- Claude Opus 5 runs on a connected Claude subscription.
+- GPT-5.6 Sol runs on a ChatGPT subscription through Codex.
+- Either of them runs pay-as-you-go through OpenRouter when no subscription is connected.
+
+So a workspace with only an OpenRouter key can still select them, and a connected subscription
+takes over automatically once it is there.
 
 Which one is the seeded default depends on the deployment: **Kimi K2.7** (Cloudflare-served, no key)
 on Cloudflare and Node, and **Claude Opus 5** on local mode, where a connected Claude subscription
@@ -362,8 +370,8 @@ is served over a trusted route. An "Operating region" selector offers one-click 
 (for example "Block China-hosted families" or "residency-guaranteed routes only") that fill the
 policy in for you to adjust.
 
-When a pipeline pins a model from a blocked family, the run is refused at start with a clear error
-naming the blocked models, rather than silently rerouting: pick a model from an allowed family or a
+When a pipeline pins a model from a blocked family, the run is refused at start, rather than
+silently rerouted. The error names the blocked models. Pick a model from an allowed family or a
 trusted route, or ask an admin to adjust the policy.
 
 ---
