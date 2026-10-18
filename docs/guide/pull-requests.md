@@ -85,8 +85,8 @@ Every build pipeline finishes with three engine steps that prepare the PR for me
   scores fall within the task's [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
   or raises a review notification for a human. When you pick a policy in the add-task modal or task
   inspector, the dropdown labels each option with its actual auto-merge ceilings (complexity, risk,
-  impact) and CI-fix budget, and the default option shows the resolved workspace default's
-  thresholds, so you can compare policies without opening the settings panel. It only auto-merges a PR
+  impact) and CI-fix budget. The default option shows the resolved workspace default's thresholds.
+  So you can compare policies without opening the settings panel. It only auto-merges a PR
   it could actually examine:
   if it can't read a real diff, or its assessment lacks a credible explanation, it routes to human
   review rather than merging on a hollow score.
@@ -101,19 +101,23 @@ in the app, and one for a run nothing is watching (see
 - **Unattended delivery** (the default for unwatched runs): the same ceilings, budgets, class rules
   and per-role restrictions as your workspace's own in-app default, with one thing changed. A run
   under it answers the checkpoints its own automatic loops raise instead of parking for a person who
-  isn't there. What it is allowed to land is identical, deliberately: a policy that ships as a
-  default may decide that an unwatched run shouldn't wait forever on an automation budget, and may
-  not decide that it gets to land a change your own thresholds would have held. Widen it yourself if
+  isn't there. What it is allowed to land is identical, deliberately. A policy that ships as a
+  default may decide that an unwatched run shouldn't wait forever on an automation budget. It may
+  not decide that the run gets to land a change your own thresholds would have held. Widen it yourself if
   your track record says to.
 - **Manual review only**: never auto-merges. Every PR, whatever its scores, raises a merge-review
   notification for a person to merge. Reach for it on a board where a human always makes the final
   call.
 
 A policy carries more than the merge decision: the same row holds the budgets the run's automatic
-loops spend before they stop and ask you. The CI-fix attempts, the requirement-review iterations and
-**Companion rework rounds** (how many times a reviewer may send its producer back, three by default)
-are all fields on it, so how much the platform retries on its own is a per-task choice rather than a
-platform constant.
+loops spend before they stop and ask you. These budgets are all fields on it:
+
+- the CI-fix attempts
+- the requirement-review iterations
+- **Companion rework rounds**: how many times a reviewer may send its producer back (three by
+  default)
+
+So how much the platform retries on its own is a per-task choice rather than a platform constant.
 
 Edit these or add your own in the workspace's **Risk policies** panel. Each row has its own **Make
 default** and **Unattended default** promote buttons, since the two defaults are independent: flag one
@@ -196,17 +200,25 @@ loops raise when they give up:
   Coder back to widen the change past what the task asked for, unreviewed, on a run with no
   supervision). The items stay on the step with their text intact.
 
-It never touches a checkpoint the **pipeline** asked for. An approval gate, a `human-test` step, visual
-confirmation, the human and PR review gates, a brainstorm or interview, the implementation-fork choice
-and the pre-dispatch input gate all stop the run whichever posture is in force, and a companion step
-that is also gated still raises its approval gate at the cap. Nor does it answer a review that is
+It never touches a checkpoint the **pipeline** asked for. These all stop the run whichever posture
+is in force:
+
+- an approval gate
+- a `human-test` step
+- visual confirmation
+- the human and PR review gates
+- a brainstorm or interview
+- the implementation-fork choice
+- the pre-dispatch input gate
+
+A companion step that is also gated still raises its approval gate at the cap. Nor does it answer a review that is
 asking **questions**: those answers are a product judgement, so that park stands under either posture.
 The same holds for a companion parked on an open **Must fix** finding. Proceeding there overrules a
 reviewer's judgement that the work must not go further, which is a different thing from confirming
 that a loop should stop trying, so that one waits for a person under either posture too.
 
 Each of these is recorded as settled by policy on the step it happened on, rather than left looking
-like a bar the work met: whoever reviews the resulting pull request can tell a run that proceeded
+like a bar the work met. So whoever reviews the resulting pull request can tell a run that proceeded
 under this posture from one whose companion simply stopped grading. The policy is read at the moment
 the cap is reached, so moving a task onto an attended policy mid-run gets the checkpoint back.
 
@@ -247,10 +259,11 @@ The report carries:
   agent kind with the model that actually ran it, plus a deep link into the run's observability panel.
 - **Coder follow-ups**: what the Coder flagged mid-run and what was decided about each item (see
   [Coder follow-ups](./running-pipelines.md#coder-follow-ups)). You are the person best placed to act
-  on a loose end the build noticed and the worst placed to discover one, so three dispositions are
-  called out above the table rather than left to be read off a status column: a question **ruled on**
-  rather than answered, a decision that **never reached the Coder** because the send-back budget was
-  already spent, and an item **dismissed by the run's autonomy policy** because nobody was watching.
+  on a loose end the build noticed, and the worst placed to discover one. So three dispositions are
+  called out above the table rather than left to be read off a status column:
+  - a question **ruled on** rather than answered
+  - a decision that **never reached the Coder** because the send-back budget was already spent
+  - an item **dismissed by the run's autonomy policy** because nobody was watching
 - **Continuous integration**: the CI gate's aggregated verdict, per-check-run names and conclusions,
   and how many times the CI fixer tried.
 - **Pre-PR validation**: each [check command](#pre-pr-validation) the harness ran against the exact
@@ -337,10 +350,10 @@ not a pipeline you clone per lens. The task inspector's **Under review** panel s
 order and lets you change it, which is also how you clear a run that failed on a skill the catalog
 no longer holds.
 
-The **PR Reviewer** agent clones the repo, fetches the PR head, and for a large diff **slices it into
-cohesive chunks** (a refactor with its call sites and tests) and reviews the chunks in parallel, up to
-five at a time, so it scales to hundreds of files without turning one pull request into dozens of
-concurrent conversations on one account. It is **comment-aware**: it reads the PR's existing review
+The **PR Reviewer** agent clones the repo and fetches the PR head. For a large diff, it **slices it
+into cohesive chunks** (a refactor with its call sites and tests) and reviews the chunks in
+parallel, up to five at a time. So it scales to hundreds of files without turning one pull request
+into dozens of concurrent conversations on one account. It is **comment-aware**: it reads the PR's existing review
 threads and skips issues already raised. It returns **prioritized findings**, each with a severity
 (blocker, high, medium, low, or nit), a category (correctness, security, performance, maintainability,
 style, or test), the file and line, an explanation, and a suggested fix.

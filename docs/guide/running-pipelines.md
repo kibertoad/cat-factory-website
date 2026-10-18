@@ -45,9 +45,14 @@ and pick its mode:
   point).
 
 Promoting a branch to Working demotes any existing Working branch back to Reference. The controls
-enforce the rest as they go: the Working branch is locked once a PR exists, Working mode is
-unavailable on a task that spans more than one service, the base branch can't be a Working branch, and
-a protected Working branch shows a warning that pushes may be rejected. A merged Working branch is
+enforce the rest as they go:
+
+- The Working branch is locked once a PR exists.
+- Working mode is unavailable on a task that spans more than one service.
+- The base branch can't be a Working branch.
+- A protected Working branch shows a warning that pushes may be rejected.
+
+A merged Working branch is
 never auto-deleted, so reusing it on a new task **resumes** it.
 
 ## Choosing models
@@ -90,8 +95,8 @@ rework, or skip rather than wondering why a step looped.
 
 Each grading round gets its own card rather than being appended to the score line. A card carries the
 rating against the step's bar, a short verdict on the work as a whole, and then the findings
-themselves: one entry per point, tagged **Must fix**, **Should fix** or **Minor**, worst first, each
-a short bolded title plus the concrete change to make. You can tell what blocks the work from what is
+themselves. There is one entry per point, tagged **Must fix**, **Should fix** or **Minor**, worst
+first. Each entry is a short bolded title plus the concrete change to make. You can tell what blocks the work from what is
 a nit without reading all of it.
 
 Those tags are not only for you to read. **A run does not advance while a Must fix is open**,
@@ -245,11 +250,11 @@ it, since it needs someone present: add the `human-test` step to a
 
 Open the gate's window to validate the change against the live URL, then choose an action:
 
-- **Confirm** — the change passes, the environment is torn down, and the run advances to the merge
+- **Confirm**: the change passes, the environment is torn down, and the run advances to the merge
   tail.
-- **Submit findings** — describe what's wrong and Cat Factory dispatches the Tester's **Fixer** to
+- **Submit findings**: describe what's wrong and Cat Factory dispatches the Tester's **Fixer** to
   address it, then re-parks for another look.
-- **Pull main + redeploy** — pull the latest `main` into the branch (looping the conflict resolver
+- **Pull main + redeploy**: pull the latest `main` into the branch (looping the conflict resolver
   if needed) and redeploy, so you test against current code.
 - **Recreate** or **Destroy** the environment.
 
@@ -303,11 +308,11 @@ When a step needs human input it moves to **Needs decision** and shows a **decis
 Answer the questions to continue. The most common prompts are the **Requirements Reviewer** and the
 **Architect**, which pause for your approval before implementation proceeds.
 
-A second kind of prompt comes from a **companion whose rework loop has stopped**. When the Spec
-Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer past it within
-the allowed rounds — either because the rating never reached the quality bar, or because a **Must
-fix** finding is still open — it stops auto-looping and parks for you with a **Decide** button
-(rather than a plain Approve) offering three choices, the same three the requirements reviewer
+A second kind of prompt comes from a **companion whose rework loop has stopped**. This happens when
+the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer past
+it within the allowed rounds. Either the rating never reached the quality bar, or a **Must fix**
+finding is still open. The companion then stops auto-looping and parks for you with a **Decide**
+button rather than a plain Approve. It offers the same three choices the requirements reviewer
 offers at its iteration cap:
 
 - **One more round**: raise the budget by one and loop the producer back for another pass.
@@ -378,8 +383,8 @@ You have four distinct controls over a run:
 
 ### Watching the gates
 
-The **CI** and **Conflicts** gates open a dedicated **gate window** when you click into them, so you
-can see *why* a gate is looping rather than a bare prose panel: the verdict, the gated commit, the
+The **CI** and **Conflicts** gates open a dedicated **gate window** when you click into them, rather
+than a bare prose panel. It shows *why* a gate is looping: the verdict, the gated commit, the
 helper's remaining attempt budget, and (for CI) exactly which checks failed. Each gate's helper
 (the **CI Fixer** / **Conflict Resolver**) renders as a sub-node that reads possible / running /
 completed / skipped, the same as the Tester's Fixer.

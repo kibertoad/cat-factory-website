@@ -37,10 +37,10 @@ surface. Build on them with the same expectations you would bring to any version
 - Changes are additive. New endpoints, new optional fields, new enum values, and new error codes
   arrive without warning and bump the OpenAPI `info.version` minor. Write clients that tolerate
   fields and enum members they do not recognise; the official SDKs already do.
-- A breaking change never lands in place. It ships as a migration path plus a version change: the
-  old shape keeps working while the new one is served beside it (a new field next to the old, a new
-  `/api/v2` prefix for a changed path or semantics), the deprecation is documented, and the old half
-  is removed only in a later release.
+- A breaking change never lands in place. It ships as a migration path plus a version change. The
+  old shape keeps working while the new one is served beside it: a new field next to the old, or a
+  new `/api/v2` prefix for a changed path or semantics. The deprecation is documented, and the old
+  half is removed only in a later release.
 - Scope semantics only ever widen on their own. Narrowing what a key may do counts as a break and
   follows the same migration rule.
 
@@ -100,8 +100,8 @@ subscription, and neither can a leak of it. That is also why such a task is refu
 quietly run on something else: charging a person who is not present, on a credential their vendor
 licenses to them alone, is the outcome the refusal exists to prevent.
 
-**Mint a personal token when the runs genuinely are yours** — driving your own headless work from a
-script, for instance. Then:
+**Mint a personal token when the runs genuinely are yours**, for example to drive your own headless
+work from a script. Then:
 
 - Every call that starts, retries, or answers a decision on such a run must carry your personal
   password in the `X-Personal-Password` header. Not only the first one: answering a parked decision
@@ -109,7 +109,7 @@ script, for instance. Then:
 - A call that needs the password and does not carry it is refused with `428 credential_required`,
   and the body's `details` names the `vendor` and whether the password was missing or wrong. Prompt
   for it and retry.
-- **The password is never stored** — not by the server, and not on the key. Keeping a copy in a
+- **The password is never stored**: not by the server, and not on the key. Keeping a copy in a
   config file beside the token would put both halves of a two-factor credential in one place, which
   is exactly what the [personal password](../guide/model-providers.md#why-a-personal-password)
   exists to prevent. Ask for it when your program starts and hold it in memory.
@@ -125,7 +125,7 @@ the **Development** group, and manage keys there:
 
 - **Create a token**: enter a label (for example "CI pipeline"), pick a scope (Read only, Read and
   write, Decide, or Full access; Read and write is the default), and pick **Runs as** (this
-  workspace, or you — see [Who a key runs as](#who-a-key-runs-as)). The secret is revealed once on a
+  workspace, or you; see [Who a key runs as](#who-a-key-runs-as)). The secret is revealed once on a
   "Copy your token now" panel and cannot be recovered afterward.
 - **Active tokens** lists each key with its label, scope badge, creation date, last-used time, and
   who created it. A personal token also carries a "Your subscription" badge, so you can tell at a
@@ -159,10 +159,13 @@ Official clients ship for four languages, so an integration does not have to wri
 
 Their models and operation methods are generated from the same OpenAPI document the server
 publishes, so a client cannot drift from the deployment it talks to. Each client's transport is
-hand-written on top and implements the conventions on this page for you: keyset auto-pagination,
-SSE framing, bounded retries on idempotent requests only, and an exception type per HTTP status
-class with the machine-readable `code` exposed verbatim as a string rather than narrowed to a
-closed enum.
+hand-written on top and implements the conventions on this page for you:
+
+- keyset auto-pagination
+- SSE framing
+- bounded retries, on idempotent requests only
+- an exception type per HTTP status class, with the machine-readable `code` exposed verbatim as a
+  string rather than narrowed to a closed enum
 
 There is no separate Kotlin client. The Java artifact is annotated (`@NullMarked`/`@Nullable`),
 escapes Kotlin's hard keywords, exposes a sealed error hierarchy, and offers builders in place of
@@ -248,11 +251,13 @@ run you have already paid for.
   wrong about anything it was told, it was told about the other scope. See
   [Whether your runs can finish on their own](#whether-your-runs-can-finish-on-their-own).
   On that row, `autoMergeEnabled` decides whether a run can land its pull request with no person
-  involved. Two caveats this API cannot settle for you, because
-  it does not report which workspace role your key's runs are admitted under: a non-empty
-  `dryRunRoles` means the policy merges for some roles and not others, and a non-empty
-  `submissionRestrictedRoles` means a run outside an allowed change class is held for a person
-  however good its scores are. Report those rather than concluding "this policy merges".
+  involved. This API does not report which workspace role your key's runs are admitted under, so
+  it cannot settle two caveats for you:
+  - A non-empty `dryRunRoles` means the policy merges for some roles and not others.
+  - A non-empty `submissionRestrictedRoles` means a run outside an allowed change class is held
+    for a person, however good its scores are.
+
+  Report those rather than concluding "this policy merges".
 - `GET /api/v1/model-presets`: which model each agent step runs on, so what a run costs. Read
   `overrides` as well as `baseModelId`: two presets often differ only in what the **coder** gets.
   Whether a preset's model can be dispatched to is not repeated here; join `baseModelId` onto
@@ -282,9 +287,13 @@ Availability itself is unchanged by all this: it still resolves under the key's 
 the two statements coexist honestly.
 
 `subscriptionConfigured` is `null` when nobody was asked, and `null` is **not** a shy `false`. It
-means there was no person to ask about (a key provisioned headlessly through `POST /api/v1/keys`),
-the deployment stores no personal subscriptions, or the row is not a personal-subscription model at
-all. "Asked, and there is none" is a subscription to connect; "there was nobody to ask" is a token to
+means one of three things:
+
+- There was no person to ask about (a key provisioned headlessly through `POST /api/v1/keys`).
+- The deployment stores no personal subscriptions.
+- The row is not a personal-subscription model at all.
+
+"Asked, and there is none" is a subscription to connect; "there was nobody to ask" is a token to
 mint in the app. A client that collapses the two sends an operator to a screen that was already
 correct.
 
@@ -315,7 +324,7 @@ happen, and the row to read it on is `isUnattendedDefault` (or the policy your t
 `riskPolicyId`).
 
 - **`attended`**: a run can park on a judgement call `GET /api/v1/runs/{runId}/decisions` will list
-  and only a human can settle — a companion at its rework cap, a judge at its bounce cap, an iterative
+  and only a human can settle: a companion at its rework cap, a judge at its bounce cap, an iterative
   review at its pass cap, follow-up items nobody triaged. With nobody to escalate to, the run waits
   indefinitely. This is what every policy created without saying otherwise gets, and what an
   unrecognised value reads as.
@@ -434,9 +443,9 @@ published half of it, leftovers from the engine you are leaving included; to nar
 send the member you want, and that patch overlays what is stored.
 
 A deployment that ships its own environment backend pins by `manifestId` instead, and **nothing
-checks that id when you write it**: it is validated as a string and matched to a handler only when a
-run reaches its deploy step, so an unserved id is stored, reported back as configured, and fails
-after the run has paid for a design pass and an implementation. Check it first:
+checks that id when you write it**. It is validated as a string, and matched to a handler only when
+a run reaches its deploy step. So an unserved id is stored and reported back as configured. It
+fails only after the run has paid for a design pass and an implementation. Check it first:
 
 ```
 GET /api/v1/environments/manifest-types
@@ -643,9 +652,13 @@ POST /api/v1/services/svc_api/tasks
 ```
 
 Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies` rather than deriving
-them: the built-in model presets are `mdp_kimi`, `mdp_glm` and `mdp_claude`, and the built-in risk
-policies are `mp_balanced`, `mp_unattended` and `mp_manual_review`, so the two libraries do not share
-a prefix and a workspace that has edited either carries ids of its own. Both pins are optional, both
+them. The two libraries do not share a prefix, and a workspace that has edited either carries ids
+of its own. The built-in ids are:
+
+- model presets: `mdp_kimi`, `mdp_glm` and `mdp_claude`
+- risk policies: `mp_balanced`, `mp_unattended` and `mp_manual_review`
+
+Both pins are optional, both
 come back on the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one means
 what it always meant: the task follows the workspace default rather than holding a copy of its id, so
 moving that default moves the task. For `riskPolicyId` that default is the **unattended** one, since
@@ -674,9 +687,9 @@ the account's model-family policy, so a preset naming a blocked model fails at d
 refusal it would have had on the workspace default. `riskPolicyId` is the pin that changes what a run
 may **do**, since a policy carries `autoMergeEnabled`, the score ceilings and `autonomy`. An `admin`
 key may pin any policy its workspace holds, which is the authority it already had by editing one.
-That is a wider licence than a board member has: in the app, somebody who does not manage the policy
-library cannot re-point a task from an attended policy onto an `unattended` one, because dropping the
-run's human checkpoints is a permission rather than a preference.
+That is a wider licence than a board member has. In the app, somebody who does not manage the
+policy library cannot re-point a task from an attended policy onto an `unattended` one. Dropping
+the run's human checkpoints is a permission, not a preference.
 
 ## Paging
 
@@ -747,10 +760,14 @@ selection and nothing more, `fix` hands the kept findings to an agent that commi
 branch, and `post` publishes them as inline comments on the pull request.
 
 **`post` is asynchronous, so read `postReport` before you conclude it worked.** A post that partly
-or wholly fails puts the review back in the list looking exactly as it did before you resolved, and
-the report is what tells those apart: how many comments were attempted and how many landed, how many
-findings were moved into the summary comment because their line is not part of the diff (or because
-the branch moved after the review started), and the provider's own error for each one that failed.
+or wholly fails puts the review back in the list looking exactly as it did before you resolved. The
+report is what tells those apart. It gives:
+
+- how many comments were attempted, and how many landed
+- how many findings were moved into the summary comment because their line is not part of the
+  diff, or because the branch moved after the review started
+- the provider's own error for each one that failed
+
 Retrying is the same `post` call with the same selection: what has already landed is recorded, so
 nothing is commented twice.
 
@@ -859,9 +876,11 @@ the output budget, so what you have is a prefix rather than an answer.
 
 Each use case NARROWS the models it may run on, and the catalog says whether each can be served
 right now. An unavailable model is listed with its cause rather than hidden, so a picker shows what
-the use case offers instead of an empty list: `provider_unavailable` (this deployment has not
-configured the provider) or `container_only` (the model runs only through a coding-subscription
-harness inside a per-run container, which this surface has none of).
+the use case offers instead of an empty list. The cause is one of:
+
+- `provider_unavailable`: this deployment has not configured the provider.
+- `container_only`: the model runs only through a coding-subscription harness inside a per-run
+  container, and this surface has no such container.
 
 Refusals, all carrying `error.details.reason`:
 
@@ -912,9 +931,9 @@ though it is only `read`.
 
 ## Kaizen entries: the platform's own improvement backlog
 
-After a run finishes, Cat Factory grades its own work: each completed agent step is scored 1 to 5 on
-how smooth or chaotic the interaction was, with recommendations for what would make it better, keyed
-by the `(agent kind, model, prompt version)` combination it ran on. A combination that scores highly
+After a run finishes, Cat Factory grades its own work. Each completed agent step is scored 1 to 5 on
+how smooth or chaotic the interaction was, with recommendations for what would make it better. The
+grade is keyed by the `(agent kind, model, prompt version)` combination the step ran on. A combination that scores highly
 with no recommendations often enough is marked verified and stops being graded. Inside the app those
 gradings are a screen you browse. Over the API they are a **backlog you drain**.
 
@@ -936,10 +955,14 @@ also returns gradings still in flight, which that route refuses with a `409`, an
 soonest.
 
 Each entry carries the context a follow-up needs, so acting on one does not mean opening the app:
-the run and step index it came from, the agent kind, the model as resolved at dispatch, the prompt
-version, the combination key and where that combination stands in its verification streak, the
-grade, the grader's summary and recommendations, which model graded it, and the board task plus its
-service. A task deleted since the run reports `task: null` rather than a blank title, and the `runId`
+
+- the run and step index it came from
+- the agent kind, the model as resolved at dispatch, and the prompt version
+- the combination key, and where that combination stands in its verification streak
+- the grade, the grader's summary and recommendations, and which model graded it
+- the board task and its service
+
+A task deleted since the run reports `task: null` rather than a blank title, and the `runId`
 joins straight onto [run debugging](#run-debugging) when a low grade deserves a look at the calls
 behind it. `task.serviceId` is the same id `GET /api/v1/services/{serviceId}` answers for, resolved
 the same way the task endpoints resolve it, and it comes with `task.serviceTitle` or not at all: you
