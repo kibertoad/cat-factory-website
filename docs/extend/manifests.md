@@ -260,7 +260,7 @@ What the platform does with them:
   rather than reporting your environment as unreachable.
 
 An environment the platform cannot reach by name or by any stated address fails its Deployer step,
-and the failure names the layer that failed. Without this, a Tester would spend its whole step on
+and the failure names the layer that failed. Otherwise, a Tester would spend its whole step on
 connection errors and report your environment as down. If the probe itself cannot complete, the run continues and the
 agent is told the check was inconclusive; "we could not tell" never fails a deploy.
 
@@ -486,8 +486,9 @@ differ.
   built-in vocabulary of common scheduler words:
   - `done` / `completed` / `succeeded` and friends map to `done`.
   - `failed` / `error` / `cancelled` / `timeout` and friends map to `failed`.
-  - Anything still unrecognised falls back to `running`. This keeps the driver waiting rather than
-    wrongly failing a live run.
+
+  Anything still unrecognised falls back to `running`, which keeps the driver waiting rather than
+  wrongly failing a live run.
 
   That vocabulary is a safety net, not a substitute for a mapping. It holds only words that are
   terminal in every vocabulary they could come from. So a word that can also mean "still waiting

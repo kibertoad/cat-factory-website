@@ -101,10 +101,10 @@ in the app, and one for a run nothing is watching (see
 - **Unattended delivery** (the default for unwatched runs): the same ceilings, budgets, class rules
   and per-role restrictions as your workspace's own in-app default, with one thing changed. A run
   under it answers the checkpoints its own automatic loops raise instead of parking for a person who
-  isn't there. What it is allowed to land is identical, deliberately. A policy that ships as a
+  isn't there. What it is allowed to land is deliberately identical: a policy that ships as a
   default may decide that an unwatched run shouldn't wait forever on an automation budget. It may
-  not decide that the run gets to land a change your own thresholds would have held. Widen it yourself if
-  your track record says to.
+  not decide that the run gets to land a change your own
+  thresholds would have held. Widen it yourself if your track record says to.
 - **Manual review only**: never auto-merges. Every PR, whatever its scores, raises a merge-review
   notification for a person to merge. Reach for it on a board where a human always makes the final
   call.
@@ -211,8 +211,8 @@ is in force:
 - the implementation-fork choice
 - the pre-dispatch input gate
 
-A companion step that is also gated still raises its approval gate at the cap. Nor does it answer a review that is
-asking **questions**: those answers are a product judgement, so that park stands under either posture.
+A companion step that is also gated still raises its approval gate at the cap. Nor does the switch
+answer a review that is asking **questions**: those answers are a product judgement, so that park stands under either posture.
 The same holds for a companion parked on an open **Must fix** finding. Proceeding there overrules a
 reviewer's judgement that the work must not go further, which is a different thing from confirming
 that a loop should stop trying, so that one waits for a person under either posture too.

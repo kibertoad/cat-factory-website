@@ -443,9 +443,9 @@ published half of it, leftovers from the engine you are leaving included; to nar
 send the member you want, and that patch overlays what is stored.
 
 A deployment that ships its own environment backend pins by `manifestId` instead, and **nothing
-checks that id when you write it**. It is validated as a string, and matched to a handler only when
+checks that id when you write it**. It is validated as a string and matched to a handler only when
 a run reaches its deploy step. So an unserved id is stored and reported back as configured. It
-fails only after the run has paid for a design pass and an implementation. Check it first:
+fails after the run has paid for a design pass and an implementation. Check it first:
 
 ```
 GET /api/v1/environments/manifest-types
@@ -652,13 +652,13 @@ POST /api/v1/services/svc_api/tasks
 ```
 
 Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies` rather than deriving
-them. The two libraries do not share a prefix, and a workspace that has edited either carries ids
-of its own. The built-in ids are:
+them. The built-in ids are:
 
 - model presets: `mdp_kimi`, `mdp_glm` and `mdp_claude`
 - risk policies: `mp_balanced`, `mp_unattended` and `mp_manual_review`
 
-Both pins are optional, both
+So the two libraries do not share a prefix, and a workspace that has edited either carries ids of
+its own. Both pins are optional, both
 come back on the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one means
 what it always meant: the task follows the workspace default rather than holding a copy of its id, so
 moving that default moves the task. For `riskPolicyId` that default is the **unattended** one, since
@@ -688,8 +688,8 @@ refusal it would have had on the workspace default. `riskPolicyId` is the pin th
 may **do**, since a policy carries `autoMergeEnabled`, the score ceilings and `autonomy`. An `admin`
 key may pin any policy its workspace holds, which is the authority it already had by editing one.
 That is a wider licence than a board member has. In the app, somebody who does not manage the
-policy library cannot re-point a task from an attended policy onto an `unattended` one. Dropping
-the run's human checkpoints is a permission, not a preference.
+policy library cannot re-point a task from an attended policy onto an `unattended` one, because
+dropping the run's human checkpoints is a permission, not a preference.
 
 ## Paging
 

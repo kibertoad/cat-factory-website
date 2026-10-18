@@ -79,7 +79,7 @@ the caller rather than convenient:
   whole exchange. On an event stream it stops once the headers arrive, because a run parked on a
   human decision waits indefinitely by design: a quiet stream is the normal state of a healthy one.
 - **Pagination ends on the cursor, not on an empty page.** A keyset page may legitimately arrive
-  empty with a cursor still set. So every client follows the cursor. It raises if the server hands
+  empty with a cursor still set, so every client follows the cursor. It raises if the server hands
   back the cursor it was just given.
 - **No dependencies you did not ask for.** Python and Go have none, TypeScript uses `fetch`, and
   Java has exactly one (Jackson) plus compile-time annotations.
@@ -87,7 +87,7 @@ the caller rather than convenient:
 ## Kotlin
 
 There is no separate Kotlin SDK, and that is a decision rather than an omission. One artifact serves
-both languages, because the Java client is built for Kotlin callers too:
+both languages, because of how the Java client is built:
 
 - It is annotated, so Kotlin reads real nullability off it rather than falling back to platform
   types.
@@ -143,8 +143,9 @@ name it gives a field and the name your client uses are the same fact rendered t
 claims that can disagree.
 
 A cross-client smoketest drives the same scenario through all four clients against one real backend.
-It compares their reports field by field. So if one language decodes a field differently, maps a
-refusal to the wrong class, or paginates one page short, a test fails and the client does not ship.
+It compares their reports field by field. One language might decode a field differently, map a
+refusal to the wrong class, or paginate one page short. Each of those fails a test before it can
+ship.
 
 The contributor-facing account of that chain (regenerating, adding an endpoint, the release
 mechanics) lives in the code repository:

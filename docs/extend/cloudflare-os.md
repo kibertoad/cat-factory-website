@@ -201,7 +201,7 @@ Four things are worth knowing before you rely on one:
 - **Binding is not receiving.** Your workspace holds the registration and may ask a person before
   enabling it. Nothing is delivered, and nothing is stored on the Gatekeeper, until it is enabled.
   If your workspace does not take the binding at all, the call is refused with the reason its own
-  side gave. So you can tell an approval queue that serves no subscriptions from a declined one.
+  side gave. That lets you tell an approval queue that serves no subscriptions from a declined one.
 - **Every delivery is authorized.** The Gatekeeper asks for a fresh callback per event. It puts the
   delivery through your approval queue as the read it is. So withdrawing someone's access stops the
   push without the Gatekeeper being told.
@@ -225,8 +225,8 @@ comparison is how this one answers.
 
 The observer has to hold an account **this Gatekeeper minted**, and that is checked before any tier
 is compared. A viewer connected through some other vendor names an account of theirs. This
-deployment has never issued that account and holds no tier for it. If it measured them against the
-tier a new account here would have got, it would admit someone who cannot read a single one of the
+deployment has never issued that account and holds no tier for it. Measuring the viewer against the
+tier a new account here would get would admit someone who cannot read a single one of the
 operations being shared. To share with such a person, connect this deployment as a vendor in their workspace and
 share with the account it mints for them.
 

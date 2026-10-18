@@ -1,8 +1,8 @@
 # Add a Custom Gate or Judge
 
-For a deployment that needs to block or grade work rather than produce it. For example, a
-license-header gate that holds a merge until every file carries the company SPDX line, or a rubric
-that scores scope adherence before a run advances. Like a [custom agent kind](./custom-agents.md), both are code you register
+This page is for a deployment that needs to block or grade work rather than produce it. For
+example, a license-header gate holds a merge until every file carries the company SPDX line, and a
+rubric scores scope adherence before a run advances. Like a [custom agent kind](./custom-agents.md), both are code you register
 from your own [deployment repository](../deploy/deployment-repository.md), with no fork and no
 harness rebuild.
 
@@ -296,7 +296,7 @@ to neither a built-in helper nor a registered container-capable kind fails there
 
 ## Testing
 
-A gate factory is a pure constructor. So test its real `wired()`/`probe()` path: wire a fake
+A gate factory is a pure constructor, so test its real `wired()`/`probe()` path: wire a fake
 provider and build the gate with `stubGateContext()` (from `@cat-factory/kernel`). That context
 defaults to the real provider registry, so a wired token shows through:
 

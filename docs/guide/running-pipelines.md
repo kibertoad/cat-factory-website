@@ -310,8 +310,8 @@ Answer the questions to continue. The most common prompts are the **Requirements
 
 A second kind of prompt comes from a **companion whose rework loop has stopped**. This happens when
 the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer past
-it within the allowed rounds. Either the rating never reached the quality bar, or a **Must fix**
-finding is still open. The companion then stops auto-looping and parks for you with a **Decide**
+it within the allowed rounds, for one of two reasons: the rating never reached the quality bar, or
+a **Must fix** finding is still open. The companion then stops auto-looping and parks for you with a **Decide**
 button rather than a plain Approve. It offers the same three choices the requirements reviewer
 offers at its iteration cap:
 
