@@ -1,16 +1,16 @@
 # Add a Custom Gate or Judge
 
-For a deployment that needs to block or grade work rather than produce it: a license-header gate that
-holds a merge until every file carries the company SPDX line, a rubric that scores scope adherence
-before a run advances. Like a [custom agent kind](./custom-agents.md), both are code you register
+For a deployment that needs to block or grade work rather than produce it. For example, a
+license-header gate that holds a merge until every file carries the company SPDX line, or a rubric
+that scores scope adherence before a run advances. Like a [custom agent kind](./custom-agents.md), both are code you register
 from your own [deployment repository](../deploy/deployment-repository.md), with no fork and no
 harness rebuild.
 
 Three shapes, and picking the right one is most of the work:
 
-- A **gate** runs a cheap deterministic precheck against a data source you supply and escalates to a
-  helper agent only on a negative verdict, looping until the precheck passes or an attempt budget is
-  spent. No score, no model call on the happy path.
+- A **gate** runs a cheap deterministic precheck against a data source you supply. It escalates to a
+  helper agent only on a negative verdict, and loops until the precheck passes or an attempt budget
+  is spent. No score, no model call on the happy path.
 - A **step-completion resolver** reshapes a finished step's output from its structured result. It
   cannot park or loop a run.
 - A **judge** always costs one model call, scores the work against a **rubric**, and disposes on that
@@ -148,9 +148,9 @@ A normal helper fixes the gated condition (the fixer pushes a fix, the conflict 
 so the engine re-runs the precheck after it finishes and the gate's verdict stays the source of
 truth. An investigate-don't-fix helper (like the built-in `on-call`) changes nothing the precheck
 would observe, so re-probing would just regress and burn the budget. Implement
-`resolveHelperCompletion` on such a gate: the engine then calls it on the helper's completion (with
-the full `AgentRunResult`) and finishes the gate step with the returned output, letting the gate
-raise a notification or enrich an incident and let the run complete for a human to act out of band.
+`resolveHelperCompletion` on such a gate. The engine then calls it on the helper's completion, with
+the full `AgentRunResult`, and finishes the gate step with the returned output. So the gate can
+raise a notification or enrich an incident, and let the run complete for a human to act out of band.
 :::
 
 ## Step-completion resolvers
@@ -208,9 +208,9 @@ bag at once); the facade builds the GitHub-backed impls and hands them in. See
 
 The built-in **document-quality gate** (`doc-quality`) is a worked example of this seam that ships in
 `@cat-factory/gates`. It runs a deterministic, checkout-free structural check on a
-[document task's](../guide/documents.md) drafted file, missing required sections, leftover
-placeholders, heading-hierarchy problems, and broken in-repo links, and on a failure escalates to the
-`doc-fixer` helper (up to two attempts) to correct the draft in place. Like every gate it is a
+[document task's](../guide/documents.md) drafted file. It looks for missing required sections,
+leftover placeholders, heading-hierarchy problems, and broken in-repo links. On a failure it
+escalates to the `doc-fixer` helper (up to two attempts) to correct the draft in place. Like every gate it is a
 pass-through until its provider is wired; both shipped runtimes wire it:
 
 ```ts
@@ -231,10 +231,10 @@ reach the gate; without it the gate falls back to the kind's built-in skeleton.
 
 ## Custom judges
 
-A **judge** is the third extension shape, for grading rather than gating. Where a gate runs a cheap
-deterministic precheck and escalates a container helper, a judge always costs one model call, scores
-the run's work against a **rubric**, and disposes on that score: advance, park for a human, send the
-work back to the step that produced it, or fail the run. Reach for it when neither of the other seams
+A **judge** is the third extension shape, for grading rather than gating. A gate runs a cheap
+deterministic precheck and escalates a container helper. A judge always costs one model call and
+scores the run's work against a **rubric**. It disposes on that score: advance, park for a human,
+send the work back to the step that produced it, or fail the run. Reach for it when neither of the other seams
 fits: a step-completion resolver can reshape output but cannot park or loop a run, and a gate has no
 score.
 
@@ -253,8 +253,8 @@ start({ buildContainer: (opts) => buildNodeContainer({ ...opts, judgeRegistry })
 ```
 
 The factory is `(ctx: JudgeContext) => JudgeDefinition`, invoked once when the engine builds its judge
-map, so a judge's hooks can close over the engine seams (`clock`, `getBlock`, `runInitiatorScope`,
-`raiseNotification`, and the provider registry) and over your own provider. Registering the same kind
+map. So a judge's hooks can close over your own provider and over the engine seams: `clock`,
+`getBlock`, `runInitiatorScope`, `raiseNotification`, and the provider registry. Registering the same kind
 twice replaces the earlier entry.
 
 The registry is empty by default, so a stock deployment has no judges. The engine owns the whole state
@@ -296,9 +296,9 @@ to neither a built-in helper nor a registered container-capable kind fails there
 
 ## Testing
 
-A gate factory is a pure constructor, so test its real `wired()`/`probe()` path by wiring a fake
-provider and building it with `stubGateContext()` (from `@cat-factory/kernel`), which defaults to the
-real provider registry so a wired token shows through:
+A gate factory is a pure constructor. So test its real `wired()`/`probe()` path: wire a fake
+provider and build the gate with `stubGateContext()` (from `@cat-factory/kernel`). That context
+defaults to the real provider registry, so a wired token shows through:
 
 ```ts
 import { stubGateContext } from '@cat-factory/kernel'
@@ -327,8 +327,8 @@ it('passes on a clean change and fails on a dirty one', async () => {
   that closes over one, leaks across per-build registries and lands in whichever copy the package
   manager resolved rather than the one the engine reads.
 - **A registered gate replaces a built-in of the same kind.** The engine builds its gate registry
-  from whatever is registered and the last registration wins, so the same seam that adds a gate also
-  customizes the shipped catalog. That is deliberate; it also means a typo in the `kind` silently
+  from whatever is registered, and the last registration wins. So the same seam that adds a gate
+  also customizes the shipped catalog. That is deliberate; it also means a typo in the `kind` silently
   adds a gate instead of replacing one.
 - **Pick the seam that can do the job.** A resolver cannot park or loop a run, and a gate has no
   score. Reaching for a judge because a gate could not park is the common wrong turn, and it costs a

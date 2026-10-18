@@ -1,7 +1,7 @@
 # Cloudflare OS Gatekeeper
 
 Cat Factory can be installed into a [Cloudflare OS](https://github.com/cloudflare/cloudflare-os)
-workspace as a **Gatekeeper**: a small Worker you deploy, which holds the API key and hands
+workspace as a **Gatekeeper**. This is a small Worker you deploy. It holds the API key, and hands
 workspace agents an object whose methods are exactly what your policy granted.
 
 The agents never see a credential. They hold a capability, and every call it makes passes through
@@ -64,9 +64,10 @@ wrangler secret put OS_SHARED_TOKEN    # the bearer for the HTTP routes
 
 `GET /health` checks the whole configuration in one pass and names everything that is unset, so you
 wire the deployment once rather than one redeploy at a time. It answers two lists under `os`:
-`blockers` are what stop a workspace installing the Gatekeeper at all, and `limitations` are what it
-would install and find missing (a deployment that does not export the hook controller serves
-everything except the subscriptions).
+
+- `blockers`: what stops a workspace installing the Gatekeeper at all.
+- `limitations`: what a workspace would install and find missing. For example, a deployment that
+  does not export the hook controller serves everything except the subscriptions.
 
 ### 3. Write the policy
 
@@ -96,8 +97,8 @@ export const POLICY: GatekeeperPolicy = {
 Two rules are worth knowing before you write one:
 
 - **A tier cannot grant above the key backing it.** The policy is compiled against the live
-  operation table, and a tier that allows an operation its `keyScope` could not call is refused at
-  startup rather than serving a method that fails on every call.
+  operation table. A tier that allows an operation its `keyScope` could not call is refused at
+  startup, rather than serving a method that fails on every call.
 - **`autoProvisionedTier` is deliberately separate from `defaultTier`.** A Cloudflare OS workspace
   mints one account per user with no identity attached, by design, so no account can ever match a
   `grants` entry. Sharing one knob would mean that turning discovery on also handed a capability to
@@ -152,10 +153,12 @@ A session carries the operations its tier granted, plus a few that are always th
 An operation the policy did not grant is **absent**, not a method that refuses, so a mistake in the
 policy is a missing method rather than a call that fails at your deployment.
 
-`withheld()` separates four reasons, because they need different fixes: `not_in_policy` and
-`denied_by_policy` are your operator's decision, `above_key_scope` needs a higher tier, and
-`not_relayable` means the result is an event stream or raw bytes that a session call cannot carry at
-all (fetch those over the [public API](./public-api.md) directly).
+`withheld()` separates four reasons, because they need different fixes:
+
+- `not_in_policy` and `denied_by_policy` are your operator's decision.
+- `above_key_scope` needs a higher tier.
+- `not_relayable` means the result is an event stream or raw bytes that a session call cannot carry
+  at all. Fetch those over the [public API](./public-api.md) directly.
 
 ## How calls are governed
 
@@ -170,8 +173,8 @@ Every call goes through the approval queue your workspace supplies:
 - **Actions ask the agent to stop.** This Gatekeeper does not simulate effects, so there is no
   provisional result to hand back while a person decides.
 - **Arguments are checked before any of that.** An argument the operation does not declare is
-  refused, naming what it does take, rather than being dropped on the way through: a filter nobody
-  applied comes back as an answer that looks filtered. The check runs before a key is minted or an
+  refused, and the refusal names what the operation does take. It is not dropped on the way
+  through, because a filter nobody applied comes back as an answer that looks filtered. The check runs before a key is minted or an
   approval is spent.
 
 Two things it deliberately will not do:
@@ -180,8 +183,8 @@ Two things it deliberately will not do:
   the repository. Every action says so up front, so the workspace does not offer an undo that would
   not work.
 - **It offers nothing for unattended auto-approval.** The public API annotates a consequence only
-  where the stakes are real money or a merged pull request, so every other write is unannotated, and
-  an unannotated write is read as destructive. If that ever changes, the catalog fills in on its own.
+  where the stakes are real money or a merged pull request. So every other write is unannotated,
+  and an unannotated write is read as destructive. If that ever changes, the catalog fills in on its own.
 
 ## Being pushed instead of polling
 
@@ -198,9 +201,9 @@ Four things are worth knowing before you rely on one:
 - **Binding is not receiving.** Your workspace holds the registration and may ask a person before
   enabling it. Nothing is delivered, and nothing is stored on the Gatekeeper, until it is enabled.
   If your workspace does not take the binding at all, the call is refused with the reason its own
-  side gave, so you can tell an approval queue that serves no subscriptions from a declined one.
-- **Every delivery is authorized.** The Gatekeeper asks for a fresh callback per event and puts the
-  delivery through your approval queue as the read it is, so withdrawing someone's access stops the
+  side gave. So you can tell an approval queue that serves no subscriptions from a declined one.
+- **Every delivery is authorized.** The Gatekeeper asks for a fresh callback per event. It puts the
+  delivery through your approval queue as the read it is. So withdrawing someone's access stops the
   push without the Gatekeeper being told.
 - **A card is pushed on every transition, settlement included.** A run that ends settles the cards
   it had open, and each one is pushed to an `approvals_subscribe` callback with its resolution
@@ -221,16 +224,17 @@ Gatekeeper to verify that a new viewer could already have read everything read t
 comparison is how this one answers.
 
 The observer has to hold an account **this Gatekeeper minted**, and that is checked before any tier
-is compared. A viewer connected through some other vendor names an account of theirs, which this
-deployment has never issued and holds no tier for; measuring them against the tier a new account
-here would have got would admit someone who cannot read a single one of the operations being
-shared. To share with such a person, connect this deployment as a vendor in their workspace and
+is compared. A viewer connected through some other vendor names an account of theirs. This
+deployment has never issued that account and holds no tier for it. If it measured them against the
+tier a new account here would have got, it would admit someone who cannot read a single one of the
+operations being shared. To share with such a person, connect this deployment as a vendor in their workspace and
 share with the account it mints for them.
 
-Two shares are therefore always refused: one where the observer holds no account this Gatekeeper
-issued, and one from a tier that can read captured agent text (model prompts and replies, tool
-arguments, search terms), which is never shareable onward whatever the viewer holds. Each refusal
-says which case it is.
+Two shares are therefore always refused, and each refusal says which case it is:
+
+- a share where the observer holds no account this Gatekeeper issued
+- a share from a tier that can read captured agent text (model prompts and replies, tool
+  arguments, search terms), which is never shareable onward whatever the viewer holds
 
 ## Could you use the MCP connector instead?
 
@@ -261,11 +265,11 @@ Gatekeeper if the workspace is where your team actually works.
 
 The same Worker serves a Cap'n Web capability endpoint at `/rpc`, behind the `OS_SHARED_TOKEN`
 bearer, for any agent runtime that speaks it. The policy, the key minting, the approvals inbox and
-the withheld reasons are all the same; what that door does not have is the workspace's approval
+the withheld reasons are all the same. What that door does not have is the workspace's approval
 queue, so the tier policy is the whole of the governance there.
 
-## See also
+---
 
-- [Public API](./public-api.md) for scopes, keys and the operations themselves
-- [Official SDKs](./sdks.md) if you want to call Cat Factory directly rather than through a workspace
-- [MCP Server](./mcp-server.md) for reaching the same operations from an MCP host
+Next: the [Public API](./public-api.md) for scopes, keys and the operations themselves, or the
+[Official SDKs](./sdks.md) to call Cat Factory directly rather than through a workspace. The
+[MCP Server](./mcp-server.md) reaches the same operations from an MCP host.
