@@ -22,8 +22,8 @@ Two different things, at two different moments:
   (`GET /files/{id}`). No document bodies. The architect must end its design with a fenced
   ` ```foundational-services ` block naming the ids the design consumes, or `none`.
 - **At implementation time**, the researcher and coder steps receive the full API contract documents
-  of exactly the services the design declared, injected as files under
-  `.cat-context/foundational-services/`, plus an index naming anything the design asked for that the
+  of exactly the services the design declared. They are injected as files under
+  `.cat-context/foundational-services/`, with an index naming anything the design asked for that the
   catalog does not contain.
 
 That split is why the catalog is cheap to carry and the contracts are still authoritative when they

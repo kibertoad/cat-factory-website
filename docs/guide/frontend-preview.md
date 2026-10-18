@@ -4,9 +4,9 @@ For anyone shipping a UI, where "the tests pass" is not the same as "it works". 
 [repository type](./repositories.md#repository-types) turns a service frame into an app Cat Factory
 can build, wire to its backends, and drive in a browser. Two things run off one configuration:
 
-- A **self-contained UI test**: in one container Cat Factory builds the app from its branch, points it
-  at the live backend under test (and mocks every other upstream), serves it, and runs the **UI
-  Tester** against it in a real browser. This works on every runtime and is torn down with the run.
+- A **self-contained UI test**: Cat Factory builds the app from its branch in one container. In
+  that same container, it points the app at the live backend under test (and mocks every other
+  upstream), serves it, and runs the **UI Tester** against it in a real browser. This works on every runtime and is torn down with the run.
 - A **browsable preview** (Local and Node runtimes): a long-lived build-and-serve you can open in your
   own browser at a stable URL to click through the app with its upstreams mocked.
 
@@ -39,10 +39,15 @@ how backend URLs reach it.
 ### Detect from repo
 
 Rather than filling every field by hand, click **Detect**. Cat Factory reads the linked repo and
-proposes a config for you to review before anything is saved: it infers the package manager and
-install command from the lockfile, the output directory and build script from the framework (Vite,
-Create React App, Nuxt, Next.js, Angular), the serve mode from a `preview`/`serve` script, and
-candidate backend bindings from env-var names in `.env.example`-style files. Each proposal carries a
+proposes a config for you to review before anything is saved. It infers:
+
+- the package manager and install command, from the lockfile
+- the output directory and build script, from the framework (Vite, Create React App, Nuxt,
+  Next.js, Angular)
+- the serve mode, from a `preview`/`serve` script
+- candidate backend bindings, from env-var names in `.env.example`-style files
+
+Each proposal carries a
 **sure** or **guess** confidence badge; you **Apply** or **Dismiss**. Detected bindings are appended,
 never overwriting an existing service link.
 
@@ -62,8 +67,10 @@ A binding maps one frontend **env var** to a source:
   directory.
 
 The **Resolves to** view in the inspector shows, per env var, whether it currently resolves to a live
-environment or is mocked, and warns when two bindings share an env var (only the last applies) or when
-a bound service has no live environment (it falls back to the mock).
+environment or is mocked. It warns in two cases:
+
+- two bindings share an env var (only the last applies)
+- a bound service has no live environment (it falls back to the mock)
 
 When a run starts, non-fatal notes are stamped on it if some bound services are live and others fall
 back to mocks, or if an env var is duplicated. A frontend whose only bound service has no live
@@ -73,7 +80,7 @@ environment is refused at start with a clear reason rather than testing against 
 
 A pipeline is a **visual** pipeline when it contains a **UI Tester** or **Visual Confirmation** step
 (for example the **Build & visual confirmation** pipeline). A visual pipeline only runs on a
-**frontend** frame, or a frame a frontend binds to; starting one on a plain backend frame is refused,
+**frontend** frame, or a frame a frontend binds to. Starting one on a plain backend frame is refused,
 and the pipeline pickers hide visual pipelines for frames that can't run them.
 
 The UI-test flow and the **Visual Confirmation** gate are covered in

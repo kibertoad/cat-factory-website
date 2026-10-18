@@ -56,10 +56,12 @@ board that mounts it and can be restored from any of them.
 ## Re-adding and deleting boards
 
 Because a service is account-owned, importing a repo that already backs one **mounts** the existing
-shared service onto your board rather than failing with "already linked", and re-adding a repo already
-on the board is a no-op. Deleting a board reclaims the services it homes and their environments so the
-repo is immediately re-addable elsewhere; a service another board still mounts is **re-homed to a
-surviving board** (kept alive with its blocks and run history) rather than destroyed.
+shared service onto your board, rather than failing with "already linked". Re-adding a repo already
+on the board is a no-op.
+
+Deleting a board reclaims the services it homes and their environments, so the repo is immediately
+re-addable elsewhere. A service another board still mounts is **re-homed to a surviving board**
+rather than destroyed. It is kept alive with its blocks and run history.
 
 ## Live updates across boards
 

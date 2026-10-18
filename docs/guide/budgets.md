@@ -1,8 +1,8 @@
 # Control Spend with Budgets
 
 For whoever answers for the bill. Running agents costs money, and Cat Factory keeps that cost
-visible and bounded with metering across three budget tiers, a monthly limit on each, and automatic
-pausing when any tier a run belongs to is exhausted.
+visible and bounded. It meters spend across three budget tiers, sets a monthly limit on each, and
+pauses automatically when any tier a run belongs to is exhausted.
 
 ## How metering works
 
@@ -81,11 +81,14 @@ gate), so a new budget applies to subsequent steps shortly after you save.
 
 ## Metered spend vs. subscription usage
 
-The ledger records **all** token usage, but tags each entry as either **metered** (direct provider
-API keys and Cloudflare Workers AI, billed per token) or **subscription** (the flat-rate Claude Code
-and Codex harnesses and the pooled Kimi/DeepSeek vendor credentials). **Only metered usage counts
-against a budget.** A flat-rate subscription call is recorded for reporting but never inflates spend
-or trips a cap, matching the [budget-of-0](#budget-of-0-local-or-subscription-only) rule.
+The ledger records **all** token usage, but tags each entry as one of two kinds:
+
+- **metered**: direct provider API keys and Cloudflare Workers AI, billed per token
+- **subscription**: the flat-rate Claude Code and Codex harnesses, and the pooled Kimi/DeepSeek
+  vendor credentials
+
+**Only metered usage counts against a budget.** A flat-rate subscription call is recorded for
+reporting but never inflates spend or trips a cap, matching the [budget-of-0](#budget-of-0-local-or-subscription-only) rule.
 
 You see this split in the **Usage** tab under **Workspace settings**, which breaks the current billing
 period into two sections:
@@ -167,8 +170,8 @@ Model choice is a direct lever on spend:
 - Direct provider APIs (Anthropic, OpenAI, AWS Bedrock, OpenRouter, a self-hosted Bifrost or LiteLLM
   gateway) are available when you supply credentials, for higher-capability models where they are
   worth it. A self-hosted gateway is metered at a generic fallback rate, because what it routes to
-  upstream is your configuration rather than something Cat Factory can price: tune its catalog entry
-  if that matters to your budget.
+  upstream is your configuration rather than something Cat Factory can price. Tune its catalog
+  entry if that matters to your budget.
 - A coding-plan subscription you already pay for (Claude, GLM, Codex) runs outside per-token
   metering entirely. See [Connect a Model Provider](./model-providers.md).
 - A model on your own local runner (Ollama, LM Studio, …) incurs no API spend at all, since it

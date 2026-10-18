@@ -14,7 +14,7 @@ If a previous fire is still running, the next fire is skipped rather than stacke
 never piles work on itself.
 
 Nobody is watching a scheduled fire, so a block that pins no risk policy of its own resolves the
-workspace's **unattended** default rather than its in-app one, and under that policy the run answers
+workspace's **unattended** default rather than its in-app one. Under that policy, the run answers
 its own automatic checkpoints instead of parking until somebody opens the board. Gates the pipeline
 asks for still stop it. See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 
@@ -48,8 +48,8 @@ issue. Bug triage is recurring-only, so it doesn't appear in the one-off Add-tas
 The run's stages:
 
 - **intake** - a non-LLM step that scans your tracker (oldest open first) for an issue matching the
-  predicates you set, imports it, retitles the recurring block from the issue, and marks it in
-  progress with a "taken by cat-factory" comment. If nothing matches, the run ends quietly.
+  predicates you set. It imports the issue, retitles the recurring block after the issue, and marks
+  the issue in progress with a "taken by cat-factory" comment. If nothing matches, the run ends quietly.
 - **investigation** - a read-only container agent that clones the repo (and any
   [involved services](./designing-your-board.md#service-connections)) and reports the root-cause
   hypotheses and whether the issue is clear enough to fix.
@@ -92,11 +92,12 @@ and runs only when you click **Run now**. The cadence editor disappears, and the
 
 On-demand matters for models that run on an **individual-usage subscription** (a personal Claude,
 Codex, or GLM subscription that you authorize with a personal password per run). A normal cadence
-schedule fires with no one present, so it **cannot** use an individual-usage model: if the block
-resolves to one, the fire is refused and recorded as a failed run telling you to make it on-demand or
-pick an API-key or coding-plan model. An on-demand schedule can, because you are present each time you
-trigger it, so the run uses your own subscription and the app prompts you for the password if it needs
-it.
+schedule fires with no one present, so it **cannot** use an individual-usage model. If the block
+resolves to one, the fire is refused and recorded as a failed run. The failure tells you to make the
+schedule on-demand, or to pick an API-key or coding-plan model.
+
+An on-demand schedule can use one, because you are present each time you trigger it. The run uses
+your own subscription, and the app prompts you for the password if it needs it.
 
 ## Managing schedules
 
