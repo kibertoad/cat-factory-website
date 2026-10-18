@@ -1,11 +1,16 @@
 # Run Locally
 
 For anyone evaluating Cat Factory, or developing against it, on a single machine. Local mode runs
-the whole product on one machine: the orchestrator as a Node process, each agent
-job as a local Docker container, GitHub or GitLab through a personal access token, and persistence on
-a local PostgreSQL. It is the fastest way to try Cat Factory end to end, and unlike a pure dev setup
-it does real work: agent containers clone, commit, and push to real repositories, CI gates on real
-GitHub Actions, and PRs (or GitLab merge requests) merge for real.
+the whole product on one machine:
+
+- the orchestrator as a Node process
+- each agent job as a local Docker container
+- GitHub or GitLab through a personal access token
+- persistence on a local PostgreSQL
+
+It is the fastest way to try Cat Factory end to end. Unlike a pure dev setup, it does real work.
+Agent containers clone, commit, and push to real repositories, CI gates on real GitHub Actions, and
+PRs (or GitLab merge requests) merge for real.
 
 Use it for evaluation, demos, and single-operator workflows. For a shared or production deployment,
 use [Cloudflare](./cloudflare.md) or [Node.js](./nodejs.md).
@@ -42,7 +47,7 @@ developer machine instead of a server:
   [Docker Hub](https://hub.docker.com/r/kibertoad/cat-factory-executor)
   (`docker.io/kibertoad/cat-factory-executor`), or you can build it locally.
 - A way to serve models (see [Models in local mode](#models-in-local-mode)). Local mode ships with
-  **no** model provider configured, so the picker is empty until you set one up: connect a provider
+  **no** model provider configured, so the picker is empty until you set one up. Connect a provider
   key in the UI, point it at Cloudflare Workers AI, or add a local runner.
 
 ## Bootstrap with the CLI
@@ -54,14 +59,21 @@ project on the **published** libraries (no monorepo checkout needed) in one comm
 npm create @cat-factory/cli@latest      # or: pnpm dlx @cat-factory/cli, npx @cat-factory/cli
 ```
 
-It asks for a project name, lets you pick the source-control provider (GitHub or GitLab) and
-[container runtime](#choosing-a-container-runtime), generates the crypto secrets in the formats the
-server needs (`AUTH_SESSION_SECRET` as hex, `ENCRYPTION_KEY` as base64), mints a PAT by opening the
-provider's token page with the right scopes pre-selected and reading the token you paste back, and
-writes the populated, git-ignored `.env` files. Drive it non-interactively with flags (`--yes`,
-`--provider`, `--token`, `--db-url`, `--container-runtime`, …) for scripts or CI. To scaffold for
+It does the following:
+
+- asks for a project name
+- lets you pick the source-control provider (GitHub or GitLab) and
+  [container runtime](#choosing-a-container-runtime)
+- generates the crypto secrets in the formats the server needs (`AUTH_SESSION_SECRET` as hex,
+  `ENCRYPTION_KEY` as base64)
+- mints a PAT: it opens the provider's token page with the right scopes pre-selected, and reads the
+  token you paste back
+- writes the populated, git-ignored `.env` files
+
+Drive it non-interactively with flags (`--yes`, `--provider`, `--token`, `--db-url`,
+`--container-runtime`, …) for scripts or CI. To scaffold for
 [native agents](#native-agents-run-on-the-host), pass `--execution-mode native` and
-`--native-harnesses claude-code,codex` (and optionally `--harness-entry <path>`); the `.env` is
+`--native-harnesses claude-code,codex` (and optionally `--harness-entry <path>`). The `.env` is then
 written with `LOCAL_NATIVE_AGENTS` set and `LOCAL_HARNESS_ENTRY` left commented so it falls back to
 the bundled harness. The generated
 `README.md` lists the remaining steps (pull the executor image, configure a model provider) with your
@@ -89,9 +101,9 @@ so. Two deployment directories that share a basename still land in one project, 
 deployment its own directory name.
 
 Re-scaffolding with `--force` after renaming the deployment directory moves it to a new project. The
-old container and volume stay behind under the old name, out of reach of `npm run db:down`, and
-while that container runs it holds the published PostgreSQL port, so the CLI prints the project it
-left behind and the command that stops it:
+old container and volume stay behind under the old name, out of reach of `npm run db:down`. While
+that container runs, it holds the published PostgreSQL port. So the CLI prints the project it left
+behind and the command that stops it:
 
 ```bash
 docker compose -p <old-project> down     # add -v to delete that database as well
@@ -109,20 +121,25 @@ need a populated env file, run the `env` subcommand instead of the full scaffold
 npx @cat-factory/cli env      # writes a ready-to-run .env into the current directory
 ```
 
-It generates all three required crypto secrets (`AUTH_SESSION_SECRET`, `ENCRYPTION_KEY`,
-`HARNESS_SHARED_SECRET`) in the formats the server expects, fills in the local defaults
-(`DATABASE_URL`, `PORT`, `CORS_ALLOWED_ORIGINS`, `LOCAL_CONTAINER_RUNTIME`), optionally mints or
-accepts a source-control PAT, and leaves `LOCAL_HARNESS_IMAGE` commented out so the version-matched
-image is used. It writes the file into the current directory (or `--dir <path>`), refuses to
-overwrite an existing `.env` unless you pass `--force`, and adds the file to a `.gitignore` so it is
-never committed. Drive it non-interactively with the same flags as the scaffolder (`--yes`,
+It does the following:
+
+- generates all three required crypto secrets (`AUTH_SESSION_SECRET`, `ENCRYPTION_KEY`,
+  `HARNESS_SHARED_SECRET`) in the formats the server expects
+- fills in the local defaults (`DATABASE_URL`, `PORT`, `CORS_ALLOWED_ORIGINS`,
+  `LOCAL_CONTAINER_RUNTIME`)
+- optionally mints or accepts a source-control PAT
+- leaves `LOCAL_HARNESS_IMAGE` commented out, so the version-matched image is used
+
+It writes the file into the current directory (or `--dir <path>`). It refuses to overwrite an
+existing `.env` unless you pass `--force`, and adds the file to a `.gitignore` so it is never
+committed. Drive it non-interactively with the same flags as the scaffolder (`--yes`,
 `--provider`, `--token`, `--db-url`, `--port`, `--container-runtime`, `--execution-mode`,
 `--native-harnesses`, …). Unlike `init`, it scaffolds nothing else, so run it inside a directory that
 already provides the `db:up` / `start` scripts, then `npm run db:up && npm start`.
 
 If you boot local mode with those secrets or `DATABASE_URL` missing, the misconfiguration screen and
-the boot log now point you straight at this command (`npx @cat-factory/cli env`) as the one-step fix,
-above the per-variable remedies.
+the boot log point you straight at this command (`npx @cat-factory/cli env`). It is listed as the
+one-step fix, above the per-variable remedies.
 
 ### Keeping the stack up: `cat-factory supervise`
 
@@ -148,9 +165,9 @@ database pool still holds the socket and fails only the HTTP check.
 | `--k3s-cluster <name>` | Start a merely-stopped k3d or kind cluster and wait for its apiserver, so a slept laptop does not leave the [Local k3s environment handler](#delegating-infrastructure-off-the-host) pointing at a dead control plane. |
 | `--compose-dir <path>` | Where the `docker-compose.yml` lives. Defaults to `--dir`, itself the current directory. Compose resolves its project file relative to the working directory, so supervising from anywhere else needs this. |
 
-It also detects a resume from suspend (a tick arriving several intervals late means time jumped) and
-repairs immediately rather than waiting out the normal failure threshold, since a resume is exactly
-when the stack is most likely already dead. It treats a dead child-process handle as authoritative, and
+It also detects a resume from suspend: a tick arriving several intervals late means time jumped. It
+then repairs immediately rather than waiting out the normal failure threshold, since a resume is
+exactly when the stack is most likely already dead. It treats a dead child-process handle as authoritative, and
 it reaps the port when a package-manager wrapper is killed without its subtree and leaves the real
 `node` orphaned on the socket. Every kill it makes names the process id and the command behind it.
 
@@ -250,8 +267,9 @@ Playwright and Chromium, pnpm and yarn, a static file server and a headless JRE 
 mode resolves the version-matched `cat-factory-executor-ui` tag with no configuration, and gives
 that step its own container beside the one the rest of the run shares.
 
-It is **not** pulled at boot, unlike the harness image above: it carries a browser and a JVM, and
-most deployments never dispatch to it, so the runtime pulls it the first time a UI Tester step runs.
+It is **not** pulled at boot, unlike the harness image above. It carries a browser and a JVM, and
+most deployments never dispatch to it, so the runtime pulls it the first time a UI Tester step
+runs.
 Expect that first dispatch to take a while. Set `LOCAL_HARNESS_IMAGE_UI` to pin a different tag or a
 local build, or pre-pull the recommended tag to move the wait somewhere you are watching. If it is
 set to something that does not exist, the UI Tester step fails at dispatch and says so.
@@ -260,21 +278,22 @@ set to something that does not exist, the UI Tester step fails at dispatch and s
 
 The backend and the executor-harness image are released as a matched pair, and the backend verifies
 the running harness reports the expected version once it becomes healthy. On a stock local
-deployment (`LOCAL_HARNESS_IMAGE` left unset, so the version-matched image is used) a mismatch, or a
-harness too old to report a version at all, **fails the first dispatch loudly** with a message that
-names the expected and running versions and tells you to re-pull the image (`docker pull …`) or unset
-`LOCAL_HARNESS_IMAGE`, then restart. When you have deliberately pinned a custom `LOCAL_HARNESS_IMAGE`
-(or a native `LOCAL_HARNESS_ENTRY`), the same mismatch is downgraded to a boot warning rather than a
-hard stop, since pinning is an explicit choice to manage compatibility yourself. This is why pinning a
+deployment, `LOCAL_HARNESS_IMAGE` is unset and the version-matched image is used. A mismatch there, or a harness too old to report a version at all, **fails the first dispatch loudly**. The
+message names the expected and running versions. It tells you to re-pull the image
+(`docker pull …`) or unset `LOCAL_HARNESS_IMAGE`, then restart.
+
+When you have deliberately pinned a custom `LOCAL_HARNESS_IMAGE` (or a native
+`LOCAL_HARNESS_ENTRY`), the same mismatch is downgraded to a boot warning rather than a hard stop.
+Pinning is an explicit choice to manage compatibility yourself. This is why pinning a
 mutable tag like `:latest` is discouraged: it can pull an image newer than the backend supports.
 
 ## Inline steps on subscription models
 
 Inline LLM steps (the requirements review, clarity review, brainstorm, task-estimator, and inline
 document kinds: one-shot text calls with no repo and no container) run on a **subscription model by
-default** in local mode. That means a preset pinned to a subscription-only model such as Claude Opus
-or a Codex GPT model, which the seeded local default already is, just runs, instead of being refused
-because an inline step had no way to reach a container-only subscription token.
+default** in local mode. So a preset pinned to a subscription-only model, such as Claude Opus or a
+Codex GPT model, just runs, instead of being refused because an inline step could not reach a
+container-only subscription token. The seeded local default already is such a preset.
 
 `LOCAL_NATIVE_INLINE` controls it and is on by default (`claude-code,codex`). Set it to `off` to turn
 inline subscription serving off, or to a subset to restrict vendors. Each inline step resolves one of
@@ -312,10 +331,10 @@ actually be served, with a clear message instead of a mid-run failure against an
 provider:
 
 - If a step's model has no usable provider at all, the run is refused (reason: providers unconfigured).
-- If a step's model works for a container step but an **inline** step can't drive it (a
-  subscription-only model with no inline harness on this deployment), the run is refused with "model
-  preset can't run this pipeline". In local mode the default-on inline subscription serving above
-  normally satisfies this; the fix elsewhere is to pick a preset whose inline steps resolve to a
+- If a step's model works for a container step but an **inline** step can't drive it, the run is
+  refused with "model preset can't run this pipeline". That is a subscription-only model with no
+  inline harness on this deployment. In local mode, the default-on inline subscription serving
+  above normally satisfies this. Elsewhere, pick a preset whose inline steps resolve to a
   provider-backed model (a direct API key, OpenRouter, or Cloudflare AI).
 
 ## Choosing a container runtime
@@ -391,7 +410,7 @@ You have several options, in rough order of "no cloud account needed":
   Claude/GLM/Codex subscription, in the UI exactly as on a hosted deployment. See
   [Connect a Model Provider](../guide/model-providers.md).
 - **Cloudflare Workers AI over REST**: off-Worker there is no `AI` binding, so Workers AI is served
-  through Cloudflare's REST API and is gated on **`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`**
+  through Cloudflare's REST API. It is gated on **`CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN`**
   (mint a Workers AI API token; find the account id with `wrangler whoami`). Set both and the
   `workers-ai` models become selectable.
 - **AWS Bedrock**: local mode shares the Node runtime's provider setup, so Bedrock registers when
@@ -400,11 +419,11 @@ You have several options, in rough order of "no cloud account needed":
   (`""` allows all). See [Configuration → LLM providers](./configuration.md#llm-providers).
 
 ::: tip Forgot the PAT?
-Local mode reaches source control through `GITHUB_PAT` (or `GITLAB_PAT`) and has no GitHub App connect
-flow, so without one every repo-operating step (clone, push, open PR or MR, CI gate, merge) is bound to
-fail at runtime. If you boot without one, Cat Factory does not leave you guessing: it logs a warning
-with a click-through token-creation link (scopes pre-selected) and shows the same one-click link as a
-dismissible banner over the board. Create the token, set the variable, and restart.
+Local mode reaches source control through `GITHUB_PAT` (or `GITLAB_PAT`), and has no GitHub App
+connect flow. So without one, every repo-operating step (clone, push, open PR or MR, CI gate, merge)
+is bound to fail at runtime. If you boot without one, Cat Factory does not leave you guessing. It
+logs a warning with a click-through token-creation link (scopes pre-selected), and shows the same
+one-click link as a dismissible banner over the board. Create the token, set the variable, and restart.
 :::
 
 ## Web search (SearXNG)
@@ -444,11 +463,15 @@ token-creation links for GitHub and GitLab so you can mint one.
 ## GitLab in local mode
 
 Local mode treats GitLab as a first-class source-control backend, not just a sign-in provider. Set
-`GITLAB_PAT` (scope `api`; add `GITLAB_API_BASE` for a self-managed instance) and a GitLab repo gets
-the same flow a GitHub repo does: the agent containers clone and push with the token, the CI gate
-reads pipeline status, mergeability and the real merge run against GitLab, and the executor opens a
-real **merge request** (reusing an open one on a resumed run). The provider is picked per repo from
-the clone-URL host, so a deployment can drive both.
+`GITLAB_PAT` (scope `api`; add `GITLAB_API_BASE` for a self-managed instance), and a GitLab repo gets
+the same flow a GitHub repo does:
+
+- The agent containers clone and push with the token.
+- The CI gate reads pipeline status.
+- Mergeability and the real merge run against GitLab.
+- The executor opens a real **merge request**, reusing an open one on a resumed run.
+
+The provider is picked per repo from the clone-URL host, so a deployment can drive both.
 
 ## A note on security
 
@@ -468,9 +491,9 @@ native Linux, keep the default bind and close the gate instead.
 ## Linking repositories
 
 Local mode discovers repositories through your `GITHUB_PAT` rather than a GitHub App installation.
-With a PAT set, the **Add from existing repo** board flow works just like on a hosted deployment: the
-picker lists your repos (via `/user/repos`), with a search/filter box for accounts that expose many,
-and importing links and syncs the repo behind a service frame. The PAT's `repo` and `workflow`
+With a PAT set, the **Add from existing repo** board flow works just like on a hosted deployment. The
+picker lists your repos (via `/user/repos`), with a search/filter box for accounts that expose many.
+Importing links and syncs the repo behind a service frame. The PAT's `repo` and `workflow`
 scopes light the flow up; CLI- and UI-linked repos share one synthetic installation, so the
 `linkRepo` helper still works and points at the same place. A `GITLAB_PAT` links GitLab repositories
 the same way. After linking, [run pipelines](../guide/running-pipelines.md) as usual.

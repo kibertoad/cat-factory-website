@@ -187,8 +187,8 @@ browser, so starting, retrying, and approving from your side runs ride along wit
 again. The server never stores the password; it travels as a request header, never in a saved record.
 
 To keep a long pipeline from lapsing halfway through, the cache is checked against an **8-hour expiry
-buffer**. A start, confirm, or retry might find less than eight hours of runway left on the cached
-password. If so, it re-prompts you then, while you are present at the action, and refreshes the full
+buffer**. When a start, confirm, or retry finds less than eight hours of runway left on the cached
+password, it re-prompts you then, while you are present at the action, and refreshes the full
 window. This stops a nearly-expired credential from failing on an asynchronous step while you are
 away.
 

@@ -6,8 +6,8 @@ Nuxt SPA on Cloudflare Pages, and per-run coding work executes in Cloudflare Con
 
 ## Your deployment project
 
-Cat Factory ships as **reusable libraries on npm** (plus a runner image on GHCR and Docker Hub), which you
-assemble into a small deployment project of two thin packages that depend on the published
+Cat Factory ships as **reusable libraries on npm**, plus a runner image on GHCR and Docker Hub. You
+assemble them into a small deployment project of two thin packages that depend on the published
 libraries and point at your own Cloudflare resources:
 
 - **Backend**: re-exports `@cat-factory/worker` and ships your `wrangler.toml` (D1 binding,

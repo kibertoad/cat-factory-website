@@ -1,8 +1,8 @@
 # Lay Out a Kubernetes Cluster
 
-For the operator who has to decide where each piece runs before filling in a connect form: which
-namespaces, which node pools, what the `NetworkPolicy` allows, what the ServiceAccount is allowed to
-do, and how many run pods a workspace will want at once.
+For the operator who has to decide where each piece runs before filling in a connect form. That
+covers which namespaces, which node pools, what the `NetworkPolicy` allows, what the ServiceAccount
+is allowed to do, and how many run pods a workspace will want at once.
 
 [Deploy on Kubernetes](./kubernetes.md) is the page for connecting a cluster you already have. This
 one is the shape of the cluster itself. Everything here is a reference layout: namespace names, node
@@ -110,13 +110,13 @@ Egress from the runner namespace can be closed down to two destinations:
 
 A step running a subscription harness needs the vendor's own API host as well, which is the reason
 those steps belong on a pool you trust. Anything else a job's own build needs (a package registry, a
-private artifact store) is yours to allow deliberately: the default posture is that a run pod
+private artifact store) is yours to allow deliberately. The default posture is that a run pod
 reaches nothing it was not given a reason to reach.
 
 ## Reaching the apiserver
 
 - **A private cluster address is fine.** The apiserver URL must be `https`, and cloud metadata
-  endpoints are refused (including their obfuscated IP spellings), but a private cluster IP or a
+  endpoints are refused (including their obfuscated IP spellings). But a private cluster IP or a
   cluster DNS name is accepted: you are pointing the product at your own cluster on purpose.
 - **Paste the cluster CA bundle** so the apiserver's certificate verifies. Skipping TLS verification
   is for kind and k3d development clusters, not for a cluster that matters.
