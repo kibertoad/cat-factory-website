@@ -39,8 +39,8 @@ the last captured output and opens nothing. The agent is explicitly told to fix 
 weaken the checks.
 
 Checks resolve up the frame chain, so a task inherits its service frame's set. The output (bounded and
-scrubbed of secrets) streams onto the step while the loop runs and stays on the finished step, so the
-run records real command output rather than the agent's assertion that it verified its work. It also
+scrubbed of secrets) streams onto the step while the loop runs, and stays on the finished step. So
+the run records real command output, rather than the agent's assertion that it verified its work. It also
 lands on the pull request itself, in the
 [verification report](#the-verification-report-on-the-pull-request). A service with no checks
 configured opens its pull request exactly as before.
@@ -54,14 +54,14 @@ rows in the panel for you to keep, edit, or drop; nothing is persisted until you
 A service frame also declares one **install command**, in the same inspector section. The harness runs
 it against the checkout before the agent's first turn.
 
-A fresh shallow clone gives an agent manifests, not dependencies: it can read that a library is
-depended upon but not what the library exposes, so it guesses at APIs, re-derives type shapes that are
-sitting on disk, or declines work it could have done. Installing first removes that whole class of
+A fresh shallow clone gives an agent manifests, not dependencies. It can read that a library is
+depended upon, but not what the library exposes. So it guesses at APIs, re-derives type shapes that
+are sitting on disk, or declines work it could have done. Installing first removes that whole class of
 guessing.
 
-The install and the pre-PR checks are threaded onto a job under different rules: the checks ride only
-a dispatch that will open a pull request, while the install rides every dispatch that gets a
-checkout, including a read-only exploration.
+The install and the pre-PR checks are threaded onto a job under different rules. The checks ride only
+a dispatch that will open a pull request. The install rides every dispatch that gets a checkout,
+including a read-only exploration.
 
 ## The repository's pull-request template
 
@@ -92,8 +92,8 @@ Every build pipeline finishes with three engine steps that prepare the PR for me
   review rather than merging on a hollow score.
 
 Risk policies live in a per-workspace library, and each task picks one. A task that picks none falls
-back to a workspace default, and a workspace carries **two** of them: one for a run somebody started
-in the app, and one for a run nothing is watching (see
+back to a workspace default. A workspace carries **two** defaults: one for a run somebody started in
+the app, and one for a run nothing is watching (see
 [Runs nobody is watching](#runs-nobody-is-watching)). Three policies ship built in:
 
 - **Balanced** (the in-app default): auto-merges a PR when its complexity, risk, and impact scores
@@ -212,10 +212,11 @@ is in force:
 - the pre-dispatch input gate
 
 A companion step that is also gated still raises its approval gate at the cap. Nor does the switch
-answer a review that is asking **questions**: those answers are a product judgement, so that park stands under either posture.
-The same holds for a companion parked on an open **Must fix** finding. Proceeding there overrules a
-reviewer's judgement that the work must not go further, which is a different thing from confirming
-that a loop should stop trying, so that one waits for a person under either posture too.
+answer a review that is asking **questions**: those answers are a product judgement, so that park
+stands under either posture. The same holds for a companion parked on an open **Must fix** finding.
+Proceeding there overrules a reviewer's judgement that the work must not go further. That is
+different from confirming that a loop should stop trying, so that one waits for a person under
+either posture too.
 
 Each of these is recorded as settled by policy on the step it happened on, rather than left looking
 like a bar the work met. So whoever reviews the resulting pull request can tell a run that proceeded
@@ -231,9 +232,11 @@ either way, which is the point of keeping the two apart.
 
 Every merge decision writes one row to the workspace's merge track record: the change class, the
 merger's scores, the outcome, and, when you supply it, how much review effort the pull request really
-took. Tag it as **No comments**, **Minor notes**, or **Real rework** when you act on a merge-review
-card, from the task inspector's merge control, or from the dismissible nudge that appears when you
-merge a pull request directly on GitHub or GitLab.
+took. Tag it as **No comments**, **Minor notes**, or **Real rework** when you act on any of these:
+
+- a merge-review card
+- the task inspector's merge control
+- the dismissible nudge that appears when you merge a pull request directly on GitHub or GitLab
 
 The rollup shows up next to each class in the **Rules per change class** panel: how many pull requests
 in that class merged, what share merged automatically, and what share needed no comments. That is the
@@ -268,16 +271,19 @@ The report carries:
   and how many times the CI fixer tried.
 - **Pre-PR validation**: each [check command](#pre-pr-validation) the harness ran against the exact
   tree that opens the pull request, with its exit code, duration, and the log of whatever failed. This
-  is kept apart from the CI section on purpose: CI is the host's opinion of the pushed branch, later
-  and elsewhere, while this is the platform's own run on the exact tree and the one verdict it
+  is kept apart from the CI section on purpose. CI is the host's opinion of the pushed branch, later
+  and elsewhere. Pre-PR validation is the platform's own run on the exact tree, and the one verdict it
   enforced. A passing command's log is dropped, and the section says so rather than leaving an
   ambiguous blank.
 - **Reproduction proof**: for a bug fix, the declared reproducing test run against the pre-fix tree and
   against the finished one, so the pull request carries evidence that the defect ever manifested.
 - **Test verification**: the Tester step's structured report.
-- **Ephemeral environment**: a three-leg proof that the test environment did its job. It **came up**
-  at a recorded time (from the provisioning event log), evidence was **captured** from it while it was
-  live (from the Tester's own report and the screenshots it stored), and it was **torn down** again.
+- **Ephemeral environment**: a three-leg proof that the test environment did its job. The legs are:
+  - It **came up** at a recorded time, as the provisioning event log shows.
+  - Evidence was **captured** from it while it was live, as the Tester's own report and the
+    screenshots it stored show.
+  - It was **torn down** again.
+
   The verdict over the three legs names every missing or contradictory leg, and a deep link points at
   the captured evidence. An unreadable provisioning log reports itself as un-evidenced rather than as
   an environment nobody reclaimed, and a tester that ran locally is kept apart from one that did not
@@ -306,7 +312,7 @@ Because the work is a real PR in your repository, all your existing branch prote
 checks, and review rules apply unchanged.
 
 To make a human code review a required step rather than an after-the-fact check, add the **Human
-Review** gate: the run waits for the PR to meet GitHub's required approvals with no unresolved
+Review** gate. The run then waits for the PR to meet GitHub's required approvals with no unresolved
 threads, and loops the Fixer to address review comments in between. See
 [Human review on the pull request](./running-pipelines.md#human-review-on-the-pull-request).
 
@@ -324,9 +330,9 @@ steer the reviewer. A Review task takes no title or description (the title is de
 no risk policy (it merges nothing). It runs the single-step **Review a pull request** pipeline, and any
 [prompt fragments](./prompt-fragments.md) you pin become review criteria.
 
-The reference is checked at creation, against precisely the repository the reviewer will read, so a
-typo'd number is refused there instead of surfacing later as a run that clones a repo and finds nothing
-to review. A link belonging to a different repository is refused too, since the reviewer fetches by
+The reference is checked at creation, against precisely the repository the reviewer will read. So a
+typo'd number is refused there, instead of surfacing later as a run that clones a repo and finds
+nothing to review. A link belonging to a different repository is refused too, since the reviewer fetches by
 number against the service's own repo. Only a positive "no such pull request" refuses: an outage, a
 revoked token, or a rate limit answers "unknown" and the task is created. The task inspector links
 through to the pull request it targets.
@@ -335,7 +341,7 @@ through to the pull request it targets.
 
 Beyond the focus text, a review task can carry a **queue of review skills**: the specialist
 playbooks your team authored for a performance pass, a security audit, an accessibility check.
-Pick them under **Review skills** in the add-task form, in the order you want them applied, and the
+Pick them under **Review skills** in the add-task form, in the order you want them applied. The
 reviewer applies each on top of its standing role, routing it to the parts of the diff it bears on.
 
 Only skills whose `SKILL.md` declares `group: review` are offered, and a review carries at most
@@ -345,8 +351,8 @@ has since left the catalog, the run fails and names it rather than reviewing wit
 asked for.
 
 This is what lets one review pipeline serve both a routine change and one that needs a security
-pass: which lenses a pull request earns is a per-review decision you make when you file the task,
-not a pipeline you clone per lens. The task inspector's **Under review** panel shows the queue in
+pass. You decide which lenses a pull request earns for each review, when you file the task. You do
+not clone a pipeline per lens. The task inspector's **Under review** panel shows the queue in
 order and lets you change it, which is also how you clear a run that failed on a skill the catalog
 no longer holds.
 
@@ -382,8 +388,8 @@ read-only investigator re-examines that finding and returns a verdict (Upheld, S
 Retracted, the last auto-deselected). Add an optional note about what seems wrong before it investigates.
 
 Posting and fixing require the PR to live on the service's own repo (fork and cross-repo PRs aren't
-supported yet) and are GitHub-only; on GitLab those two resolutions report as unsupported, while the
-review itself still runs.
+supported yet), and are GitHub-only. On GitLab, those two resolutions report as unsupported, while
+the review itself still runs.
 
 ## Merging closes the loop
 
@@ -402,9 +408,10 @@ If the change needs more work, you have the usual options:
 
 - Push commits or request changes on the PR directly.
 - Refine the block's [requirements](./requirements.md) and start a new run.
-- Use the run's **retry** to re-run from a failed step, or
-  [**restart from a step you pick**](./running-pipelines.md#retry-restart-stop-and-reset) (even on a
-  finished run) to redo, say, the Coder and everything after it without touching the earlier work.
+- Use the run's **retry** to re-run from a failed step.
+- Use [**restart from a step you pick**](./running-pipelines.md#retry-restart-stop-and-reset), even
+  on a finished run, to redo, say, the Coder and everything after it without touching the earlier
+  work.
 
 Each iteration is fully visible on the board and in the run's event log.
 
