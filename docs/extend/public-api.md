@@ -429,9 +429,23 @@ or an approval gate stops the run either way. So `autonomy` is about waiting, no
 When you report what a policy will do, keep the two apart.
 
 Every workspace starts with an **Unattended delivery** policy (`mp_unattended`) as its unattended
-default. It is the same as that workspace's own in-app default in every limit, budget and per-role
-restriction. Only `autonomy` is different. If you want runs started through the API to keep stopping
-for people, point `isUnattendedDefault` at a policy whose `autonomy` is `attended`. See
+default. It is a separate row, so a later edit to the in-app default does not change it.
+
+- In a new workspace, it has the stock `mp_balanced` ceilings, class rules and per-role
+  restrictions. It sets `autonomy: "unattended"` and narrows three loop budgets:
+
+  | Field | Balanced | Unattended delivery |
+  | --- | --- | --- |
+  | `maxRequirementIterations` | 6 | 3 |
+  | `maxTesterQualityIterations` | 3 | 2 |
+  | `judgeMaxBounces` | 1 | 0 |
+
+  `companionMaxReworks` and `ciMaxAttempts` keep the Balanced values.
+- A workspace that existed before this policy shipped got a copy of its own `isDefault` policy as it
+  was then. Only `autonomy` is different.
+
+If you want runs started through the API to keep stopping for people, point `isUnattendedDefault` at a
+policy whose `autonomy` is `attended`. See
 [Runs nobody is watching](../guide/pull-requests.md#runs-nobody-is-watching).
 
 ### Adopting a repository you already have

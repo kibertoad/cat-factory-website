@@ -89,6 +89,45 @@ manifest, fill the write-only secrets sub-form, and run a test dispatch. The edi
 the same wire contract the backend enforces. The **Test environments** tab in the same window
 registers an [environment provider](./environments.md); a single pool can back both jobs.
 
+### Declaring the pool from the deployment
+
+A pool registered in this window belongs to one workspace. On a deployment where a pool is the only
+executor, every new board starts unable to run an agent until someone fills the form. A Node
+deployment that already knows its pools can declare one per account instead. Pass
+`seedAccountRunnerPool` to `start()`: a function that gets the account and returns the same `config`
+and write-only `secrets` the form takes, or `undefined` for no pool:
+
+```ts
+start({
+  seedAccountRunnerPool: (account) => ({
+    config: {
+      kind: 'kubernetes',
+      kubernetes: {
+        label: 'Agents',
+        apiServerUrl: 'https://k8s.internal:6443',
+        namespace: 'cat-factory',
+        image: 'ghcr.io/kibertoad/cat-factory-executor:<tag>',
+      },
+    },
+    secrets: { apiToken: process.env.AGENT_POOL_TOKEN! },
+  }),
+})
+```
+
+The function is called for personal and organization accounts. Every board of the account that has
+no pool of its own uses the account's pool. A board created before accounts existed gets nothing and
+keeps its own registration.
+
+The server stores the account's pool at boot and when a board of an account with no pool is
+created. At boot it also compares each stored pool with what the function returns now, and replaces
+it when the config or the secrets changed, so a rotated token reaches every account on the next
+restart. A pool that is not valid is logged as an error naming the account, and the next boot tries
+again.
+
+A board stops using the account's pool when its `inheritAccountRunnerPool` setting is `false`.
+Removing a board's own pool sets that setting, unless the request passes `fallBackToAccount=true`.
+`startLocal()` does not take this option.
+
 ### Native Kubernetes backend
 
 If your compute is a Kubernetes cluster, you don't need a manifest at all. Select the **Kubernetes**

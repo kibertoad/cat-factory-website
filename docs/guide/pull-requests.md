@@ -140,14 +140,21 @@ Three policies ship built in:
 | Policy | Default for | Auto-merges |
 | --- | --- | --- |
 | **Balanced** | Runs started in the app | When complexity, risk, and impact are all within the thresholds. Anything above goes to human review. |
-| **Unattended delivery** | Runs nothing is watching | Exactly what your workspace's in-app default would merge. |
+| **Unattended delivery** | Runs nothing is watching | The same as the shipped **Balanced**. |
 | **Manual review only** | None | Never. Every pull request raises a merge-review notification, whatever its scores, and a person merges it. Use it on a board where a person always makes the final call. |
 
-**Unattended delivery** has the same limits, budgets, class rules and per-role restrictions as your
-workspace's in-app default. Only one thing is different: a run under it answers the checkpoints that
-its own automatic loops raise, instead of waiting for a person who is not there. As shipped, it may not
-land a change that your own thresholds would hold back. If your track record supports it, widen the policy
-yourself.
+**Unattended delivery** has the same limits, class rules and per-role restrictions as the shipped
+**Balanced**. Two things are different:
+
+- A run under it answers the checkpoints that its own automatic loops raise, instead of waiting for a
+  person who is not there.
+- It spends less on the loops whose limit it answers: three requirement-review passes instead of six,
+  two Tester coverage re-runs instead of three, and no judge bounces instead of one.
+
+Companion rework rounds and CI-fix attempts keep the Balanced values. A rework round produces work,
+not another verdict, and a spent CI budget is a failure that a person must see. As shipped, the policy
+may not land a change that Balanced would hold back. If your track record supports it, widen the
+policy yourself.
 
 A policy also holds the budgets that the run's automatic loops spend before they stop and ask you. So
 how much the platform retries on its own is a choice for each task, not a platform constant:
@@ -161,6 +168,12 @@ To edit policies or add your own, open the workspace's **Risk policies** panel. 
 buttons: **Make default** and **Unattended default**. The two defaults are independent. To use one
 policy for all runs, set both on the same policy. You cannot delete a policy while it is a default.
 The panel tells you which default blocks the delete.
+
+The two defaults are separate rows, so an edit to one does not change the other. A new workspace seeds
+**Unattended delivery** from the stock Balanced values. So if you tighten your in-app default, tighten
+the unattended one too. A workspace that existed before **Unattended delivery** shipped got a copy of
+its own in-app default as it was then. Only the unattended posture is switched on, and the narrower
+budgets above do not apply.
 
 ### Rules per change class
 
