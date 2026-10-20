@@ -125,8 +125,27 @@ restart. A pool that is not valid is logged as an error naming the account, and 
 again.
 
 A board stops using the account's pool when its `inheritAccountRunnerPool` setting is `false`.
-Removing a board's own pool sets that setting, unless the request passes `fallBackToAccount=true`.
+Removing a board's own pool sets that setting to `false`, unless the request passes
+`fallBackToAccount=true`. With `fallBackToAccount=true` the setting becomes `true`, also for a board
+that had opted out before, so the board uses the account's pool again.
 `startLocal()` does not take this option.
+
+#### The account's pool in the Agent containers tab
+
+A board admin manages the same choice in **Infrastructure → Agent containers**:
+
+- A board that uses its account's pool shows that pool with an **Account pool** badge. It has no
+  remove button, because the pool belongs to the account and not to the board.
+- On such a board, the form below is titled **Use a different pool for this board**. Saving it
+  registers a pool of the board's own, and the board stops using the account's pool.
+- In advanced mode, **Stop using the account pool** opts the board out. The board then cannot run
+  agents until you connect a pool of its own.
+- A board that opted out and has no pool of its own names the account's pool and offers
+  **Use the account pool**. This button shows in every mode.
+- A board with its own pool, on an account that also has one, shows the checkbox
+  **When I remove this board's pool, use the account pool**. It is clear by default. Tick it before
+  you remove the board's pool to fall back to the account's pool; leave it clear and the board
+  opts out.
 
 ### Native Kubernetes backend
 
