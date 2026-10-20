@@ -106,9 +106,10 @@ possible at all.
    *Manual review only*, or keep auto-merge and add class floors for source and schema changes. The
    shipped default auto-merges under balanced ceilings with no floors. A workspace has a second
    default for runs nothing is watching (API, tracker, schedule), shipped as *Unattended delivery*.
-   It lands nothing the in-app default would have held. But a run under it answers its own automatic
-   checkpoints instead of stopping for a person. Re-point it at an attended policy if you want that
-   work to keep parking. See
+   In a new workspace it has the stock *Balanced* ceilings. But a run under it answers its own
+   automatic checkpoints instead of stopping for a person. It is a separate policy, so tightening the
+   in-app default does not tighten it: tighten both. Re-point it at an attended policy if you want
+   that work to keep parking. See
    [Runs nobody is watching](../guide/pull-requests.md#runs-nobody-is-watching).
 3. **Scope the GitHub App installation to only the repositories the platform should work on.** Do
    not install on "All repositories" of an organization that also holds crown jewels.

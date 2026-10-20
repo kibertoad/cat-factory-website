@@ -153,8 +153,9 @@ dismissed everything and left nothing to fold in, the round settles with no LLM 
 Two per-task knobs on the [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
 tune the loop:
 
-- **`maxRequirementIterations`** (default **3**): how many reviewer passes run before the loop stops
-  and asks you to choose one more round, proceed anyway, or stop and reset the task.
+- **`maxRequirementIterations`** (default **6**, **3** under Unattended delivery): how many reviewer
+  passes run before the loop stops and asks you to choose one more round, proceed anyway, or stop
+  and reset the task.
 - **`maxRequirementConcernAllowed`** (default none): findings at or below this severity are recorded
   but auto-advance the run, with no human gate and the companion skipped, so only the findings that
   matter to you pause the run.

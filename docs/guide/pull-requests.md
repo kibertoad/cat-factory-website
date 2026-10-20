@@ -98,13 +98,16 @@ the app, and one for a run nothing is watching (see
 
 - **Balanced** (the in-app default): auto-merges a PR when its complexity, risk, and impact scores
   fall within the thresholds, and routes anything above them to human review.
-- **Unattended delivery** (the default for unwatched runs): the same ceilings, budgets, class rules
-  and per-role restrictions as your workspace's own in-app default, with one thing changed. A run
-  under it answers the checkpoints its own automatic loops raise instead of parking for a person who
-  isn't there. What it is allowed to land is deliberately identical: a policy that ships as a
-  default may decide that an unwatched run shouldn't wait forever on an automation budget. It may
-  not decide that the run gets to land a change your own
-  thresholds would have held. Widen it yourself if your track record says to.
+- **Unattended delivery** (the default for unwatched runs): the same ceilings, class rules and
+  per-role restrictions as the shipped **Balanced**. A run under it answers the checkpoints its own
+  automatic loops raise instead of parking for a person who isn't there. It also spends less on the
+  loops whose cap it answers: three requirement-review passes instead of six, two Tester coverage
+  re-runs instead of three, and no judge bounces instead of one. Companion rework rounds and CI-fix
+  attempts stay at the Balanced values. A rework round produces work rather than another verdict, and
+  a spent CI budget is a failure a person has to see. What it is allowed to land is deliberately
+  unchanged: a policy that ships as a default may decide that an unwatched run shouldn't wait forever
+  on an automation budget. It may not decide that the run gets to land a change Balanced would have
+  held. Widen it yourself if your track record says to.
 - **Manual review only**: never auto-merges. Every PR, whatever its scores, raises a merge-review
   notification for a person to merge. Reach for it on a board where a human always makes the final
   call.
@@ -123,6 +126,12 @@ Edit these or add your own in the workspace's **Risk policies** panel. Each row 
 default** and **Unattended default** promote buttons, since the two defaults are independent: flag one
 policy both ways to run a single posture everywhere. Neither default can be deleted while it holds its
 flag, and the panel says which flag is blocking.
+
+The two defaults are separate rows, so an edit to one does not reach the other. A new workspace seeds
+**Unattended delivery** from the stock Balanced values, so if you tighten your in-app default, tighten
+the unattended one too. A workspace that existed before **Unattended delivery** shipped got a copy of
+its own in-app default as it stood then, with only the unattended posture switched on and none of the
+narrower budgets above.
 
 ### Rules per change class
 

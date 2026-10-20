@@ -341,9 +341,13 @@ Neither value covers a checkpoint the **pipeline** asks for. A `human-test` step
 approval gate stops the run either way, which is what keeps this a statement about waiting rather than
 about oversight. When you report what a policy will do, keep the two apart.
 
-Every workspace seeds an **Unattended delivery** policy (`mp_unattended`) as its unattended default:
-identical to that workspace's own in-app default in every ceiling, budget and per-role restriction,
-with `autonomy` the only difference. A deployment that wants its API-started runs to keep parking
+Every workspace seeds an **Unattended delivery** policy (`mp_unattended`) as its unattended default.
+In a new workspace it has the stock `mp_balanced` ceilings, class rules and per-role restrictions, with
+`autonomy: "unattended"` and three narrower loop budgets: `maxRequirementIterations` 3 (Balanced 6),
+`maxTesterQualityIterations` 2 (Balanced 3) and `judgeMaxBounces` 0 (Balanced 1). `companionMaxReworks`
+and `ciMaxAttempts` keep the Balanced values. A workspace that existed before this policy shipped got a
+copy of its own `isDefault` policy as it stood then, with `autonomy` the only difference. Either way it
+is a separate row: a later edit to the in-app default does not change it. A deployment that wants its API-started runs to keep parking
 re-points `isUnattendedDefault` at a policy whose `autonomy` is `attended`. See
 [Runs nobody is watching](../guide/pull-requests.md#runs-nobody-is-watching).
 
