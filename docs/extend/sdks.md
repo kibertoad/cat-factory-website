@@ -11,10 +11,11 @@ deployment validates against, so a client cannot describe a request the server w
 | Go | `github.com/kibertoad/cat-factory/sdk/go` | the Go module proxy |
 | Java and Kotlin | `ai.catfactory:cat-factory-sdk` | Maven Central |
 
-Two projections sit beside them rather than being a fifth client: the
-[MCP server](./mcp-server.md), which exposes the same operations as tools to an MCP host, and the
-Gatekeeper bindings, a policy-annotated operation table for credential-holding front-ends. The
-[Cloudflare OS Gatekeeper](./cloudflare-os.md) is built on that table.
+Two projections sit beside them rather than being a fifth client:
+
+- The [MCP server](./mcp-server.md) exposes the same operations as tools to an MCP host.
+- The Gatekeeper bindings are a policy-annotated operation table for credential-holding
+  front-ends. The [Cloudflare OS Gatekeeper](./cloudflare-os.md) is built on that table.
 
 ## Getting a key
 
@@ -51,16 +52,16 @@ the caller rather than convenient:
   values and object fields an older client has never heard of. Every client decodes them anyway;
   otherwise each additive server release would be an outage for anyone who has not upgraded.
 - **The error class comes from the HTTP status; the cause comes from `code`.** The status picks the
-  exception type, and `code` is exposed verbatim as a plain string rather than narrowed to a closed
+  exception type. `code` is exposed verbatim as a plain string rather than narrowed to a closed
   enum, because new codes appear without a major version.
 - **Only idempotent requests are retried.** Starting a run costs real model work, and a transport
   failure with no response says nothing about whether the server acted.
 - **A connection failure names the cause instead of blaming the deployment.** "Failed to reach the
-  deployment" is a verdict about reachability, and it is the wrong one when the deployment answered
-  nine calls a moment ago and then restarted. Each client classifies what actually happened
-  (a refusal, a reset, a name that does not resolve, an untrusted or expired certificate, a
-  handshake that never got that far, a request rejected before a socket was opened) and states only
-  what that cause supports, followed by what this client had already seen from the origin:
+  deployment" is a verdict about reachability. It is the wrong verdict when the deployment answered
+  nine calls a moment ago and then restarted. So each client classifies what actually happened:
+  a refusal, a reset, a name that does not resolve, an untrusted or expired certificate, a
+  handshake that never got that far, or a request rejected before a socket was opened. It states
+  only what that cause supports, followed by what this client had already seen from the origin:
 
   ```text
   POST /api/v1/tasks failed: https://cat-factory.example.com reset the connection before
@@ -68,8 +69,8 @@ the caller rather than convenient:
   0.2s ago. (read ECONNRESET)
   ```
 
-  A reset after nine answered calls is a deployment that restarted; a refusal with nothing answered
-  yet is an address with nothing behind it, and the two send you to different places entirely. The
+  A reset after nine answered calls is a deployment that restarted. A refusal with nothing answered
+  yet is an address with nothing behind it. The two send you to different places entirely. The
   runtime's own error is kept verbatim at the end and on the exception's cause, and an unrecognised
   failure is reported as itself rather than guessed at.
 - **Streams are never auto-reconnected.** A reconnect replays the event stream from its start, and
@@ -78,19 +79,22 @@ the caller rather than convenient:
   whole exchange. On an event stream it stops once the headers arrive, because a run parked on a
   human decision waits indefinitely by design: a quiet stream is the normal state of a healthy one.
 - **Pagination ends on the cursor, not on an empty page.** A keyset page may legitimately arrive
-  empty with a cursor still set, so every client follows the cursor and raises if the server hands
-  back the one it was just given.
+  empty with a cursor still set, so every client follows the cursor. It raises if the server hands
+  back the cursor it was just given.
 - **No dependencies you did not ask for.** Python and Go have none, TypeScript uses `fetch`, and
   Java has exactly one (Jackson) plus compile-time annotations.
 
 ## Kotlin
 
 There is no separate Kotlin SDK, and that is a decision rather than an omission. One artifact serves
-both languages: the Java client is annotated so Kotlin reads real nullability off it rather than
-falling back to platform types, keywords that collide (`public`) are escaped while keeping the wire
-name, models are built with builders rather than telescoping constructors, the error hierarchy is
-sealed so a Kotlin `when` is exhaustive with no `else`, and enums tolerate values a newer deployment
-sends.
+both languages, because of how the Java client is built:
+
+- It is annotated, so Kotlin reads real nullability off it rather than falling back to platform
+  types.
+- Keywords that collide (`public`) are escaped, and the wire name is kept.
+- Models are built with builders rather than telescoping constructors.
+- The error hierarchy is sealed, so a Kotlin `when` is exhaustive with no `else`.
+- Enums tolerate values a newer deployment sends.
 
 ```kotlin
 val client = CatFactoryClient.builder()
@@ -120,9 +124,9 @@ fixture server, or a WireMock/MSW double all work.
 
 Two things to know when the target is a local mock:
 
-- **The Java client drops to HTTP/1.1 for cleartext origins on purpose.** Its default is HTTP/2,
-  which over plain HTTP sends an upgrade header on every request, and a mock that does not speak it
-  is entitled to reject the request. Over HTTPS the negotiation is ALPN, so HTTP/2 is kept.
+- **The Java client drops to HTTP/1.1 for cleartext origins on purpose.** Its default is HTTP/2.
+  Over plain HTTP, that sends an upgrade header on every request, and a mock that does not speak
+  HTTP/2 is entitled to reject the request. Over HTTPS the negotiation is ALPN, so HTTP/2 is kept.
 - **The key is never inspected client-side**, so a mock needs no real key: any non-empty string
   works. Only that `baseUrl` and `apiKey` are non-empty is validated, and only to fail early rather
   than send an unauthenticated request.
@@ -134,13 +138,14 @@ route contracts the deployment validates against. Each client's transport, error
 policy, pagination helper, and event-stream reader are hand-written and live beside the generated
 files, which is what keeps a contract change from rewriting behaviour.
 
-The [API Endpoint Reference](../reference/api-reference.md) is rendered from that same spec, so what
-it says a field is called and what your client calls it are the same fact rendered twice, never two
+The [API Endpoint Reference](../reference/api-reference.md) is rendered from that same spec. So the
+name it gives a field and the name your client uses are the same fact rendered twice, never two
 claims that can disagree.
 
-A cross-client smoketest drives the same scenario through all four against one real backend and
-compares their reports field by field, so one language decoding a field differently, mapping a
-refusal to the wrong class, or paginating one page short fails a test rather than shipping.
+A cross-client smoketest drives the same scenario through all four clients against one real backend.
+It compares their reports field by field. One language might decode a field differently, map a
+refusal to the wrong class, or paginate one page short. Each of those fails a test before it can
+ship.
 
 The contributor-facing account of that chain (regenerating, adding an endpoint, the release
 mechanics) lives in the code repository:

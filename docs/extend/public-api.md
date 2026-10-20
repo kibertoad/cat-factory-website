@@ -6,12 +6,18 @@ redirectFrom:
 # Public API
 
 The reference for driving Cat Factory from outside the app: CI, a script, another service, an agent
-of your own. Cat Factory exposes a key-authenticated HTTP API under `/api/v1`. It covers headless
-jobs (breaking down an [initiative](../guide/initiatives.md) and other inline pipelines), the full
-board workload (list services, create and read tasks, start/stop/retry/
-delete runs, stream progress), pipeline discovery, parked human decisions, a notification inbox, the
-workspace's spend, and a read-only run-debugging surface. Every operation is scoped to one workspace
-and authenticated by a bearer key.
+of your own. Cat Factory exposes a key-authenticated HTTP API under `/api/v1`. It covers:
+
+- headless jobs: breaking down an [initiative](../guide/initiatives.md) and other inline pipelines
+- the full board workload: list services, create and read tasks, start/stop/retry/delete runs,
+  stream progress
+- pipeline discovery
+- parked human decisions
+- a notification inbox
+- the workspace's spend
+- a read-only run-debugging surface
+
+Every operation is scoped to one workspace and authenticated by a bearer key.
 
 Reach for an [official SDK](#client-sdks) before hand-rolling HTTP: clients ship for TypeScript,
 Python, Go and Java/Kotlin.
@@ -37,10 +43,10 @@ surface. Build on them with the same expectations you would bring to any version
 - Changes are additive. New endpoints, new optional fields, new enum values, and new error codes
   arrive without warning and bump the OpenAPI `info.version` minor. Write clients that tolerate
   fields and enum members they do not recognise; the official SDKs already do.
-- A breaking change never lands in place. It ships as a migration path plus a version change: the
-  old shape keeps working while the new one is served beside it (a new field next to the old, a new
-  `/api/v2` prefix for a changed path or semantics), the deprecation is documented, and the old half
-  is removed only in a later release.
+- A breaking change never lands in place. It ships as a migration path plus a version change. The
+  old shape keeps working while the new one is served beside it: a new field next to the old, or a
+  new `/api/v2` prefix for a changed path or semantics. The deprecation is documented, and the old
+  half is removed only in a later release.
 - Scope semantics only ever widen on their own. Narrowing what a key may do counts as a break and
   follows the same migration rule.
 
@@ -95,13 +101,13 @@ and merge-policy role its runs answer to, and you make it when you mint the key 
 | `GET /api/v1/models` | leaves out every user-scoped model, and says so | resolves under you |
 
 **A system token is the default and usually the right one.** It belongs to the workspace rather than
-to a person, so a CI job or a shared integration holding one cannot spend anybody's individual
-subscription, and neither can a leak of it. That is also why such a task is refused rather than
-quietly run on something else: charging a person who is not present, on a credential their vendor
-licenses to them alone, is the outcome the refusal exists to prevent.
+to a person. So a CI job or a shared integration holding one cannot spend anybody's individual
+subscription, and neither can a leak of it. That is also why such a task is refused, rather than
+quietly run on something else. The refusal exists to prevent charging a person who is not present,
+on a credential their vendor licenses to them alone.
 
-**Mint a personal token when the runs genuinely are yours** — driving your own headless work from a
-script, for instance. Then:
+**Mint a personal token when the runs genuinely are yours**, for example to drive your own headless
+work from a script. Then:
 
 - Every call that starts, retries, or answers a decision on such a run must carry your personal
   password in the `X-Personal-Password` header. Not only the first one: answering a parked decision
@@ -109,7 +115,7 @@ script, for instance. Then:
 - A call that needs the password and does not carry it is refused with `428 credential_required`,
   and the body's `details` names the `vendor` and whether the password was missing or wrong. Prompt
   for it and retry.
-- **The password is never stored** — not by the server, and not on the key. Keeping a copy in a
+- **The password is never stored**: not by the server, and not on the key. Keeping a copy in a
   config file beside the token would put both halves of a two-factor credential in one place, which
   is exactly what the [personal password](../guide/model-providers.md#why-a-personal-password)
   exists to prevent. Ask for it when your program starts and hold it in memory.
@@ -123,9 +129,9 @@ so nobody can mint a token onto a colleague's subscription, and a token minted t
 Create and revoke keys from the app. Open the **Integrations** hub, find **API access tokens** under
 the **Development** group, and manage keys there:
 
-- **Create a token**: enter a label (for example "CI pipeline"), pick a scope (Read only, Read and
-  write, Decide, or Full access; Read and write is the default), and pick **Runs as** (this
-  workspace, or you — see [Who a key runs as](#who-a-key-runs-as)). The secret is revealed once on a
+- **Create a token**: enter a label (for example "CI pipeline"), and pick a scope: Read only, Read
+  and write, Decide, or Full access. Read and write is the default. Then pick **Runs as**: this
+  workspace, or you (see [Who a key runs as](#who-a-key-runs-as)). The secret is revealed once on a
   "Copy your token now" panel and cannot be recovered afterward.
 - **Active tokens** lists each key with its label, scope badge, creation date, last-used time, and
   who created it. A personal token also carries a "Your subscription" badge, so you can tell at a
@@ -159,14 +165,17 @@ Official clients ship for four languages, so an integration does not have to wri
 
 Their models and operation methods are generated from the same OpenAPI document the server
 publishes, so a client cannot drift from the deployment it talks to. Each client's transport is
-hand-written on top and implements the conventions on this page for you: keyset auto-pagination,
-SSE framing, bounded retries on idempotent requests only, and an exception type per HTTP status
-class with the machine-readable `code` exposed verbatim as a string rather than narrowed to a
-closed enum.
+hand-written on top and implements the conventions on this page for you:
+
+- keyset auto-pagination
+- SSE framing
+- bounded retries, on idempotent requests only
+- an exception type per HTTP status class, with the machine-readable `code` exposed verbatim as a
+  string rather than narrowed to a closed enum
 
 There is no separate Kotlin client. The Java artifact is annotated (`@NullMarked`/`@Nullable`),
 escapes Kotlin's hard keywords, exposes a sealed error hierarchy, and offers builders in place of
-default arguments, so it is idiomatic from Kotlin without a second client to keep in step.
+default arguments. So it is idiomatic from Kotlin, without a second client to keep in step.
 
 The SDKs are a typed skin over exactly the endpoints below. Scopes, error codes and paging rules
 are identical whichever you use.
@@ -223,9 +232,9 @@ deployment can provision itself end to end without anyone opening the app.
 | `GET` | `/api/v1/model-presets` | admin | The model presets a task can pin, and which one an unpinned task resolves. |
 
 These reads are `admin` rather than `read`, unlike `GET /api/v1/repos`. They name what the
-**deployment** has wired, including the permissions its source-control credential holds, where the
-board reads name board content, and anyone able to read that is already at the rung that could
-change it.
+**deployment** has wired, including the permissions its source-control credential holds. The board
+reads name board content instead. Anyone able to read these admin reads is already at the rung
+that could change that wiring.
 
 ### Check what is wired before you spend anything
 
@@ -239,20 +248,22 @@ run you have already paid for.
   [Models a key cannot spend](#models-a-key-cannot-spend) below.
 - `GET /api/v1/vcs/connection` exists for `canCreateRepos` and `canManageWorkflows`. Both are
   enforced by the provider at **push** time, so skipping this check turns a missing workflow
-  permission into a repository that bootstrapped and then failed to gain its CI workflow, which
-  reads like a broken bootstrap rather than a permission you can grant.
+  permission into a repository that bootstrapped and then failed to gain its CI workflow. That reads
+  like a broken bootstrap, rather than a permission you can grant.
 - `GET /api/v1/risk-policies`: read the **`isUnattendedDefault`** row, not the `isDefault` one. A
-  workspace carries two defaults, and `isDefault` is the policy a task resolves when a person starts
-  it in the app; every run this API starts resolves the unattended one, as do tracker dispatches and
+  workspace carries two defaults. `isDefault` is the policy a task resolves when a person starts it
+  in the app. Every run this API starts resolves the unattended one, as do tracker dispatches and
   schedule fires. `isDefault` still means exactly what it always did, so an existing client is not
-  wrong about anything it was told, it was told about the other scope. See
+  wrong about anything it was told; it was told about the other scope. See
   [Whether your runs can finish on their own](#whether-your-runs-can-finish-on-their-own).
   On that row, `autoMergeEnabled` decides whether a run can land its pull request with no person
-  involved. Two caveats this API cannot settle for you, because
-  it does not report which workspace role your key's runs are admitted under: a non-empty
-  `dryRunRoles` means the policy merges for some roles and not others, and a non-empty
-  `submissionRestrictedRoles` means a run outside an allowed change class is held for a person
-  however good its scores are. Report those rather than concluding "this policy merges".
+  involved. This API does not report which workspace role your key's runs are admitted under, so
+  it cannot settle two caveats for you:
+  - A non-empty `dryRunRoles` means the policy merges for some roles and not others.
+  - A non-empty `submissionRestrictedRoles` means a run outside an allowed change class is held
+    for a person, however good its scores are.
+
+  Report those rather than concluding "this policy merges".
 - `GET /api/v1/model-presets`: which model each agent step runs on, so what a run costs. Read
   `overrides` as well as `baseModelId`: two presets often differ only in what the **coder** gets.
   Whether a preset's model can be dispatched to is not repeated here; join `baseModelId` onto
@@ -282,9 +293,13 @@ Availability itself is unchanged by all this: it still resolves under the key's 
 the two statements coexist honestly.
 
 `subscriptionConfigured` is `null` when nobody was asked, and `null` is **not** a shy `false`. It
-means there was no person to ask about (a key provisioned headlessly through `POST /api/v1/keys`),
-the deployment stores no personal subscriptions, or the row is not a personal-subscription model at
-all. "Asked, and there is none" is a subscription to connect; "there was nobody to ask" is a token to
+means one of three things:
+
+- There was no person to ask about (a key provisioned headlessly through `POST /api/v1/keys`).
+- The deployment stores no personal subscriptions.
+- The row is not a personal-subscription model at all.
+
+"Asked, and there is none" is a subscription to connect; "there was nobody to ask" is a token to
 mint in the app. A client that collapses the two sends an operator to a screen that was already
 correct.
 
@@ -314,10 +329,10 @@ opens the app. `autonomy` on `GET /api/v1/risk-policies` is the field that answe
 happen, and the row to read it on is `isUnattendedDefault` (or the policy your task pins as
 `riskPolicyId`).
 
-- **`attended`**: a run can park on a judgement call `GET /api/v1/runs/{runId}/decisions` will list
-  and only a human can settle — a companion at its rework cap, a judge at its bounce cap, an iterative
-  review at its pass cap, follow-up items nobody triaged. With nobody to escalate to, the run waits
-  indefinitely. This is what every policy created without saying otherwise gets, and what an
+- **`attended`**: a run can park on a judgement call that `GET /api/v1/runs/{runId}/decisions` will
+  list and only a human can settle. Such calls come up at a companion's rework cap, a judge's
+  bounce cap, an iterative review's pass cap, and with follow-up items nobody triaged. With nobody
+  to escalate to, the run waits indefinitely. This is what every policy created without saying otherwise gets, and what an
   unrecognised value reads as.
 - **`unattended`**: the platform takes the documented "proceed" answer to each of those and records on
   the step that it did.
@@ -339,10 +354,10 @@ re-points `isUnattendedDefault` at a policy whose `autonomy` is `attended`. See
 ### Adopting a repository you already have
 
 `GET /api/v1/repos` lists the repositories this workspace has **linked**, and linking is an explicit
-per-workspace act: the provider webhook for an added repository does not project one, and a resync
-refreshes what is already linked rather than rediscovering the installation. So a repository that
+per-workspace act. The provider webhook for an added repository does not project one. A resync
+refreshes what is already linked, rather than rediscovering the installation. So a repository that
 exists and is perfectly reachable is absent from that list in exactly the way one that was never
-created is, and `POST /api/v1/services` answers `404` for its `repoId` either way. Two reads and one
+created is. `POST /api/v1/services` answers `404` for its `repoId` either way. Two reads and one
 write settle it:
 
 ```
@@ -370,16 +385,18 @@ Four things to plan for:
   `linkedElsewhere`. A repository nobody here has linked can still back a service on another board of
   the account, and service creation refuses it either way, so check the flags before adopting.
 - **`truncated: true` on the available read means the rows are a prefix.** The provider legs behind
-  it stop at a page cap and a search cap, so on a wide connection a reachable repository can be
+  it stop at a page cap and a search cap. So on a wide connection, a reachable repository can be
   missing from a browse. Narrow with `q` rather than concluding it does not exist; a point-read is
   never truncated.
 
-A repository the connection cannot reach is a `404` with `details.reason: repo_not_reachable`, which
-covers both "it does not exist" and "your credential is not granted it": a provider answers those
-identically. A credential the provider **rejects** is kept apart from both, as `503` with
-`details.reason: vcs_credential_rejected` (re-connect the workspace; an app installation may have
-been removed or a token revoked), and a throttled connection as `429`
-`details.reason: vcs_rate_limited`, which is the one failure here worth retrying.
+A repository the connection cannot reach is a `404` with `details.reason: repo_not_reachable`. That
+covers both "it does not exist" and "your credential is not granted it", because a provider answers
+those identically. Two other failures get their own status and reason:
+
+- A credential the provider **rejects** is a `503` with `details.reason: vcs_credential_rejected`.
+  Re-connect the workspace; an app installation may have been removed or a token revoked.
+- A throttled connection is a `429` with `details.reason: vcs_rate_limited`. It is the one failure
+  here worth retrying.
 
 ### Bootstrapping a repository
 
@@ -428,19 +445,21 @@ PATCH /api/v1/services/{serviceId}
 ```
 
 `provisioning` is a tagged union whose non-matching branches are ignored, so read it back off the
-response rather than trusting the `200`: a wrong-shaped patch is accepted and stored as something the
-deploy step later reads as "no manifests". An omitted `provisioning` leaves the stored one alone, so
-correcting a title cannot silently un-deploy a service. Send `{ "type": "infraless" }` to **take the
-pin back**: the service is left with no environment to provision, and reads back with no
-`provisioning` at all, because a service that stands nothing up and one that was never pinned are
-the same thing here. Taking a pin back removes the whole stored configuration rather than the
-published half of it, leftovers from the engine you are leaving included; to narrow a pin instead,
+response rather than trusting the `200`. A wrong-shaped patch is accepted, and stored as something
+the deploy step later reads as "no manifests". An omitted `provisioning` leaves the stored one alone,
+so correcting a title cannot silently un-deploy a service.
+
+Send `{ "type": "infraless" }` to **take the pin back**. The service is left with no environment to
+provision, and reads back with no `provisioning` at all. That is because a service that stands
+nothing up and one that was never pinned are the same thing here. Taking a pin back removes the
+whole stored configuration rather than the published half of it, leftovers from the engine you are
+leaving included. To narrow a pin instead,
 send the member you want, and that patch overlays what is stored.
 
 A deployment that ships its own environment backend pins by `manifestId` instead, and **nothing
-checks that id when you write it**: it is validated as a string and matched to a handler only when a
-run reaches its deploy step, so an unserved id is stored, reported back as configured, and fails
-after the run has paid for a design pass and an implementation. Check it first:
+checks that id when you write it**. It is validated as a string and matched to a handler only when
+a run reaches its deploy step. So an unserved id is stored and reported back as configured. It
+fails after the run has paid for a design pass and an implementation. Check it first:
 
 ```
 GET /api/v1/environments/manifest-types
@@ -449,8 +468,8 @@ GET /api/v1/environments/manifest-types
                            "defaultManifestPath": "deploy/.kargo.yml" } ] }
 ```
 
-`source` says who to go and ask: `registered` is a type the deployment holds in code, so a missing id
-is a deployment change, where a missing `workspace` row is an edit anyone can make in the app.
+`source` says who to go and ask. `registered` is a type the deployment holds in code, so a missing id
+is a deployment change. By contrast, a missing `workspace` row is an edit anyone can make in the app.
 `defaultManifestPath` is what a pin naming no `manifestPath` deploys from, and `null` means the type
 declares none, so such a pin has nowhere to read a manifest from.
 
@@ -472,8 +491,8 @@ branch on rather than retry:
 
 - **`422`, `reason: service_has_unfinished_tasks`.** A frame holding a task that has not finished is
   refused, because deleting one discards work in flight along with its history. `details` carries
-  `unfinishedTasks`, the count. The refusal is decided **before** anything is torn down, so a `422`
-  leaves the frame, its tasks and their runs exactly as they were: retrying changes nothing, and the
+  `unfinishedTasks`, the count. The refusal is decided **before** anything is torn down. So a `422`
+  leaves the frame, its tasks and their runs exactly as they were. Retrying changes nothing, and the
   runs still going are still yours to stop or resume. Deleting those tasks first is you saying you
   mean it.
 - **`404` for an ARCHIVED service.** Every per-service endpoint addresses exactly the population
@@ -564,24 +583,27 @@ Content-Type: application/json
 `ref` is the issue's canonical key or its full URL; the provider's own parser resolves either, so
 you can forward whichever form your webhook carried.
 
-That link, not the ticket's text, is what the rest of the platform runs on. Every agent step
-re-reads the live issue as context (status, labels, description, comments), the run's clarification
-questions are written back onto the issue, a reply typed there resolves against the parked run, and
-the recurring intake sweep treats the issue as taken. `description` stays your own framing and is
-never overwritten.
+That link, not the ticket's text, is what the rest of the platform runs on:
+
+- Every agent step re-reads the live issue as context (status, labels, description, comments).
+- The run's clarification questions are written back onto the issue.
+- A reply typed there resolves against the parked run.
+- The recurring intake sweep treats the issue as taken.
+
+`description` stays your own framing and is never overwritten.
 
 Two refusals matter:
 
-- The ticket is resolved **before** the task is created. An unconfigured or disabled source, a ref
-  the provider cannot parse, or an issue the tracker will not serve refuses the whole request and
-  leaves the board untouched, rather than handing you a `201` for a task that runs on its title
+- The ticket is resolved **before** the task is created. Each of these refuses the whole request and
+  leaves the board untouched: an unconfigured or disabled source, a ref the provider cannot parse,
+  or an issue the tracker will not serve. You do not get a `201` for a task that runs on its title
   alone.
 - **One task per ticket.** A ticket already linked comes back `409` with
-  `details.reason: "ticket_already_linked"` and `details.taskId` naming the task that holds it, so a
+  `details.reason: "ticket_already_linked"` and `details.taskId` naming the task that holds it. So a
   redelivered webhook follows the existing task instead of filing a duplicate. You need no
-  bookkeeping of your own to stay idempotent, and that holds under concurrency: two deliveries of
-  one ticket in flight together are decided by a conditional write, so exactly one gets a task and
-  the other gets the `409` naming it. The losing filing is rolled back off the board rather than
+  bookkeeping of your own to stay idempotent, and that holds under concurrency. Two deliveries of one
+  ticket in flight together are decided by a conditional write, so exactly one gets a task and the
+  other gets the `409` naming it. The losing filing is rolled back off the board rather than
   left behind ticket-less.
 
 ### Reading and setting tracker writeback
@@ -609,19 +631,19 @@ Three flags rather than one switch, because they are separately answerable: a wo
 merge recorded on the ticket without wanting a parked review's questions asked there.
 
 All three **default on**. Writeback only ever touches an issue a task is linked to, and nothing links
-one by accident, so the default closes the loop rather than leaving a merged pull request beside an
+one by accident. So the default closes the loop, rather than leaving a merged pull request beside an
 open issue with nothing on it. Note this when you file ticket-linked tasks: unless the workspace has
 chosen otherwise, the platform will comment on and close the issues you name.
 
 Two properties worth planning for:
 
 - **The `PATCH` merges.** An omitted action keeps whatever the workspace holds, so one decision moves
-  one action and a caller acting on `resolveOnMerge` cannot silently move the other two. An empty
+  one action, and a caller acting on `resolveOnMerge` cannot silently move the other two. An empty
   patch is a no-op and does not stamp `updatedAt`. That is unlike the in-app save, which has all
   three rendered in front of it and replaces the row wholesale.
 - **`updatedAt` is `null` when nobody has ever chosen.** The values you read are then this
-  deployment's defaults rather than anyone's decision, which is what lets you tell a workspace you
-  are safe to configure from one whose choice you are about to overwrite. It is `null` and not an
+  deployment's defaults rather than anyone's decision. That lets you tell a workspace you are safe to
+  configure from one whose choice you are about to overwrite. It is `null` and not an
   epoch timestamp precisely so it cannot be formatted as a setting saved in 1970.
 
 Both calls need an `admin`-scoped key: this is workspace-wide configuration, so enabling
@@ -647,9 +669,13 @@ POST /api/v1/services/svc_api/tasks
 ```
 
 Read the ids off `GET /api/v1/model-presets` and `GET /api/v1/risk-policies` rather than deriving
-them: the built-in model presets are `mdp_kimi`, `mdp_glm` and `mdp_claude`, and the built-in risk
-policies are `mp_balanced`, `mp_unattended` and `mp_manual_review`, so the two libraries do not share
-a prefix and a workspace that has edited either carries ids of its own. Both pins are optional, both
+them. The built-in ids are:
+
+- model presets: `mdp_kimi`, `mdp_glm` and `mdp_claude`
+- risk policies: `mp_balanced`, `mp_unattended` and `mp_manual_review`
+
+So the two libraries do not share a prefix, and a workspace that has edited either carries ids of
+its own. Both pins are optional, both
 come back on the task read, and `PATCH /api/v1/tasks/{taskId}` corrects either. Omitting one means
 what it always meant: the task follows the workspace default rather than holding a copy of its id, so
 moving that default moves the task. For `riskPolicyId` that default is the **unattended** one, since
@@ -670,17 +696,17 @@ What matters to a caller is the **refusal**, not the fields:
   That is a different fact from an unknown id and needs a different fix, so the two list endpoints
   answer with the same two reasons.
 - **The refusal does not name the library's contents.** Pinning takes `write` and both lists take
-  `admin`, so a `422` carrying the available ids would let the lower rung enumerate by typo exactly
+  `admin`. So a `422` carrying the available ids would let the lower rung enumerate, by typo, exactly
   what the higher one gates. It names the id that missed and which library it missed.
 
-Pinning a model preset does not widen what the account allows: the base model still resolves through
-the account's model-family policy, so a preset naming a blocked model fails at dispatch with the same
-refusal it would have had on the workspace default. `riskPolicyId` is the pin that changes what a run
+Pinning a model preset does not widen what the account allows. The base model still resolves through
+the account's model-family policy, so a preset naming a blocked model fails at dispatch, with the
+same refusal it would have had on the workspace default. `riskPolicyId` is the pin that changes what a run
 may **do**, since a policy carries `autoMergeEnabled`, the score ceilings and `autonomy`. An `admin`
 key may pin any policy its workspace holds, which is the authority it already had by editing one.
-That is a wider licence than a board member has: in the app, somebody who does not manage the policy
-library cannot re-point a task from an attended policy onto an `unattended` one, because dropping the
-run's human checkpoints is a permission rather than a preference.
+That is a wider licence than a board member has. In the app, somebody who does not manage the
+policy library cannot re-point a task from an attended policy onto an `unattended` one, because
+dropping the run's human checkpoints is a permission, not a preference.
 
 ## Paging
 
@@ -696,7 +722,7 @@ its array (`tasks`, `jobs` or `entries`) plus a `nextCursor`, and you page until
 | `status` | Filter by status. Tasks: `planned`, `ready`, `in_progress`, `blocked`, `pr_ready`, `done`. Jobs: `running`, `succeeded`, `failed`. |
 | `since` | Jobs and Kaizen entries. Epoch milliseconds; return rows created at or after this. |
 
-The cursor is a keyset (a sort key plus an id), not an offset, so a page can't shift under concurrent
+The cursor is a keyset (a sort key plus an id), not an offset. So a page can't shift under concurrent
 inserts and silently skip a row, and a burst of runs sharing a millisecond pages correctly. A
 malformed cursor is a `400 invalid_cursor` rather than a silent re-serve of page 1.
 
@@ -739,22 +765,30 @@ recoverable `429` rather than a wall with no door.
 ### Reviewing a pull request over the API
 
 The deep review of an existing GitHub or GitLab pull request is drivable end to end with a `decide`
-key, which is what an integration that renders findings in its own UI needs. Create a task with
-`taskType: "review"` and the PR's URL in `fields`, start it (the task is pinned to the review
-pipeline, so the start body can be empty), then poll `GET /api/v1/runs/{runId}/decisions` until the
-`pr-review` entry reports `awaiting_selection`.
+key, which is what an integration that renders findings in its own UI needs. The flow is:
 
-That entry is what you render: the findings ordered blocker-first, each with a stable id, its file
-and line, its severity and category, and the fix the reviewer suggested, grouped under the slices of
-the diff it reasoned in. Curate them one call at a time, then resolve: `finish` records the
-selection and nothing more, `fix` hands the kept findings to an agent that commits onto the PR's own
-branch, and `post` publishes them as inline comments on the pull request.
+1. Create a task with `taskType: "review"` and the PR's URL in `fields`.
+2. Start it. The task is pinned to the review pipeline, so the start body can be empty.
+3. Poll `GET /api/v1/runs/{runId}/decisions` until the `pr-review` entry reports
+   `awaiting_selection`.
+
+That entry is what you render. It holds the findings ordered blocker-first, grouped under the slices
+of the diff the reviewer reasoned in. Each finding has a stable id, its file and line, its severity
+and category, and the fix the reviewer suggested. Curate them one call at a time, then resolve:
+
+- `finish` records the selection and nothing more.
+- `fix` hands the kept findings to an agent that commits onto the PR's own branch.
+- `post` publishes them as inline comments on the pull request.
 
 **`post` is asynchronous, so read `postReport` before you conclude it worked.** A post that partly
-or wholly fails puts the review back in the list looking exactly as it did before you resolved, and
-the report is what tells those apart: how many comments were attempted and how many landed, how many
-findings were moved into the summary comment because their line is not part of the diff (or because
-the branch moved after the review started), and the provider's own error for each one that failed.
+or wholly fails puts the review back in the list looking exactly as it did before you resolved. The
+report is what tells those apart. It gives:
+
+- how many comments were attempted, and how many landed
+- how many findings were moved into the summary comment because their line is not part of the
+  diff, or because the branch moved after the review started
+- the provider's own error for each one that failed
+
 Retrying is the same `post` call with the same selection: what has already landed is recorded, so
 nothing is commented twice.
 
@@ -863,9 +897,11 @@ the output budget, so what you have is a prefix rather than an answer.
 
 Each use case NARROWS the models it may run on, and the catalog says whether each can be served
 right now. An unavailable model is listed with its cause rather than hidden, so a picker shows what
-the use case offers instead of an empty list: `provider_unavailable` (this deployment has not
-configured the provider) or `container_only` (the model runs only through a coding-subscription
-harness inside a per-run container, which this surface has none of).
+the use case offers instead of an empty list. The cause is one of:
+
+- `provider_unavailable`: this deployment has not configured the provider.
+- `container_only`: the model runs only through a coding-subscription harness inside a per-run
+  container, and this surface has no such container.
 
 Refusals, all carrying `error.details.reason`:
 
@@ -881,7 +917,7 @@ Refusals, all carrying `error.details.reason`:
 | `503` | `use_case_empty_reply` | The model answered with nothing usable. |
 
 Two of those are deliberate and worth counting on. A model outside the list, and one this deployment
-cannot serve, are both refused rather than swapped for another: a narrowed list that substitutes
+cannot serve, are both refused rather than swapped for another. A narrowed list that substitutes
 silently is not a narrowing, and you would have no way to see it happened. And a `200` never carries
 an empty string, because a model that answered with nothing is not an answer worth saving.
 
@@ -916,9 +952,9 @@ though it is only `read`.
 
 ## Kaizen entries: the platform's own improvement backlog
 
-After a run finishes, Cat Factory grades its own work: each completed agent step is scored 1 to 5 on
-how smooth or chaotic the interaction was, with recommendations for what would make it better, keyed
-by the `(agent kind, model, prompt version)` combination it ran on. A combination that scores highly
+After a run finishes, Cat Factory grades its own work. Each completed agent step is scored 1 to 5 on
+how smooth or chaotic the interaction was, with recommendations for what would make it better. The
+grade is keyed by the `(agent kind, model, prompt version)` combination the step ran on. A combination that scores highly
 with no recommendations often enough is marked verified and stops being graded. Inside the app those
 gradings are a screen you browse. Over the API they are a **backlog you drain**.
 
@@ -940,16 +976,20 @@ also returns gradings still in flight, which that route refuses with a `409`, an
 soonest.
 
 Each entry carries the context a follow-up needs, so acting on one does not mean opening the app:
-the run and step index it came from, the agent kind, the model as resolved at dispatch, the prompt
-version, the combination key and where that combination stands in its verification streak, the
-grade, the grader's summary and recommendations, which model graded it, and the board task plus its
-service. A task deleted since the run reports `task: null` rather than a blank title, and the `runId`
-joins straight onto [run debugging](#run-debugging) when a low grade deserves a look at the calls
-behind it. `task.serviceId` is the same id `GET /api/v1/services/{serviceId}` answers for, resolved
-the same way the task endpoints resolve it, and it comes with `task.serviceTitle` or not at all: you
-never receive an id that endpoint cannot resolve.
 
-A `failed` entry is a real entry rather than a hidden one, and usually names something about the
+- the run and step index it came from
+- the agent kind, the model as resolved at dispatch, and the prompt version
+- the combination key, and where that combination stands in its verification streak
+- the grade, the grader's summary and recommendations, and which model graded it
+- the board task and its service
+
+A task deleted since the run reports `task: null` rather than a blank title. The `runId` joins
+straight onto [run debugging](#run-debugging) when a low grade deserves a look at the calls behind
+it. `task.serviceId` is the same id `GET /api/v1/services/{serviceId}` answers for, resolved the same
+way the task endpoints resolve it. It comes with `task.serviceTitle` or not at all, so you never
+receive an id that endpoint cannot resolve.
+
+A `failed` entry is a real entry rather than a hidden one. It usually names something about the
 deployment rather than about the run: no grader model is configured, or prompt recording is off so
 there was no telemetry to judge. Those are worth acknowledging too, which is why acknowledgement is
 allowed on them.

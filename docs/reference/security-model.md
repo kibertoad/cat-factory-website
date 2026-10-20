@@ -11,9 +11,9 @@ auto-merge on, and again whenever you widen who may start runs.
 
 Agents read untrusted text on every run: repository contents, issue and tracker text, pull-request
 comments, web-search results, and the results of any MCP tool server wired for the run. Assume the
-worst case, because the platform's own controls are designed around it: the agent process inside the
-run container will run any command its tools allow, and its prompt-level restrictions (instructions,
-`allowedTools`, a "read-only" role description) have already failed.
+worst case, because the platform's own controls are designed around it. In that worst case, the
+agent process inside the run container will run any command its tools allow, and its prompt-level
+restrictions (instructions, `allowedTools`, a "read-only" role description) have already failed.
 
 Out of scope on this page: attacks on the platform's own HTTP surface (see
 [Invite and Manage Your Team](../guide/team-and-access.md)), a malicious operator, and a compromised VCS host.
@@ -83,10 +83,10 @@ Do not lean on any of these:
   is a real control in one shape: it closes the escalation where an initiator who cannot merge on
   the host causes a merge by tapping a review card.
 - **The absence of a secret from the prompt.** Injected context files and job bodies carry
-  non-secret projections by design, but assume anything the agent can read it can also try to
+  non-secret projections by design. But assume anything the agent can read, it can also try to
   exfiltrate through text it writes.
 - **The provenance of a wired MCP tool server.** Its results are untrusted input like everything
-  else the agent reads, and the run container places no egress bound on which wired servers a
+  else the agent reads. The run container places no egress bound on which wired servers a
   subverted agent may call with what it has read. What does bind is which servers you wire for which
   agent kinds, and the scope of the credential each is handed.
 
@@ -105,8 +105,8 @@ possible at all.
 2. **Choose risk policies deliberately, and check both defaults.** For anything sensitive, pin
    *Manual review only*, or keep auto-merge and add class floors for source and schema changes. The
    shipped default auto-merges under balanced ceilings with no floors. A workspace has a second
-   default for runs nothing is watching (API, tracker, schedule), shipped as *Unattended delivery*:
-   in a new workspace it has the stock *Balanced* ceilings, but a run under it answers its own
+   default for runs nothing is watching (API, tracker, schedule), shipped as *Unattended delivery*.
+   In a new workspace it has the stock *Balanced* ceilings. But a run under it answers its own
    automatic checkpoints instead of stopping for a person. It is a separate policy, so tightening the
    in-app default does not tighten it: tighten both. Re-point it at an attended policy if you want
    that work to keep parking. See
@@ -114,11 +114,11 @@ possible at all.
 3. **Scope the GitHub App installation to only the repositories the platform should work on.** Do
    not install on "All repositories" of an organization that also holds crown jewels.
 4. **Govern stored personal PATs, or step 3 does not bind.** An initiator's stored personal token
-   outranks the App token on the standard dispatch path, so a member holding a classic-scope PAT
-   would otherwise widen every run they start to their whole account.
-   - Your host's own controls are stronger than ours and worth reaching for first **if this
-     deployment serves the whole organization**: a GitHub org owner can deny classic PATs access to
-     the org and require owner approval for fine-grained tokens. Those bind every tool the member
+   outranks the App token on the standard dispatch path. So without this, a member holding a
+   classic-scope PAT would widen every run they start to their whole account.
+   - Your host's own controls are stronger than ours, and worth reaching for first **if this
+     deployment serves the whole organization**. A GitHub org owner can deny classic PATs access to
+     the org, and require owner approval for fine-grained tokens. Those bind every tool the member
      uses, not only this one.
    - They are the wrong tool for individual adoption, which is why personal tokens stay fully
      supported and the account-level floor ships unset.
@@ -127,17 +127,19 @@ possible at all.
      cannot lift it.
    - **Enforced, per board**: turn off *Run credential* in workspace settings. The board then
      authenticates as the App installation, at the cost of bot attribution.
-   - **Visible**: the personal-token form states what a token actually grants when it is tested or
-     saved, the board raises a banner on load when the token a run would present cannot do the work,
-     and a local deployment says the same thing in its boot log. All three read the same
-     classification, and all three are advice rather than a gate: they report a token's reach and
-     cannot narrow it. A token that passes is exactly as wide as whoever minted it made it.
-     The board check judges the token only where a run would present it (the repositories this
-     board's services target), so a GitLab-bound board is told nothing about a stored GitHub token,
-     and a board whose *Run credential* is off is not warned about a credential its runs never use.
-     What that check reports is a per-capability verdict, deliberately not the token's raw scope
-     list: anyone who can read the board could otherwise read the breadth of a shared deployment
-     credential.
+   - **Visible**: three surfaces report what a token can do.
+     - The personal-token form states what a token actually grants when it is tested or saved.
+     - The board raises a banner on load when the token a run would present cannot do the work.
+     - A local deployment says the same thing in its boot log.
+
+     All three read the same classification, and all three are advice rather than a gate. They
+     report a token's reach, and cannot narrow it. A token that passes is exactly as wide as whoever
+     minted it made it. The board check judges the token only where a run would present it (the
+     repositories this board's services target). So a GitLab-bound board is told nothing about a
+     stored GitHub token, and a board whose *Run credential* is off is not warned about a credential
+     its runs never use. What that check reports is a per-capability verdict, deliberately not the
+     token's raw scope list: anyone who can read the board could otherwise read the breadth of a
+     shared deployment credential.
 5. **Treat local native mode as trusted-input only.** With no container, the process boundary is
    only the agent CLI's own sandboxing. Do not point native-mode runs at repositories or issues
    whose content you do not trust.
@@ -156,7 +158,7 @@ possible at all.
 Stated rather than papered over, because each one changes how you should configure a deployment:
 
 - **On a hosted deployment, loopback local-model endpoints still reach the server itself.** With LAN
-  reach off, the remaining grant is loopback, which is the intended target on a developer's machine
+  reach off, the remaining grant is loopback. That is the intended target on a developer's machine,
   and pure downside on a shared one. Any signed-in user can drive the connectivity probe, which
   makes it a loopback port prober. If you run a shared deployment where nobody needs local runners,
   treat this as a reason to keep the feature unused rather than merely narrow.

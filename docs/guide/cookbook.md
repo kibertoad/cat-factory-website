@@ -2,7 +2,7 @@
 
 For someone who already runs Cat Factory and has one concrete change to make. Task-indexed recipes
 for changing a flow you already have. The rest of the guide is organized by
-subject, which is right when you want to understand a mechanism and wrong when you have a concrete
+subject. That is right when you want to understand a mechanism, and wrong when you have a concrete
 edit to make and half an afternoon to make it. Each recipe here is the short path: what to click,
 what it changes, and the one page to read if you need the full model.
 
@@ -26,7 +26,7 @@ Almost every recipe happens in the **pipeline builder**, so start with the loop 
 
 ::: tip Clone, do not rebuild
 Build the change on top of a clone rather than assembling a pipeline from an empty draft. The merge
-tail (**Conflicts Gate**, **CI Gate**, **Merger**) is seeded into the built-in build pipelines and is
+tail (**Conflicts Gate**, **CI Gate**, **Merger**) is seeded into the built-in build pipelines. It is
 not offered in the agent palette, so a from-scratch pipeline cannot gate on real CI or merge for
 real. Clone **Standard build** or **Simple build** and edit from there.
 :::
@@ -57,10 +57,10 @@ beside it counts what the current tier is hiding.
 Decide first which of the two shapes you want, because they behave differently.
 
 **A companion loops its producer back automatically.** Hover the producer step in the draft and
-click **Add the &lt;companion&gt;**. It is inserted directly after the step it reviews, rates the
-work, and sends it back for rework without asking anyone whenever the rating is below the quality
-bar or the review left a **Must fix** finding open. When it runs out of rework rounds it parks with
-a **Decide** prompt (one more round, proceed anyway, or stop and reset). The shipped pairs:
+click **Add the &lt;companion&gt;**. It is inserted directly after the step it reviews, and rates the
+work. It sends the work back for rework without asking anyone whenever the rating is below the
+quality bar or the review left a **Must fix** finding open. When it runs out of rework rounds it
+parks with a **Decide** prompt (one more round, proceed anyway, or stop and reset). The shipped pairs:
 
 | Producer | Companion |
 | --- | --- |
@@ -178,8 +178,8 @@ skill is an executable step.
 
 Fragments reach the code-aware kinds (Coder, CI Fixer, Fixer, Reviewer, Architect) and the
 document-authoring kinds. Each arrives as its own titled block, so name them the way you want them
-cited ("No raw SQL in controllers" beats "Rules 3"), and the reviewers score the change against each
-one in their **Best-practice adherence** section.
+cited ("No raw SQL in controllers" beats "Rules 3"). The reviewers score the change against each one
+in their **Best-practice adherence** section.
 
 ### Run a step only on big tasks
 

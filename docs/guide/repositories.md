@@ -24,17 +24,17 @@ validates it against GitHub and shows who it authenticated as. The token is stor
 write-only (never shown again). It does two things:
 
 - **Attributes your runs to you.** Runs you initiate prefer your token over the deployment's GitHub
-  App for pushing the work branch and reading the CI and merge state, so the resulting commits and PR
-  are attributed to you. Leave it unset and runs fall back to the workspace's GitHub App.
+  App for pushing the work branch and reading the CI and merge state, so the resulting commits and
+  PR are attributed to you. Leave it unset and runs fall back to the workspace's GitHub App.
 - **Widens the repo picker.** On every deployment (local mode included), **Add from existing repo**
-  also lists repositories your token can reach beyond what the workspace's GitHub App is installed on,
-  tagged **· personal (your token)**. Linking one creates a **personal service**: runs against it use
+  also lists repositories your token can reach beyond the workspace's GitHub App installation. They
+  are tagged **· personal (your token)**. Linking one creates a **personal service**: runs against it use
   your token for push, PR author, and CI actor. It is public github.com only (a GitHub Enterprise host
   isn't offered for a personal token).
 
-A service backed by another member's personal token is hidden from members who can't reach that repo:
-its frame shows a **Permission denied** placeholder and its tasks are dropped from their board view,
-failing closed rather than leaking a repo they lack access to. If your token expires or is revoked, the
+A service backed by another member's personal token is hidden from members who can't reach that repo.
+Its frame shows a **Permission denied** placeholder, and its tasks are dropped from their board view.
+This fails closed, rather than leaking a repo they lack access to. If your token expires or is revoked, the
 picker quietly falls back to App-reachable repos.
 
 ## Linking an existing repository
@@ -43,14 +43,19 @@ Link any repository the GitHub App can access to a service frame. From then on, 
 under that service clone and open PRs against it.
 
 The quickest path is **Add from existing repo** (sidebar → Repositories). It opens a picker of every
-repo the GitHub App can reach (including ones the workspace doesn't track yet) with a
-search/filter box (by owner or name, with a "showing X of Y" count) so a wide install of hundreds of
-repos stays manageable, plus a link to grant the App access to more. Importing links and syncs the
-repo, drops a **ready** service frame named after it, and points the frame at the repo, so tasks you
-add under it target that repo, with **no bootstrap run**. Right after adding, the modal shows the
-same configuration controls as the service inspector (test infra, the docker-compose path, cloud
-provider and instance size, and best-practice [fragments](./prompt-fragments.md)), so you can finish
-setting the service up without a second trip to the inspector.
+repo the GitHub App can reach, including ones the workspace doesn't track yet. The picker has:
+
+- a search/filter box (by owner or name, with a "showing X of Y" count), so a wide install of
+  hundreds of repos stays manageable
+- a link to grant the App access to more
+
+Importing links and syncs the repo and drops a **ready** service frame named after it. The frame
+points at the repo, so tasks you add under it target that repo, with **no bootstrap run**.
+
+Right after adding, the modal shows the same configuration controls as the service inspector, so you
+can finish setting the service up without a second trip. The controls cover test infra, the
+docker-compose path, cloud provider and instance size, and best-practice
+[fragments](./prompt-fragments.md).
 
 ## Bootstrapping a new repository
 
@@ -85,8 +90,8 @@ entry, leaves the run with nothing to clone.
 Cat Factory checks this before it starts. If the workspace's source-control connection cannot see
 the reference architecture's repository, the launch is refused on the spot and **nothing is
 created**: no run, no service frame on the board, nothing to clean up. The dialog names the
-repository it could not see and offers to open that reference architecture for editing, and the
-rest of the form is kept, so correcting the entry and launching again is two clicks.
+repository it could not see, and offers to open that reference architecture for editing. The rest
+of the form is kept, so correcting the entry and launching again is two clicks.
 
 Two things fix it, and which one you want depends on why it failed:
 
@@ -142,8 +147,8 @@ counterpart, "what must be true", is the [spec](./requirements.md#the-unified-in
 
 One repository can back several services. Flag the repository as a **monorepo**, then pin each
 service to a **subdirectory** of it. When you add services from a monorepo, browse the repo's tree
-and select the directories of the services you want (from any folder), then add them all in one step:
-the modal shows a **Selected services** list and an **Add N services** button. Each service is pinned
+and select the directories of the services you want (from any folder). Then add them all in one
+step: the modal shows a **Selected services** list and an **Add N services** button. Each service is pinned
 to its subdirectory.
 
 Agents that edit code run scoped to that subdirectory: the **coder**, **mocker**, and **CI fixer**
@@ -157,8 +162,8 @@ Repositories that are not flagged as monorepos are unchanged: the service owns t
 
 A monorepo that holds a UI app beside its backends can say so in the same pass. Select the
 directories as usual, then name the app's directory under **Frontend app**. It is added as a
-[**frontend** frame](#repository-types) pinned to that subdirectory instead of a backend service,
-and bound to every service added beside it, so the board draws the frontend-to-backend links as
+[**frontend** frame](#repository-types) pinned to that subdirectory, instead of a backend service.
+It is bound to every service added beside it, so the board draws the frontend-to-backend links as
 soon as the import finishes.
 
 The option appears once at least two directories are selected and the repository type is
@@ -180,9 +185,12 @@ work happens outside the platform.
 ## GitLab
 
 Cat Factory runs on GitLab as well as GitHub, through a provider-neutral VCS layer. The GitLab backend
-(`@cat-factory/gitlab`) implements the neutral VCS client over the GitLab REST v4 API (repository,
-branch, merge-request, issue, and CI reads and writes), a webhook verifier and mapper (merge request,
-issue, push, and pipeline hooks), and project provisioning.
+(`@cat-factory/gitlab`) implements:
+
+- the neutral VCS client over the GitLab REST v4 API: repository, branch, merge-request, issue, and
+  CI reads and writes
+- a webhook verifier and mapper: merge request, issue, push, and pipeline hooks
+- project provisioning
 
 GitLab is first-class on **every runtime**, hosted Cloudflare and Node included, not just local mode.
 A GitLab repo clones, pushes, gates on real CI, and merges through a real merge request, and the

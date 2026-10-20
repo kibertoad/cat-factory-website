@@ -109,9 +109,11 @@ Open **Workspace settings → Members** (the tab shows only to a board admin). T
 
 The board's creator is enrolled as an admin automatically.
 
-A **Viewer** sees the board as read-only: editing gestures (drag, resize, delete) are disabled with a
-"Read-only access" note, run and review-window actions are disabled while the windows stay readable,
-and the board switcher badges such a board **Viewer** (a restricted board also shows a lock icon).
+A **Viewer** sees the board as read-only:
+
+- Editing gestures (drag, resize, delete) are disabled, with a "Read-only access" note.
+- Run and review-window actions are disabled, while the windows stay readable.
+- The board switcher marks the board **Viewer**. A restricted board also shows a lock icon.
 
 ## The responsible product person
 

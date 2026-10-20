@@ -14,8 +14,8 @@ developer machine, the [`cat-factory k3s` guided setup](#local-k3s-guided-setup)
 cluster into both in one command.
 
 This page is the connect form. Before you fill it in on a cluster that matters, decide the layout it
-connects to: namespaces, node pools, the `NetworkPolicy` around run pods, the ServiceAccount's RBAC
-and how many concurrent runs the pool is sized for. That is
+connects to. That covers namespaces, node pools, the `NetworkPolicy` around run pods, the
+ServiceAccount's RBAC and how many concurrent runs the pool is sized for. That is
 [Lay Out a Kubernetes Cluster](./kubernetes-topology.md).
 
 ## Agent containers on Kubernetes
@@ -40,9 +40,9 @@ pod per run, running the executor-harness image.
 | **Node selector / tolerations / labels / annotations** | Optional. Standard pod placement and metadata. |
 
 Use **Test connection** to probe the apiserver before you save. A probe that never got an answer
-names the transport cause it hit (refused, DNS, timeout, reset, an untrusted, expired, wrong-hostname
-or wrong-protocol certificate, a badly pasted credential) with the remedy for that cause, rather than
-the generic wrapper the runtime throws. This is an alternative to a
+names the transport cause it hit, with the remedy for that cause, rather than the generic wrapper
+the runtime throws. The cause can be refused, DNS, timeout, reset, an untrusted, expired,
+wrong-hostname or wrong-protocol certificate, or a badly pasted credential. This is an alternative to a
 [runner pool](../operate/runner-pools.md): a deployment reaches Kubernetes directly rather than dispatching to
 a scheduler over HTTP.
 
@@ -54,8 +54,8 @@ publicly-trusted certificate, or run the workspace on Node or local. This is the
 [EKS](#amazon-eks) a Node-and-local backend: a real EKS apiserver presents a private CA.
 :::
 
-A pasted ServiceAccount token is trimmed where the request header is built, so a trailing newline
-cannot pass the form check and then fail inside the HTTP client, and a token broken across a wrapped
+A pasted ServiceAccount token is trimmed where the request header is built. So a trailing newline
+cannot pass the form check and then fail inside the HTTP client. A token broken across a wrapped
 terminal line is flagged on the field itself.
 
 ## Ephemeral environments on Kubernetes
@@ -89,14 +89,14 @@ injection is either a `Secret` resource or a `generatorEnvFile` `.env` consumed 
 ### Pulling a private image on a local cluster
 
 A per-PR namespace is created seconds before the manifests are applied, so nothing can put a pull
-secret in it ahead of time, and an image your CI published to a private package answers 403 to a
+secret in it ahead of time. An image your CI published to a private package answers 403 to a
 kubelet with no credential. The environment then provisions and never becomes ready, which looks
 like a broken cluster rather than a missing credential.
 
 On a cluster whose API server address is the machine Cat Factory runs on, it closes this itself.
-Each provision writes the workspace's own Git credential into the new namespace as a
-`dockerconfigjson` secret and attaches it to the service accounts your manifests run as, before any
-workload is applied. There is no field for it and nothing to set up. The addresses that qualify are
+Before any workload is applied, each provision writes the workspace's own Git credential into the
+new namespace as a `dockerconfigjson` secret, and attaches it to the service accounts your
+manifests run as. There is no field for it and nothing to set up. The addresses that qualify are
 the ones a local kubeconfig actually contains: `127.0.0.1`, `localhost` and `::1`, the `0.0.0.0`
 k3d writes by default, and Docker Desktop's `kubernetes.docker.internal` and
 `host.docker.internal`. That covers every local k3s, k3d, kind and Rancher Desktop cluster as
@@ -112,19 +112,19 @@ Three things bound it:
   third-party registry is left alone, because a Git token has no business being offered to it.
 - **The credential is short-lived and is not renewed.** It expires about an hour after the
   provision, which covers the rollout. If a workload is restarted or scaled up long afterwards, its
-  new pods hit the same 403 again; re-provision the environment to write a fresh credential, or
-  make the package public if the environment is a long-lived one.
+  new pods hit the same 403 again. Re-provision the environment to write a fresh credential, or make
+  the package public if the environment is a long-lived one.
 
-One case on a local cluster is skipped: if your kustomize overlay sets its own namespace and you
-have not configured a namespace template, the namespace is only known once the overlay is built,
-which happens after this step. The provisioning log says so, and configuring a namespace template
-(which also gives you real per-PR isolation) is what turns it back on.
+One case on a local cluster is skipped. If your kustomize overlay sets its own namespace and you
+have not configured a namespace template, the namespace is only known once the overlay is built.
+That happens after this step. The provisioning log says so. Configuring a namespace template
+(which also gives you real per-PR isolation) turns it back on.
 
-Remote clusters are untouched: pushing a credential into every preview namespace is a reasonable
-trade on a cluster you throw away and not one to make silently on a shared one, so there it stays
+Remote clusters are untouched. Pushing a credential into every preview namespace is a reasonable
+trade on a cluster you throw away. It is not one to make silently on a shared one, so there it stays
 your decision (a pre-created pull secret referenced by your own manifests). Either way, each
-provision records what it did under `registry-auth` in the environment's provisioning log, naming
-the registry it wired or the reason it wired nothing.
+provision records what it did under `registry-auth` in the environment's provisioning log. It names
+the registry it wired, or the reason it wired nothing.
 
 ### How the preview URL is resolved
 
@@ -141,14 +141,14 @@ Each source takes an optional scheme (`http`, `https`, or left at the default, w
 the resource).
 
 The ingress template's **port** is its own field rather than something you write into the host, and it
-has to be: the rendered host template is also the Ingress `spec.rules[].host` your manifests declare,
-and Kubernetes rejects a `host` carrying a port. So a cluster whose ingress controller answers on
+has to be. That is because the rendered host template is also the Ingress `spec.rules[].host` your
+manifests declare, and Kubernetes rejects a `host` carrying a port. So a cluster whose ingress controller answers on
 anything but the scheme's default port sets `port` and leaves the template portless. Left empty it
 means the scheme default, which is what every connection without it already meant.
 
 Build the host from **`{{namespace}}`** rather than `{{branch}}`. A branch is
-`cat-factory/<taskId>`: the `/` ends the host and turns everything after it into a path, so the URL
-names the bare host `cat-factory` and the Ingress declaring that `host` is refused by the apiserver.
+`cat-factory/<taskId>`, and the `/` ends the host and turns everything after it into a path. So the
+URL names the bare host `cat-factory`, and the apiserver refuses the Ingress declaring that `host`.
 The namespace is already sanitized to a single DNS label.
 
 ### Wildcard-DNS hosts
@@ -165,9 +165,10 @@ cf-env-catalog-api-pr5.127.0.0.1.nip.io  ->  127.0.0.1     (one character's diff
 ```
 
 **The namespace template and the URL source are therefore only correct together.** Neither half is
-wrong on its own, and nothing downstream catches the pair: the workloads roll out, the environment
-reports ready (readiness is workload readiness, not an HTTP probe), and the first thing to notice is
-a test step failing with a connection error against an address that was never your cluster.
+wrong on its own, and nothing downstream catches the pair. The workloads roll out, and the
+environment reports ready (readiness is workload readiness, not an HTTP probe). The first thing to
+notice is a test step failing with a connection error against an address that was never your
+cluster.
 
 Cat Factory refuses a provision whose URL would resolve elsewhere, before it creates the namespace.
 The environment fails immediately with `config_incomplete`, naming both addresses and the fix, and
@@ -185,10 +186,11 @@ nothing is left behind on the cluster. Three ways to make a name carry one addre
 ## Amazon EKS
 
 If your cluster is Amazon EKS, select the **EKS** backend instead of **Kubernetes** on either tab. It
-is the same native Kubernetes backend, per-run pods on the **Agent containers** tab and per-PR
-namespaces on the **Test environments** tab, with one difference: instead of a static ServiceAccount
-token, it authenticates to the apiserver with a short-lived IAM token (a SigV4-presigned STS token,
-the same kind `aws eks get-token` mints), so you don't manage a long-lived bearer token.
+is the same native Kubernetes backend: per-run pods on the **Agent containers** tab, and per-PR
+namespaces on the **Test environments** tab. There is one difference. Instead of a static
+ServiceAccount token, it authenticates to the apiserver with a short-lived IAM token, so you don't
+manage a long-lived bearer token. The IAM token is a SigV4-presigned STS token, the same kind
+`aws eks get-token` mints.
 
 The connect form takes the usual Kubernetes fields (apiserver URL, namespace, image, sizing) plus:
 
@@ -202,8 +204,8 @@ The connect form takes the usual Kubernetes fields (apiserver URL, namespace, im
 
 The EKS backend is opt-in per workspace: connect it and pick it, nothing else changes. It carries no
 AWS SDK, so a deployment that never connects EKS pays nothing for it. A real EKS apiserver presents a
-private CA, so the **runner** backend runs on the Node and local runtimes (which can pin a custom CA);
-the Cloudflare Worker rejects an EKS connection at registration rather than failing mid-run.
+private CA, so the **runner** backend runs on the Node and local runtimes, which can pin a custom CA.
+The Cloudflare Worker rejects an EKS connection at registration, rather than failing mid-run.
 
 ## Per-service provision types
 
@@ -257,9 +259,14 @@ remote-custom handler provisions it.
 ### Generating or repairing the manifest
 
 If a repo has no valid deployment manifest, Cat Factory can dispatch a coding agent to write or fix
-one instead of failing the first run. The **env-config-repair** run clones the repo at the target
-branch, uses the custom type's fixer prompt (or the built-in Kubernetes logic) to generate or repair
-the manifest file in place, pushes the fix onto the same branch (or opens a PR), and re-validates.
+one instead of failing the first run. The **env-config-repair** run does the following:
+
+1. clones the repo at the target branch
+2. generates or repairs the manifest file in place, using the custom type's fixer prompt (or the
+   built-in Kubernetes logic)
+3. pushes the fix onto the same branch (or opens a PR)
+4. re-validates
+
 The agent only edits an existing repo; it never re-initialises history or force-pushes. It runs as a
 durable, tracked run like any other.
 
@@ -279,9 +286,11 @@ The command:
 
 1. **Probes** the host for `kubectl`, `k3d`, `kind`, and `k3s`, a running Docker daemon, and any
    reachable cluster.
-2. **Offers** a short menu: reuse an existing cluster, create a **k3d** cluster (the default when
-   Docker is running), create a **kind** cluster, or install **k3s** (Linux only; the `sudo` command
-   is printed, never run for you).
+2. **Offers** a short menu:
+   - reuse an existing cluster
+   - create a **k3d** cluster (the default when Docker is running)
+   - create a **kind** cluster
+   - install **k3s** (Linux only; the `sudo` command is printed, never run for you)
 3. **Provisions** a least-privilege ServiceAccount and RBAC (never `cluster-admin`) and mints a
    long-lived token.
 4. **Checks the ingress path** rather than promising it, and reports one of three outcomes. See
@@ -316,12 +325,12 @@ half to fix.
 
 Two facts shape what you can fix without rebuilding:
 
-- **The host port is create-time-only.** Every local distribution runs the cluster inside Docker and
+- **The host port is create-time-only.** Every local distribution runs the cluster inside Docker. It
   forwards only the ports it was asked for when the cluster was created, so a published port cannot
   be added to a running k3d or kind cluster. Clusters this command creates publish it
   (`--ingress-port`, default `80`); a cluster created any other way may not.
 - **kind ships no ingress controller**, where k3d bundles Traefik. The create path lays kind's
-  irreversible half (the port mapping and the `ingress-ready=true` node label) and leaves the
+  irreversible half: the port mapping and the `ingress-ready=true` node label. It leaves the
   controller to you, because fetching a third-party manifest onto your machine is not a choice a
   guided setup should make silently. It prints the command; a re-run then reports ready.
 
@@ -337,7 +346,7 @@ alone cannot pick this path. It is refused with `--runtime k3s`, where a host se
 to rebuild from here.
 
 Because a local ingress controller serves TLS with a self-signed certificate, the derived environment
-URL is plain `http`: publishing the TLS entrypoint instead would trade a connection error for a
+URL is plain `http`. Publishing the TLS entrypoint instead would trade a connection error for a
 certificate error at the tester, which is the worse of the two.
 
 k3s itself runs only on Linux. On Windows and macOS the command steers you to k3d (k3s inside
@@ -346,9 +355,13 @@ Docker). On Windows it also needs k3d installed first, which is
 rights, the cluster, and back to this form.
 
 Selecting the **Local k3s** preset by hand (without the CLI) pre-fills the Kubernetes environment
-form with local defaults: a `cf-env-pr{{pullNumber}}` namespace, a `{{namespace}}.127.0.0.1.nip.io`
-host (nip.io wildcard DNS, no local setup), and skipped TLS verification for the cluster's
-self-signed cert. The two are chosen to compose: see
+form with local defaults:
+
+- a `cf-env-pr{{pullNumber}}` namespace
+- a `{{namespace}}.127.0.0.1.nip.io` host (nip.io wildcard DNS, no local setup)
+- skipped TLS verification for the cluster's self-signed cert
+
+The two are chosen to compose: see
 [Wildcard-DNS hosts](#wildcard-dns-hosts) before you change either.
 
 ---

@@ -46,16 +46,16 @@ Notion, Jira) you can:
 2. Paste a page or issue URL (or id) directly.
 3. Pick something already imported into the workspace.
 
-For a **repo-backed source** (GitHub, and GitLab through the same adapter) attaching a doc is a
-two-step pick: search for a repository, then choose one or more files, either by filtering on path or
-by browsing the repository tree (multi-select). A repo reachable only through your personal token is
+For a **repo-backed source** (GitHub, and GitLab through the same adapter), attaching a doc is a
+two-step pick. Search for a repository, then choose one or more files. Filter on path, or browse the
+repository tree (multi-select). A repo reachable only through your personal token is
 badged, since it resolves through the workspace's GitHub App at run time and can fail to link on a
 hosted deployment.
 
 GitHub is available as a document source automatically once its App or PAT is installed, with no
 connect step. When no source is connected at all, the context section offers a **Connect a source**
-action that opens the connect flow over the task form and preserves what you've already typed, rather
-than a dead Attach button. Chosen items are imported and linked as agent context on create, with no
+action rather than a dead Attach button. It opens the connect flow over the task form, and keeps
+what you've already typed. Chosen items are imported and linked as agent context on create, with no
 separate import step. Search is scoped to the workspace's own integration installation, so you only
 ever see your own org's content.
 
@@ -71,18 +71,19 @@ make while you are still writing the task.
 
 - **The link is trimmed to its canonical form.** Share links carry title segments and tracking
   parameters, and the chip shows the rebuilt link instead. For a few sources the id itself is the
-  canonical form, because the URL cannot be rebuilt without knowing something the picker does not
-  have (a Confluence site's base URL, a Linear workspace slug, which VCS host a repo doc lives on).
+  canonical form, because the URL needs something the picker does not have. That is a Confluence
+  site's base URL, a Linear workspace slug, or the VCS host a repo doc lives on.
   Seeing an id rather than a URL is a normal answer there, not a failed resolution.
 - **A reference that had to be widened says so.** Some links name a part the source cannot address
   on its own, most often a Figma component instance. Rather than guess which frame you meant, the
-  import widens to the whole file or project, and the picker states in an amber line exactly what
-  was dropped, as you pasted it. "I attached this frame" and "I attached the entire design" would
+  import widens to the whole file or project. The picker states in an amber line exactly what was
+  dropped, as you pasted it. "I attached this frame" and "I attached the entire design" would
   otherwise look identical.
-- **A refusal names which correction it needs.** Either no link of that shape will ever work for the
-  selected source, in which case the message states the format that will, or the link is fine and
-  points at a different source, in which case the picker names that source and offers to switch with
-  your text unchanged.
+- **A refusal names which correction it needs.** There are two cases:
+  - No link of that shape will ever work for the selected source. The message states the format
+    that will.
+  - The link is fine and points at a different source. The picker names that source, and offers to
+    switch with your text unchanged.
 - **An unreachable source is not a refusal.** If the check cannot be made (an outage, a proxy error
   page), the reference stays stageable and the import remains the backstop it always was. A
   transient failure should not make a perfectly good link unattachable.
@@ -101,13 +102,13 @@ depends on where you aim it:
   each with its modules and tasks. A large epic seeds a module with several task leaves, each
   carrying its slice of the document.
 - **At an existing service**: what work does this document imply inside a service that already
-  exists? The plan comes back as modules and tasks for that service, and the modules it already has
-  are taken into account, so the plan adds beside them rather than proposing a second "Checkout"
-  next to the one that is there. The preview says which service it is planning into.
+  exists? The plan comes back as modules and tasks for that service. The modules it already has are
+  taken into account, so the plan adds beside them rather than proposing a second "Checkout" next
+  to the one that is there. The preview says which service it is planning into.
 
 Approving creates exactly what the preview showed. A plan aimed at a service is authored for that
-service from the start, rather than a board-wide plan flattened into it, which is what keeps the
-approved preview and the created blocks the same thing.
+service from the start, rather than a board-wide plan flattened into it. That keeps the approved
+preview and the created blocks the same thing.
 
 **A design document is always planned into a service**, so the preview asks you to pick one. A
 design describes screens, and asked for an architecture a model will happily invent a service per
@@ -132,9 +133,9 @@ different blast radius:
 | Tag a document as a kind's template or exemplar | **Admin**. It decides what every document run on the board writes from, not what one task reads. |
 
 The split is why the person who links the spec their task is about does not have to be the person
-who connected Confluence. It is also visible in the picker: a member sees the source named with no
-**add a source** entry, and the no-source empty state tells them to ask an admin, rather than
-offering a connect flow that would take a token and then refuse it. Viewers can read what is
+who connected Confluence. It is also visible in the picker. A member sees the source named with no
+**add a source** entry. The no-source empty state tells them to ask an admin, rather than offering a
+connect flow that would take a token and then refuse it. Viewers can read what is
 attached and attach nothing.
 
 ## Creating a task straight from an issue
@@ -169,8 +170,9 @@ offered as a task source for import and linking too.
 A headless integration does the same thing by naming the ticket on
 [`POST /api/v1/services/{serviceId}/tasks`](../extend/public-api.md#filing-a-task-from-a-tracker-ticket),
 which imports the issue and attaches it rather than flattening it into the description. A task
-dispatched this way has nobody in the app, so if it pins no risk policy it resolves the workspace's
-**unattended** default and can answer its own automatic checkpoints rather than waiting on a person.
+dispatched this way has nobody in the app. So if it pins no risk policy, it resolves the workspace's
+**unattended** default. It can then answer its own automatic checkpoints rather than waiting on a
+person.
 See [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 
 ## Bug hunt
@@ -189,9 +191,9 @@ What you scan depends on the tracker:
   usable.
 - **GitHub Issues and GitLab Issues** put every issue in one repository, so there is **no board to
   pick**. You choose the service instead, and the hunt reads the repository that service is linked
-  to. The board field names that repository rather than offering a choice: a picker there could rate
-  and adopt a bug from a repository nothing on your board points at, and the run that followed would
-  open its pull request somewhere else entirely.
+  to. The board field names that repository rather than offering a choice. A picker there could rate
+  and adopt a bug from a repository nothing on your board points at. The run that followed would
+  then open its pull request somewhere else entirely.
 
 Either way you also choose where a confirmed bug lands, which for a repository-backed tracker is the
 same choice as what gets scanned. A service with no repository linked has no issues to hunt, and the
@@ -210,8 +212,8 @@ three parts:
   park a connected Jira.
 - **Writeback**: see below.
 
-Each source has a **Check setup** button that runs a live diagnostic and reports a concrete status,
-`ready`, `not_installed`, `not_connected`, `auth_failed`, `forbidden`, or `unreachable`, so you can
+Each source has a **Check setup** button that runs a live diagnostic and reports a concrete status:
+`ready`, `not_installed`, `not_connected`, `auth_failed`, `forbidden`, or `unreachable`. So you can
 tell a missing GitHub App install from a bad Jira credential without starting a run to find out.
 
 A context picker always shows which tracker it is searching, and offers to add one from there if the
@@ -277,18 +279,18 @@ it:
   natively; Jira transitions it to its first "Done" status; Linear transitions it to a completed
   workflow state).
 - **Post open questions on a parked headless run**: when a run started through the
-  [public API](../extend/public-api.md) pauses to clarify requirements, posts its open questions on
-  the linked issue, each with the id an answer names.
+  [public API](../extend/public-api.md) pauses to clarify requirements, it posts its open questions
+  on the linked issue. Each question carries the id an answer names.
 
-All three are **on by default**, and each can be overridden per task in the task inspector
+All three are **on by default**. Each can be overridden per task in the task inspector
 (**Inherit workspace**, **On**, or **Off**), so a one-off task can opt out of (or into) writeback
 without changing the workspace default.
 
-Writeback only ever touches an issue a task is **linked** to, and nothing links one by accident: a
+Writeback only ever touches an issue a task is **linked** to, and nothing links one by accident. A
 link arrives when you import an issue, when the recurring intake picks one up, or when a headless
-caller files a task with a `ticket`. Each of those is a request to work the issue where it was filed,
-so the default closes the loop rather than leaving a merged pull request beside an issue still
-sitting open with nothing on it saying the work was done.
+caller files a task with a `ticket`. Each of those is a request to work the issue where it was
+filed. So the default closes the loop, rather than leaving a merged pull request beside an issue
+still sitting open with nothing on it saying the work was done.
 
 Writeback follows each linked issue's **own** source, not the filing tracker. A workspace with
 **Filing tracker: None** still comments on and closes the GitHub issue a task was filed from. The two
@@ -298,7 +300,7 @@ The questions toggle exists because a headless caller has no in-app inbox to wat
 reaches whoever filed the issue, and they can answer it over the API against the ids in the comment.
 It fires only for runs whose origin is the public API. A task started in the app is unaffected, and its
 clarification surface stays the in-app review window. The post is claimed once per review iteration
-and issue before it is attempted, so a retried or replayed run never double-posts onto an issue
+and issue before it is attempted. So a retried or replayed run never double-posts onto an issue
 somebody is reading, and a tracker outage leaves the post retryable rather than lost.
 
 A deployment driven entirely over the API can read and change the same three actions without opening
@@ -313,16 +315,19 @@ Once linked and imported, source content travels with the block:
 - The coder agent uses it to implement the task accurately.
 - Subsequent steps reference the same shared definition.
 
-Container agents get the linked material in full: each step's prompt carries
-a short summary index, and the complete bodies are written into a git-excluded `.cat-context/`
-directory in the workspace for the agent to read on demand.
+Container agents get the linked material in full. Each step's prompt carries a short summary index.
+The complete bodies are written into a git-excluded `.cat-context/` directory in the workspace, for
+the agent to read on demand.
 
 A document that cannot actually reach the agent **fails the run** rather than being dropped quietly.
-A reference that resolves to a page with an empty body, and a corpus that overflows the materialized
-context budget, both used to leave the run looking healthy while the agent worked from a spec nobody
-noticed it never read. Both now refuse in the same words, naming what could not be delivered. Cat Factory also resolves references you
-name in a description, Jira keys, `owner/repo#123`, and URLs, against the imported corpus, so a task
-that mentions a ticket picks up that ticket's content even without an explicit link.
+This includes a reference that resolves to a page with an empty body, and a corpus that overflows the
+materialized context budget. Both refuse in the same words, naming what could not be delivered.
+Otherwise the run would look healthy while the agent worked from a spec nobody noticed it never
+read.
+
+Cat Factory also resolves references you name in a description against the imported corpus: Jira
+keys, `owner/repo#123`, and URLs. So a task that mentions a ticket picks up that ticket's content
+even without an explicit link.
 
 ## Enabling integrations
 

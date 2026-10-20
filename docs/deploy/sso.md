@@ -2,9 +2,9 @@
 
 For the operator standing a deployment up for an organization, who needs people to sign in through
 the company's own identity provider rather than through a consumer login. Cat Factory ships **one
-generic OpenID Connect adapter**: Okta, Microsoft Entra ID, Auth0, Keycloak, PingFederate,
+generic OpenID Connect adapter**. Okta, Microsoft Entra ID, Auth0, Keycloak, PingFederate,
 OneLogin, JumpCloud, Google Workspace and a Shibboleth IdP running the OIDC OP plugin are all
-OpenID Connect providers, so a discovery document plus a client id and secret is the whole
+OpenID Connect providers. So a discovery document plus a client id and secret is the whole
 configuration for any of them. A provider not named here works too, as long as it publishes a
 discovery document: there is no per-vendor list to be on.
 
@@ -74,8 +74,8 @@ to a deployment that looks configured and is not:
    guarantees irrelevant.
 4. **`AUTH_DEV_OPEN` or `TESTING_NO_AUTH` alongside SSO.** Those hatches serve every protected
    route anonymously. A deployment that configured SSO to satisfy a security review must not carry
-   a variable combination that reopens the API, and an operator cannot be relied on to notice they
-   set both, so the pair is refused rather than one silently winning.
+   a variable combination that reopens the API. An operator cannot be relied on to notice they set
+   both, so the pair is refused rather than one silently winning.
 
 ## 3. Check the sign-in
 
@@ -84,8 +84,8 @@ The login screen shows an SSO button as soon as the provider is live, labelled w
 goes to your provider, your provider authenticates the person, and the callback hands the app the
 same session token every other login mints.
 
-A refusal comes back to the login screen as a message rather than as raw JSON, and the reasons are
-distinct on purpose, because the remedies differ: a missing directory group is the user's to take
+A refusal comes back to the login screen as a message rather than as raw JSON. The reasons are
+distinct on purpose, because the remedies differ. A missing directory group is the user's to take
 to IT, while a failed code exchange is the operator's own configuration.
 
 ## Who is allowed in
@@ -115,8 +115,8 @@ provider **did** release positively excludes the person: groups arrived and none
 verified email arrived on a domain that is not allowed. When the claim the rule needed simply never
 arrived, the login is still refused, but no sessions are cut. A user removed from every group, a
 dropped scope, a renamed claim and a provider that stopped marking emails verified all look
-identical from here, and treating a configuration regression as an offboarding would force-sign-out
-the whole deployment on the release where a scope goes missing, including the admin who has to fix
+identical from here. Treating a configuration regression as an offboarding would force-sign-out the
+whole deployment on the release where a scope goes missing. That includes the admin who has to fix
 it.
 
 ## Why SSO is configured in the environment, not in the UI
@@ -128,9 +128,9 @@ not:
 - **It is the deployment's trust root, not tenant configuration.** Whoever can edit the SSO provider
   can point it at an identity provider they control and then sign in as anybody. A UI-editable
   identity provider turns "workspace admin" into a path to every account on the deployment.
-- **The bootstrap is circular.** SSO gates who reaches the UI at all, so configuring it from inside
-  the UI needs a second, already-working login to exist first, which is exactly the consumer login
-  an organization adopting SSO wants gone.
+- **The bootstrap is circular.** SSO gates who reaches the UI at all. So configuring it from inside
+  the UI needs a second, already-working login to exist first. That is exactly the consumer login an
+  organization adopting SSO wants gone.
 - **The refusals above are boot-time.** "SSO and dev-open cannot both be on" belongs where the
   process starts, not on a form submission that could leave a running deployment in the refused
   state.

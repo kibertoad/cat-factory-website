@@ -1,9 +1,10 @@
 # Author a Document
 
-For anyone whose deliverable is prose rather than code. Not all work is code: a **document task**
-produces a written document, a PRD, an RFC, an ADR, a runbook, and ships it as a Markdown file in a
-repository through the same pull-request flow as a code change. It is the forward-authoring counterpart to the reverse-documentation agents that describe
-existing code (blueprints and the code documenters).
+For anyone whose deliverable is prose rather than code. Not all work is code. A **document task**
+produces a written document, such as a PRD, an RFC, an ADR or a runbook. It ships the document as a Markdown
+file in a repository, through the same pull-request flow as a code change. It is the
+forward-authoring counterpart to the reverse-documentation agents that describe existing code
+(blueprints and the code documenters).
 
 ## Creating a document task
 
@@ -39,8 +40,8 @@ in-repo directory, and, for several kinds, extra fields tailored to it:
 | **other** | `docs` | None |
 
 The kind-specific fields you fill are folded into the author's prompt as required content for the
-matching sections, so a PRD's "Success metrics" or an ADR's "Considered options" get written from what
-you provided rather than invented.
+matching sections. A PRD's "Success metrics" or an ADR's "Considered options" then get written from
+what you provided, rather than invented.
 
 ## How a document is authored
 
@@ -57,7 +58,7 @@ with a human review gate on the result. The finalizer polishes the merged-in pro
 ### The interview round
 
 Between the outline and the draft, the **Author a document** flow parks the run and opens a **Refine
-the document** window where an interviewer asks a small batch of focused questions about scope,
+the document** window. There, an interviewer asks a small batch of focused questions about scope,
 audience, depth, structure, and the points to cover. Answer them, then **Continue** (it may ask a
 follow-up round) or **Proceed to draft** to converge on what you have given it. It synthesizes an
 authoring brief from your answers that the writer starts from, so the draft reflects an
@@ -68,8 +69,8 @@ The step passes through when no model provider is wired for it.
 
 A document task can borrow context from other repositories without touching them. In the task
 inspector's **Run Settings**, the **Reference repositories** picker attaches one or more repos as
-read-only material: the writer clones each as a sibling checkout it may read (to reuse existing
-solutions and patterns while drafting) but never writes to or pushes. Search for any repo your
+read-only material. The writer clones each as a sibling checkout it may read, to reuse existing
+solutions and patterns while drafting. It never writes to or pushes those checkouts. Search for any repo your
 workspace connection (or, in local mode, your PAT) can reach, not just synced board repos; selecting
 one attaches it, and attached repos show as removable chips. It needs a connected GitHub App;
 without one the picker prompts you to connect first. Up to 20 repos per task.

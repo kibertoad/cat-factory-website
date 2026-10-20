@@ -8,8 +8,8 @@ redirectFrom:
 For a deployment that needs the app itself to show something the platform does not ship.
 [Custom agents, gates, and judges](./custom-agents.md) extend the backend; this page is the frontend
 counterpart. A deployment that consumes the app layer can contribute its own **components** to the
-running SPA, result windows, navigation entries, inspector panels, task types, and full-screen
-overlays, without forking the layer and without a host edit.
+running SPA, without forking the layer and without a host edit. It can add result windows,
+navigation entries, inspector panels, task types, and full-screen overlays.
 
 The governing rule is the same on both sides: **zero host edits for a consumer extension**. A worked
 example ships with the platform as the `acme:security` module in the template deployment's
@@ -70,10 +70,13 @@ with no config change.
 
 ### Result windows
 
-Backend data selects a frontend component, joined by a namespaced id. Register an agent kind whose
-`presentation.resultView` is `'<ns>:<name>'` (see
-[Add a Custom Agent Kind → The registration seam](./custom-agents.md#the-registration-seam)), contribute the component to `resultViews`
-under the same id, and opening a step of that kind mounts your component. An unpaired id degrades to
+Backend data selects a frontend component, joined by a namespaced id:
+
+1. Register an agent kind whose `presentation.resultView` is `'<ns>:<name>'` (see
+   [Add a Custom Agent Kind → The registration seam](./custom-agents.md#the-registration-seam)).
+2. Contribute the component to `resultViews` under the same id.
+
+Opening a step of that kind then mounts your component. An unpaired id degrades to
 the generic prose panel with a dev-console warning naming it; a structured kind with no bespoke window
 gets the built-in `generic-structured` viewer for free.
 
@@ -164,10 +167,14 @@ workspaceMetadataFields: [
 
 The resolver receives `{ userId, userEmail, workspaceId, workspaceName, metadata }`. Returning `null`
 means "not resolvable right now": the tool stays listed and explains itself on click instead of
-opening something wrong. Four refusals are reported separately, since each has its own fix: a
-declared `requiredMetadata` key nobody filled in, a resolver that returned nothing, a result that is
-not an `http(s)` URL, and a resolver that threw. A throwing resolver never blanks the nav; it is
-caught and reported like any other refusal.
+opening something wrong. Four refusals are reported separately, since each has its own fix:
+
+- a declared `requiredMetadata` key nobody filled in
+- a resolver that returned nothing
+- a result that is not an `http(s)` URL
+- a resolver that threw
+
+A throwing resolver never blanks the nav; it is caught and reported like any other refusal.
 
 ::: warning Metadata values are untrusted input
 A workspace admin types them in, so treat a value as operator-supplied text. Interpolate it into a

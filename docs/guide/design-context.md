@@ -50,8 +50,8 @@ The imported document renders as a Markdown file the agent reads on demand, in a
 
 - **Notes** first: anything the import could not fully cover, so a reader hits the qualification
   before the content it qualifies.
-- **One section per frame or screen**, with each node's styling in brackets: the facts an agent
-  would otherwise invent, such as `[fill #3366ff; Inter 16/600 lh 24; radius 8; auto-layout vertical
+- **One section per frame or screen**, with each node's styling in brackets. The styling gives the
+  facts an agent would otherwise invent, such as `[fill #3366ff; Inter 16/600 lh 24; radius 8; auto-layout vertical
   gap 12 padding 16/24]`.
 - **Components**: each instance's component-set name plus the variants and properties the design
   actually uses, for example `variants: Size=Large | Size=Small; props: Icon=true, Label`. That is
@@ -72,8 +72,8 @@ an unlabelled task still gets it and a frontend task with no design does not.
 Figma serves design **variables** only on Enterprise plans. Where the plan does not serve them, the
 import falls back to the file's **published styles**, which every plan serves. The two are never
 merged, and the rendered section says which one produced it. A design that simply defines no tokens,
-a plan that gates the variables endpoint, and a read that failed are three different facts, and the
-page names which one you are looking at rather than showing an empty section for all three.
+a plan that gates the variables endpoint, and a read that failed are three different facts. The
+page names which one you are looking at, rather than showing an empty section for all three.
 
 ### Caps, and what each one asks you to do
 
@@ -134,8 +134,8 @@ failure never fails an import: the text is the load-bearing half.
 
 The retained frames are also put in front of the agents that build and plan a screen (the
 implementer, the architect and the fixer), alongside the text. Where an agent can be shown a
-picture, it is: on a coding run the frames are written into the checkout and the agent opens them,
-and on an inline step they ride the model request itself.
+picture, it is. On a coding run, the frames are written into the checkout and the agent opens them.
+On an inline step, they ride the model request itself.
 
 Two things have to be true for that to happen:
 
@@ -188,7 +188,7 @@ otherwise judge by its name.
 ::: warning A run needs an initiator for this to be read
 Declarations belong to a person, so they are resolved from the run **initiator's** own runner
 entries. A run nobody started (a [recurring pipeline](./recurring-pipelines.md), a system sweep)
-resolves none, and the family table is not consulted in that case either: with no declarations read
+resolves none, and the family table is not consulted in that case either. With no declarations read
 at all, your own **Text only** is exactly what could not be seen, so the frames are withheld rather
 than attached on a guess.
 :::

@@ -1,9 +1,13 @@
 # Choose and Edit a Pipeline
 
 For anyone deciding what should run against a task, and for whoever needs a chain the library does
-not ship. It covers the built-in catalog and what each preset is for, the builder edits that turn a
-read-only default into a pipeline of your own, and the step settings (gating, binary outputs,
-consensus) that only exist at design time. Starting a run and steering it is
+not ship. It covers:
+
+- the built-in catalog, and what each preset is for
+- the builder edits that turn a read-only default into a pipeline of your own
+- the step settings that only exist at design time: gating, binary outputs and consensus
+
+Starting a run and steering it is
 [Run a Pipeline](./running-pipelines.md).
 
 ## Anatomy of a pipeline
@@ -16,10 +20,14 @@ The build presets are a three-rung ladder. They vary in one thing: how much desi
 | **Standard build** (default) | Architect → Architect Reviewer → Coder → Reviewer → Deployer → Tester → Conflicts → CI → Merger | The default. Every step always runs, no requirements interview and no human pauses. |
 | **Adaptive build** | Task Estimator → *(Architect + reviewer)* → Coder → Reviewer → Deployer → *(Tester)* → Conflicts → CI → *(Human Review)* → Merger | A service's tasks vary enough in size that one fixed shape is wrong for most of them. |
 
-**Adaptive build** sizes the task up first with one cheap Task Estimator call, then switches the
-bracketed steps on by [estimate gate](#estimating-and-gating-expensive-steps): the Architect above a
-complexity bar, the Tester above a low complexity or risk bar, and a **Human Review** wait on the PR
-above a high risk bar. So a trivial task runs the Simple-build shape and a risky one runs the full
+**Adaptive build** sizes the task up first with one cheap Task Estimator call. Then it switches the
+bracketed steps on by [estimate gate](#estimating-and-gating-expensive-steps):
+
+- the Architect, above a complexity bar
+- the Tester, above a low complexity or risk bar
+- a **Human Review** wait on the PR, above a high risk bar
+
+So a trivial task runs the Simple-build shape and a risky one runs the full
 ladder, decided per task instead of once by whoever picked the pipeline. The Architect's reviewer
 carries no gate of its own: it cascades, skipped whenever the Architect was.
 
@@ -42,11 +50,16 @@ on task size.
 | **Human Review** | Waits for a real human review on the PR. See [Human review on the pull request](./running-pipelines.md#human-review-on-the-pull-request). |
 | **Merger** | Scores the PR and auto-merges within thresholds, or raises a review notification. |
 
-Everything the presets leave out stays available as an opt-in step in the builder: the
-**Requirements Reviewer** (the iterative human answer/dismiss/re-review conversation, right for
-genuinely ambiguous scope and overkill for a task someone already wrote down), the **Spec Writer**
-and its reviewer, the **Researcher**, the **Mock Builder**, the **Blueprinter**, the **Code
-Commenter**, the documentation kinds, and any human approval gate. They are omitted from the presets
+Everything the presets leave out stays available as an opt-in step in the builder:
+
+- the **Requirements Reviewer**: the iterative human answer/dismiss/re-review conversation. It is
+  right for genuinely ambiguous scope, and overkill for a task someone already wrote down.
+- the **Spec Writer** and its reviewer
+- the **Researcher**, the **Mock Builder**, the **Blueprinter** and the **Code Commenter**
+- the documentation kinds
+- any human approval gate
+
+They are omitted from the presets
 rather than shipped disabled, so a preset's step list reads as exactly what it does.
 
 Two **brainstorm** steps are opt-in the same way: a **Requirements brainstorm** and an
@@ -73,11 +86,16 @@ Other built-in pipelines each new workspace seeds:
 | **Analyze environment** | Reads a service's infrastructure and reports what it found. |
 | **Bug triage (recurring)** / **Tech debt** | The recurring presets (see [Schedule Recurring Work](./recurring-pipelines.md)). |
 
-Additional agent kinds include the **Fixer** (loops on failing tests inside the Tester gate),
-**Bug Investigator**, **Playwright** (runnable e2e tests from the spec's acceptance scenarios),
-**Documenter**, a tech-debt analysis step, and a **Skill** step that runs a
-repo-sourced [Claude Skill](./skills.md) picked per step; a deployment can also
-[register its own agent kinds and pipelines](../extend/custom-agents.md).
+Additional agent kinds include:
+
+- **Fixer**: loops on failing tests inside the Tester gate
+- **Bug Investigator**: explores the repo from a raw bug report (see below)
+- **Playwright**: writes runnable e2e tests from the spec's acceptance scenarios
+- **Documenter**: describes existing code
+- a tech-debt analysis step
+- **Skill**: runs a repo-sourced [Claude Skill](./skills.md) picked per step
+
+A deployment can also [register its own agent kinds and pipelines](../extend/custom-agents.md).
 
 ### Retired pipelines
 
@@ -106,9 +124,9 @@ Set the purpose (and a description) on a cloned pipeline in the builder.
 
 ### Previewing a pipeline before you pick it
 
-The pipeline picker in the add-task form and the inspector's Run settings is a master-detail list:
-hover a pipeline to see its description and its ordered steps as labeled chips, with a shield icon on
-any step that pauses for human approval, before you commit to it. Disabled-by-default steps are left
+The pipeline picker in the add-task form and the inspector's Run settings is a master-detail list.
+Before you commit to a pipeline, hover it to see its description and its ordered steps as labeled
+chips. A shield icon marks any step that pauses for human approval. Disabled-by-default steps are left
 out of the preview. A custom pipeline's description is editable in the builder ("shown when picking
 this pipeline"), so the pipelines you author explain themselves at selection time.
 
@@ -117,8 +135,8 @@ this pipeline"), so the pipelines you author explain themselves at selection tim
 The **Triage & fix bug** pipeline is built for a bug report rather than a feature brief:
 
 - The **Bug Investigator** is a read-only agent that clones the repo, reads the code against the raw
-  report, and returns an enriched report, plus an *optional* working hypothesis, which it omits
-  unless reasonably confident so a weak guess never misdirects the fix. It commits nothing and opens
+  report, and returns an enriched report. It adds an *optional* working hypothesis only when it is
+  reasonably confident, so a weak guess never misdirects the fix. It commits nothing and opens
   no PR.
 - The **Clarity Review** gate then triages the report for whether it is actually *fixable*: are
   there repro steps, expected-vs-actual behaviour, the environment, and the affected area? It runs
@@ -129,15 +147,18 @@ The **Triage & fix bug** pipeline is built for a bug report rather than a featur
 A bug pipeline that places a **repro-test** step also gets a machine-checked **reproduction proof**.
 That step declares the command that runs the reproduction, an optional setup command, and the test
 files that make it up. Between the coding agent settling and the pull request opening, the harness
-runs that command twice, in two fresh worktrees of the same clone: once against the pre-fix tree with
-the declared test files applied on top, and once against the final tree. Only red-then-green counts as
-**reproduced**; both phases use the same setup command and the byte-identical test files, so an
-environment problem that fails both can never pass as proof.
+runs that command twice, in two fresh worktrees of the same clone:
+
+1. against the pre-fix tree, with the declared test files applied on top
+2. against the final tree
+
+Only red-then-green counts as **reproduced**. Both phases use the same setup command and the
+byte-identical test files, so an environment problem that fails both can never pass as proof.
 
 Anything else is recorded honestly as **inconclusive**, with both captured outputs and a one-line
-note. A failed verification is a repair rather than a run failure: the output goes back to the agent
-(which is told not to weaken the reproduction) while its budget holds, then degrades to inconclusive
-with the pull request still opening. A step that concedes the defect could not be reproduced records
+note. A failed verification is a repair rather than a run failure. While its budget holds, the output goes
+back to the agent, which is told not to weaken the reproduction. When the budget runs out, the
+verification degrades to inconclusive, and the pull request still opens. A step that concedes the defect could not be reproduced records
 that declaration structurally, with the reason and the alternative verification it performed, so
 "could not be reproduced" is never indistinguishable from "nobody tried". A run whose repro-test step
 declared no runnable command behaves exactly as it did before.
@@ -147,9 +168,9 @@ each kind's description shows as a tooltip.
 
 ### The Ralph loop
 
-A **Ralph loop** task runs a single coding step that retries until a command you supply passes, for
-work whose "done" is a check rather than a review: get the suite green, make the typechecker pass,
-port a batch of call sites. Create a task of type **Ralph loop**, put the spec in the description, and
+A **Ralph loop** task runs a single coding step that retries until a command you supply passes. It
+is for work whose "done" is a check rather than a review: get the suite green, make the typechecker
+pass, port a batch of call sites. Create a task of type **Ralph loop**, put the spec in the description, and
 set two knobs in the inspector's **Agent configuration** panel:
 
 - **Validation command**: the shell command run in the checkout after each iteration (for example
@@ -178,18 +199,19 @@ overrides the design's frame for it.
 
 This UI-focused pipeline runs Coder → Reviewer → Mock Builder → **UI Tester** → **Visual
 Confirmation** → the standard Conflicts → CI → Merger tail. A visual pipeline like this runs only on a
-**frontend** frame (or a frame a frontend binds to); the UI Tester builds that frontend, wires it to
-the backend under test and mocks other upstreams, and drives it in a real browser. See
-[Preview and Test a Frontend](./frontend-preview.md) for the frontend configuration this uses. The
-UI Tester captures a screenshot of each distinct view; the Visual Confirmation gate pairs those
-screenshots by view against the references it holds for the task (a linked design's retained frames,
-plus any image uploaded against the task) and **parks** for a person to compare actual against
-reference. From the gate you can:
+**frontend** frame (or a frame a frontend binds to). The UI Tester builds that frontend, wires it to
+the backend under test, mocks other upstreams, and drives it in a real browser. See
+[Preview and Test a Frontend](./frontend-preview.md) for the frontend configuration this uses.
 
-- **Approve** — the change matches; the run advances to the merge tail.
-- **Request a fix** — describe what's off and the Tester's **Fixer** addresses it, then the gate
+The UI Tester captures a screenshot of each distinct view. The Visual Confirmation gate pairs those
+screenshots by view against the references it holds for the task: a linked design's retained
+frames, plus any image uploaded against the task. Then the gate **parks** for a person to compare actual
+against reference. From the gate you can:
+
+- **Approve**: the change matches, and the run advances to the merge tail.
+- **Request a fix**: describe what's off and the Tester's **Fixer** addresses it. Then the gate
   re-parks for another look.
-- **Recapture** — re-run the UI Tester to refresh the screenshots.
+- **Recapture**: re-run the UI Tester to refresh the screenshots.
 
 When a linked design contributes nothing, or fewer frames than it has, the gate says which design
 and why rather than showing a short gallery that reads as complete.
@@ -209,19 +231,19 @@ one the rest of its pipeline shares.
 
 Point your deployment at it before running the pipeline:
 
-- **Cloudflare** — publish `cat-factory-executor-ui` into your managed registry
-  (`pnpm image:publish:ui`) and add the `UiTesterContainer` class plus its `UI_CONTAINER` binding,
+- **Cloudflare**: publish `cat-factory-executor-ui` into your managed registry
+  (`pnpm image:publish:ui`). Add the `UiTesterContainer` class plus its `UI_CONTAINER` binding,
   which the deployment template ships commented in place.
-- **Node with a Kubernetes runner pool** — set the pool's UI-tester image to a published
+- **Node with a Kubernetes runner pool**: set the pool's UI-tester image to a published
   `cat-factory-executor-ui` tag.
-- **Local** — nothing to do: the version-matched image is used automatically and pulled the first
+- **Local**: nothing to do. The version-matched image is used automatically and pulled the first
   time a UI Tester step runs. Override it with
   [`LOCAL_HARNESS_IMAGE_UI`](../reference/environment-variables.md).
 
 Until it is wired, a UI Tester step **fails at dispatch** and says which setting is missing. It is
-deliberately not run on the ordinary executor image instead: that image has no browser, so the step
-would spend a checkout, an install and several model turns before discovering it, and then report a
-generic failure to test rather than the missing wiring. Drop the UI Tester step from the pipeline to
+deliberately not run on the ordinary executor image instead. That image has no browser, so the step
+would spend a checkout, an install and several model turns before finding that out. It would then
+report a generic failure to test, rather than the missing wiring. Drop the UI Tester step from the pipeline to
 run the gate in its manual form.
 
 ### Authoring a document
@@ -230,9 +252,9 @@ The document track produces a **new in-repo Markdown document** shipped as a pul
 forward counterpart to the reverse-documentation agents (Documenter, Blueprinter) that describe
 existing code. Two pipelines seed it:
 
-- **Author a document**: doc-researcher → doc-outliner (**human gate** on the outline) → doc-writer →
-  doc-reviewer (an AI review loop, then a **human gate** on the converged draft) → doc-finalizer →
-  Conflicts → CI → Merger.
+- **Author a document**: doc-researcher → doc-outliner → doc-writer → doc-reviewer → doc-finalizer →
+  Conflicts → CI → Merger. The doc-outliner has a **human gate** on the outline. The doc-reviewer
+  runs an AI review loop, then a **human gate** on the converged draft.
 - **Quick document**: doc-writer → doc-reviewer → the merge tail, for a small or low-stakes doc, so
   even a quick doc can't merge over a conflict or a red build.
 
@@ -259,19 +281,26 @@ The built-in pipelines are read-only templates, but you can shape your own:
   at run start, so you can drop, say, the Researcher for a run without rebuilding the chain. At least
   one step must stay enabled.
 
-On app open, a startup check surfaces pipelines that need attention: a custom pipeline that
-references an agent kind that no longer exists or has an invalid shape (offered for deletion), a
-built-in with an invalid shape (offered a reseed), and a built-in whose seeded definition has moved
-ahead of your stored copy (offered a reseed to adopt it). **Reseeding** a built-in restores its
+On app open, a startup check surfaces pipelines that need attention:
+
+- a custom pipeline that references an agent kind that no longer exists, or has an invalid shape.
+  It is offered for deletion.
+- a built-in with an invalid shape. It is offered a reseed.
+- a built-in whose seeded definition has moved ahead of your stored copy. It is offered a reseed to
+  adopt it.
+
+**Reseeding** a built-in restores its
 canonical definition while preserving your labels and archive state.
 
 In the builder, the agent palette is grouped into collapsible categories (**Review & triage**,
 **Design & research**, **Implementation**, **Testing**, **Documentation**, and
 **Gates & observability**), with any custom kinds in a trailing bucket. The palette also opens on the
-**basic** tier and widens one cumulative level at a time (basic, intermediate, advanced) up to the
-whole catalog, so the everyday kinds are not scattered among every engine kind that runs a model. The
-same control appears on a model preset's per-agent overrides, which always keeps a kind the preset
-already pins a model for, whatever its tier, and offers a search that spans the whole catalog.
+**basic** tier. It widens one cumulative level at a time (basic, intermediate, advanced) up to the
+whole catalog, so the everyday kinds are not scattered among every engine kind that runs a model.
+
+The same control appears on a model preset's per-agent overrides. There it always keeps a kind the
+preset already pins a model for, whatever its tier, and offers a search that spans the whole
+catalog.
 
 You can also tag a pipeline with **labels** and **archive** ones you no longer run to keep the list
 focused; archiving hides a pipeline without deleting it.
@@ -281,10 +310,15 @@ focused; archiving hides a pipeline without deleting it.
 A workspace can rewrite an agent kind's system prompt from the builder. Every version the workspace
 has run stays there to compare against and restore.
 
-The history is an append-only log per workspace and agent kind. The newest revision is live,
-restoring an older prompt appends a copy of it, and **back to the built-in** is itself a recorded
-revision, so the workspace resumes tracking the shipped prompt as it improves rather than pinning a
-stale copy, and the revert is visible in the history. If two people edit the same prompt at once, the
+The history is an append-only log per workspace and agent kind:
+
+- The newest revision is live.
+- Restoring an older prompt appends a copy of it.
+- **Back to the built-in** is itself a recorded revision. The workspace then resumes tracking the
+  shipped prompt as it improves, rather than pinning a stale copy, and the revert is visible in the
+  history.
+
+If two people edit the same prompt at once, the
 second save is refused rather than silently winning.
 
 An override replaces the shipped role prompt only. The engine still layers its own surface directives
@@ -299,9 +333,9 @@ An agent kind's output-token ceiling has three tiers, narrowest winning:
 2. The workspace's per-kind setting.
 3. The model route's default.
 
-For a kind whose whole deliverable is one reply, such as a document author or a spec writer, the cap
-bounds the artifact rather than guarding against a runaway, and how long that artifact needs to be is
-a property of the work you are doing. Leaving a tier unset inherits from the next one down.
+Some kinds deliver one reply and nothing else, such as a document author or a spec writer. For them,
+the cap bounds the artifact rather than guarding against a runaway. How long that artifact needs to
+be is a property of the work you are doing. Leaving a tier unset inherits from the next one down.
 
 ## Binary-output steps
 
@@ -312,11 +346,11 @@ Some agent kinds produce binary artifacts rather than code: generated images, mu
 ### Generating media
 
 The quickest way to see this working is the built-in **Media** task type. Create a task, pick
-**Media**, describe what you want made, and start it: the **Generate media** pipeline runs one
-**Media Generator** step, which generates candidates, pauses for you to look at them, and stores
-the ones you keep.
+**Media**, describe what you want made, and start it. The **Generate media** pipeline runs one
+**Media Generator** step. It generates candidates, pauses for you to look at them, and stores the
+ones you keep.
 
-It works on a fresh deployment because the storage it points at is the platform's own: a
+It works on a fresh deployment because the storage it points at is the platform's own. A
 `Platform asset storage` service is in every workspace's service catalog, and the bytes land in the
 account's [content storage](../deploy/configuration.md#content-storage-binary-artifacts). On a local
 deployment that is the filesystem with nothing configured. On any deployment that has configured no
@@ -359,17 +393,25 @@ derived from the current selection, so removing a generator reads as a break rat
 of requirements.
 
 Formats exist because 3D is where the container is the requirement. PNG versus WebP is a genre
-question that belongs in the prompt, but GLB, USDZ, and FBX are all one content type and none
-substitutes for another: a Godot importer takes the first, a RealityKit pipeline the second, an art
+question that belongs in the prompt. But GLB, USDZ, and FBX are all one content type, and none
+substitutes for another. A Godot importer takes the first, a RealityKit pipeline the second, an art
 pipeline the third. Declare the format you need, not the set you would accept, because the agent has
 to name a concrete container on the vendor call. Matching is exact, with no synonyms mapped.
 
 ### Generation options
 
 Beside the selections above, a binary-output step can state the parameters every generation it makes
-must carry: reference images (each with the role it plays, such as style or subject), an instruction
-or masked edit of an existing artifact, a negative prompt, a fixed seed, an aspect ratio, an exact
-output size in pixels, an upscale factor, a transparent background, and seamless tiling.
+must carry:
+
+- reference images, each with the role it plays, such as style or subject
+- an instruction or masked edit of an existing artifact
+- a negative prompt
+- a fixed seed
+- an aspect ratio
+- an exact output size in pixels
+- an upscale factor
+- a transparent background
+- seamless tiling
 
 These are statements about the deliverable, not preferences, and the platform checks them before the
 run starts rather than after it has spent anything. Two things can be wrong with one:
@@ -382,21 +424,21 @@ run starts rather than after it has spent anything. Two things can be wrong with
   an integration that renders yours.
 
 The second check is the one that catches a whole class of quiet damage. An endpoint that offers ten
-aspect ratios and is asked for an eleventh does not fail: it crops to the nearest one and returns
-successfully, and the artifact then passes every other check the platform can make. The consumer that
+aspect ratios and is asked for an eleventh does not fail. It crops to the nearest one and returns
+successfully. The artifact then passes every other check the platform can make. The consumer that
 rejects it is your game or your storefront, weeks later.
 
 A value only SOME of your integrations accept is neither of those. If one of them takes `7:3` and
-another has written down a list without it, the step is not refused: which integration renders which
+another has written down a list without it, the step is not refused. Which integration renders which
 artifact is the agent's call, and one that accepts your value is selected. The builder names the ones
 that will not take it, because the fix is either dropping them from this step or accepting that they
 will be sent something else. Read that line even though the step starts, since it is the crop above
 being reported in advance rather than discovered later.
 
 Both checks are only as strong as what your deployment declared. An integration that has not stated
-which values it accepts might still serve the one you asked for, so the step starts and the builder
-says which of your integrations will actually honour it, rather than refusing a selection that is
-probably fine. Where no selected integration has stated anything, you see nothing new, which is the
+which values it accepts might still serve the one you asked for. So the step starts, rather than
+refusing a selection that is probably fine. The builder says which of your integrations will
+actually honour the value. Where no selected integration has stated anything, you see nothing new, which is the
 ordinary case until your deployment audits an endpoint.
 
 An exact size states the delivered dimensions, so it cannot be combined with an aspect ratio or an
@@ -408,18 +450,21 @@ the step's prompt as an advisory. It refuses nothing: both selections pass every
 can make and exactly one is right, and the person who knows which is the person writing the prompt.
 The agent's brief states the overlap too and asks it to record which integration it used.
 
-The engine gives the agent a brief under `.cat-context/binary-output/` covering the storage service,
-the context services, and each selected integration (its content types, formats, endpoint, operating
-notes, API contracts, and the environment variable its credential arrives as). The credential's value
+The engine gives the agent a brief under `.cat-context/binary-output/`. It covers the storage
+service, the context services, and each selected integration: its content types, formats,
+endpoint, operating notes, API contracts, and the environment variable its credential arrives as. The credential's value
 never reaches a prompt.
 
 Refusals are kept apart because different people fix them. A storage or context id that no longer
 resolves in the workspace catalog is refused at admission as `binary_output_service_invalid`, fixed
 by whoever manages the catalog. Everything about the generative side is
-`binary_output_generator_invalid`, and where that one is fixed depends on which fault it names: an
-unknown generator id is fixed in the deployment's build, while an uncovered content type or format,
-an unsupported generation option, or a value nothing accepts are all fixed in the step, by changing
-what it asks for or which integrations it selects. The refusal names the fault, so you do not have to
+`binary_output_generator_invalid`, and where that one is fixed depends on which fault it names:
+
+- An unknown generator id is fixed in the deployment's build.
+- An uncovered content type or format, an unsupported generation option, or a value nothing
+  accepts are all fixed in the step. Change what it asks for, or which integrations it selects.
+
+The refusal names the fault, so you do not have to
 guess which of the two you are holding. A generator step with no selection at all is refused at save.
 
 ### Comparing and keeping what was generated
@@ -440,15 +485,18 @@ and says so, so an unreviewed artifact is never presented as a reviewed one.
 
 ### Reading the result back
 
-After the run, the step's result window reports what was stored: each artifact's service, location,
-entity, and media type, whether it went where the step pointed it, and each counted loss on its own
-line (undeclared, unparseable, invalid, over the cap, or naming an unknown service).
+After the run, the step's result window reports what was stored:
 
-For artifacts in the platform's own asset storage, the report also shows them: an image renders
-inline, anything else is named by its type, and both carry a link to open the file and one to save a
+- each artifact's service, location, entity, and media type
+- whether it went where the step pointed it
+- each counted loss on its own line: undeclared, unparseable, invalid, over the cap, or naming an
+  unknown service
+
+For artifacts in the platform's own asset storage, the report also shows them. An image renders
+inline, and anything else is named by its type. Both carry a link to open the file and one to save a
 copy wherever you want it. Artifacts in your organisation's own store show the location the agent
-recorded, which is what you paste into whatever reads that store, since the platform never held those
-bytes.
+recorded, since the platform never held those bytes. Paste that location into whatever reads that
+store.
 
 ## Estimating and gating expensive steps
 
@@ -459,9 +507,9 @@ says which reading it is showing, because a forecast and a measurement of the sa
 not the same fact: this one is labelled "forecast before the work started".
 
 That estimate lets you **gate** expensive steps so they run only when the work warrants it. Open a
-step's gate controls and set minimum thresholds on any of the axes; the step then runs only when the
-estimate meets a threshold and is skipped otherwise, so light tasks bypass work their own diff cannot
-justify while risky ones still get it. This is how the **Adaptive build** preset switches its
+step's gate controls and set minimum thresholds on any of the axes. The step then runs only when the
+estimate meets a threshold, and is skipped otherwise. So light tasks bypass work their own diff
+cannot justify, while risky ones still get it. This is how the **Adaptive build** preset switches its
 Architect, Tester, and Human Review on per task.
 
 Gatability is a per-kind capability, so the controls appear on any step whose kind declares it, not
@@ -478,18 +526,18 @@ second threshold to keep in sync.
 ### Re-scoring the task after the work lands
 
 The estimate above is a forecast, made before anyone had written a line. The **Task Reassessor** is
-the other end of it: place it after the Coder and it reads the change the run actually made (the
-pull request's diff, read-only, in a container) and scores the same three axes against it.
+the other end of it. Place it after the Coder, and it reads the change the run actually made: the
+pull request's diff, read-only, in a container. It scores the same three axes against that change.
 
 It does two jobs, and which one you get depends only on what came before it in the pipeline:
 
 - **It corrects a forecast.** With a Task Estimator earlier in the pipeline, the task keeps ONE set
-  of ratings, now labelled "measured from the change that landed", with the forecast it replaced
-  shown beside each axis. That is what makes a run's estimate reviewable after the fact: a task
-  forecast at 30% complexity and measured at 90% is worth reading, and worth remembering the next
-  time something similar is described the same way.
+  of ratings, now labelled "measured from the change that landed". The forecast it replaced is
+  shown beside each axis. That is what makes a run's estimate reviewable after the fact. A task forecast at
+  30% complexity and measured at 90% is worth reading, and worth remembering the next time
+  something similar is described the same way.
 - **It produces the ratings a pipeline never had.** On a preset with no Task Estimator (Simple
-  build, or a bug-fix pipeline), it is the only step that rates the task at all, so the ratings
+  build, or a bug-fix pipeline), it is the only step that rates the task at all. So the ratings
   arrive after the fact rather than not at all.
 
 The Reassessor is not in any shipped preset: it costs an extra read-only container run per task, so

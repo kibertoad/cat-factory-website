@@ -100,8 +100,8 @@ Merge the pull request. The board updates over its live connection and the card 
 
 That is the property worth internalising: a task is done when its pull request merged with passing
 checks. No agent decides it. A pipeline with no merger step raises a completion notification and
-stops rather than marking anything done, and a merger step scores its assessment against the merge
-preset you configured, routing anything outside it to a person.
+stops, rather than marking anything done. A merger step scores its assessment against the merge
+preset you configured, and routes anything outside it to a person.
 
 ## What to do next
 

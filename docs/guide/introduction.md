@@ -2,9 +2,10 @@
 
 The starting point for anyone new to Cat Factory: what it is, who it is for, and how the pieces fit.
 Cat Factory is a self-hosted platform that brings a visual board, LLM coding agents, and a live view
-of every run together in one place. You lay out the work as a board of services, modules, and tasks,
-writing tasks yourself or importing them from an issue tracker you already run, attach dependencies
-and context, then run agent pipelines that turn those tasks into reviewed pull requests. It is a
+of every run together in one place. You lay out the work as a board of services, modules, and tasks.
+You write tasks yourself or import them from an issue tracker you already run, and attach
+dependencies and context. Then you run agent pipelines that turn those tasks into reviewed pull
+requests. It is a
 central place for your team to work: you can see what every agent is doing and step in when one needs
 your input.
 

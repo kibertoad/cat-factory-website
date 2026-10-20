@@ -1,10 +1,15 @@
 # Run a Claude Skill
 
 For a team with a procedure it wants run the same way every time. A **Claude Skill** is a procedural
-playbook your team authors in a repository and hands to an agent. Where [prompt fragments](./prompt-fragments.md) are passive guidance folded into
-every code-aware agent, a skill is a procedure you point at work: as a **pipeline step** that clones
-the repo, does what the playbook prescribes and commits the result, or as a **review skill** queued
-onto a review task, where the reviewer applies it as an extra lens on the pull request.
+playbook your team authors in a repository and hands to an agent.
+
+[Prompt fragments](./prompt-fragments.md) are passive guidance folded into every code-aware agent.
+A skill is different: it is a procedure you point at work, in one of two ways:
+
+- as a **pipeline step** that clones the repo, does what the playbook prescribes and commits the
+  result
+- as a **review skill** queued onto a review task, where the reviewer applies it as an extra lens on
+  the pull request
 
 ## Authoring a skill
 
@@ -31,8 +36,8 @@ A skill that declares none is filed under Other.
 
 The group is what lets a surface offer the part of your catalog that fits it. A review task's skill
 queue (below) offers your `review` skills and nothing else, so a release-notes writer never turns up
-in a picker for a security audit. Each skill in **Account settings → Skills** shows its group; if a
-manifest declares a group this version does not know, the skill is filed under Other and the screen
+in a picker for a security audit. Each skill in **Account settings → Skills** shows its group. If a
+manifest declares a group this version does not know, the skill is filed under Other. The screen
 says which value it declared, so you can fix the frontmatter.
 
 Skills already in your catalog are filed under Other until their `SKILL.md` is next edited. That is
@@ -96,14 +101,14 @@ this with "This skill is no longer in the catalog; pick another."
 
 Add a **Skill** step to a pipeline and pick a skill in the step's picker (one skill per step). A step
 with no skill selected blocks the pipeline from saving. At run time the step clones the repo, follows
-the skill, and commits whatever it prescribes: it amends the task's pull request when one is already
-open, otherwise it branches off the base and opens its own. A skill that is purely advisory and
+the skill, and commits whatever it prescribes. When the task's pull request is already open, it
+amends that pull request. Otherwise it branches off the base and opens its own. A skill that is purely advisory and
 produces no change is a clean no-op, not a failure.
 
-For an agent author: with the Claude Code harness the skill is installed natively so the CLI
-auto-loads it; on other harnesses the instructions go into the prompt and resource files land under
-`.cat-context/skill/`. Resource bodies are fetched at dispatch from the skill's pinned commit,
-bounded to about 48 KB per file and 200 KB in total; anything larger or binary is referenced by its
+For an agent author: with the Claude Code harness, the skill is installed natively so the CLI
+auto-loads it. On other harnesses, the instructions go into the prompt, and resource files land
+under `.cat-context/skill/`. Resource bodies are fetched at dispatch from the skill's pinned commit.
+They are bounded to about 48 KB per file and 200 KB in total; anything larger or binary is referenced by its
 repo path instead of inlined.
 
 ---

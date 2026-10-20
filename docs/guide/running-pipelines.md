@@ -45,9 +45,14 @@ and pick its mode:
   point).
 
 Promoting a branch to Working demotes any existing Working branch back to Reference. The controls
-enforce the rest as they go: the Working branch is locked once a PR exists, Working mode is
-unavailable on a task that spans more than one service, the base branch can't be a Working branch, and
-a protected Working branch shows a warning that pushes may be rejected. A merged Working branch is
+enforce the rest as they go:
+
+- The Working branch is locked once a PR exists.
+- Working mode is unavailable on a task that spans more than one service.
+- The base branch can't be a Working branch.
+- A protected Working branch shows a warning that pushes may be rejected.
+
+A merged Working branch is
 never auto-deleted, so reusing it on a new task **resumes** it.
 
 ## Choosing models
@@ -71,8 +76,8 @@ routine steps to manage [spend](./budgets.md).
 Runs stream over WebSockets, so there's no polling. As the run executes you'll see:
 
 - Each step transition (**Pending → Working → Done**).
-- A live **elapsed clock** on the running step (both in the pipeline view and the inspector), so a
-  step that hasn't emitted subtasks yet reads as working rather than hung; a finished step shows its
+- A live **elapsed clock** on the running step, in both the pipeline view and the inspector. So a
+  step that hasn't emitted subtasks yet reads as working rather than hung. A finished step shows its
   frozen total.
 - **Subtask** updates within a step.
 - **Decision prompts** when an agent needs you.
@@ -83,27 +88,27 @@ Every board and run share one live connection, so progress appears the moment th
 open.
 
 **Companion steps** (the Spec Reviewer, the Architect's reviewer, the Coder's Reviewer, and the
-Tester's Fixer) render as distinct sub-nodes on their parent step, so you can see a companion rate,
-rework, or skip rather than wondering why a step looped.
+Tester's Fixer) render as distinct sub-nodes on their parent step. So you can see a companion rate,
+rework, or skip, rather than wondering why a step looped.
 
 ### Reading a companion's verdict
 
 Each grading round gets its own card rather than being appended to the score line. A card carries the
 rating against the step's bar, a short verdict on the work as a whole, and then the findings
-themselves: one entry per point, tagged **Must fix**, **Should fix** or **Minor**, worst first, each
-a short bolded title plus the concrete change to make. You can tell what blocks the work from what is
-a nit without reading all of it.
+themselves. There is one entry per point, tagged **Must fix**, **Should fix** or **Minor**, worst
+first. Each entry is a short bolded title plus the concrete change to make. You can tell what blocks
+the work from what is a nit without reading all of it.
 
 Those tags are not only for you to read. **A run does not advance while a Must fix is open**,
 whatever the rating says. A rating is one number over a whole deliverable, so a review can score work
-above its bar and still have named something that must not ship; when it does, the producer is sent
-back to fix it rather than the pipeline moving on. The rating decides everything else: at or above
+above its bar and still have named something that must not ship. When it does, the producer is sent
+back to fix it, rather than the pipeline moving on. The rating decides everything else: at or above
 the bar with nothing must-fix outstanding, the run continues.
 
 Every round is handed the rounds before it, so a companion re-grading a revised document knows what it
 asked for last time. That is what makes a rework budget buy convergence rather than a fresh sample of
-problems each pass, and it applies to both sides of the loop: the producer being reworked sees the
-prior verdicts too.
+problems each pass. Passing on earlier rounds applies to both sides of the loop: the producer being reworked sees the prior
+verdicts too.
 
 Reviewer prose renders as Markdown throughout: judge summaries and findings, the
 [Best-practice adherence](./prompt-fragments.md) section, and the PR review's summary, findings and
@@ -122,19 +127,19 @@ tester, a gate, the PR review, or a plain prose panel.
 
 Read it when a step took longer than it should have or produced thin work. "Missing test fixtures",
 "the spec did not say which API to use", or "the build was already broken" are the kind of thing it
-surfaces, and they usually point at something to fix in the task or the repo rather than in the agent.
+surfaces. They usually point at something to fix in the task or the repo, rather than in the agent.
 
 ## Reading the test report
 
-The **Tester** does hands-on work: it stands up the Mock Builder's mocks, runs the software, and
-greenlights only on behaviour it actually observed, starting from the spec's Gherkin acceptance
-scenarios and probing edge and error cases. Open its step to get a structured **test-report window**
-that lays out the scenarios it exercised, the per-area outcomes, any concerns it linked, and the
+The **Tester** does hands-on work. It stands up the Mock Builder's mocks, runs the software, and
+greenlights only on behaviour it actually observed. It starts from the spec's Gherkin acceptance
+scenarios and probes edge and error cases. Open its step to get a structured **test-report window**.
+The window lays out the scenarios the Tester exercised, the per-area outcomes, any concerns it linked, and the
 greenlight verdict, plus the state of any **Fixer** attempt. When the tests fail, the Fixer
 companion runs inside the Tester gate to fix them and is skipped when they pass.
 
-The Tester records a discrete **outcome for every area it lists as tested** (passed, failed, or
-skipped, each with a concrete detail), so a report can't claim a broad set of scenarios and then show
+The Tester records a discrete **outcome for every area it lists as tested**: passed, failed, or
+skipped, each with a concrete detail. So a report can't claim a broad set of scenarios and then show
 only one happy-path result. A failed outcome forces a non-greenlight; a scenario the Tester chose not
 to run is recorded as `skipped` with a reason rather than dropped.
 
@@ -180,14 +185,15 @@ circling.
 **Answer & send back** promises the Coder there is something new in your reply to apply, and buys it
 another pass to do so. **Answer & close** says your reply settles the question without giving it
 anything to act on: nobody has the fact it asked for, or it asked to widen scope and the answer is no.
-A closed question clears the gate exactly as an answer does, costs nothing, and rides into every later
-pass under a heading that tells the Coder the topic is settled and must not be re-argued in the code or
-the commit message.
+A closed question clears the gate exactly as an answer does, and costs nothing. It rides into every
+later pass under a heading that tells the Coder the topic is settled, and must not be re-argued in
+the code or the commit message.
 
 Reach for **close** whenever your reply is a standing policy rather than a fact ("build exactly what
-the task specifies", "we don't have that information here"). Answered instead, a Coder that finds
-nothing to apply will write its uncertainty into a comment, reword it on the next pass, and re-raise
-the same question under a new title until the send-back budget runs out.
+the task specifies", "we don't have that information here"). If you answer and send back instead, a
+Coder that finds nothing to apply will write its uncertainty into a comment and reword it on the
+next pass. It will then re-raise the same question under a new title until the send-back budget runs
+out.
 
 Headless callers get the same choice: `POST …/follow-ups/items/:itemId/answer` takes an optional
 `resolution` of `answered` (the default) or `closed`. See the
@@ -210,11 +216,11 @@ its text on the step, so nothing the Coder noticed is lost. See
 
 ## Choosing an implementation approach
 
-Some tasks can be built in materially different ways (patch the call site versus refactor the seam,
-migrate the schema versus adapt the mapper), and that choice is often a judgement call worth making
+Some tasks can be built in materially different ways, for example patching the call site versus
+refactoring the seam, or migrating the schema versus adapting the mapper. That choice is often a judgement call worth making
 before any code is written. The Coder step can run an **implementation-fork decision** phase for
-exactly this: a read-only proposer surfaces the distinct approaches first, the run **parks**, and your
-choice is folded into the Coder's prompt as a binding directive.
+exactly this. A read-only proposer surfaces the distinct approaches first, and the run **parks**.
+Your choice is folded into the Coder's prompt as a binding directive.
 
 At the park, a **Choose an implementation approach** window shows a card per approach, each with its
 summary, concrete plan, tradeoffs, and risk notes, one marked **Recommended**. You can:
@@ -245,11 +251,11 @@ it, since it needs someone present: add the `human-test` step to a
 
 Open the gate's window to validate the change against the live URL, then choose an action:
 
-- **Confirm** — the change passes, the environment is torn down, and the run advances to the merge
+- **Confirm**: the change passes, the environment is torn down, and the run advances to the merge
   tail.
-- **Submit findings** — describe what's wrong and Cat Factory dispatches the Tester's **Fixer** to
+- **Submit findings**: describe what's wrong and Cat Factory dispatches the Tester's **Fixer** to
   address it, then re-parks for another look.
-- **Pull main + redeploy** — pull the latest `main` into the branch (looping the conflict resolver
+- **Pull main + redeploy**: pull the latest `main` into the branch (looping the conflict resolver
   if needed) and redeploy, so you test against current code.
 - **Recreate** or **Destroy** the environment.
 
@@ -282,13 +288,13 @@ When a run reaches it, the gate watches the task's pull request on GitHub:
   unresolved review threads and no standing **Changes requested**. A reviewer who has requested
   changes holds the gate even when other reviewers make up the required approval count, matching
   GitHub's own merge rule.
-- On outstanding review threads it dispatches the **Fixer** to address the feedback (immediately once
-  the PR is approved; after a per-task grace window otherwise) and resolves each handled thread so the
-  next check sees it cleared. A reviewer re-opening a thread re-triggers the Fixer.
+- On outstanding review threads it dispatches the **Fixer** to address the feedback: immediately once
+  the PR is approved, and after a per-task grace window otherwise. The gate then resolves each
+  handled thread, so the next check sees it cleared. A reviewer re-opening a thread re-triggers the Fixer.
 - Feedback typed into the review box with no inline line comments counts too. A "Request changes" or
   "Comment" review's summary body is read and folded into the outstanding feedback the Fixer works
-  through, so leaving prose without a single line comment moves the run forward instead of leaving it
-  waiting for an approval that isn't coming.
+  through. As a result, leaving prose without a single line comment moves the run forward, instead
+  of leaving it waiting for an approval that isn't coming.
 - It waits indefinitely for the human, re-arming rather than auto-failing, and raises a
   **human-review** notification while it waits.
 - From the gate window a person can request a freeform fix at any time, dispatched immediately.
@@ -303,12 +309,12 @@ When a step needs human input it moves to **Needs decision** and shows a **decis
 Answer the questions to continue. The most common prompts are the **Requirements Reviewer** and the
 **Architect**, which pause for your approval before implementation proceeds.
 
-A second kind of prompt comes from a **companion whose rework loop has stopped**. When the Spec
-Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer past it within
-the allowed rounds — either because the rating never reached the quality bar, or because a **Must
-fix** finding is still open — it stops auto-looping and parks for you with a **Decide** button
-(rather than a plain Approve) offering three choices, the same three the requirements reviewer
-offers at its iteration cap:
+A second kind of prompt comes from a **companion whose rework loop has stopped**. This happens when
+the Spec Reviewer, the Coder's Reviewer, or the Architect's companion can't get the producer past
+it within the allowed rounds. There are two possible reasons: the rating never reached the quality
+bar, or a **Must fix** finding is still open. The companion then stops auto-looping and parks for
+you with a **Decide** button rather than a plain Approve. It offers the same three choices the
+requirements reviewer offers at its iteration cap:
 
 - **One more round**: raise the budget by one and loop the producer back for another pass.
 - **Proceed anyway**: accept the producer's current output and advance the pipeline.
@@ -319,11 +325,11 @@ How many rounds it gets before that is **Companion rework rounds** on the task's
 [risk policy](./pull-requests.md#conflicts-ci-and-the-merger), three on every built-in policy. Raise
 it on a board whose specs and designs usually need a couple of passes; lower it where a round costs
 more than it earns. Setting it to **0** does not switch the companion off: it still grades the work
-and writes its verdict, and the first verdict it does not pass comes straight to you instead of
-buying a round. Note that a round you grant here yourself is on top of the budget, not out of it.
+and writes its verdict. The first verdict it does not pass comes straight to you, instead of buying
+a round. Note that a round you grant here yourself is on top of the budget, not out of it.
 
-A judge that spends its bounce budget below the threshold, and an iterative review that spends its
-pass budget without converging, park the same way and for the same reason: the automation is
+A judge that spends its bounce budget below the threshold parks the same way. So does an iterative
+review that spends its pass budget without converging. The reason is the same: the automation is
 reporting that it gave up, not asking you to settle a judgement.
 
 An open **Must fix** is the exception, and it matters for the unattended case below. That park is
@@ -333,7 +339,7 @@ makes that call.
 
 If nobody is watching the run, though, none of the three choices reaches anyone. A run started over
 the API, dispatched from a ticket or fired by a schedule resolves the workspace's **unattended**
-risk policy, and if that policy says so the platform takes **Proceed anyway** itself and records that
+risk policy. If that policy says so, the platform takes **Proceed anyway** itself and records that
 it did. It will not do that for an open **Must fix**: an unattended run parks on one exactly as an
 attended run does, and waits. See
 [Runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
@@ -351,9 +357,9 @@ pushes periodic checkpoints, so an evicted or retried run resumes on the same br
 starting over. A live no-progress guard ends a run early with a diagnostic if the agent thrashes
 without editing files.
 
-Cat Factory also owns the Git delivery contract: the agent commits its own work and validates
-locally, while the harness pushes the branch and opens the pull request, so a container agent
-never needs push credentials. Your existing CI/CD takes it from there. If a step fails, the
+Cat Factory also owns the Git delivery contract. The agent commits its own work and validates
+locally. The harness pushes the branch and opens the pull request, so a container agent never needs
+push credentials. Your existing CI/CD takes it from there. If a step fails, the
 error is captured and the run surfaces a manual retry from the failure point. The board shows the
 **real failure reason** (the agent's actual error, with the raw detail under "Show detail").
 
@@ -378,21 +384,25 @@ You have four distinct controls over a run:
 
 ### Watching the gates
 
-The **CI** and **Conflicts** gates open a dedicated **gate window** when you click into them, so you
-can see *why* a gate is looping rather than a bare prose panel: the verdict, the gated commit, the
+The **CI** and **Conflicts** gates open a dedicated **gate window** when you click into them, rather
+than a bare prose panel. It shows *why* a gate is looping: the verdict, the gated commit, the
 helper's remaining attempt budget, and (for CI) exactly which checks failed. Each gate's helper
 (the **CI Fixer** / **Conflict Resolver**) renders as a sub-node that reads possible / running /
 completed / skipped, the same as the Tester's Fixer.
 
-Each helper attempt shows both sides of the round: **Handed to the fixer** (the fixing instructions it
-was given, and for CI the failing checks snapshotted at dispatch) and the **Fixer report** it returned,
-alongside the outcome and timestamp. The conflicts gate hands no textual instructions (GitHub reports
-mergeability as a single bit), so it shows the outcome without an instructions block.
+Each helper attempt shows both sides of the round, alongside the outcome and timestamp:
+
+- **Handed to the fixer**: the fixing instructions it was given, and for CI the failing checks
+  snapshotted at dispatch
+- **Fixer report**: what it returned
+
+The conflicts gate hands no textual instructions (GitHub reports mergeability as a single bit), so it
+shows the outcome without an instructions block.
 
 ::: tip Web research
 When [web search is configured](../deploy/configuration.md#web-search) on the deployment, container
-agents (the **Coder**, **CI Fixer**, …) get web-search and web-fetch tools through a backend proxy,
-and the inline **Architect** / **Researcher** agents can use their provider's hosted web search. Both
+agents (the **Coder**, **CI Fixer**, …) get web-search and web-fetch tools through a backend proxy.
+The inline **Architect** / **Researcher** agents can use their provider's hosted web search. Both
 are opt-in and no-op until configured.
 :::
 

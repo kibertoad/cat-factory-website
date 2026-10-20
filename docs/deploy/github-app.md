@@ -18,8 +18,8 @@ page so you only confirm. You'll still generate the private key and set the secr
 ## 1. Create the App
 
 Go to **Settings → Developer settings → GitHub Apps → New GitHub App**, under either a personal
-account or an org (both work, and the App can stay **private**, since you can always install a
-private App on your own repos).
+account or an org. Both work. The App can stay **private**, since you can always install a private
+App on your own repos.
 
 **Webhook**
 
@@ -114,8 +114,8 @@ up like the App above, with two differences:
 Configure its credentials alongside the default App's (`GITHUB_PRIVILEGED_APP_ID` and
 `GITHUB_PRIVILEGED_APP_PRIVATE_KEY`; see [Configuration](./configuration.md#authentication)). An
 org opts in by **installing the privileged App** on its account, directly from the App's page on
-GitHub. (The in-app install link always points at the default App, so this one install step happens
-on GitHub.) The backend detects which App owns the installation, so nothing else needs to change:
+GitHub. The in-app install link always points at the default App, so this one install step happens
+on GitHub. The backend detects which App owns the installation, so nothing else needs to change:
 the workspace binds to the privileged App and the bootstrap dialog's "Create repository" button
 creates the repo directly.
 

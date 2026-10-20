@@ -8,21 +8,30 @@ ones no page here narrates, is [Environment Variables](../reference/environment-
 ## When a required value is missing
 
 A mandatory variable that is missing or invalid does not crash-loop the container. The backend
-starts anyway and serves a minimal fallback: the health check returns `200` with status
-`misconfigured` (so the orchestrator keeps the container alive instead of restarting it in a loop
-that hides the problem), and the SPA branches to a full-screen **Backend not configured** screen
-listing each problem with the variable name, what it is for, how to fix it, and a **link to the
-matching documentation**. Only variable names and remedies are shown, never any secret value, so the
+starts anyway and serves a minimal fallback:
+
+- The health check returns `200` with status `misconfigured`, so the orchestrator keeps the
+  container alive instead of restarting it in a loop that hides the problem.
+- The SPA branches to a full-screen **Backend not configured** screen. It lists each problem with
+  the variable name, what it is for, how to fix it, and a **link to the matching documentation**.
+
+Only variable names and remedies are shown, never any secret value, so the
 screen and the matching boot log are safe to share. The same structured problem list is returned as a
 `503` to non-browser callers.
 
-The values validated this way include `DATABASE_URL`, `ENCRYPTION_KEY` (present, valid base64,
-decodes to ≥ 32 bytes), `AUTH_SESSION_SECRET`, `HARNESS_SHARED_SECRET`, `TELEMETRY_DB` (on the
-Worker), the primary `DB` binding (on the Worker), a login provider on a remote deployment, the
-container-executor wiring, a `DB_SCHEMA` that isn't a valid Postgres identifier, and malformed
-`AGENT_MODELS` JSON. `GITHUB_APP_PRIVATE_KEY` (and the privileged App key) must be a **PKCS#8** PEM;
-a GitHub-issued PKCS#1 `BEGIN RSA PRIVATE KEY` is rejected with the exact `openssl pkcs8 -topk8`
-conversion to run. Setting `REDIS_URL` without the optional `ioredis` package installed is also fatal,
+The values validated this way include:
+
+- `DATABASE_URL`
+- `ENCRYPTION_KEY` (present, valid base64, decodes to ≥ 32 bytes)
+- `AUTH_SESSION_SECRET` and `HARNESS_SHARED_SECRET`
+- `TELEMETRY_DB` and the primary `DB` binding (on the Worker)
+- a login provider on a remote deployment
+- the container-executor wiring
+- a `DB_SCHEMA` that isn't a valid Postgres identifier
+- malformed `AGENT_MODELS` JSON
+
+`GITHUB_APP_PRIVATE_KEY` (and the privileged App key) must be a **PKCS#8** PEM. A GitHub-issued
+PKCS#1 `BEGIN RSA PRIVATE KEY` is rejected with the exact `openssl pkcs8 -topk8` conversion to run. Setting `REDIS_URL` without the optional `ioredis` package installed is also fatal,
 with the `pnpm add ioredis` fix. Fix the listed values and reload.
 
 ### Warnings that don't block boot
@@ -30,9 +39,9 @@ with the `pnpm add ioredis` fix. Fix the listed values and reload.
 Some misconfigurations are logged as a single structured warning (with a doc link) and boot
 continues on the built-in default rather than stopping:
 
-- A **numeric knob** set to a non-numeric value (for example `AGENT_MAX_OUTPUT_TOKENS`,
-  `CONTAINER_MAX_AGE_MINUTES`, or any of the retention-day vars) logs `NAME is set to "…", which is
-  not a number — ignoring it and using the built-in default` and falls back.
+- A **numeric knob** set to a non-numeric value logs `NAME is set to "…", which is
+  not a number — ignoring it and using the built-in default` and falls back. Examples include
+  `AGENT_MAX_OUTPUT_TOKENS`, `CONTAINER_MAX_AGE_MINUTES` and the retention-day vars.
 - Only one half of `CLOUDFLARE_ACCOUNT_ID` / `CLOUDFLARE_API_TOKEN` being set names the missing half.
 - `REDIS_URL` set but unreachable: a boot probe logs the credential-free `host:port` and a
   `redis-cli -u <REDIS_URL> ping` check to run, then continues (cross-node coordination stays off
@@ -40,20 +49,26 @@ continues on the built-in default rather than stopping:
 - In **local mode**, a `GITHUB_PAT` that fails a quick `GET /user` probe (revoked, forbidden, or
   missing the `repo`/`workflow` scopes) logs a warning with a pre-scoped token-creation link.
 
-One boot check is deliberately fatal-then-recoverable: when the database refuses the connection on a
-**loopback** host (a `localhost` that resolves to IPv6 `::1` on Windows or Docker Desktop, a common
-footgun), the misconfigured screen names `DATABASE_URL` and the `127.0.0.1` fix, rather than
-crash-looping. A refused connection to a **remote** database still crashes and retries, so a transient
-outage isn't frozen behind the screen.
+One boot check is deliberately fatal-then-recoverable. When the database refuses the connection on a
+**loopback** host, the misconfigured screen names `DATABASE_URL` and the `127.0.0.1` fix, rather
+than crash-looping. A common footgun is a `localhost` that resolves to IPv6 `::1` on Windows or
+Docker Desktop. A refused connection to a **remote** database still crashes and retries, so a
+transient outage isn't frozen behind the screen.
 
 ### Elaborated failure messages
 
-Runtime failures an operator has to act on now carry a structured cause, a fix, and a doc link while
-preserving the original error text: rejected GitHub/GitLab API calls (per HTTP status), GitHub App
-installation-token mint failures, webhook signature rejections (logged operator-side with the env var
-to compare, while the caller still gets a terse `401`), credential-decryption failures (which name
-whether the `ENCRYPTION_KEY` was rotated or a stored secret is corrupted), unsupported model or
-Bedrock models, and container/runner dispatch failures (a `404` names a stale executor-harness image).
+Runtime failures an operator has to act on carry a structured cause, a fix, and a doc link, while
+preserving the original error text. These failures include:
+
+- rejected GitHub/GitLab API calls (per HTTP status)
+- GitHub App installation-token mint failures
+- webhook signature rejections, logged operator-side with the env var to compare, while the caller
+  still gets a terse `401`
+- credential-decryption failures, which name whether the `ENCRYPTION_KEY` was rotated or a stored
+  secret is corrupted
+- unsupported model or Bedrock models
+- container/runner dispatch failures (a `404` names a stale executor-harness image)
+
 These surface in the boot log and, where they belong to a run, on the run's step (see
 [Observability → Run and step diagnostics](../operate/observability.md#run-and-step-diagnostics)).
 
@@ -61,9 +76,9 @@ These surface in the boot log and, where they belong to a run, on the run's step
 
 The Node backend exposes two public endpoints. `GET /health` is a static liveness signal (`200`
 `{status:"ok"}`, or `misconfigured` above) that your orchestrator restarts on. `GET /ready` is a
-readiness signal a load balancer drains on: it round-trips the Postgres pool with a bounded
-`SELECT 1` and checks the pg-boss worker, returning `200 {status:"ready"}` or `503`
-`{status:"not_ready"}` with a per-check breakdown, and flips to not-ready the moment graceful
+readiness signal a load balancer drains on. It round-trips the Postgres pool with a bounded
+`SELECT 1` and checks the pg-boss worker. It returns `200 {status:"ready"}`, or `503`
+`{status:"not_ready"}` with a per-check breakdown. It flips to not-ready the moment graceful
 shutdown begins. The Cloudflare Worker has no long-lived process and no readiness endpoint.
 
 ## Authentication
@@ -111,10 +126,10 @@ the ledger itself is unreachable.
 
 A remote (hosted) Node deployment has **no anonymous tier**: it fails to boot unless at least one
 provider is configured (GitHub OAuth, Google OAuth, or `AUTH_PASSWORD_ENABLED` with a strong
-`AUTH_SESSION_SECRET`). Users can also **sign in with their own GitHub or GitLab PAT**: they paste the
-token, the server resolves it to their account, and the same `AUTH_ALLOWED_LOGINS` /
-`AUTH_ALLOWED_ORGS` / `AUTH_ALLOWED_EMAIL_DOMAINS` allowlists decide who gets in (it fails closed when
-all three are empty). [Local mode](./local.md#signing-in) is the exception: it signs in with the
+`AUTH_SESSION_SECRET`). Users can also **sign in with their own GitHub or GitLab PAT**. They paste the
+token, and the server resolves it to their account. The same `AUTH_ALLOWED_LOGINS` /
+`AUTH_ALLOWED_ORGS` / `AUTH_ALLOWED_EMAIL_DOMAINS` allowlists decide who gets in. Sign-in fails closed
+when all three are empty. [Local mode](./local.md#signing-in) is the exception: it signs in with the
 deployment's configured PAT or a local password. GitLab PAT sign-in is offered only when the
 deployment has a GitLab connection configured (`GITLAB_TOKEN`, below); GitLab group membership then
 counts toward `AUTH_ALLOWED_ORGS`, matching GitHub.
@@ -128,9 +143,14 @@ run path, unless the workspace turns that off. On both, a token too narrow for t
 otherwise reach its first failure several steps into a pipeline, as a `403` out of a container.
 
 Three surfaces report what the token in use can actually do, from one classification and one
-required-scope list: the connect form's warnings when a token is stored, the local deployment's boot
-log, and a check on board load that resolves the token a run would present through the same path the
-dispatch mint uses. That last one raises a banner only on an established blocking gap or a rejected
+required-scope list:
+
+- the connect form's warnings when a token is stored
+- the local deployment's boot log
+- a check on board load, which resolves the token a run would present through the same path the
+  dispatch mint uses
+
+That last one raises a banner only on an established blocking gap or a rejected
 token, and names whether the credential is the deployment's or the signed-in user's. See
 [Troubleshooting → a step fails cloning, pushing or merging](../operate/troubleshooting.md#a-run-fails-or-stalls).
 
@@ -156,9 +176,9 @@ merges through a real merge request, and users can sign in with a GitLab PAT. Se
 `GITLAB_API_BASE` also decides which host agent containers clone from, so a self-managed instance
 needs it set even when nothing else about the deployment does. On Cloudflare the platform hands that
 host to each container. If you run a [self-hosted runner pool](../operate/runner-pools.md), set
-`GITHUB_ALLOWED_HOSTS` to your GitLab host on the executor-harness container as well: it is the
-harness's allow-list of hosts it will send a clone credential to, it defaults to github.com, and
-without your host on it every GitLab clone is refused.
+`GITHUB_ALLOWED_HOSTS` to your GitLab host on the executor-harness container as well. It is the
+harness's allow-list of hosts it will send a clone credential to, and it defaults to github.com.
+Without your host on it, every GitLab clone is refused.
 
 ## LLM providers
 
@@ -204,9 +224,9 @@ key is safe across all of them.
 ::: warning Use one stable key
 A single `ENCRYPTION_KEY` backs all of these integrations. Use the same key value across restarts
 and replicas, or encrypted credentials become unreadable. If a credential can't be decrypted (the key
-was rotated or regenerated), the error names the key and the affected credential and tells you to
-restore the original key or re-enter that credential; one broken credential is isolated, so unrelated
-providers keep working rather than the whole config failing.
+was rotated or regenerated), the error names the key and the affected credential. It tells you to
+restore the original key or re-enter that credential. One broken credential is isolated, so
+unrelated providers keep working rather than the whole config failing.
 :::
 
 ## Spend caps (operator ceilings)
@@ -250,7 +270,7 @@ names who can fix it. When the deployment gives an account admin no storage back
 storage is yours to fix as the operator, and nobody in the app gets a banner for it.
 
 The same gaps, with the model and source control, are listed together under **Configuration → Setup
-checklist**, which follows the same rule: a row shows its fix only to someone who can save it, and
+checklist**. It follows the same rule: a row shows its fix only to someone who can save it, and
 names who can to everyone else.
 
 ## Content storage (binary artifacts)
@@ -270,22 +290,22 @@ The default is `fs` on local, `r2` on Cloudflare, and **off** on Node until an a
 So a local deployment can run the Media pipeline with nothing configured at all: its assets land on
 disk under the base path above.
 
-A pipeline that includes an agent needing binary storage (the **UI Tester**, which uploads its
-screenshots, and the **Media Generator**, which stores what it generates) is refused at start when
-the account has no store configured, with a message that names the fix, rather than failing mid-run.
+Some agents need binary storage: the **UI Tester** uploads its screenshots, and the **Media
+Generator** stores what it generates. A pipeline that includes one is refused at start when the
+account has no store configured, rather than failing mid-run. The message names the fix.
 Pipelines that don't use such an agent are unaffected. Switching an account's backend orphans
 artifacts stored under the previous one.
 
 Screenshots and generated assets have different lifetimes in this store. Screenshots are run
-evidence and are reclaimed on a clock (the workspace's artifact-retention window, 14 days by
-default); generated assets are the deliverable the run was started to produce and are **exempt**
-from it, so they stay until the workspace is deleted. Size the store accordingly: a board that
+evidence and are reclaimed on a clock: the workspace's artifact-retention window, 14 days by
+default. Generated assets are the deliverable the run was started to produce, and are **exempt**
+from that window, so they stay until the workspace is deleted. Size the store accordingly: a board that
 generates media every day accumulates. The candidates you did not keep are the exception, and only
 because the step is told to remove them once you have chosen: no clock would have.
 
 A single stored asset is capped at 24 MiB, and one run may store 200. Both are ceilings on what a
-container can write, not budgets to plan against: a step that has to deliver larger files than that
-delivers them into your organisation's own object store instead, which is what the storage selection
+container can write, not budgets to plan against. A step that has to deliver larger files than that
+delivers them into your organisation's own object store instead. That is what the storage selection
 on the step is for.
 
 ## Node container execution
@@ -304,7 +324,7 @@ fail loudly instead of faking success:
 
 ## Multi-node coordination (Redis)
 
-A Node.js deployment running **more than one instance** uses Redis to keep replicas in sync: live
+A Node.js deployment running **more than one instance** uses Redis to keep replicas in sync. Live
 board events reach browsers on every node, and each node drops stale in-memory cache entries after a
 write on another node. A single instance and local mode need none of this; the Cloudflare Worker
 coordinates through its own globally-addressed primitives.
@@ -416,7 +436,7 @@ Inline search only takes effect on providers with a hosted search tool (Anthropi
 ## Document & task sources
 
 Document sources (Confluence, Notion, GitHub repo docs, the Figma and Zeplin design-context sources,
-and Linear Docs) and the Jira task source are **always on**: they ship enabled and each workspace
+and Linear Docs) and the Jira task source are **always on**. They ship enabled, and each workspace
 connects its own site through the UI, with credentials stored encrypted under `ENCRYPTION_KEY`. There
 is no per-integration enable flag. The integrations fail loudly at boot if `ENCRYPTION_KEY` is missing
 rather than silently returning errors later.
@@ -432,9 +452,9 @@ which lists model providers alongside the document and task-tracker sources:
 | `DOCUMENT_PLANNER` | How imported documents are turned into context: `llm` (default) or `headings` (deterministic split). |
 
 Task sources (Jira, GitHub Issues, and Linear) are configured per workspace. Each
-workspace turns its sources on or off in the UI (**Workspace settings → Issue tracker**); they work
-on every runtime, GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the
-PAT) with no env, and Linear connects per workspace via OAuth or a personal API key. See
+workspace turns its sources on or off in the UI (**Workspace settings → Issue tracker**). They work
+on every runtime. GitHub Issues rides the per-tenant GitHub App installation (or, in local mode, the
+PAT) with no env. Linear connects per workspace via OAuth or a personal API key. See
 [Connect Issue & Document Sources](../guide/issue-sources.md). The tech-debt
 [recurring pipeline](../guide/recurring-pipelines.md) files its ticket through the workspace's chosen
 filing tracker.

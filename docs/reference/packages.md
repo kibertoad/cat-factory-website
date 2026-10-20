@@ -17,11 +17,11 @@ frontend. Everything else arrives transitively.
 | `@cat-factory/local-server` | [Local mode](../deploy/local.md), the same backend wired for one machine | `startLocal()` |
 | `@cat-factory/app` | Every deployment's frontend | Nuxt `extends: ['@cat-factory/app']` |
 
-The facade is a composition root, not a thin re-export: it depends on the core packages **and on the
+The facade is a composition root, not a thin re-export. It depends on the core packages **and on the
 opt-in ones**, so a capability like GitLab or Bedrock is turned on with configuration rather than
 with a dependency change. That is why [Configuration](../deploy/configuration.md) can promise that
-setting `GITLAB_TOKEN` is enough, and it is the fact to check first when a capability that "should be
-optional" appears to be missing: it is present and unconfigured, not absent.
+setting `GITLAB_TOKEN` is enough. This dependency is also the fact to check first when a capability
+that "should be optional" appears to be missing: it is present and unconfigured, not absent.
 
 See [Deployment Repository](../deploy/deployment-repository.md) for the shape of the project that
 consumes these, including the migrations that ship inside the facade.
@@ -42,10 +42,10 @@ Present in every deployment, whatever it has configured.
 | `@cat-factory/integrations` | GitHub, document/task sources (including the experimental Linear connector), ticket trackers, environments, runner pools. |
 | `@cat-factory/prompt-fragments` | The curated, versioned best-practice [prompt fragments](../guide/prompt-fragments.md) injected into agent prompts, including the writing-style fragments applied to document tasks. Register your own with `registerPromptFragment`. |
 | `@cat-factory/workspaces` | The tenancy base: workspaces and the accounts above them. See [Workspaces and accounts](../guide/core-concepts.md#workspaces-and-accounts). |
-| `@cat-factory/spend` | Pricing tables and spend metering — what [budgets](../guide/budgets.md) and the usage endpoint are computed from. |
+| `@cat-factory/spend` | Pricing tables and spend metering: what [budgets](../guide/budgets.md) and the usage endpoint are computed from. |
 | `@cat-factory/caching` | The app-level caching seam: `createAppCaches` builds the named in-memory read-through caches services consume through the kernel `AppCaches` port. In-memory only; Redis (when `REDIS_URL` is set on a multi-node Node deployment) is an invalidation bus, never a data tier. |
 | `@cat-factory/sandbox` | The [Sandbox](../guide/sandbox.md): versioned prompt candidates, experiment matrices, and judge/objective grading, with `@cat-factory/sandbox-fixtures` supplying the graded no-repo fixtures it runs against. |
-| `@cat-factory/app` | Nuxt SPA layer — board UI and Pinia stores. Consumed as a Nuxt layer, not imported. |
+| `@cat-factory/app` | Nuxt SPA layer: board UI and Pinia stores. Consumed as a Nuxt layer, not imported. |
 
 ## Opt-in capability packages
 
@@ -61,11 +61,11 @@ the runtime facades, so the column that matters is the last one.
 | `@cat-factory/provider-s3` | An S3 blob backend for binary-artifact storage, over the kernel `BinaryBlobBackend` port. Node deployments only. | Picking S3 as the account's [content store](../deploy/configuration.md#content-storage-binary-artifacts), in the app rather than the environment. |
 | `@cat-factory/observability-otel` | An OpenTelemetry (OTLP/HTTP) publisher for LLM generations, container tool spans, structured logs, and deployment-level run-health gauges. The workerd-safe fetch exporter on Cloudflare, the official SDK on Node. | `OTEL_ENABLED` + `OTEL_EXPORTER_OTLP_*`. See [Observability](../operate/observability.md). |
 | `@cat-factory/observability-langfuse` | A Langfuse trace sink for the same generations and tool spans, over `fetch` on both runtimes. | `LANGFUSE_ENABLED` + both project keys. See [Observability](../operate/observability.md). |
-| `@cat-factory/consensus` | [Multi-model consensus](../guide/choosing-a-pipeline.md#multi-model-consensus) on eligible steps — specialist panel, debate, ranked voting — gated on the task's estimate. | `CONSENSUS_ENABLED`. |
+| `@cat-factory/consensus` | [Multi-model consensus](../guide/choosing-a-pipeline.md#multi-model-consensus) on eligible steps: specialist panel, debate, ranked voting. It is gated on the task's estimate. | `CONSENSUS_ENABLED`. |
 
 `@cat-factory/cli` is the odd one out: it is a tool rather than a dependency. `npm create
 @cat-factory/cli` scaffolds a standalone [local-mode deployment](../deploy/local.md#bootstrap-with-the-cli)
-on the published libraries — generating the crypto secrets, minting a GitHub/GitLab PAT, and writing
+on the published libraries. It generates the crypto secrets, mints a GitHub/GitLab PAT, and writes
 the populated, git-ignored `.env` files. Its core functions (`buildPlan`, `generateSecrets`, …) are
 exported for programmatic use.
 
@@ -107,8 +107,9 @@ Two directories in that tree are the source of pages here rather than reading of
 `docs/environment-variables.md` as [Environment Variables](./environment-variables.md). Both pages
 carry a generated banner and a CI check, so neither can drift from the code.
 
-`backend/docs/` is where the platform's own design notes live — deeper than this site goes, written
-for someone changing the code rather than deploying it. Read them from a checkout; they assume one.
+`backend/docs/` is where the platform's own design notes live. They go deeper than this site, and
+are written for someone changing the code rather than deploying it. Read them from a checkout; they
+assume one.
 
 ---
 

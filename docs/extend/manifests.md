@@ -79,7 +79,7 @@ references from a **bounded** namespace, listed per manifest below.
 Two properties follow from the namespace being bounded, and both are deliberate:
 
 - **An unknown reference resolves to the empty string**, so a manifest can never reach arbitrary
-  host state, and a typo produces a request with an empty field rather than an error you have to
+  host state. A typo produces a request with an empty field, rather than an error you have to
   correlate back.
 - **A JSON body is a string template, not an object.** Embed a raw JSON value (the whole job spec,
   a number) by writing the placeholder unquoted:
@@ -96,10 +96,10 @@ case-insensitive and ignores surrounding whitespace, and an explicit mapping alw
 
 ### Per-workspace config for code adapters
 
-A manifest can also carry an optional **`providerConfig`**, an opaque key/value bag that the
-generic HTTP adapter ignores, but a [custom code adapter](./custom-providers.md) reads for
-settings the standard fields don't cover (a project name, a target service, status-vocabulary
-overrides). Because it rides the connection, it is **per workspace**: one deployment-wide code
+A manifest can also carry an optional **`providerConfig`**: an opaque key/value bag. The generic
+HTTP adapter ignores it. A [custom code adapter](./custom-providers.md) reads it for settings the
+standard fields don't cover, such as a project name, a target service, or status-vocabulary
+overrides. Because it rides the connection, it is **per workspace**: one deployment-wide code
 adapter can serve many workspaces, each with its own `providerConfig`, while deployment-wide
 defaults come from the environment. See
 [Add a Custom Provider → How configuration reaches your adapter](./custom-providers.md#how-configuration-reaches-your-adapter).
@@ -202,8 +202,8 @@ ALB", "public ALB") is for the human reading a diagnostic and is never matched o
 #### When your balancer's stable identity is a NAME
 
 Use `response.hostsPath` instead, or beside it. A managed load balancer is usually addressed by
-name rather than by address, and its vendor says so: an AWS ALB's addresses change as it scales or
-gains an availability zone, and the DNS name is the thing a client is documented to use. Pinning
+name rather than by address, and its vendor says so. For example, an AWS ALB's addresses change as
+it scales or gains an availability zone, and the DNS name is the thing a client is documented to use. Pinning
 today's addresses into your response mapping means re-pinning them on every poll, and the value you
 pinned can be stale by the time anything dials it.
 
@@ -215,8 +215,8 @@ pinned can be stale by the time anything dials it.
 ```
 
 The same three shapes are accepted, with `{ "host": "…", "label": "…" }` for the object form. The
-platform resolves each name at the moment it dials, expands it into the addresses it answered with,
-and grades every one of them by the rules below exactly as if you had stated it yourself. Nothing
+platform resolves each name at the moment it dials, and expands it into the addresses it answered
+with. It grades every one of them by the rules below, exactly as if you had stated it yourself. Nothing
 downstream ever sees the name: what a container is given is still an address the platform proved.
 
 Declare both paths when your API publishes both kinds. Every address is then tried ahead of every
@@ -232,8 +232,8 @@ a disguise, and a resolver handed the same string answers loopback quite happily
 What the platform does with them:
 
 - **Order is yours, the choice is not.** When an environment reports `ready`, the platform dials
-  its name first and then each address you stated, in the order you stated them, stopping at the
-  first that opens a TCP connection. What it publishes downstream is the one that CARRIED, never
+  its name first. Then it dials each address you stated, in the order you stated them. It stops at
+  the first that opens a TCP connection. What it publishes downstream is the one that CARRIED, never
   the first you listed: an address nobody proved would be recorded as a working route while the
   agent still failed.
 - **The agent's container is given the mapping**, as a `--add-host` entry or a pod `hostAliases`
@@ -250,18 +250,18 @@ What the platform does with them:
 - **State them once.** If your create response carries the addresses and your status endpoint does
   not, that is fine: the platform keeps what you last stated. It only replaces the list when a
   response actually carries the field.
-- **A name you keep stating keeps its proof.** When a balancer scales or gains a zone it answers
-  with a different address set, which says nothing about whether the proved route still carries, so
-  the platform holds the verdict it took through that name rather than re-probing on every poll. It
+- **A name you keep stating keeps its proof.** When a balancer scales or gains a zone, it answers
+  with a different address set. That says nothing about whether the proved route still carries. So
+  the platform holds the verdict it took through that name, rather than re-probing on every poll. It
   drops the proof when you stop stating the name.
 - **A name nothing can resolve is reported, not guessed at.** If one of your names answers with
   nothing, that candidate is a dead end and the platform moves to the next one. If the platform
   itself has no way to resolve names, it says so on the environment and settles nothing either way,
   rather than reporting your environment as unreachable.
 
-An environment the platform cannot reach by name or by any stated address fails its Deployer step
-naming the layer that failed, instead of a Tester spending its whole step on connection errors and
-reporting your environment as down. If the probe itself cannot complete, the run continues and the
+An environment the platform cannot reach by name or by any stated address fails its Deployer step,
+and the failure names the layer that failed. Otherwise, a Tester would spend its whole step on
+connection errors and report your environment as down. If the probe itself cannot complete, the run continues and the
 agent is told the check was inconclusive; "we could not tell" never fails a deploy.
 
 ### Template variables
@@ -291,9 +291,10 @@ carries fewer.
 | `{{input.repoName}}` | The repository name, parsed from the pull request URL. |
 
 This is what lets a manifest build a "create an environment for PR #N of owner/repo" request with
-no per-block configuration. An identifier your platform needs that is **not** derivable from a
-block (a project, team or tenant slug, a target cluster) is not in this namespace: bake it into the
-manifest as a literal in the path or body template, or pass it as a manual-provision input.
+no per-block configuration. Some identifiers your platform needs are **not** derivable from a
+block, for example a project, team or tenant slug, or a target cluster. They are not in this
+namespace. Bake them into the manifest as a literal in the path or body template, or pass them as a
+manual-provision input.
 Register one manifest per project if they differ.
 
 ### Worked example: a PR-environment platform
@@ -476,23 +477,27 @@ and any live subtask progress. The rules below are where a working manifest and 
 differ.
 
 - **`resultPath` is the field most schedulers want.** Point it at the object holding the harness
-  `result` envelope and Cat Factory forwards **every** structured product (blueprint tree, spec
-  document, merge assessment, test report, bootstrap branch), not just the pull request scalars.
+  `result` envelope. Cat Factory then forwards **every** structured product, not just the pull
+  request scalars: blueprint tree, spec document, merge assessment, test report, bootstrap branch.
   Known fields are coerced by type and unknown ones ignored.
 - The scalar paths (`prUrlPath`, `branchPath`, `summaryPath`) still apply and **override**
   `resultPath` when set, for schedulers that surface those outside any envelope.
 - **Map your terminal states explicitly.** A status your manifest does not map is matched against a
-  built-in vocabulary of common scheduler words (`done` / `completed` / `succeeded` and friends map
-  to `done`; `failed` / `error` / `cancelled` / `timeout` and friends to `failed`), and anything
-  still unrecognised falls back to `running`, which keeps the driver waiting rather than wrongly
-  failing a live run. That vocabulary is a safety net, not a substitute for a mapping: only words
-  that are terminal in every vocabulary they could come from are in it, so a word that can also
-  mean "still waiting for capacity" (Kubernetes' `Unschedulable`, for one) is deliberately absent
-  and reads as `running`.
+  built-in vocabulary of common scheduler words:
+  - `done` / `completed` / `succeeded` and friends map to `done`.
+  - `failed` / `error` / `cancelled` / `timeout` and friends map to `failed`.
+
+  Anything still unrecognised falls back to `running`, which keeps the driver waiting rather than
+  wrongly failing a live run.
+
+  That vocabulary is a safety net, not a substitute for a mapping. It holds only words that are
+  terminal in every vocabulary they could come from. So a word that can also mean "still waiting
+  for capacity" (Kubernetes' `Unschedulable`, for one) is deliberately absent and reads as
+  `running`.
 - **Report a reclaimed runner with a reclaim word and the step is retried on a fresh runner.**
-  `evicted` / `preempted` / `oomkilled` / `node_lost` and friends are read as the runner going away
-  rather than the job failing, so the step is re-dispatched onto a new pool member instead of
-  failing the run. This applies to a mapped status too: `{"from": "evicted", "to": "failed"}` still
+  `evicted` / `preempted` / `oomkilled` / `node_lost` and friends are read as the runner going away,
+  not as the job failing. So the step is re-dispatched onto a new pool member instead of failing
+  the run. This applies to a mapped status too: `{"from": "evicted", "to": "failed"}` still
   gets the retry. Words that usually mean a human intervened (`cancelled`, `killed`, `aborted`) are
   deliberately not treated this way: they fail the step, they never resurrect it.
 - **A poll that answers 404 or 410 is read the same way.** If your scheduler forgets a job whose
@@ -503,17 +508,17 @@ differ.
   that hides an unauthorized read behind a 404.
 - **A re-dispatched step arrives as a NEW `jobId`.** Both retry paths (a tester-to-fixer or
   gate-helper round, and a recovery after a reclaimed runner) suffix the id. Combined with sticky
-  routing, that is what makes an eviction recovery land on a fresh pool member instead of back on
-  the dead job: treat an unseen id as a new job and place it accordingly.
+  routing, that makes an eviction recovery land on a fresh pool member instead of back on the dead
+  job. Treat an unseen id as a new job and place it accordingly.
 - **Set `callMetricsPath` if your poll response proxies the harness view verbatim** (it is
-  `callMetrics` there). The harness drains per-model-call telemetry on every poll, so mapping it
-  lands a run's token spend while the run is in flight, and keeps it when a run dies before it can
-  return a terminal result. Leave it unset and those calls are recorded only from the terminal
+  `callMetrics` there). The harness drains per-model-call telemetry on every poll. So when you
+  map it, a run's token spend is recorded while the run is in flight. The spend is also kept when a
+  run dies before it can return a terminal result. Leave it unset and those calls are recorded only from the terminal
   result envelope, which an evicted or out-of-memory run never produces. Recording is idempotent,
   so the terminal envelope repeating them costs nothing.
 - **Set `sliceReviewsPath` too** (it is `sliceReviews` on the harness view). A pull request review
-  fans its slices out across parallel subagents and emits findings only in the terminal output, so
-  this channel is the only thing that makes a finished slice durable while the review is still
+  fans its slices out across parallel subagents, and emits findings only in the terminal output.
+  So this channel is the only thing that makes a finished slice durable while the review is still
   running. Leave it unset and a pool-backed review that wedges has nothing for a manual resume to
   work from: it can only be re-run from zero.
 - **Set `toolServersPath` too** (it is `toolServers` on the harness view). It carries what the
@@ -523,15 +528,15 @@ differ.
   come up in the runner. Leave it unset and the step reports no observation rather than a false one.
 - **Set `dispatchCapabilitiesPath` if your dispatch response proxies the harness's acceptance
   body** (it is `capabilities` there, and it is the one mapping read off the dispatch response
-  rather than the poll one). It is what lets the platform refuse a blind run: a runner image older
-  than an optional job-body capability does not reject the field, it ignores it, and the prompt has
+  rather than the poll one). It is what lets the platform refuse a blind run. A runner image older
+  than an optional job-body capability does not reject the field; it ignores it. But the prompt has
   already told the agent it has tools that were never installed. It is deliberately not read by
   name without this mapping, because `capabilities` is an ordinary word for a scheduler to use
   about its own runners.
 - **Declare a `release` template even if your runners are ephemeral.** It is also the only cancel
-  the platform has on a pool: when a dispatch is refused as blind, the harness has already started
-  an agent, and without `release` it runs to completion and can open a pull request for a step the
-  engine already failed. Calling `release` on an already-finished job must be a no-op.
+  the platform has on a pool. When a dispatch is refused as blind, the harness has already started
+  an agent. Without `release`, that agent runs to completion, and it can open a pull request for a
+  step the engine already failed. Calling `release` on an already-finished job must be a no-op.
 
 A manifest with no `release`, or no `response.statusPath`, reports the gap on its connection test in
 the Infrastructure window, and logs it once at registration.

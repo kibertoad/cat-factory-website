@@ -2,16 +2,16 @@
 
 For whoever lays out the work before any agent runs. The board is where you describe what you're
 building, and it is also the work queue. Blocks can start here, or come from an issue imported from a
-connected tracker (see [Connect Issue & Document Sources](./issue-sources.md)); either way the
-tracker stays the source of truth for the issue and the board is where the work runs. This page
+connected tracker (see [Connect Issue & Document Sources](./issue-sources.md)). Either way, the
+tracker stays the source of truth for the issue, and the board is where the work runs. This page
 covers building and organizing that structure.
 
 ## The canvas
 
 The board is a pannable, zoomable canvas rendered with Vue Flow. As you zoom, the canvas uses
 semantic level-of-detail rendering: high-level frames stay legible when zoomed out, and detail
-appears as you zoom in. Keep zooming into an in-flight task and its card grows downward, first into
-its full **build-pipeline steps**, then one notch further into each step's live **subtask**
+appears as you zoom in. Keep zooming into an in-flight task and its card grows downward. First it
+shows its full **build-pipeline steps**, then, one notch further, each step's live **subtask**
 breakdown, so you can watch a run's internals spatially as you zoom. (Cards expand
 only when they're on screen, and where two would overlap only the centre-most opens, so deep zoom
 stays readable.)
@@ -41,10 +41,10 @@ from your org, and a service frame offers **Add task** and **Add recurring pipel
 
 - **Model Configuration**: manage the [model presets](#assigning-models) tasks run on.
 - **Risk policies**: manage the named risk policies a task chooses. After CI passes, the **Merger**
-  step scores the PR on complexity, risk, and impact and auto-merges only within the policy's
-  ceilings; the same policy also carries the CI-fixer, requirement/tester iteration, fork-decision,
-  and release-health knobs, plus whether a run under it waits for a person at its own automatic
-  checkpoints. Promote one row as the default for runs started in the app and one as the default
+  step scores the PR on complexity, risk, and impact, and auto-merges only within the policy's
+  ceilings. The same policy also carries the CI-fixer, requirement/tester iteration, fork-decision,
+  and release-health knobs. It also says whether a run under it waits for a person at its own
+  automatic checkpoints. Promote one row as the default for runs started in the app and one as the default
   for [runs nobody is watching](./pull-requests.md#runs-nobody-is-watching).
 - **Workspace settings**: the running-task limit, the waiting-decision escalation threshold, and
   review-debt friction (see [Workspace settings](#workspace-settings)).
@@ -67,14 +67,14 @@ feels like it spans several PRs, split it into sibling leaves.
 ## Adding and editing blocks
 
 - **Create** a block from the command bar (`⌘K`) or the per-frame **Add task** / **Add module**
-  controls, at the level you need. When you add a task, pick its **type** (**Feature**, **Bug**,
-  **Document**, **Spike**, **Review**, **Ralph loop**, or **Media**), which adjusts the form (a Bug
+  controls, at the level you need. When you add a task, pick its **type**: **Feature**, **Bug**,
+  **Document**, **Spike**, **Review**, **Ralph loop**, or **Media**. The type adjusts the form: a Bug
   collects severity and steps to reproduce, a Spike a time-box, a [Document](./documents.md) its kind
-  and target path, a [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) the PR to
-  audit and a review focus, a [Ralph loop](./choosing-a-pipeline.md#the-ralph-loop) its validation
-  command and iteration budget) and lets the workspace cap concurrency per type. A
-  [Media](./choosing-a-pipeline.md#generating-media) task's deliverable is generated files (images,
-  3D models, audio) rather than code, so it opens no pull request. A deployment can
+  and target path. A [Review](./pull-requests.md#deep-reviewing-an-existing-pull-request) collects
+  the PR to audit and a review focus, and a [Ralph loop](./choosing-a-pipeline.md#the-ralph-loop)
+  its validation command and iteration budget. The type also lets the workspace cap concurrency per
+  type. A [Media](./choosing-a-pipeline.md#generating-media) task's deliverable is generated files
+  (images, 3D models, audio) rather than code, so it opens no pull request. A deployment can
   [add task types of its own](../extend/frontend-extensions.md#custom-task-types), an "incident" or a
   "compliance-audit", which then appear in the picker and as a badge on the card like any built-in.
 - **Describe new work** (Create → Describe new work, the command bar, or the queue view's header)
@@ -90,9 +90,9 @@ feels like it spans several PRs, split it into sibling leaves.
   in the inspector.
 - **Reparent** by dragging a block onto a new parent, which is useful as your design evolves. Moving
   a task into another service's frame re-homes it onto that service.
-- **Delete** a block to remove it. Deletion is **optimistic** (the block disappears at once and
-  only reappears, with an error toast, if the backend rejects it) and **idempotent**, so deleting a
-  block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
+- **Delete** a block to remove it. Deletion is **optimistic**: the block disappears at once, and
+  only reappears, with an error toast, if the backend rejects it. Deletion is also **idempotent**, so
+  deleting a block whose row is already half-gone cleans up the leftovers instead of erroring. Deletion cascades
   to children, so deleting a service removes its modules and tasks too, and a service or module
   delete confirmation names how many items it will remove. A delete shows a **Deleted X**
   toast with an **Undo** button that restores the whole subtree (edges included), and a drag-reparent
@@ -158,8 +158,8 @@ the task; the sibling layout, per-repo PRs, and merge order are automatic.
 A service frame typically maps to one Git repository. You have three options:
 
 - **Link an existing repository** the GitHub App can access.
-- **Bootstrap a new repository** from a reference architecture: you create the empty repo on
-  GitHub (or an org can let the privileged App tier create it), Cat Factory force-pushes the
+- **Bootstrap a new repository** from a reference architecture. You create the empty repo on
+  GitHub, or an org can let the privileged App tier create it. Cat Factory force-pushes the
   template into it, then the service frame materializes on the board.
 - **Reconcile** an existing repo's structure onto the board with service blueprints.
 

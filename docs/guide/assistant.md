@@ -30,9 +30,9 @@ repositories and trackers, so a shortened or retyped link is a link to something
 ## What it does with your request
 
 The model reads your sentence and picks one action plus its arguments. It does not perform anything
-and it does not decide anything about your board: Cat Factory looks the action up, checks the values,
-matches every name against the services you actually have, and then does the same thing the
-equivalent button does.
+and it does not decide anything about your board. Cat Factory looks the action up, checks the
+values, and matches every name against the services you actually have. Then it does the same thing
+the equivalent button does.
 
 That is why the answer is always one of three things:
 
@@ -43,8 +43,12 @@ That is why the answer is always one of three things:
   is written until it is settled.
 - **It cannot.** If your request is not one of the actions above, it says so and lists what it can do.
 
-Anything else is a normal error with the usual detail behind it: a tracker that is not connected, a
-repository this workspace cannot see, an issue that already has a task, or a spent model budget.
+Anything else is a normal error with the usual detail behind it:
+
+- a tracker that is not connected
+- a repository this workspace cannot see
+- an issue that already has a task
+- a spent model budget
 
 ## What you need first
 
@@ -62,7 +66,7 @@ repository this workspace cannot see, an issue that already has a task, or a spe
 - **Which service a task lands in** is worked out from the issue's own repository. When the issue
   lives in a repository that backs exactly one service on your board, that is where the task goes.
   When it does not (a Jira ticket, or a monorepo repository behind several services), the Assistant
-  asks which service you meant, so name it in your request to skip the question: *"file …/issues/12
+  asks which service you meant. To skip the question, name the service in your request: *"file …/issues/12
   as a task on the billing service"*.
 - **Asking twice is safe.** Declaring a dependency that already exists changes nothing and says so.
   Adding a repository your organization already runs as a service mounts that existing service onto

@@ -62,9 +62,12 @@ notification flagged to them directly; otherwise it goes to the task's creator.
 
 The reviewer, the incorporation editor, and the Requirement Writer are all confined to the product and
 business layer. A technical design question is dropped outright rather than raised at a low severity,
-because it asks a product owner something they cannot answer, buries the questions only they can, and
-pre-empts the Architect and Researcher, which settle the technical layer later with the repository and
-the in-repo spec in hand.
+because of these effects:
+
+- It asks a product owner something they cannot answer.
+- It buries the questions only they can answer.
+- It pre-empts the Architect and Researcher, which settle the technical layer later with the
+  repository and the in-repo spec in hand.
 
 For purely technical work the expected outcome is **no findings at all**. An empty review is the
 reviewer working, not the reviewer failing.
@@ -134,14 +137,16 @@ document. All of it is server-driven, so it survives closing the window, and you
 when the batch is ready. You can request recommendations whenever the review is editable, including a
 merged review you are reworking.
 
-Recommendations are not AI-reviewed: you decide. For each ready suggestion you can **Accept** it (it
-becomes the finding's answer, folded into the next incorporation), **Reject** it (the finding reopens
-so you answer it manually), or **Re-request** it with a note to steer a fresh draft.
+Recommendations are not AI-reviewed: you decide. For each ready suggestion you can:
+
+- **Accept** it. It becomes the finding's answer, folded into the next incorporation.
+- **Reject** it. The finding reopens so you answer it manually.
+- **Re-request** it, with a note to steer a fresh draft.
 
 Incorporation and re-review run **in the background**. After you click "Incorporate answers" you go
-straight back to the board, and the task card shows which stage is running ("Incorporating answers…"
-then "Re-reviewing…") in place of an approval badge, since no action is needed until the reviewer
-comes back. You're summoned again only if the re-review raises fresh findings or hits the iteration
+straight back to the board. No action is needed until the reviewer comes back. So instead of an
+approval badge, the task card shows which stage is running: "Incorporating answers…", then
+"Re-reviewing…". You're summoned again only if the re-review raises fresh findings or hits the iteration
 cap; a converged round just advances the pipeline. (If you
 dismissed everything and left nothing to fold in, the round settles with no LLM call at all.)
 
@@ -169,7 +174,7 @@ Where the reviewer clarifies one task at a time, the **Spec Writer** agent produ
 
 The Spec Writer runs **before the Architect** when a pipeline carries it (and standalone via the
 **Write spec** pipeline). Every task gets a shared work branch created up front, so the spec lands
-on that branch first and the spec-aware Architect designs against it, rather than the spec being
+on that branch first. The spec-aware Architect then designs against it, rather than the spec being
 written only after the design is settled. The writer aggregates the clarified requirements of
 **every task** under the service frame and commits a `spec/` folder, **sharded by module → feature**
 so two task branches editing different features never collide on merge:
@@ -193,16 +198,23 @@ came from, and structured **Given/When/Then** acceptance criteria.
 
 The implementation state answers the one question a priority cannot: whether the service is actually
 known to honour the requirement. **Aspirational** means agreed but not yet observed; **established**
-means a tester observed it hold. An aspirational requirement's Gherkin scenarios carry an
-`@aspirational` tag, the build and test prompts read the state, and a pull request's
-[verification report](./pull-requests.md#the-verification-report-on-the-pull-request) maps requirements
-to the evidence for them. Those criteria seed the Gherkin scenarios in a two-pass
-flow: the **Spec Writer** seeds the `.feature` files, the **Acceptance Author** agent polishes them,
-and the **Acceptance Test Author** agent turns each scenario into a runnable test. Re-runs rewrite
+means a tester observed it hold. Three things follow from the state:
+
+- An aspirational requirement's Gherkin scenarios carry an `@aspirational` tag.
+- The build and test prompts read the state.
+- A pull request's
+  [verification report](./pull-requests.md#the-verification-report-on-the-pull-request) maps
+  requirements to the evidence for them.
+
+The Given/When/Then criteria seed the Gherkin scenarios in a two-pass flow:
+
+- The **Spec Writer** seeds the `.feature` files.
+- The **Acceptance Author** agent polishes them.
+- The **Acceptance Test Author** agent turns each scenario into a runnable test. Re-runs rewrite
 the canonical files but never clobber the polished features.
 
 The spec is **not** human-gated. Instead of pausing for your approval, the Spec Writer's companion,
-the **Spec Reviewer**, rates the spec (especially its acceptance-scenario coverage) and loops the
+the **Spec Reviewer**, rates the spec, especially its acceptance-scenario coverage. It loops the
 writer back with the feedback folded in until the spec clears the bar. Every container agent reads
 the in-repo spec as context, and the engine strictly validates any returned document before
 ingesting it. The in-repo files are the source of truth.
@@ -211,8 +223,8 @@ ingesting it. The in-repo files are the source of truth.
 
 The spec captures **business** requirements, so the Spec Writer only writes one when a task has
 business behaviour to specify. A purely technical task (a refactor, a dependency bump, plumbing)
-produces no business requirements, and the writer commits nothing for it rather than inventing
-filler; the implementer then treats the task description as primary and the spec as a regression
+produces no business requirements. The writer commits nothing for it, rather than inventing filler.
+The implementer then treats the task description as primary, and the spec as a regression
 reference.
 
 Each task carries a **technical** label in its inspector with three states: **Unset (auto-detect)**
@@ -223,10 +235,12 @@ Technical to skip business-spec work, or mark a misclassified one Business to en
 ### Viewing the spec
 
 Open **View Requirements** from a service's inspector to browse the committed spec in a structured
-window: modules, then feature groups, then each requirement with its Given/When/Then criteria, plus
-a toggle to read the rendered Gherkin scenarios. Every requirement is badged with its implementation
-state, each group carries a rollup, the overview shows a service-wide rollup, and a three-way filter
-narrows the list to aspirational or established requirements. The window reads the spec from the repo's default
+window. It shows modules, then feature groups, then each requirement with its Given/When/Then
+criteria. A toggle shows the rendered Gherkin scenarios instead.
+
+Every requirement is badged with its implementation state, and each group carries a rollup. The
+overview shows a service-wide rollup, and a three-way filter narrows the list to aspirational or
+established requirements. The window reads the spec from the repo's default
 branch, so it shows an empty state (rather than an error) on a service with no spec yet or no
 connected repository.
 

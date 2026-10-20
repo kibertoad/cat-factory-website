@@ -12,10 +12,10 @@ To try the whole product on one machine with Docker and a GitHub token, see
 ## Your deployment project
 
 As with the [Cloudflare deployment](./cloudflare.md#your-deployment-project), you assemble a small
-project on top of the published libraries: a thin package that depends on `@cat-factory/node-server`
-and calls its `start()`, plus your own `.env` and (if you containerize) a `Dockerfile`. To scaffold
-it, copy the `deploy/node` example directory, swap its `workspace:*` dependency for the published
-npm version, and point the config at your resources. You can layer in
+project on top of the published libraries. That is a thin package that depends on
+`@cat-factory/node-server` and calls its `start()`, plus your own `.env` and (if you containerize) a
+`Dockerfile`. To scaffold it, copy the `deploy/node` example directory, swap its `workspace:*`
+dependency for the published npm version, and point the config at your resources. You can layer in
 [proprietary agents and providers](../reference/architecture.md#extending-a-deployment) the same way.
 For a step-by-step on the workspace layout, the local dev loop, and where custom code plugs in, see
 [Set Up Your Deployment Repository](./deployment-repository.md).
