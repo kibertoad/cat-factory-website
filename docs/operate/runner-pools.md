@@ -92,9 +92,9 @@ registers an [environment provider](./environments.md); a single pool can back b
 ### Declaring the pool from the deployment
 
 A pool registered in this window belongs to one workspace. On a deployment where a pool is the only
-executor, every new board starts unable to run an agent until someone fills the form. A Node
-deployment that already knows its pools can declare one per account instead. Pass
-`seedAccountRunnerPool` to `start()`: a function that gets the account and returns the same `config`
+executor, every new board starts unable to run an agent until someone fills the form. A deployment
+that already knows its pools can declare one per account instead. Pass `seedAccountRunnerPool` to
+`start()` or `startLocal()`: a function that gets the account and returns the same `config`
 and write-only `secrets` the form takes, or `undefined` for no pool:
 
 ```ts
@@ -126,7 +126,11 @@ again.
 
 A board stops using the account's pool when its `inheritAccountRunnerPool` setting is `false`.
 Removing a board's own pool sets that setting, unless the request passes `fallBackToAccount=true`.
-`startLocal()` does not take this option.
+
+In local mode a board still runs its agents in containers on your machine. It uses the account's pool
+only when its `delegateAgentsToRunnerPool` setting is on. A local machine connected to a mothership
+ignores the option and logs a warning at boot: the account pools live on the mothership, so declare
+the seed in the mothership's deployment instead.
 
 ### Native Kubernetes backend
 
