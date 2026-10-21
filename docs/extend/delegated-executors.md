@@ -120,10 +120,11 @@ carrying `brief.correlationKey`, so a replayed dispatch re-attaches instead of d
 Your half is to recognise your own run: look for it by the correlation key first, and dispatch only
 when there is none.
 
-If your system returns nothing identifying at start (GitHub's `workflow_dispatch` answers `204`
-with no run id), `@cat-factory/delegation-github-actions` solves it for you: your caller workflow
-renders the key into its own `run-name:`, and the run becomes findable by a string the platform
-chose.
+A replay is the hard case even when your system returns an id at start: the attempt that got the
+id may have died before it was saved, so the replay holds only the brief. GitHub's
+`workflow_dispatch` answers with the run id, and `@cat-factory/delegation-github-actions` returns
+it from `start`; for the replay (and for a server that answers `204` with no id) it finds the run
+by the key your caller workflow renders into its own `run-name:`, a string the platform chose.
 
 ```yaml
 # .github/workflows/implement.yml
@@ -241,9 +242,10 @@ notifications, and every gate and policy the rest of the pipeline declares.
   dispatching against many product repos is one ordinary shape, so read what a run produced from
   the repository and branch the HANDLE carries, not from your own configuration.
 - **A workflow committed to each onboarded repository is the other ordinary shape**, and then the
-  dispatch target varies per task. Pass `workflow` as a function: it is handed the work repository,
-  the workspace, the run, the agent kind and the correlation key, which is exactly the set both a
-  dispatch and every later poll can name. Nothing a poll cannot see is offered, because a resolver
+  dispatch target varies per task. Pass `workflow` as a function: it is handed the work repository
+  and its base branch, the workspace, the run, the agent kind and the correlation key, which is
+  exactly the set both a dispatch and every later poll can name. The base branch is the `ref` to
+  dispatch a per-repository workflow on, since that branch holds its reviewed definition. Nothing a poll cannot see is offered, because a resolver
   that dispatched into one repository and polled another would report a live run as one that never
   appeared.
 - **Say what you cannot do.** A missing `cancel`, an unknown token count, an unreadable result: all
