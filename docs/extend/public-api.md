@@ -381,6 +381,34 @@ identically. A credential the provider **rejects** is kept apart from both, as `
 been removed or a token revoked), and a throttled connection as `429`
 `details.reason: vcs_rate_limited`, which is the one failure here worth retrying.
 
+### Sending a person to add a repository
+
+Adopting a repository over the API settles the link, but not the service: which board it belongs
+on, what role it plays and whether it is a monorepo are a person's choices. An integration that
+finds a repository with no service behind it can send that person to the app instead, with the
+add-service window open and the repository already searched for:
+
+```
+GET /api/v1/deployment
+{ "appUrl": "https://cat-factory.example.com" }
+
+https://cat-factory.example.com/?addRepo=acme/payments-api&provider=github&ws=ws_123
+```
+
+`appUrl` is the deployment's `APP_BASE_URL`, or the origin the API was reached on when none is
+set, with no trailing slash. Any `read` key may ask, and a key reaching several workspaces needs
+no `x-cat-factory-workspace` header for it.
+
+| Parameter | Required | Meaning |
+| --- | --- | --- |
+| `addRepo` | yes | The repository as `owner/name`. A GitLab project under nested groups keeps its whole path. |
+| `provider` | no | `github` or `gitlab`. When the board is connected to a different host, the window says so rather than matching a repository of the same name there. |
+| `ws` | no | The workspace to open. Without it the person lands on the board they used last. |
+
+The repository is selected as soon as the board's connection lists it. One the connection cannot
+reach is not listed, and the window shows its usual remedy (granting the app access, or checking
+the token's scope). A person who is signed out signs in first and arrives at the same window.
+
 ### Bootstrapping a repository
 
 ```
