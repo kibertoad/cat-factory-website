@@ -10,7 +10,7 @@ redirectFrom:
 
 Every operation the public API (`/api/v1`) serves, with its scope, parameters and payload shapes. Generated from the [OpenAPI document in the code repository](https://github.com/kibertoad/cat-factory/blob/main/docs/openapi.json), which is itself generated from the contracts the server routes are built from, so this page cannot drift from the running surface.
 
-Surface version **1.61.0**. 125 operations across 24 groups.
+Surface version **1.79.0**. 143 operations across 26 groups.
 
 ::: tip Start on the guide, not here
 This page is the field level. [Public API](../extend/public-api.md) is the page to read first: how to mint a key, which scope to pick, the worked board workload, how to answer a run that parks, and how the error envelope and paging work. Reach for an [official SDK](../extend/sdks.md) before hand-rolling HTTP, or point a generator at the spec linked above.
@@ -18,7 +18,7 @@ This page is the field level. [Public API](../extend/public-api.md) is the page 
 
 ## Authenticating
 
-A public-API key of the form `cf_live_<keyId>.<secret>`.
+A public-API key of the form `cf_live_<keyId>.<secret>`. A key reaching more than one workspace also sends `x-cat-factory-workspace: <workspaceId>` on every workspace-scoped call.
 
 Every call carries the key as a bearer token and is scoped to that key's workspace. Each key holds one scope on an inclusive ladder, so a higher scope grants everything below it:
 
@@ -28,7 +28,32 @@ Each operation below states the LOWEST scope that admits it. A key below that li
 
 ## Operations
 
-[Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Identity](#identity) · [Jobs](#jobs) · [Kaizen](#kaizen) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [Use cases](#use-cases) · [VCS](#vcs) · [Webhook](#webhook)
+[Best-practice standards](#best-practice-standards) · [Debug](#debug) · [Decisions](#decisions) · [Environments](#environments) · [Evidence](#evidence) · [Guided review](#guided-review) · [Identity](#identity) · [Jobs](#jobs) · [Kaizen](#kaizen) · [Keys](#keys) · [Merge records](#merge-records) · [Model presets](#model-presets) · [Models](#models) · [Notifications](#notifications) · [Pipelines](#pipelines) · [Repos](#repos) · [Risk policies](#risk-policies) · [Services](#services) · [Spec](#spec) · [Task types](#task-types) · [Tasks](#tasks) · [Tracker](#tracker) · [Usage](#usage) · [Use cases](#use-cases) · [VCS](#vcs) · [Webhook](#webhook)
+
+### Best-practice standards
+
+#### List the workspace's best-practice standards
+
+`GET /api/v1/prompt-fragments`
+
+Minimum scope: `write`.
+
+List the best-practice standards the key’s workspace resolves: the deployment’s shipped catalog merged with the account’s library and this board’s own, with later tiers overriding earlier ones by id and a tombstoned entry absent. The discovery half of `fragmentIds` on task creation, so the `fragmentId` read here is what a task pins, and an id this list does not carry is refused by the create rather than dropped. Each entry carries what a picker (or a model) decides from (title, category, one-line summary, tags, the `appliesTo` hint and which tier it won on) and deliberately NOT the guidance body, which is the authored text of the org’s standards rather than something a caller has to read in order to name one. Keyset-paginated and ordered by `fragmentId`: a tier can link a whole repo directory of guidelines and get one standard per file, so page with `cursor` until `nextCursor` is null. The scope floor is `write`, the same scope that names a standard on a task, because an imported standard’s one-line summary is derived from the opening of its file, so this list is not free of the org’s own guidance text even without the body. A `review` task’s reviewer additionally reports its ADHERENCE to every standard it was given, so what is named on the create comes back rated on the run.
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `limit` | `integer` | no | 1 to 100, pattern `^\d+$` |
+| `cursor` | `string` | no | 1 to 200 characters |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicPromptFragmentList`](#publicpromptfragmentlist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
 ### Debug
 
@@ -329,6 +354,27 @@ The tool calls the run’s agents made, in the order they made them — which co
 
 A run’s human decisions, from requirement-review and clarity findings through approval gates, judge verdicts, interviews and follow-ups, so a headless caller can drive the clarification loop instead of the run hanging. Answering requires a `decide`-scope key.
 
+#### Stream a run’s parked decisions (SSE)
+
+`GET /api/v1/runs/{runId}/decision-events`
+
+Minimum scope: `read`.
+
+Server-sent events over the run’s whole decision list: a `decision-state` frame carrying the same payload `GET /api/v1/runs/{runId}/decisions` serves, pushed whenever it changes, then a terminal `done` when the run settles or a `timeout` at the connection cap. This is how a chunked operation reports progress: a PR deep review’s slice count, a bug-fishing angle landing and a challenge verdict all move the decision list without moving the run, so they produce no `progress` frame on the run streams. Authenticated by the API key header.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `runId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | `string` (`text/event-stream`) | An event stream of the run’s decision list |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+
 #### List a run's parked decisions
 
 `GET /api/v1/runs/{runId}/decisions`
@@ -590,6 +636,75 @@ Pick how a brainstorm that exhausted its pass budget proceeds: one more round, p
 | `stage` | `string` | yes |  |
 
 **Request body** (required): [`PublicResolveExceeded`](#publicresolveexceeded) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicDecisionList`](#publicdecisionlist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Mark bug-fishing findings to be addressed
+
+`POST /api/v1/runs/{runId}/decisions/bug-fishing/address`
+
+Minimum scope: `decide`.
+
+Spawn one bug-fix task per named finding, each linked back to the expedition and started immediately. Accepted while the expedition is still fishing later angles as well as once it parks, because the findings of a completed angle are actionable the moment they land. `pipelineId` overrides, for this request only, the pipeline the spawned tasks run; omitting it uses the default the expedition resolved, which the decision publishes as `defaultFixPipelineId`. An unknown id, or one whose finding already has a live spawn, is refused rather than skipped. Requires a `decide`-scope key.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `runId` | `string` | yes |  |
+
+**Request body** (required): object (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicDecisionList`](#publicdecisionlist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Dismiss a bug-fishing finding
+
+`POST /api/v1/runs/{runId}/decisions/bug-fishing/findings/{findingId}/dismiss`
+
+Minimum scope: `decide`.
+
+Drop one finding from triage. It stays on the record of the expedition, struck through, and is no longer markable. Curation rather than a resolution: the run stays exactly where it is. Requires a `decide`-scope key.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `runId` | `string` | yes |  |
+| `findingId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicDecisionList`](#publicdecisionlist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Finish a bug-fishing expedition
+
+`POST /api/v1/runs/{runId}/decisions/bug-fishing/resolve`
+
+Minimum scope: `decide`.
+
+Finish triaging and advance the run past the step. Anything still unmarked stays unacted on, which is why this is a separate verb rather than something marking implies. Requires a `decide`-scope key.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `runId` | `string` | yes |  |
 
 **Responses**
 
@@ -1093,6 +1208,28 @@ Record the curated finding selection and say what to do with it: `finish` comple
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+#### Resume a stalled PR deep review
+
+`POST /api/v1/runs/{runId}/decisions/pr-review/resume`
+
+Minimum scope: `decide`.
+
+Re-dispatch the reviewer for only the slices that never reported, re-aggregating the findings from the slice reports already captured, so a review whose final aggregation turn wedged is recovered without throwing away the work that finished. Refused with 409 unless the review is still in progress. Requires a `decide`-scope key.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `runId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicDecisionList`](#publicdecisionlist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 #### Answer an agent-raised decision
 
 `POST /api/v1/runs/{runId}/decisions/questions/{decisionId}/answer`
@@ -1467,6 +1604,285 @@ The engine’s bundle of CAPTURED FACTS about a run: the CI gate’s verdict and
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
+### Guided review
+
+#### List the workspace's guided reviews
+
+`GET /api/v1/guided-reviews`
+
+Minimum scope: `read`.
+
+Guided review sessions in the workspace, newest created first, optionally narrowed to one repository (`repoId`), one pull request (`prNumber`) or the calling key's own (`mine=true`). Keyset-paginated: up to `limit` rows (default 50, at most 100) per page, and `nextCursor` to pass back as `cursor` for the next page, null on the last. A malformed cursor is `400` with `code: "invalid_cursor"`.
+
+**Query parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `repoId` | `string` | no | max 200 characters |
+| `prNumber` | `integer` | no | min 1, pattern `^\d+$` |
+| `mine` | `"true"` \| `"false"` | no |  |
+| `limit` | `integer` | no | 1 to 100, pattern `^\d+$` |
+| `cursor` | `string` | no | 1 to 200 characters |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`PublicGuidedReviewList`](#publicguidedreviewlist) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Open a guided review of a pull request
+
+`POST /api/v1/guided-reviews`
+
+Minimum scope: `write`.
+
+Open a guided review of one pull request in a repository linked to the workspace, or return the one the calling key's identity already has for it. A guided review explains the PR (what it does, its meaningful changes, consequences, risks, where to focus, and suggested questions) and holds question threads answered by a model that reads the PR at the commit under review. Answers with the session at once; its overview is generated in the background, so follow `GET /api/v1/guided-reviews/{sessionId}/events` or re-read it. A key bound to a person acts as that person; an unbound key owns its own sessions and runs on the workspace's credentials, never a person's; `createdByKind` says which of the two owns a session. An unlinked repository is `404` with `details.reason: "repo_not_linked"`, and a PR the host cannot find is `404` with `details.reason: "pr_not_found"`.
+
+**Request body** (required): [`OpenGuidedReview`](#openguidedreview) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewSessionView`](#guidedreviewsessionview) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Get a guided review
+
+`GET /api/v1/guided-reviews/{sessionId}`
+
+Minimum scope: `read`.
+
+The session with its overview, its threads (each naming the answer it is waiting on, if any) and its comment drafts. The overview's `status` is `pending` or `running` while it is generated; a `failed` one carries `failure.reason` (`budget_exhausted`, `model_unavailable`, `repo_unavailable`, `generation_failed`, `unreadable_reply`, or `head_moved` when the author pushed before it finished, which `POST /api/v1/guided-reviews/{sessionId}/refresh` resolves) and the raw cause in `failure.detail`.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewSessionView`](#guidedreviewsessionview) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Delete a guided review
+
+`DELETE /api/v1/guided-reviews/{sessionId}`
+
+Minimum scope: `write`.
+
+Delete the session with its threads, messages and drafts. Only the identity that opened it may; anyone else is `403` with `details.reason: "not_session_owner"`. Nothing on the pull request is touched.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `204` | empty | No content |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Post comment drafts to the pull request
+
+`POST /api/v1/guided-reviews/{sessionId}/comment-drafts/post`
+
+Minimum scope: `write`.
+
+Publish the named drafts as review comments on the pull request, as the key's identity, with an optional summary comment. Each comment posts on its own, so a partial post is normal: the result counts `posted` and `failed` drafts (a failed one carries `postError` and can be posted again) and lists in `skipped` the named drafts this call did not claim because they were already posted, discarded or being posted, so a retried call never posts a comment twice. The summary posts only alongside a draft this call claimed, so an identical retry after a complete post publishes nothing. Refused `409` with `details.reason: "session_stale"` when the pull request has commits past `reviewedHeadSha`: refresh the review and check the drafts first. Posting never approves or requests changes.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+
+**Request body** (required): [`PostGuidedReviewDrafts`](#postguidedreviewdrafts) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewPostResult`](#guidedreviewpostresult) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Edit, re-anchor or discard a comment draft
+
+`PATCH /api/v1/guided-reviews/{sessionId}/comment-drafts/{draftId}`
+
+Minimum scope: `write`.
+
+Change a draft's body or the line it sits on, or discard it with `discard: true`. Send the `rev` you loaded: a draft edited, posted or discarded since is refused `409` with `details.reason: "draft_conflict"`, so reload and decide again. A new anchor must be a line inside the diff on its side, or the edit is `422` with `details.reason: "draft_anchor_outside_diff"`. Only the session's owner may edit.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+| `draftId` | `string` | yes |  |
+
+**Request body** (required): [`EditGuidedReviewDraft`](#editguidedreviewdraft) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewCommentDraft`](#guidedreviewcommentdraft) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Stream a guided review (SSE)
+
+`GET /api/v1/guided-reviews/{sessionId}/events`
+
+Minimum scope: `read`.
+
+Server-sent events for one guided review: a `state` frame carrying the session view (the same body `GET /api/v1/guided-reviews/{sessionId}` returns) whenever it changes, `deleted` when the session is removed, and `timeout` when the connection cap is reached (reconnect to continue). A thread whose `pendingMessageId` clears has an answer to fetch with `GET /api/v1/guided-reviews/{sessionId}/threads/{threadId}`. Authenticated by the API key header.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | `string` (`text/event-stream`) | An event stream of session updates |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+
+#### Point a guided review at the PR's current head
+
+`POST /api/v1/guided-reviews/{sessionId}/refresh`
+
+Minimum scope: `write`.
+
+Re-read the pull request and regenerate the overview at its current head commit, keeping every thread. Use it after the author pushes: the overview, answers and draft anchors are computed against the commit recorded as `reviewedHeadSha`.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewSessionView`](#guidedreviewsessionview) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Open an exploration thread
+
+`POST /api/v1/guided-reviews/{sessionId}/threads`
+
+Minimum scope: `write`.
+
+Open a thread in the session, optionally asking its first question in the same call. A thread is an independent line of questioning: waiting on an answer in one never blocks another. Pass a suggested question from the overview verbatim to ask it.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+
+**Request body** (required): [`OpenGuidedReviewThread`](#openguidedreviewthread) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewThreadView`](#guidedreviewthreadview) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Get a thread with its messages
+
+`GET /api/v1/guided-reviews/{sessionId}/threads/{threadId}`
+
+Minimum scope: `read`.
+
+The thread and its messages in order. An assistant message is `pending` or `running` until answered, then `complete` with markdown `content` and the `citations` (file spans) it rests on, or `failed` with a `failure`. A `comment-drafts` message's drafts are on the session; its `draftReport` names every proposed comment that was refused (`outside_diff`, `not_in_pr`, `incomplete`).
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+| `threadId` | `string` | yes |  |
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewThreadView`](#guidedreviewthreadview) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Draft review comments from a thread's conclusions
+
+`POST /api/v1/guided-reviews/{sessionId}/threads/{threadId}/comment-drafts`
+
+Minimum scope: `write`.
+
+Ask the model to turn what the thread concluded into review comments, each placed on the line it is about. Optional `instructions` narrow which ones. Drafts are kept only on lines inside the PR's diff; posting them is a separate, explicit call. Busy like a question: `409` with `details.reason: "thread_busy"` while the thread is waiting on an answer.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+| `threadId` | `string` | yes |  |
+
+**Request body** (required): [`RequestGuidedReviewDrafts`](#requestguidedreviewdrafts) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewExchange`](#guidedreviewexchange) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
+#### Ask a question in a thread
+
+`POST /api/v1/guided-reviews/{sessionId}/threads/{threadId}/messages`
+
+Minimum scope: `write`.
+
+Append a question and the placeholder that will answer it, and answer with both at once; the answer is produced in the background. A thread holds one unanswered question at a time: asking again before it is answered is `409` with `details.reason: "thread_busy"`, and other threads are unaffected. `depth: "deep"` answers from a read-only checkout of the repository instead, so it can search the whole tree and run read-only commands; it takes minutes rather than seconds and stays `running` meanwhile, and a deployment with no runner settles it as `depth_unavailable`.
+
+**Path parameters**
+
+| Name | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `sessionId` | `string` | yes |  |
+| `threadId` | `string` | yes |  |
+
+**Request body** (required): [`AskGuidedReview`](#askguidedreview) (`application/json`)
+
+**Responses**
+
+| Status | Body | Meaning |
+| --- | --- | --- |
+| `200` | [`GuidedReviewExchange`](#guidedreviewexchange) (`application/json`) | Success |
+| `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
+| `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
+
 ### Identity
 
 What the calling key is and what it may do — the self-check an integration runs at startup, so “can I do this?” does not have to be answered by attempting it and reading the 403. `read` scope.
@@ -1530,7 +1946,7 @@ Start a public, inline pipeline headlessly against a supplied brief. Returns a j
 
 | Status | Body | Meaning |
 | --- | --- | --- |
-| `202` | [`PublicJobAccepted`](#publicjobaccepted) (`application/json`) | Accepted — the run has started |
+| `202` | [`PublicJobAccepted`](#publicjobaccepted) (`application/json`) | Accepted, the run has started |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -1584,7 +2000,7 @@ Stop a headless job run, freeing its concurrency slot. Idempotent — an already
 
 Minimum scope: `read`.
 
-Server-sent events for a headless job run: `progress` frames until a terminal `done`/`error`/`stopped`/`timeout` event. Authenticated by the API key header.
+Server-sent events for a headless job run: `progress` frames until a terminal `done`/`error`/`stopped`/`timeout` event, plus a `decision` frame announcing each park. For what the run is asking, and how a chunked operation is progressing through it, stream `GET /api/v1/runs/{runId}/decision-events` beside this. Authenticated by the API key header.
 
 **Path parameters**
 
@@ -1685,7 +2101,7 @@ The workspace’s public-API keys, provisioned headlessly. Requires an `admin`-s
 
 Minimum scope: `admin`.
 
-The live (non-revoked) keys for the calling key’s workspace, metadata only; a secret is never readable back. `createdByKeyId` names the key that provisioned a key headlessly; `createdByUserId` names the person who minted one in the app.
+The account’s live (non-revoked) keys that reach the workspace this request acts on, account-wide ones included, metadata only; a secret is never readable back. `workspaceIds` is each key’s reach (`null` for every workspace). `createdByKeyId` names the key that provisioned a key headlessly; `createdByUserId` names the person who minted one in the app.
 
 **Responses**
 
@@ -1701,7 +2117,7 @@ The live (non-revoked) keys for the calling key’s workspace, metadata only; a 
 
 Minimum scope: `admin`.
 
-Mint a key for the calling key’s own workspace and return its raw secret EXACTLY ONCE, so store it now: it is not recoverable. Omitting `scope` mints a `write` key. `admin` cannot be minted here: a key provisioned over the API can never itself provision, which keeps the chain one link long. Requires an `admin`-scope key.
+Mint a key in the calling key’s account and return its raw secret EXACTLY ONCE, so store it now: it is not recoverable. Omitting `workspaceIds` mints a key for the workspace this request acts on; a list or `null` (every workspace) can never reach further than the calling key, refused as `403` with `reason: "workspace_reach_exceeded"`. Omitting `scope` mints a `write` key. `admin` cannot be minted here: a key provisioned over the API can never itself provision, which keeps the chain one link long. Requires an `admin`-scope key.
 
 **Request body** (required): [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) (`application/json`)
 
@@ -1719,7 +2135,7 @@ Mint a key for the calling key’s own workspace and return its raw secret EXACT
 
 Minimum scope: `admin`.
 
-Revoke a key AND every key it minted, so a leaked provisioning key cannot outlive its own revocation through the credentials it left behind. Idempotent, and it may name the calling key. Requires an `admin`-scope key.
+Revoke a key AND every key it minted, so a leaked provisioning key cannot outlive its own revocation through the credentials it left behind. Idempotent, and it may name the calling key. A key reaching workspaces the calling key does not is refused with `reason: "workspace_reach_exceeded"`. Requires an `admin`-scope key.
 
 **Path parameters**
 
@@ -2489,7 +2905,7 @@ Detach a document, naming it by the `(source, externalId)` pair the list serves.
 
 Minimum scope: `read`.
 
-Server-sent events for a board task run: `progress` frames (the rich run projection) until a terminal `done`/`error` event, or a `timeout` when the connection cap is reached. Authenticated by the API key header.
+Server-sent events for a board task run: `progress` frames (the rich run projection) until a terminal `done`/`error` event, or a `timeout` when the connection cap is reached, plus a `decision` frame announcing each park. For what the run is asking, and how a chunked operation is progressing through it, stream `GET /api/v1/runs/{runId}/decision-events` beside this. Authenticated by the API key header.
 
 **Path parameters**
 
@@ -2522,7 +2938,7 @@ Retry a task’s failed run. A task on an individual-usage model cannot be retri
 
 | Status | Body | Meaning |
 | --- | --- | --- |
-| `202` | [`PublicTask`](#publictask) (`application/json`) | Accepted — the run has started |
+| `202` | [`PublicTask`](#publictask) (`application/json`) | Accepted, the run has started |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -2568,7 +2984,7 @@ Start a task’s pipeline. Uses the request’s pipelineId, else the task’s pi
 
 | Status | Body | Meaning |
 | --- | --- | --- |
-| `202` | [`PublicTask`](#publictask) (`application/json`) | Accepted — the run has started |
+| `202` | [`PublicTask`](#publictask) (`application/json`) | Accepted, the run has started |
 | `4XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Client error (validation, unauthorized, not found, conflict, rate limit) |
 | `5XX` | [`ErrorResponse`](#errorresponse) (`application/json`) | Server error |
 
@@ -2896,7 +3312,7 @@ Deregister this endpoint; its deliveries stop and the workspace's other endpoint
 
 The payload shapes the operations above reference. Field names, types and constraints are the contract; the narrative for what each one means lives on the page that owns the feature.
 
-[`AcceptanceCriterion`](#acceptancecriterion) · [`AcknowledgeKaizenEntry`](#acknowledgekaizenentry) · [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) · [`CreatePublicJob`](#createpublicjob) · [`CreatePublicTask`](#createpublictask) · [`CreatedPublicApiKey`](#createdpublicapikey) · [`DocumentFreshness`](#documentfreshness) · [`DomainRule`](#domainrule) · [`ErrorResponse`](#errorresponse) · [`Notification`](#notification) · [`NotificationWebhook`](#notificationwebhook) · [`PrReportCheck`](#prreportcheck) · [`PrReportCi`](#prreportci) · [`PrReportContext`](#prreportcontext) · [`PrReportContextDocument`](#prreportcontextdocument) · [`PrReportEnvironments`](#prreportenvironments) · [`PrReportIssue`](#prreportissue) · [`PrReportJudge`](#prreportjudge) · [`PrReportJudges`](#prreportjudges) · [`PrReportMerge`](#prreportmerge) · [`PrReportObservability`](#prreportobservability) · [`PrReportReproduction`](#prreportreproduction) · [`PrReportRequirements`](#prreportrequirements) · [`PrReportRun`](#prreportrun) · [`PrReportStep`](#prreportstep) · [`PrReportTestConcern`](#prreporttestconcern) · [`PrReportTestOutcome`](#prreporttestoutcome) · [`PrReportTests`](#prreporttests) · [`PrReportValidation`](#prreportvalidation) · [`PrReportValidationCommand`](#prreportvalidationcommand) · [`PrVerificationReport`](#prverificationreport) · [`PublicAgentDecision`](#publicagentdecision) · [`PublicAnswerFollowUp`](#publicanswerfollowup) · [`PublicAnswerInterview`](#publicanswerinterview) · [`PublicApiKey`](#publicapikey) · [`PublicApiKeyList`](#publicapikeylist) · [`PublicApprovalGateDecision`](#publicapprovalgatedecision) · [`PublicApproveStep`](#publicapprovestep) · [`PublicBrainstormDecision`](#publicbrainstormdecision) · [`PublicChallengePrReviewFinding`](#publicchallengeprreviewfinding) · [`PublicChooseFork`](#publicchoosefork) · [`PublicClarityDecision`](#publicclaritydecision) · [`PublicDecision`](#publicdecision) · [`PublicDecisionList`](#publicdecisionlist) · [`PublicFollowUpItem`](#publicfollowupitem) · [`PublicFollowUpsDecision`](#publicfollowupsdecision) · [`PublicForkDecision`](#publicforkdecision) · [`PublicHumanTestDecision`](#publichumantestdecision) · [`PublicHumanTestEnvironment`](#publichumantestenvironment) · [`PublicIdentity`](#publicidentity) · [`PublicIncorporate`](#publicincorporate) · [`PublicInputGateDecision`](#publicinputgatedecision) · [`PublicInterviewDecision`](#publicinterviewdecision) · [`PublicInterviewQuestion`](#publicinterviewquestion) · [`PublicJob`](#publicjob) · [`PublicJobAccepted`](#publicjobaccepted) · [`PublicKaizenEntry`](#publickaizenentry) · [`PublicKaizenEntryCombo`](#publickaizenentrycombo) · [`PublicKaizenEntryList`](#publickaizenentrylist) · [`PublicKaizenEntryTask`](#publickaizenentrytask) · [`PublicNotificationList`](#publicnotificationlist) · [`PublicNotificationWebhook`](#publicnotificationwebhook) · [`PublicNotificationWebhookList`](#publicnotificationwebhooklist) · [`PublicPipeline`](#publicpipeline) · [`PublicPipelineList`](#publicpipelinelist) · [`PublicPrReviewDecision`](#publicprreviewdecision) · [`PublicRejectStep`](#publicrejectstep) · [`PublicReplyFinding`](#publicreplyfinding) · [`PublicRequestGateFix`](#publicrequestgatefix) · [`PublicRequestStepChanges`](#publicrequeststepchanges) · [`PublicRequirementsDecision`](#publicrequirementsdecision) · [`PublicResolveAgentDecision`](#publicresolveagentdecision) · [`PublicResolveExceeded`](#publicresolveexceeded) · [`PublicResolveInputGate`](#publicresolveinputgate) · [`PublicResolvePrReview`](#publicresolveprreview) · [`PublicReviewFinding`](#publicreviewfinding) · [`PublicRun`](#publicrun) · [`PublicRunArtifact`](#publicrunartifact) · [`PublicRunArtifactList`](#publicrunartifactlist) · [`PublicRunSpec`](#publicrunspec) · [`PublicService`](#publicservice) · [`PublicServiceList`](#publicservicelist) · [`PublicServiceSpec`](#publicservicespec) · [`PublicSetFindingStatus`](#publicsetfindingstatus) · [`PublicSpecFeatureFile`](#publicspecfeaturefile) · [`PublicSpecProvenance`](#publicspecprovenance) · [`PublicSpecTruncation`](#publicspectruncation) · [`PublicSpend`](#publicspend) · [`PublicSpendRow`](#publicspendrow) · [`PublicSpendTotals`](#publicspendtotals) · [`PublicTask`](#publictask) · [`PublicTaskDocument`](#publictaskdocument) · [`PublicTaskList`](#publictasklist) · [`PublicTaskSourceDocument`](#publictasksourcedocument) · [`PublicTaskTicket`](#publictaskticket) · [`PublicTaskUploadedDocument`](#publictaskuploadeddocument) · [`PublicUnanswerableWait`](#publicunanswerablewait) · [`PublicUsage`](#publicusage) · [`PublicUsageBudget`](#publicusagebudget) · [`PublicUsageRow`](#publicusagerow) · [`PublicVisualConfirmDecision`](#publicvisualconfirmdecision) · [`PutNotificationWebhook`](#putnotificationwebhook) · [`RequirementGroup`](#requirementgroup) · [`RequirementItem`](#requirementitem) · [`SpecDoc`](#specdoc) · [`SpecModule`](#specmodule) · [`SpecReadIssue`](#specreadissue) · [`StartPublicTask`](#startpublictask) · [`UpdatePublicTask`](#updatepublictask)
+[`AcceptanceCriterion`](#acceptancecriterion) · [`AcknowledgeKaizenEntry`](#acknowledgekaizenentry) · [`AskGuidedReview`](#askguidedreview) · [`CreateHeadlessPublicApiKey`](#createheadlesspublicapikey) · [`CreatePublicJob`](#createpublicjob) · [`CreatePublicTask`](#createpublictask) · [`CreatedPublicApiKey`](#createdpublicapikey) · [`DocumentFreshness`](#documentfreshness) · [`DomainRule`](#domainrule) · [`EditGuidedReviewDraft`](#editguidedreviewdraft) · [`ErrorResponse`](#errorresponse) · [`GuidedReviewAnchor`](#guidedreviewanchor) · [`GuidedReviewCommentDraft`](#guidedreviewcommentdraft) · [`GuidedReviewDraftReport`](#guidedreviewdraftreport) · [`GuidedReviewExchange`](#guidedreviewexchange) · [`GuidedReviewFailure`](#guidedreviewfailure) · [`GuidedReviewMessage`](#guidedreviewmessage) · [`GuidedReviewOverview`](#guidedreviewoverview) · [`GuidedReviewOverviewContent`](#guidedreviewoverviewcontent) · [`GuidedReviewPostResult`](#guidedreviewpostresult) · [`GuidedReviewSession`](#guidedreviewsession) · [`GuidedReviewSessionView`](#guidedreviewsessionview) · [`GuidedReviewThread`](#guidedreviewthread) · [`GuidedReviewThreadSummary`](#guidedreviewthreadsummary) · [`GuidedReviewThreadView`](#guidedreviewthreadview) · [`Notification`](#notification) · [`NotificationWebhook`](#notificationwebhook) · [`OpenGuidedReview`](#openguidedreview) · [`OpenGuidedReviewThread`](#openguidedreviewthread) · [`PostGuidedReviewDrafts`](#postguidedreviewdrafts) · [`PrReportCheck`](#prreportcheck) · [`PrReportCi`](#prreportci) · [`PrReportContext`](#prreportcontext) · [`PrReportContextDocument`](#prreportcontextdocument) · [`PrReportEnvironments`](#prreportenvironments) · [`PrReportIssue`](#prreportissue) · [`PrReportJudge`](#prreportjudge) · [`PrReportJudges`](#prreportjudges) · [`PrReportMerge`](#prreportmerge) · [`PrReportObservability`](#prreportobservability) · [`PrReportReproduction`](#prreportreproduction) · [`PrReportRequirements`](#prreportrequirements) · [`PrReportRun`](#prreportrun) · [`PrReportStep`](#prreportstep) · [`PrReportTestConcern`](#prreporttestconcern) · [`PrReportTestOutcome`](#prreporttestoutcome) · [`PrReportTests`](#prreporttests) · [`PrReportValidation`](#prreportvalidation) · [`PrReportValidationCommand`](#prreportvalidationcommand) · [`PrVerificationReport`](#prverificationreport) · [`PublicAgentDecision`](#publicagentdecision) · [`PublicAnswerFollowUp`](#publicanswerfollowup) · [`PublicAnswerInterview`](#publicanswerinterview) · [`PublicApiKey`](#publicapikey) · [`PublicApiKeyList`](#publicapikeylist) · [`PublicApprovalGateDecision`](#publicapprovalgatedecision) · [`PublicApproveStep`](#publicapprovestep) · [`PublicBrainstormDecision`](#publicbrainstormdecision) · [`PublicBugFishingDecision`](#publicbugfishingdecision) · [`PublicBugFishingFinding`](#publicbugfishingfinding) · [`PublicBugFishingPhase`](#publicbugfishingphase) · [`PublicBugFishingPlan`](#publicbugfishingplan) · [`PublicBugFishingSpawn`](#publicbugfishingspawn) · [`PublicBugFishingUnfishedCell`](#publicbugfishingunfishedcell) · [`PublicChallengePrReviewFinding`](#publicchallengeprreviewfinding) · [`PublicChooseFork`](#publicchoosefork) · [`PublicClarityDecision`](#publicclaritydecision) · [`PublicDecision`](#publicdecision) · [`PublicDecisionList`](#publicdecisionlist) · [`PublicFollowUpItem`](#publicfollowupitem) · [`PublicFollowUpsDecision`](#publicfollowupsdecision) · [`PublicForkDecision`](#publicforkdecision) · [`PublicGuidedReviewList`](#publicguidedreviewlist) · [`PublicHumanTestDecision`](#publichumantestdecision) · [`PublicHumanTestEnvironment`](#publichumantestenvironment) · [`PublicIdentity`](#publicidentity) · [`PublicIncorporate`](#publicincorporate) · [`PublicInputGateDecision`](#publicinputgatedecision) · [`PublicInterviewDecision`](#publicinterviewdecision) · [`PublicInterviewQuestion`](#publicinterviewquestion) · [`PublicJob`](#publicjob) · [`PublicJobAccepted`](#publicjobaccepted) · [`PublicKaizenEntry`](#publickaizenentry) · [`PublicKaizenEntryCombo`](#publickaizenentrycombo) · [`PublicKaizenEntryList`](#publickaizenentrylist) · [`PublicKaizenEntryTask`](#publickaizenentrytask) · [`PublicNotificationList`](#publicnotificationlist) · [`PublicNotificationWebhook`](#publicnotificationwebhook) · [`PublicNotificationWebhookList`](#publicnotificationwebhooklist) · [`PublicPipeline`](#publicpipeline) · [`PublicPipelineList`](#publicpipelinelist) · [`PublicPrReviewDecision`](#publicprreviewdecision) · [`PublicPromptFragment`](#publicpromptfragment) · [`PublicPromptFragmentList`](#publicpromptfragmentlist) · [`PublicRejectStep`](#publicrejectstep) · [`PublicReplyFinding`](#publicreplyfinding) · [`PublicRequestGateFix`](#publicrequestgatefix) · [`PublicRequestStepChanges`](#publicrequeststepchanges) · [`PublicRequirementsDecision`](#publicrequirementsdecision) · [`PublicResolveAgentDecision`](#publicresolveagentdecision) · [`PublicResolveExceeded`](#publicresolveexceeded) · [`PublicResolveInputGate`](#publicresolveinputgate) · [`PublicResolvePrReview`](#publicresolveprreview) · [`PublicReviewFinding`](#publicreviewfinding) · [`PublicRun`](#publicrun) · [`PublicRunArtifact`](#publicrunartifact) · [`PublicRunArtifactList`](#publicrunartifactlist) · [`PublicRunSpec`](#publicrunspec) · [`PublicService`](#publicservice) · [`PublicServiceList`](#publicservicelist) · [`PublicServiceSpec`](#publicservicespec) · [`PublicSetFindingStatus`](#publicsetfindingstatus) · [`PublicSpecFeatureFile`](#publicspecfeaturefile) · [`PublicSpecProvenance`](#publicspecprovenance) · [`PublicSpecTruncation`](#publicspectruncation) · [`PublicSpend`](#publicspend) · [`PublicSpendRow`](#publicspendrow) · [`PublicSpendTotals`](#publicspendtotals) · [`PublicTask`](#publictask) · [`PublicTaskDocument`](#publictaskdocument) · [`PublicTaskList`](#publictasklist) · [`PublicTaskSourceDocument`](#publictasksourcedocument) · [`PublicTaskTicket`](#publictaskticket) · [`PublicTaskUploadedDocument`](#publictaskuploadeddocument) · [`PublicUnanswerableWait`](#publicunanswerablewait) · [`PublicUsage`](#publicusage) · [`PublicUsageBudget`](#publicusagebudget) · [`PublicUsageRow`](#publicusagerow) · [`PublicVisualConfirmDecision`](#publicvisualconfirmdecision) · [`PutNotificationWebhook`](#putnotificationwebhook) · [`RequestGuidedReviewDrafts`](#requestguidedreviewdrafts) · [`RequirementGroup`](#requirementgroup) · [`RequirementItem`](#requirementitem) · [`SpecDoc`](#specdoc) · [`SpecModule`](#specmodule) · [`SpecReadIssue`](#specreadissue) · [`StartPublicTask`](#startpublictask) · [`UpdatePublicTask`](#updatepublictask)
 
 ### `AcceptanceCriterion`
 
@@ -2914,6 +3330,13 @@ The payload shapes the operations above reference. Field names, types and constr
 | `acknowledged` | `boolean` | no |  |
 | `note` | `string` \| `null` | no |  |
 
+### `AskGuidedReview`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `content` | `string` | yes | 1 to 4000 characters |
+| `depth` | `"inline"` \| `"deep"` | no |  |
+
 ### `CreateHeadlessPublicApiKey`
 
 | Field | Type | Required | Notes |
@@ -2921,6 +3344,7 @@ The payload shapes the operations above reference. Field names, types and constr
 | `externalIdentity` | `string` | no | 1 to 200 characters, pattern `^[^\x00-\x1f\x7f\x80-\x9f]+$` |
 | `label` | `string` | yes | 1 to 120 characters |
 | `scope` | `"read"` \| `"write"` \| `"decide"` | no |  |
+| `workspaceIds` | array of `string` \| `null` | no |  |
 
 ### `CreatePublicJob`
 
@@ -2937,10 +3361,11 @@ The payload shapes the operations above reference. Field names, types and constr
 | `description` | `string` | no | max 2000 characters |
 | `documents` | array of [`PublicTaskDocument`](#publictaskdocument) | no |  |
 | `fields` | map of `string` \| array of `string` \| `boolean` \| `number` | no |  |
+| `fragmentIds` | array of `string` | no |  |
 | `modelPresetId` | `string` | no | 1 to 120 characters |
 | `pipelineId` | `string` | no | 1 to 120 characters |
 | `riskPolicyId` | `string` | no | 1 to 120 characters |
-| `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `string` | no |  |
+| `taskType` | `"feature"` \| `"bug"` \| `"bug-fishing"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `string` | no |  |
 | `ticket` | [`PublicTaskTicket`](#publictaskticket) | no |  |
 | `title` | `string` | yes | 1 to 200 characters |
 
@@ -2985,6 +3410,18 @@ One of 3 shapes.
 | `rule` | `string` | yes | 1 to 4000 characters |
 | `sourceBlockIds` | array of `string` | no |  |
 
+### `EditGuidedReviewDraft`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `body` | `string` | no | 1 to 8000 characters |
+| `discard` | `boolean` | no |  |
+| `line` | `integer` | no | min 1 |
+| `path` | `string` | no | 1 to 1024 characters |
+| `rev` | `integer` | yes | min 1 |
+| `side` | `"LEFT"` \| `"RIGHT"` | no |  |
+| `startLine` | `integer` \| `null` | no |  |
+
 ### `ErrorResponse`
 
 | Field | Type | Required | Notes |
@@ -2994,6 +3431,168 @@ One of 3 shapes.
 | `error.details` | ? | no |  |
 | `error.issues` | array of object | no |  |
 | `error.message` | `string` | yes |  |
+
+### `GuidedReviewAnchor`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `endLine` | `integer` | no | min 1 |
+| `path` | `string` | yes | 1 to 1024 characters |
+| `side` | `"LEFT"` \| `"RIGHT"` | no |  |
+| `startLine` | `integer` | no | min 1 |
+
+### `GuidedReviewCommentDraft`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `body` | `string` | yes | 1 to 8000 characters |
+| `createdAt` | `number` | yes |  |
+| `id` | `string` | yes |  |
+| `line` | `integer` | yes | min 1 |
+| `messageId` | `string` | yes |  |
+| `path` | `string` | yes | 1 to 1024 characters |
+| `postError` | `string` \| `null` | yes |  |
+| `postedUrl` | `string` \| `null` | yes |  |
+| `rationale` | `string` | yes | max 8000 characters |
+| `rev` | `integer` | yes | min 1 |
+| `sessionId` | `string` | yes |  |
+| `side` | `"LEFT"` \| `"RIGHT"` | yes |  |
+| `startLine` | `integer` \| `null` | yes |  |
+| `status` | `"proposed"` \| `"posting"` \| `"posted"` \| `"failed"` \| `"discarded"` | yes |  |
+| `threadId` | `string` | yes |  |
+| `updatedAt` | `number` | yes |  |
+
+### `GuidedReviewDraftReport`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `dropped` | array of object | yes |  |
+| `proposed` | `integer` | yes | min 0 |
+
+### `GuidedReviewExchange`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `placeholder` | [`GuidedReviewMessage`](#guidedreviewmessage) | yes |  |
+| `question` | [`GuidedReviewMessage`](#guidedreviewmessage) | yes |  |
+
+### `GuidedReviewFailure`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `detail` | `string` \| `null` | yes |  |
+| `reason` | `"budget_exhausted"` \| `"model_unavailable"` \| `"repo_unavailable"` \| `"generation_failed"` \| `"unreadable_reply"` \| `"depth_unavailable"` \| `"head_moved"` | yes |  |
+
+### `GuidedReviewMessage`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `citations` | array of [`GuidedReviewAnchor`](#guidedreviewanchor) | yes |  |
+| `content` | `string` | yes | max 40000 characters |
+| `createdAt` | `number` | yes |  |
+| `depth` | `"inline"` \| `"deep"` | yes |  |
+| `draftReport` | [`GuidedReviewDraftReport`](#guidedreviewdraftreport) \| `null` | yes |  |
+| `failure` | [`GuidedReviewFailure`](#guidedreviewfailure) \| `null` | yes |  |
+| `id` | `string` | yes |  |
+| `kind` | `"answer"` \| `"comment-drafts"` | yes |  |
+| `model` | `string` \| `null` | yes |  |
+| `role` | `"user"` \| `"assistant"` | yes |  |
+| `seq` | `integer` | yes | min 1 |
+| `sessionId` | `string` | yes |  |
+| `status` | `"pending"` \| `"running"` \| `"complete"` \| `"failed"` | yes |  |
+| `threadId` | `string` | yes |  |
+| `updatedAt` | `number` | yes |  |
+
+### `GuidedReviewOverview`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `content` | [`GuidedReviewOverviewContent`](#guidedreviewoverviewcontent) \| `null` | yes |  |
+| `failure` | [`GuidedReviewFailure`](#guidedreviewfailure) \| `null` | yes |  |
+| `generation` | `integer` | yes | min 1 |
+| `model` | `string` \| `null` | yes |  |
+| `status` | `"pending"` \| `"running"` \| `"complete"` \| `"failed"` | yes |  |
+
+### `GuidedReviewOverviewContent`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `consequences` | array of object | yes |  |
+| `focusAreas` | array of object | yes |  |
+| `intent` | `string` | yes | max 8000 characters |
+| `meaningfulChanges` | array of object | yes |  |
+| `risks` | array of object | yes |  |
+| `suggestedQuestions` | array of object | yes |  |
+| `summary` | `string` | yes | max 8000 characters |
+
+### `GuidedReviewPostResult`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `drafts` | array of [`GuidedReviewCommentDraft`](#guidedreviewcommentdraft) | yes |  |
+| `failed` | `integer` | yes | min 0 |
+| `posted` | `integer` | yes | min 0 |
+| `skipped` | array of `string` | yes |  |
+| `summary` | object | yes |  |
+| `summary.error` | `string` \| `null` | yes |  |
+| `summary.posted` | `boolean` \| `null` | yes |  |
+
+### `GuidedReviewSession`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `baseRef` | `string` | yes |  |
+| `createdAt` | `number` | yes |  |
+| `createdBy` | `string` | yes |  |
+| `createdByKind` | `"user"` \| `"api-key"` | yes |  |
+| `id` | `string` | yes |  |
+| `overview` | [`GuidedReviewOverview`](#guidedreviewoverview) | yes |  |
+| `owner` | `string` | yes |  |
+| `prNumber` | `integer` | yes | min 1 |
+| `prTitle` | `string` | yes |  |
+| `provider` | `"github"` \| `"gitlab"` | yes |  |
+| `repo` | `string` | yes |  |
+| `repoId` | `string` | yes |  |
+| `reviewedHeadSha` | `string` | yes |  |
+| `updatedAt` | `number` | yes |  |
+
+### `GuidedReviewSessionView`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `drafts` | array of [`GuidedReviewCommentDraft`](#guidedreviewcommentdraft) | yes |  |
+| `session` | [`GuidedReviewSession`](#guidedreviewsession) | yes |  |
+| `threads` | array of [`GuidedReviewThreadSummary`](#guidedreviewthreadsummary) | yes |  |
+
+### `GuidedReviewThread`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `createdAt` | `number` | yes |  |
+| `createdBy` | `string` | yes |  |
+| `id` | `string` | yes |  |
+| `sessionId` | `string` | yes |  |
+| `title` | `string` | yes | max 200 characters |
+| `updatedAt` | `number` | yes |  |
+
+### `GuidedReviewThreadSummary`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `createdAt` | `number` | yes |  |
+| `createdBy` | `string` | yes |  |
+| `id` | `string` | yes |  |
+| `pendingMessageId` | `string` \| `null` | yes |  |
+| `sessionId` | `string` | yes |  |
+| `title` | `string` | yes | max 200 characters |
+| `updatedAt` | `number` | yes |  |
+
+### `GuidedReviewThreadView`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `messages` | array of [`GuidedReviewMessage`](#guidedreviewmessage) | yes |  |
+| `thread` | [`GuidedReviewThread`](#guidedreviewthread) | yes |  |
 
 ### `Notification`
 
@@ -3009,7 +3608,7 @@ One of 3 shapes.
 | `severity` | `"normal"` \| `"urgent"` | no |  |
 | `status` | `"open"` \| `"acted"` \| `"dismissed"` | yes |  |
 | `title` | `string` | yes |  |
-| `type` | `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
+| `type` | `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"bug_fishing_triage"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
 
 ### `NotificationWebhook`
 
@@ -3020,10 +3619,33 @@ One of 3 shapes.
 | `hasSecret` | `boolean` | yes |  |
 | `id` | `string` | yes |  |
 | `name` | `string` | yes |  |
-| `runEvents` | array of `"run.started"` \| `"run.completed"` \| `"run.failed"` | yes |  |
-| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
+| `runEvents` | array of `"run.started"` \| `"run.completed"` \| `"run.failed"` \| `"run.step_completed"` | yes |  |
+| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"bug_fishing_triage"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | yes |  |
 | `updatedAt` | `number` | yes |  |
 | `url` | `string` | yes |  |
+
+### `OpenGuidedReview`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `owner` | `string` | yes | 1 to 200 characters |
+| `prNumber` | `integer` | yes | min 1 |
+| `provider` | `"github"` \| `"gitlab"` | no |  |
+| `repo` | `string` | yes | 1 to 200 characters |
+
+### `OpenGuidedReviewThread`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `question` | [`AskGuidedReview`](#askguidedreview) | no |  |
+| `title` | `string` | no | max 200 characters |
+
+### `PostGuidedReviewDrafts`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `draftIds` | array of `string` | yes |  |
+| `summary` | `string` | no | max 8000 characters |
 
 ### `PrReportCheck`
 
@@ -3332,6 +3954,7 @@ One of 3 shapes.
 | `revokedAt` | `number` \| `null` | yes |  |
 | `scope` | `"read"` \| `"write"` \| `"decide"` \| `"admin"` | yes |  |
 | `workspaceId` | `string` | yes |  |
+| `workspaceIds` | array of `string` \| `null` | yes |  |
 
 ### `PublicApiKeyList`
 
@@ -3375,6 +3998,87 @@ One of 3 shapes.
 | `status` | `"ready"` \| `"incorporating"` \| `"reviewing"` \| `"merged"` \| `"exceeded"` \| `"incorporated"` | yes |  |
 | `taskId` | `string` | yes |  |
 
+### `PublicBugFishingDecision`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `currentPhaseIndex` | `number` | yes |  |
+| `defaultFixPipelineId` | `string` \| `null` | yes |  |
+| `findings` | array of [`PublicBugFishingFinding`](#publicbugfishingfinding) | yes |  |
+| `kind` | `"bug-fishing"` | yes |  |
+| `model` | `string` \| `null` | yes |  |
+| `phases` | array of [`PublicBugFishingPhase`](#publicbugfishingphase) | yes |  |
+| `plan` | [`PublicBugFishingPlan`](#publicbugfishingplan) \| `null` | yes |  |
+| `status` | `"fishing"` \| `"awaiting_triage"` \| `"done"` | yes |  |
+| `stepIndex` | `number` | yes |  |
+| `stepKind` | `string` | yes |  |
+
+### `PublicBugFishingFinding`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `confidence` | `"high"` \| `"medium"` \| `"low"` | yes |  |
+| `detail` | `string` | yes |  |
+| `dismissed` | `boolean` | yes |  |
+| `evidence` | `string` \| `null` | yes |  |
+| `failureScenario` | `string` \| `null` | yes |  |
+| `findingId` | `string` | yes |  |
+| `kind` | `"bug"` \| `"logic-gap"` \| `"edge-case"` \| `"footgun"` \| `"requirement-gap"` \| `"other"` | yes |  |
+| `line` | `number` \| `null` | yes |  |
+| `path` | `string` | yes |  |
+| `phaseId` | `string` | yes |  |
+| `severity` | `"critical"` \| `"high"` \| `"medium"` \| `"low"` | yes |  |
+| `spawn` | [`PublicBugFishingSpawn`](#publicbugfishingspawn) \| `null` | yes |  |
+| `suggestedFix` | `string` \| `null` | yes |  |
+| `territoryId` | `string` \| `null` | yes |  |
+| `title` | `string` | yes |  |
+
+### `PublicBugFishingPhase`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `failureReason` | `string` \| `null` | yes |  |
+| `filesRead` | `number` \| `null` | yes |  |
+| `goal` | `string` | yes |  |
+| `manifestFiles` | `number` \| `null` | yes |  |
+| `phaseId` | `string` | yes |  |
+| `settledAt` | `number` \| `null` | yes |  |
+| `status` | `"pending"` \| `"fishing"` \| `"completed"` \| `"failed"` | yes |  |
+| `summary` | `string` \| `null` | yes |  |
+| `territoryId` | `string` \| `null` | yes |  |
+| `territoryLabel` | `string` \| `null` | yes |  |
+| `title` | `string` | yes |  |
+
+### `PublicBugFishingPlan`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `passBudget` | `number` | yes |  |
+| `plannedCells` | `number` | yes |  |
+| `surveyUnavailableReason` | `string` \| `null` | yes |  |
+| `treeTruncated` | `boolean` | yes |  |
+| `unfished` | array of [`PublicBugFishingUnfishedCell`](#publicbugfishingunfishedcell) | yes |  |
+
+### `PublicBugFishingSpawn`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `executionId` | `string` \| `null` | yes |  |
+| `failureReason` | `string` \| `null` | yes |  |
+| `pipelineId` | `string` | yes |  |
+| `requestedAt` | `number` | yes |  |
+| `status` | `"pending"` \| `"spawned"` \| `"failed"` | yes |  |
+| `taskId` | `string` | yes |  |
+
+### `PublicBugFishingUnfishedCell`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `phaseId` | `string` | yes |  |
+| `phaseTitle` | `string` | yes |  |
+| `territoryId` | `string` | yes |  |
+| `territoryLabel` | `string` | yes |  |
+
 ### `PublicChallengePrReviewFinding`
 
 | Field | Type | Required | Notes |
@@ -3404,7 +4108,7 @@ One of 3 shapes.
 
 ### `PublicDecision`
 
-One of 13 shapes.
+One of 14 shapes.
 
 **Shape 1**
 
@@ -3454,17 +4158,21 @@ One of 13 shapes.
 
 **Shape 10**
 
-[`PublicHumanTestDecision`](#publichumantestdecision)
+[`PublicBugFishingDecision`](#publicbugfishingdecision)
 
 **Shape 11**
 
-[`PublicVisualConfirmDecision`](#publicvisualconfirmdecision)
+[`PublicHumanTestDecision`](#publichumantestdecision)
 
 **Shape 12**
 
-[`PublicFollowUpsDecision`](#publicfollowupsdecision)
+[`PublicVisualConfirmDecision`](#publicvisualconfirmdecision)
 
 **Shape 13**
+
+[`PublicFollowUpsDecision`](#publicfollowupsdecision)
+
+**Shape 14**
 
 [`PublicInterviewDecision`](#publicinterviewdecision)
 
@@ -3477,6 +4185,7 @@ One of 13 shapes.
 | `runId` | `string` | yes |  |
 | `status` | `"running"` \| `"blocked"` \| `"paused"` \| `"done"` \| `"failed"` | yes |  |
 | `taskId` | `string` | yes |  |
+| `truncated` | `boolean` | yes |  |
 | `unanswerable` | array of [`PublicUnanswerableWait`](#publicunanswerablewait) | yes |  |
 
 ### `PublicFollowUpItem`
@@ -3514,6 +4223,13 @@ One of 13 shapes.
 | `seamSummary` | `string` \| `null` | yes |  |
 | `status` | `"proposing"` \| `"awaiting_choice"` \| `"answering"` \| `"chosen"` \| `"single_path"` \| `"skipped"` | yes |  |
 
+### `PublicGuidedReviewList`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `nextCursor` | `string` \| `null` | yes |  |
+| `sessions` | array of [`GuidedReviewSession`](#guidedreviewsession) | yes |  |
+
 ### `PublicHumanTestDecision`
 
 | Field | Type | Required | Notes |
@@ -3544,6 +4260,7 @@ One of 13 shapes.
 | `label` | `string` | yes |  |
 | `scope` | `"read"` \| `"write"` \| `"decide"` \| `"admin"` | yes |  |
 | `workspaceId` | `string` | yes |  |
+| `workspaceIds` | array of `string` \| `null` | yes |  |
 
 ### `PublicIncorporate`
 
@@ -3697,11 +4414,41 @@ One of 13 shapes.
 | --- | --- | --- | --- |
 | `findings` | array of object | yes |  |
 | `kind` | `"pr-review"` | yes |  |
+| `lastActivityAt` | `number` \| `null` | yes |  |
+| `maxResumeAttempts` | `number` | yes |  |
+| `postAttempts` | `number` | yes |  |
+| `postReport` | object \| `null` | yes |  |
+| `postedBody` | `boolean` | yes |  |
+| `postedFindingIds` | array of `string` | yes |  |
 | `prUrl` | `string` \| `null` | yes |  |
+| `reportedSlices` | `number` | yes |  |
+| `resumeAttempts` | `number` | yes |  |
 | `selectedFindingIds` | array of `string` | yes |  |
 | `slices` | array of object | yes |  |
 | `status` | `"reviewing"` \| `"awaiting_selection"` \| `"challenging"` \| `"fixing"` \| `"posting"` \| `"done"` \| `"skipped"` | yes |  |
 | `summary` | `string` \| `null` | yes |  |
+
+### `PublicPromptFragment`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `appliesTo` | object | no |  |
+| `appliesTo.agentKinds` | array of `string` | no |  |
+| `appliesTo.blockTypes` | array of `"frontend"` \| `"service"` \| `"library"` \| `"document"` \| `"api"` \| `"database"` \| `"queue"` \| `"integration"` \| `"external"` \| `"environment"` | no |  |
+| `category` | `string` | yes |  |
+| `fragmentId` | `string` | yes |  |
+| `summary` | `string` | yes |  |
+| `tags` | array of `string` | yes |  |
+| `tier` | `"builtin"` \| `"account"` \| `"workspace"` | yes |  |
+| `title` | `string` | yes |  |
+| `version` | `string` | yes |  |
+
+### `PublicPromptFragmentList`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `fragments` | array of [`PublicPromptFragment`](#publicpromptfragment) | yes |  |
+| `nextCursor` | `string` \| `null` | yes |  |
 
 ### `PublicRejectStep`
 
@@ -3932,6 +4679,7 @@ One of 13 shapes.
 | `autoStartDependents` | `boolean` | yes |  |
 | `dependsOn` | array of `string` | yes |  |
 | `description` | `string` | yes |  |
+| `fragmentIds` | array of `string` | yes |  |
 | `modelPresetId` | `string` \| `null` | yes |  |
 | `progress` | `number` | yes |  |
 | `pullRequestUrl` | `string` \| `null` | yes |  |
@@ -3940,7 +4688,7 @@ One of 13 shapes.
 | `serviceId` | `string` | yes |  |
 | `status` | `"planned"` \| `"ready"` \| `"in_progress"` \| `"blocked"` \| `"pr_ready"` \| `"done"` | yes |  |
 | `taskId` | `string` | yes |  |
-| `taskType` | `"feature"` \| `"bug"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `"recurring"` \| `string` | yes |  |
+| `taskType` | `"feature"` \| `"bug"` \| `"bug-fishing"` \| `"document"` \| `"spike"` \| `"review"` \| `"ralph"` \| `"media"` \| `"recurring"` \| `string` | yes |  |
 | `title` | `string` | yes |  |
 
 ### `PublicTaskDocument`
@@ -3990,7 +4738,7 @@ One of 2 shapes.
 | Field | Type | Required | Notes |
 | --- | --- | --- | --- |
 | `detail` | `string` | yes |  |
-| `reason` | `"human_wait_gate"` \| `"unclassified_gate"` \| `"unwired_interview_gate"` | yes |  |
+| `reason` | `"human_wait_gate"` \| `"unclassified_gate"` \| `"unwired_interview_gate"` \| `"curation_gate"` | yes |  |
 | `stepIndex` | `number` | yes |  |
 | `stepKind` | `string` | yes |  |
 
@@ -4044,10 +4792,16 @@ One of 2 shapes.
 | `alertEvents` | array of `"platform_health.firing"` \| `"platform_health.resolved"` | no |  |
 | `enabled` | `boolean` | no |  |
 | `name` | `string` | no | 1 to 100 characters |
-| `runEvents` | array of `"run.started"` \| `"run.completed"` \| `"run.failed"` | no |  |
+| `runEvents` | array of `"run.started"` \| `"run.completed"` \| `"run.failed"` \| `"run.step_completed"` | no |  |
 | `secret` | `string` | no | 16 to 200 characters |
-| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | no |  |
+| `types` | array of `"merge_review"` \| `"pipeline_complete"` \| `"ci_failed"` \| `"deploy_blocked"` \| `"test_failed"` \| `"requirement_review"` \| `"clarity_review"` \| `"release_regression"` \| `"decision_required"` \| `"human_test_ready"` \| `"visual_confirmation_ready"` \| `"human_review"` \| `"followup_pending"` \| `"fork_decision_pending"` \| `"judge_review"` \| `"pr_review_ready"` \| `"bug_fishing_triage"` \| `"initiative"` \| `"platform_health"` \| `"infra_unreachable"` \| `"budget_paused"` \| `"budget_threshold"` \| `"key_drift"` \| `"merge_tag_request"` | no |  |
 | `url` | `string` (uri) | no | max 2000 characters, pattern `^https://` |
+
+### `RequestGuidedReviewDrafts`
+
+| Field | Type | Required | Notes |
+| --- | --- | --- | --- |
+| `instructions` | `string` | no | max 4000 characters |
 
 ### `RequirementGroup`
 
