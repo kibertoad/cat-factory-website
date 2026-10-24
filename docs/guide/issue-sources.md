@@ -263,6 +263,13 @@ the thing that actually knows, while a bare non-built-in id still fails validati
 distinguishable from a registration. A registered source's board scope is carried as an opaque board
 id rather than being squeezed into one of the built-in vendors' fields.
 
+A registered source can push too. Its webhook adapter verifies and parses deliveries like the built-ins
+do. If the vendor checks the webhook URL before it sends events and reads the answer from the response
+body, as Slack's `url_verification` challenge does, the adapter can also implement `handshake`. The
+receiver asks it only after the signature is verified, and sends its answer with a `200` instead of
+acking the delivery. A vendor that sends the signing secret in that first request cannot be verified
+this way and is not supported.
+
 A registered source is usable everywhere the built-ins are, including the
 [public API's `ticket` input](../extend/public-api.md#filing-a-task-from-a-tracker-ticket).
 
