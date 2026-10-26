@@ -128,9 +128,12 @@ A board stops using the account's pool when its `inheritAccountRunnerPool` setti
 Removing a board's own pool sets that setting, unless the request passes `fallBackToAccount=true`.
 
 In local mode a board still runs its agents in containers on your machine. It uses the account's pool
-only when its `delegateAgentsToRunnerPool` setting is on. A local machine connected to a mothership
-ignores the option and logs a warning at boot: the account pools live on the mothership, so declare
-the seed in the mothership's deployment instead.
+only when its `delegateAgentsToRunnerPool` setting is on.
+
+An account pool does not reach a local machine connected to a mothership. That machine opens pool
+secrets with its own key, and the mothership seals account pools with its key. The machine ignores
+the option and logs a warning at boot. To delegate a board's agents from it, register a pool on that
+board from the machine.
 
 ### Native Kubernetes backend
 
