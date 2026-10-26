@@ -206,7 +206,7 @@ await start({
   seedEnvironmentHandlers: [{ provisionType: 'k8s', manifestId: 'acme-eks' }],
   // The stacks a provisioned environment composes on top of.
   seedSharedStacks: [{ name: 'shared-postgres', layers: [{ source: { kind: 'inline', body: composeYaml } }] }],
-  // A new board can run an agent with no Infrastructure → Runner pool step (Node `start()` only).
+  // A new board can run an agent with no Infrastructure → Runner pool step.
   seedAccountRunnerPool: (account) => ({ config: poolConfig, secrets: { apiToken: process.env.AGENT_POOL_TOKEN! } }),
 })
 ```
