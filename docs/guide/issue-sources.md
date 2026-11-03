@@ -305,6 +305,22 @@ A deployment driven entirely over the API can read and change the same three act
 the app: see
 [Reading and setting tracker writeback](../extend/public-api.md#reading-and-setting-tracker-writeback).
 
+### Posting refined requirements back to the issue
+
+When a task came from a tracker issue, the requirements review window offers **Post to linked
+issues** once the review has produced a refined requirements document. Each linked issue gets the
+document as a **comment**: the issue description the reporter wrote is never changed. Jira receives
+it converted to its own rich-text format, with lists, code blocks, quotes, emphasis and links intact;
+GitHub, GitLab and Linear receive the Markdown as written. A document too long for one Jira comment is
+cut at a line and says so.
+
+The post happens only when someone clicks the button, and it is not governed by the three toggles
+above. Each document is posted to an issue at most once, so clicking again reports **already
+posted**, while a revised document (after another review round) posts again. An issue whose tracker
+was unreachable reports **failed** and can be retried by posting again. See
+[Clarify Requirements](./requirements.md#posting-the-refined-requirements-to-the-source-issue) for
+where the button sits in the review.
+
 ## Using sources as agent context
 
 Once linked and imported, source content travels with the block:

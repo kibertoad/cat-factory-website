@@ -160,6 +160,21 @@ Resolving requirements first means the **Coder**, **Tester**, and **Acceptance**
 the same clear definition, which means fewer wasted runs and fewer surprise PRs.
 :::
 
+### Posting the refined requirements to the source issue
+
+When the task was imported from a tracker issue, the refined requirements block in the review window
+carries a **Post to linked issues** button. It adds the current document as a comment on every issue
+linked to the task, so the reporter sees what will be built without leaving their tracker, and their
+original description stays as they wrote it. The button is disabled while an incorporation is still
+rewriting the document, and for board viewers.
+
+Under the button, each issue is listed with what happened to it: **posted**, **already posted** (this
+exact document is already on that issue), **already being posted** (a teammate's click is still
+running, or its result was not recorded), **failed** (post again to retry), or that the tracker
+cannot be written to. The same document never lands twice on one issue; a revised document from a
+later round posts as a new comment. How each tracker receives it is described under
+[Issue Sources → Writing back to the tracker](./issue-sources.md#posting-refined-requirements-back-to-the-issue).
+
 ## The unified in-repo spec
 
 Where the reviewer clarifies one task at a time, the **Spec Writer** agent produces the durable,
