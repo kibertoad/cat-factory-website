@@ -716,7 +716,7 @@ controllers call, so the arbitration between the two surfaces is identical which
 | `GET` | (base) | read | List the run's parked decisions: review findings with stable item ids, the iteration and its cap, the incorporated document, the proposed implementation forks, and any judge verdict. |
 | `POST` | `/requirements/findings/{itemId}/reply` | decide | Answer one review finding. |
 | `PATCH` | `/requirements/findings/{itemId}` | decide | Dismiss or reopen a finding. |
-| `POST` | `/requirements/incorporate` | decide | Incorporate the answers into the requirements. |
+| `POST` | `/requirements/incorporate` | decide | Incorporate the answers into the requirements. `after: "proceed"` settles on the result and advances the run instead of re-reviewing it. |
 | `POST` | `/requirements/re-review` | decide | Re-review the incorporated document. |
 | `POST` | `/requirements/proceed` | decide | Proceed with the requirements as they stand. |
 | `POST` | `/requirements/resolve-exceeded` | decide | Resolve a review that hit its iteration cap. |
