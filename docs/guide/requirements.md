@@ -81,6 +81,13 @@ Requirements review is **iterative**. Each round:
 The cycle repeats until the reviewer is satisfied (or every remaining finding is dismissed). If a
 merge of your answers comes out wrong, you can redo it with a comment instead of accepting it.
 
+A re-review is held to a stricter bar than the first pass. It is shown what you answered and what
+you dismissed in the round before, and a new finding must either be **high** severity or **follow up
+on one of your answers**: the answer introduced a behaviour, rule or scope whose own gap is now
+visible. A follow-up names the answer it comes from on its card. Anything else is left out, so
+dismissing findings and keeping the recommended defaults does not buy you a fresh batch of questions
+about text nobody changed. The window states how many findings the bar left out.
+
 Findings are grouped by whose court the ball is in: **needs a reaction** first, then **waiting on the
 Writer**, then **already handled**, with severity ordering within each group. On a long review you
 never scroll past answered cards to find what is still on you. The order is pinned while your cursor is
@@ -138,11 +145,18 @@ Recommendations are not AI-reviewed: you decide. For each ready suggestion you c
 becomes the finding's answer, folded into the next incorporation), **Reject** it (the finding reopens
 so you answer it manually), or **Re-request** it with a note to steer a fresh draft.
 
-Incorporation and re-review run **in the background**. After you click "Incorporate answers" you go
-straight back to the board, and the task card shows which stage is running ("Incorporating answers…"
-then "Re-reviewing…") in place of an approval badge, since no action is needed until the reviewer
-comes back. You're summoned again only if the re-review raises fresh findings or hits the iteration
-cap; a converged round just advances the pipeline. (If you
+Once every finding is answered or dismissed, two buttons fold your answers in:
+
+- **Incorporate and re-review** folds them into the document and has the reviewer check it again.
+- **Incorporate and proceed** folds them in and moves the run straight on to the next phase, with no
+  further review round. Pick it when you are satisfied with your answers and want the document they
+  make to be final.
+
+Both run **in the background**: you go straight back to the board, and the task card shows which
+stage is running ("Incorporating answers…", then "Re-reviewing…" for a re-review) in place of an
+approval badge, since no action is needed until the reviewer comes back. After a re-review you're
+summoned again only if it raises fresh findings or hits the iteration cap; a converged round just
+advances the pipeline. (If you
 dismissed everything and left nothing to fold in, the round settles with no LLM call at all.)
 
 Two per-task knobs on the [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
