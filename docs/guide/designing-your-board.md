@@ -85,6 +85,14 @@ feels like it spans several PRs, split it into sibling leaves.
   full **Add task** form with your text and choices in it, for every other type and for context
   attachments.
   Closing the dialog with text in it asks first.
+- **Attach images** to a task (a bug screenshot, a sketch, a diagram) in the **Add task** form or
+  later in the task inspector's **Images** section, up to six per task as PNG, JPEG, WebP or GIF.
+  The agents working the task are shown them as image input wherever their model accepts images,
+  and are told when a step could not carry them. Images need
+  [content storage](../deploy/configuration.md#content-storage-binary-artifacts) configured for the account. They stay with the
+  task: one set whichever board attached them, carried along when the task moves to another
+  service, and removed when the task is deleted. A file of another type is not added, and the form
+  names it.
 - **Edit** its title, description, status, chosen pipeline, prompt fragments, risk policy,
   and (on a task) its [responsible product person](./team-and-access.md#the-responsible-product-person)
   in the inspector.
