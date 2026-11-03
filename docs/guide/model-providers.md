@@ -181,19 +181,25 @@ What the password actually buys is twofold:
 ### How unlocking works in practice
 
 You are not re-prompted on every action. After you enter it once, the password is cached in your
-browser, so starting, retrying, and approving from your side runs ride along without asking
-again. The server never stores the password; it travels as a request header, never in a saved record.
+browser, so starting, retrying, and restarting runs ride along without asking again. The server
+never stores the password; it travels as a request header, never in a saved record.
 
-To keep a long pipeline from lapsing halfway through, the cache is checked against an **8-hour expiry
-buffer**: if a start, confirm, or retry finds less than eight hours of runway left on the cached
-password, it re-prompts you then, while you are present at the action, and refreshes the full window,
-rather than letting a nearly-expired credential fail on an asynchronous step while you are away.
+The cache is checked against an **8-hour expiry buffer**: if a start, retry, or restart finds less
+than eight hours of runway left on the cached password, it re-prompts you then, while you are present
+at the action, and refreshes the full window.
 
 Unlocking mints a short-lived, per-run activation (re-encrypted with the system key only, scoped to
-that one run) so the asynchronous container steps can authenticate while you are away. That
-activation is deleted the moment the run finishes, and a healthy run that you keep tending re-mints
-it on each interaction, so the activation only ever expires on a stuck or abandoned run. A
-background sweep reclaims any stragglers.
+that one run, valid for about 12 hours) so the asynchronous container steps can authenticate while
+you are away. That activation is deleted the moment the run finishes. A background sweep reclaims any
+stragglers.
+
+### When a run outlives its activation
+
+A run can sit for longer than its activation lasts, for example while a requirements review waits on
+your answers overnight. It does not fail when that happens. The step that needed the credential
+**pauses** instead, and the run panel shows **Enter password and continue**. Clicking it uses your
+cached password (or asks for it), renews the activation, and carries on from that same step. Nothing
+the run already did is repeated.
 
 ### Responsible use
 

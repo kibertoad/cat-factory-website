@@ -24,8 +24,9 @@ Each agent runs on its kind's default model; see [Choosing models](#choosing-mod
 ::: tip Personal subscriptions ask for a password once
 If a step uses a model from a personal (individual-usage) subscription such as Claude, GLM, or
 Codex, Cat Factory asks for your personal password to unlock your credential. After the first
-unlock it is cached in your browser for a few hours, so subsequent starts, retries, and approvals
-don't re-prompt. The password is about using *your own* credential on purpose.
+unlock it is cached in your browser for a few hours, so subsequent starts and retries don't
+re-prompt. If a run waits so long that its credential lapses, it pauses rather than fails, and one
+click resumes it. The password is about using *your own* credential on purpose.
 See [Connect a Model Provider → Why a personal password](./model-providers.md#why-a-personal-password).
 :::
 
