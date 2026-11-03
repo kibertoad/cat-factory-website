@@ -270,7 +270,9 @@ A registered source is usable everywhere the built-ins are, including the
 
 Cat Factory can keep the upstream issue updated as work progresses, so the tracker reflects reality
 without manual status-shuffling. Three workspace toggles under **Issue tracker → Writeback** control
-it:
+the comments and status changes below; a fourth, covered under
+[Writing refined requirements into the issue](#writing-refined-requirements-into-the-issue),
+controls the description:
 
 - **Comment when a PR opens**: posts a comment on the linked issue when the task's pull request opens.
 - **Close as resolved when a PR merges**: closes the issue when the PR merges (GitHub closes it
@@ -305,21 +307,29 @@ A deployment driven entirely over the API can read and change the same three act
 the app: see
 [Reading and setting tracker writeback](../extend/public-api.md#reading-and-setting-tracker-writeback).
 
-### Posting refined requirements back to the issue
+### Writing refined requirements into the issue
 
-When a task came from a tracker issue, the requirements review window offers **Post to linked
-issues** once the review has produced a refined requirements document. Each linked issue gets the
-document as a **comment**: the issue description the reporter wrote is never changed. Jira receives
-it converted to its own rich-text format, with lists, code blocks, quotes, emphasis and links intact;
-GitHub, GitLab and Linear receive the Markdown as written. A document too long for one Jira comment is
-cut at a line and says so.
+When a task came from a tracker issue, its requirements review produces a refined requirements
+document, and that document can replace the issue's **description**. Every tracker keeps the
+previous description in its history (Jira's history, GitHub's edit history, GitLab's description
+versions, Linear's history), and the new description opens with a line saying it was refined
+during review. Jira receives it in its own rich-text format, with lists, code blocks, quotes,
+emphasis and links intact; GitHub, GitLab and Linear receive the Markdown as written. A document too
+long for one Jira field is cut at a line and says so.
 
-The post happens only when someone clicks the button, and it is not governed by the three toggles
-above. Each document is posted to an issue at most once, so clicking again reports **already
-posted**, while a revised document (after another review round) posts again. An issue whose tracker
-was unreachable reports **failed** and can be retried by posting again. See
-[Clarify Requirements](./requirements.md#posting-the-refined-requirements-to-the-source-issue) for
-where the button sits in the review.
+Two ways to trigger it:
+
+- **Write refined requirements into the linked issue's description**, a fourth toggle under
+  **Issue tracker → Writeback**. It is **off by default** and applies to the whole workspace. When it
+  is on, the description is updated once, as the requirements review settles and the run moves on
+  to the next step. A tracker that cannot be reached never holds the run up: that issue is marked
+  as failed and can be updated by hand.
+- **Update linked issues**, a button in the requirements review window, which works whatever the
+  toggle says. See
+  [Clarify Requirements](./requirements.md#writing-the-refined-requirements-into-the-source-issue).
+
+An issue whose description already holds exactly this document is left alone and reported as
+**already up to date**, so clicking twice, or a run being retried, changes nothing on the tracker.
 
 ## Using sources as agent context
 
