@@ -160,6 +160,25 @@ Resolving requirements first means the **Coder**, **Tester**, and **Acceptance**
 the same clear definition, which means fewer wasted runs and fewer surprise PRs.
 :::
 
+### Writing the refined requirements into the source issue
+
+When the task was imported from a tracker issue, the refined requirements block in the review window
+carries an **Update linked issues** button. It replaces the description of every issue linked to the
+task with the current document, so the reporter reads what will be built where they filed it; the
+tracker keeps their original description in its history. The button is disabled while an
+incorporation is still rewriting the document, and for board viewers.
+
+A workspace can also have this happen automatically: with **Write refined requirements into the
+linked issue's description** on under
+[Issue Sources → Writing back to the tracker](./issue-sources.md#writing-refined-requirements-into-the-issue),
+the approved document is written once, when the review settles and the run moves on. It is not
+written on every incorporation round.
+
+Under the button, each linked issue is listed with what happened to it last, whether you clicked or
+the setting fired: **updated**, **already up to date** (the description already held this exact
+document, so nothing was written), **failed** (update again to retry), or that the tracker cannot be
+updated.
+
 ## The unified in-repo spec
 
 Where the reviewer clarifies one task at a time, the **Spec Writer** agent produces the durable,
