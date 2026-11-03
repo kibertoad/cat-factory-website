@@ -145,7 +145,7 @@ comes back. You're summoned again only if the re-review raises fresh findings or
 cap; a converged round just advances the pipeline. (If you
 dismissed everything and left nothing to fold in, the round settles with no LLM call at all.)
 
-Two per-task knobs on the [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
+Per-task knobs on the [risk policy](./designing-your-board.md#navigating-navbar-and-command-bar)
 tune the loop:
 
 - **`maxRequirementIterations`** (default **6**, **3** under Unattended delivery): how many reviewer
@@ -154,6 +154,19 @@ tune the loop:
 - **`maxRequirementConcernAllowed`** (default none): findings at or below this severity are recorded
   but auto-advance the run, with no human gate and the companion skipped, so only the findings that
   matter to you pause the run.
+- **Requirements review raises** (`requirementFindingFloor`, default **high and medium**): how
+  verbose the review is. Pick **high findings only** to be asked just what blocks implementation, or
+  **everything** to include minor clarifications. A finding below this level is never raised at all,
+  where `maxRequirementConcernAllowed` decides whether a raised finding stops the run.
+- **Follow the task estimate** (`requirementFloorProgression`, off by default): moves that level with
+  the task's size, read against the highest of the estimate's complexity, risk and impact. Below the
+  medium threshold (default 30%) only high findings are raised, from it high and medium, and from the
+  everything threshold (default 70%) every severity. The task needs an estimate when the review
+  starts: put a **Task Estimator** before the requirements review, or reuse one from an earlier run.
+  Without one, the fixed level above applies.
+
+The review window says which level each pass raised, whether the estimate set it, and how many
+findings it left out below it.
 
 ::: tip Do this before running a pipeline
 Resolving requirements first means the **Coder**, **Tester**, and **Acceptance** steps all work from
