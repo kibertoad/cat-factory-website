@@ -116,7 +116,8 @@ A policy carries more than the merge decision: the same row holds the budgets th
 loops spend before they stop and ask you. The CI-fix attempts, the requirement-review iterations and
 **Companion rework rounds** (how many times a reviewer may send its producer back, three by default)
 are all fields on it, so how much the platform retries on its own is a per-task choice rather than a
-platform constant.
+platform constant. The policy also sets the **Post-implementation review effort**, how thorough the
+reviewer that checks the build's change is (see [Review effort](#review-effort)).
 
 Edit these or add your own in the workspace's **Risk policies** panel. Each row has its own **Make
 default** and **Unattended default** promote buttons, since the two defaults are independent: flag one
@@ -316,7 +317,8 @@ pauses a *build* pipeline to wait for a human's GitHub approval.
 Create it from the add-task modal: pick type **Review**, and in **Pull request** enter the target as a
 full URL (`https://github.com/owner/repo/pull/123`) or a bare `#123` for a PR on the service's own
 repo. Add an optional **Review focus** (for example "focus on the auth changes and error handling") to
-steer the reviewer. A Review task takes no title or description (the title is derived from the PR) and
+steer the reviewer. Pick a **Review effort** (low, medium, high, extra high or max; high by default) to
+set how thorough the review is; see [Review effort](#review-effort). A Review task takes no title or description (the title is derived from the PR) and
 no risk policy (it merges nothing). It runs the single-step **Review a pull request** pipeline, and any
 [prompt fragments](./prompt-fragments.md) you pin become review criteria.
 
@@ -376,6 +378,33 @@ the findings that matter (all are selected by default), and resolve:
 On any single finding you can **Dismiss** it (drop it from the set) or **Challenge** it: a second
 read-only investigator re-examines that finding and returns a verdict (Upheld, Strengthened, or
 Retracted, the last auto-deselected). Add an optional note about what seems wrong before it investigates.
+
+You can challenge several findings at once. Up to three investigations run at the same time and the
+rest wait their turn, shown as **Queued** on the finding. While they run you can keep selecting and
+deselecting findings and challenge more of them; resolving the review and dismissing a finding wait
+until every investigation has settled.
+
+### Review effort
+
+The effort level sets how thorough a review is, in four ways:
+
+| Level | Findings reported | Unconfirmed findings | Verification pass |
+| --- | --- | --- | --- |
+| Low | up to 5 | no | no |
+| Medium | up to 10 | no | no |
+| High (default) | up to 20 | no | yes |
+| Extra high | up to 35 | yes, marked "Possible:" | yes |
+| Max | no cap | yes, marked "Possible:" | yes |
+
+Up to high, the reviewer reports only findings it has confirmed against the code. From high up, each
+candidate finding is checked a second time before it is reported. Higher levels also give each slice
+of a large diff more turns and keep more slices under review in parallel (never more than five). A
+higher level costs more tokens and takes longer. The level changes how much the reviewer looks for,
+not how strictly it grades: a finding's severity means the same at every level.
+
+The same levels govern the reviewer that checks a build's own change after implementation. There the
+level comes from the task's [risk policy](#conflicts-ci-and-the-merger) (**Post-implementation review
+effort**, high by default) rather than from the task.
 
 Posting and fixing require the PR to live on the service's own repo (fork and cross-repo PRs aren't
 supported yet) and are GitHub-only; on GitLab those two resolutions report as unsupported, while the
