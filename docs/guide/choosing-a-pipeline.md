@@ -249,8 +249,14 @@ branch. The committed Markdown is the durable artifact, so no new storage is inv
 For the short version of the common edits (add a review step, add a gate, change a step's prompt,
 attach a skill), see the [Cookbook](./cookbook.md). This section is the model behind them.
 
-The built-in pipelines are read-only templates, but you can shape your own:
+The built-in pipelines are read-only templates apart from their approval checkpoints, and you can
+shape your own:
 
+- **Approval checkpoints** on a built-in are edited in place, from the shield in its library row:
+  choose which steps pause for a person, and who may approve. You can add checkpoints but not
+  remove the ones the built-in ships (the Clarity Review pause in **Triage & fix bug**, for
+  example); those stay locked on. This is how you make **Complex build** stop after the Architect
+  without cloning it.
 - **Clone** any pipeline, built-in or custom, into a new editable copy. This is how a read-only
   default becomes a starting point you can change.
 - **Edit** a custom pipeline in place: reorder, add, or remove steps. Built-in pipelines carry a
@@ -263,7 +269,9 @@ On app open, a startup check surfaces pipelines that need attention: a custom pi
 references an agent kind that no longer exists or has an invalid shape (offered for deletion), a
 built-in with an invalid shape (offered a reseed), and a built-in whose seeded definition has moved
 ahead of your stored copy (offered a reseed to adopt it). **Reseeding** a built-in restores its
-canonical definition while preserving your labels and archive state.
+canonical definition while preserving your labels, archive state, and the approval checkpoints you
+added. A checkpoint the new definition no longer allows (its step became estimate-gated, or left the
+pipeline) is dropped, and the reseed says which.
 
 In the builder, the agent palette is grouped into collapsible categories (**Review & triage**,
 **Design & research**, **Implementation**, **Testing**, **Documentation**, and
