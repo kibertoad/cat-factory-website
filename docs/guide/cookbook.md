@@ -83,10 +83,21 @@ Full model: [Choose and Edit a Pipeline → Anatomy of a pipeline](./choosing-a-
 
 Use this when a person must look before the run continues.
 
-1. Click the shield control on the step: **Require human approval after this step**.
+1. Click the shield control on the step: **Require human approval after this step**. On a step
+   with a reviewing companion (the Architect with its Architect Reviewer, the Coder with its
+   Reviewer), the shield opens a menu instead, because the pause can sit in two places:
+   - **After each draft, before the review**: you see every draft the step produces, including
+     each rework round the companion sends back.
+   - **Once the review passes the draft**: you see the design or change once, after the companion
+     has accepted it.
+   - **Both**, or no checkpoint.
 2. Open the step's gate settings and set who clears it: **Who may approve** (Admins, Members),
    optional **Named approvers**, and **Approvals required**, each from a different person.
 3. Save.
+
+On a built-in pipeline, open the shield in its row of the pipeline library instead: built-ins
+accept approval checkpoints in place, so you do not need to clone one to add a pause. See
+[Choose and Edit a Pipeline](./choosing-a-pipeline.md#editing-pipelines).
 
 The run reaches the step, finishes it, then moves to **Needs decision** and raises an inbox
 notification. It waits as long as it needs; nothing times out. The notification turns red and is
@@ -95,7 +106,8 @@ flagged **Overdue** past the workspace's escalation threshold, set in
 
 A step may not carry both a human approval gate and an
 [estimate gate](#run-a-step-only-on-big-tasks). An estimate may add a checkpoint, never cancel one,
-so pick one.
+so pick one. The same holds for a companion's checkpoint when the step it reviews is estimate-gated
+or carries a run condition, since the review is skipped along with it.
 
 ### Add a gate
 
