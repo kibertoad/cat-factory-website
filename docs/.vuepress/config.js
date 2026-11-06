@@ -32,6 +32,7 @@ const GUIDE_GROUPS = [
       '/guide/requirements.md',
       '/guide/documents.md',
       '/guide/initiatives.md',
+      '/guide/research-projects.md',
     ],
   },
   {
