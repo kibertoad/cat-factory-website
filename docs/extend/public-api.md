@@ -682,6 +682,55 @@ That is a wider licence than a board member has: in the app, somebody who does n
 library cannot re-point a task from an attended policy onto an `unattended` one, because dropping the
 run's human checkpoints is a permission rather than a preference.
 
+## Staged projects
+
+A project definition may declare **stages**: an ordered set of steps, each running one task type
+and writing its own result, where a stage starts only once the stages it runs after have an
+accepted result. A stage may hold its result at a **checkpoint** until a person accepts it, and may
+read the accepted results of earlier stages as context. The platform ships four task types a
+stage can run: `research` (answer questions against the vendor the definition describes),
+`decisions` (propose a decision register a person settles at the checkpoint), `spawn` (create a
+task in each service the project links, with the project linked as context, and start each run)
+and `writeup` (compose the stages it reads into one Markdown document). A deployment's own project
+kinds offer the ones they list.
+
+| Method | Path | Scope | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/projects/{projectId}/stages` | read | Each stage of the pinned definition, in its order, with where it stands. Empty for a definition with no stages. |
+| `POST` | `/api/v1/projects/{projectId}/stages/{stageId}/tasks` | write | Start a stage: create its task under the project. Start the task's run as any project task's, with `POST /api/v1/projects/{projectId}/tasks/{taskId}/start`. |
+| `POST` | `/api/v1/projects/{projectId}/stages/{stageId}/checkpoint` | decide | Accept the stage's newest result, so the stages after it count it. Body `{ revision? }` for a task type that settles its result as it is accepted. |
+
+A stage's `state` is derived from its tasks and the project's outcomes, never stored:
+
+- `status` is `blocked` (a stage it runs after has no accepted result; `waitingOn` names which),
+  `ready`, `in-progress` (its task, `activeTaskId`, has no result yet), `awaiting-checkpoint` (its
+  newest result waits for a person) or `done`.
+- `stale` says an upstream result this stage built on has changed since. It is stated, never acted
+  on: nothing reruns on its own.
+- `latest` and `accepted` name the stage's newest result and the newest one a person accepted.
+- `acceptance` reports how the newest result meets the stage's **acceptance criteria**, for a stage
+  that declares them. A model argues each criterion with passages quoted from the result, and the
+  platform computes each criterion's status: `met` only when every quoted passage is in the result,
+  `unmet` as argued, `unverified` otherwise. A report whose `state` is `unavailable`, `failed` or
+  `pending` assessed nothing yet, and every criterion in it reads `unverified`. A person still
+  decides at the checkpoint.
+
+The stage routes refuse with `409` and a `details.reason` you can branch on:
+
+| Reason | Raised by |
+| --- | --- |
+| `project_stage_blocked`, `project_stage_in_progress`, `project_stage_awaiting_checkpoint`, `project_stage_not_repeatable` | starting a stage that is not ready (or done and repeatable) |
+| `project_stage_checkpoint_not_pending` | accepting a stage with no result waiting |
+| `project_stage_work_unsettled` | accepting a `spawn` stage while a task it created is not done or removed |
+| `project_homed_elsewhere` | starting or accepting a stage from a board that only mounts the project |
+
+Accepting a `decisions` stage needs its settlement: a `revision` naming a choice for every item,
+or `422 project_stage_revision_required`.
+
+Each project outcome names its `taskType`, the task type whose handler decodes its `body`, and
+`GET /api/v1/project-kinds/{kind}` serves each task type's body schema under `schemas.outcomes`,
+keyed by that name.
+
 ## Paging
 
 The list endpoints that can grow without bound, `GET /api/v1/services/{serviceId}/tasks`,
