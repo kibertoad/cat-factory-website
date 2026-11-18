@@ -57,8 +57,8 @@ result on its own.
 ## Knowing when a stage needs you
 
 When a stage's result awaits acceptance, the board that homes the project gets a notification.
-Clicking it takes you to the stage's task; accepting the stage clears it. It counts toward review
-debt like the other review cards, and you can route it to Slack or email from their settings.
+Clicking it opens the project on its stages; accepting the stage clears it. You can route it to
+Slack or email from their settings.
 
 To drive stages from another system, see
 [Staged projects in the public API](../extend/public-api.md#staged-projects).
